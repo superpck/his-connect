@@ -1,0 +1,20 @@
+<% include ./../../templates/includes/head %>
+<header>
+    <% include ./../../templates/includes/header %>
+</header>
+
+<form action="/setup-api/form" method="get">
+    <div class="well">
+        <div class="form-group">
+            <label for="RequestKey">Request Key</label>
+            <input type="password" class="form-control" id="RequestKey" name="RequestKey" placeholder="Request Key">
+        </div>
+        <div class="form-group">
+            <label for="SecretKey">Secret Key</label>
+            <input type="password" class="form-control" id="SecretKey" name="SecretKey" placeholder="Secret Key">
+        </div>
+        <button type="submit" class="btn btn-default">Signin</button>
+    </div>
+</form>
+
+<% include ./../../templates/includes/footer %>

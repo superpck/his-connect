@@ -1,0 +1,642 @@
+<% include ./../../templates/includes/head %>
+<header>
+    <% include ./../../templates/includes/header %>
+</header>
+
+<form method='post' action="/setup-api/save">
+    <input type="hidden" name="token" value="<%= token %>">
+    <main>
+        <div class="row">
+            <div class="col-sm-12">
+                <h3 style="color: red;"><%= error %></h3>
+                <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading" role="tab" id="headingOne"
+                            style="color: rgb(23, 100, 3); background-color: rgb(244, 255, 240);">
+                            <h4 class="panel-title">
+                                <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne"
+                                    aria-expanded="true" aria-controls="collapseOne">
+                                    1.Local API Config
+                                </a>
+                            </h4>
+                        </div>
+                        <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel"
+                            aria-labelledby="headingOne">
+                            <div class="panel-body">
+                                <table class="table">
+                                    <tr>
+                                        <td class="table-title">
+                                            HospCode:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="HOSPCODE" value="<%= configs.HOSPITAL.HOSPCODE %>">
+                                        </td>
+                                    </tr>
+                                    <!-- 
+                                    <tr>
+                                        <td class="table-title">
+                                            Level:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="API_LEVEL"
+                                                value="<%= configs.HOSPITAL.API_LEVEL %>" readonly>
+                                        </td>
+                                    </tr>-->
+
+                                    <tr>
+                                        <td class="table-title">
+                                            HTTPS:</td>
+                                        <td class="table-content">
+                                            <input type="checkbox" name="HTTPS" value="1"
+                                                <% if(configs.API.HTTPS==1) { %>checked <% } %>">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            Port:</td>
+                                        <td class="table-content">
+                                            <input type="number" name="PORT" value="<%= configs.API.PORT %>">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            Tools: <%= configs.API.START_TOOL %>
+                                        </td>
+                                        <td class="table-content">
+                                            <select name="START_TOOL" id="START_TOOL">
+                                                <option value="pm2"
+                                                    <% if (configs.API.START_TOOL == 'pm2') {%>selected<% } %>>PM2
+                                                </option>
+                                                <option value="nodemon"
+                                                    <% if (configs.API.START_TOOL == 'nodemon') {%>selected<% } %>>
+                                                    Nodemon</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            PM2 Name:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="PM2_NAME" value="<%= configs.API.PM2_NAME %>">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            no. Instance:</td>
+                                        <td class="table-content">
+                                            <input type="number" name="PM2_INSTANCE"
+                                                value="<%= configs.API.PM2_INSTANCE %>">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            Max connect:</td>
+                                        <td class="table-content">
+                                            <input type="number" name="MAX_CONNECTION_PER_MINUTE"
+                                                value="<%= configs.API.MAX_CONNECTION_PER_MINUTE %>">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            Restart PM2 หลังบันทึก:</td>
+                                        <td class="table-content">
+                                            <input type="checkbox" name="AUTO_RESTART" value="1"
+                                                <% if(configs.API.AUTO_RESTART==1) { %>checked <% } %>">
+                                        </td>
+                                    </tr>
+
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading" role="tab" id="hisConfig"
+                            style="color: blue; background-color: aliceblue;">
+                            <h4 class="panel-title">
+                                <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion"
+                                    href="#collapseHis" aria-expanded="false" aria-controls="collapseHis">
+                                    2.HIS Config
+                                </a>
+                            </h4>
+                        </div>
+                        <div id="collapseHis" class="panel-collapse collapse" role="tabpanel"
+                            aria-labelledby="hisConfig">
+                            <div class="panel-body">
+
+                                <table class="table">
+                                    <tr>
+                                        <td class="table-title">
+                                            HIS:</td>
+                                        <td class="table-content">
+                                            <select name="HIS_PROVIDER" id="HIS_PROVIDER">
+                                                <option value="hosxpv3"
+                                                    <% if (configs.HISDB.HIS_PROVIDER == 'hosxpv3') { %>selected<% } %>>
+                                                    HOSxP v.3</option>
+                                                <option value="hosxpv4"
+                                                    <% if (configs.HISDB.HIS_PROVIDER == 'hosxpv4') { %>selected<% } %>>
+                                                    HOSxP v.4</option>
+                                                <option value="ezhosp"
+                                                    <% if (configs.HISDB.HIS_PROVIDER == 'ezhosp') { %>selected<% } %>>
+                                                    EZhosp</option>
+                                                <option value="infod"
+                                                    <% if (configs.HISDB.HIS_PROVIDER == 'infod') { %>selected<% } %>>
+                                                    HOMC</option>
+                                                <option value="ssb"
+                                                    <% if (configs.HISDB.HIS_PROVIDER == 'ssb') { %>selected<% } %>>SSB
+                                                </option>
+                                                <option value="hospitalos"
+                                                    <% if (configs.HISDB.HIS_PROVIDER == 'hospitalos') { %>selected<% } %>>
+                                                    HospitalOS</option>
+                                                <option value="pmk"
+                                                    <% if (configs.HISDB.HIS_PROVIDER == 'pmk') { %>selected<% } %>>PMK
+                                                </option>
+                                                <option value="mkhospital"
+                                                    <% if (configs.HISDB.HIS_PROVIDER == 'mkhospital') { %>selected<% } %>>
+                                                    รพ.มหาสารคาม</option>
+                                                <option value="thiades"
+                                                    <% if (configs.HISDB.HIS_PROVIDER == 'thiades') { %>selected<% } %>>
+                                                    Thiades</option>
+                                                <option value="thairefer"
+                                                    <% if (configs.HISDB.HIS_PROVIDER == 'thairefer') { %>selected<% } %>>
+                                                    Thai Refer</option>
+                                                <option value="nemo"
+                                                    <% if (configs.HISDB.HIS_PROVIDER == 'nemo') { %>selected<% } %>>
+                                                    NEMO</option>
+                                                <option value="kpstat"
+                                                    <% if (configs.HISDB.HIS_PROVIDER == 'kpstat') { %>selected<% } %>>
+                                                    KP Stat</option>
+                                                <option value="md"
+                                                    <% if (configs.HISDB.HIS_PROVIDER == 'md') { %>selected<% } %>>Medee
+                                                    Soft</option>
+                                                <option value="other"
+                                                    <% if (configs.HISDB.HIS_PROVIDER == 'other') { %>selected<% } %>>
+                                                    อื่นๆ</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            Host:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="HIS_DB_HOST"
+                                                value="<%= configs.HISDB.HIS_DB_HOST %>">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            Port:</td>
+                                        <td class="table-content">
+                                            <input type="number" name="HIS_DB_PORT"
+                                                value="<%= configs.HISDB.HIS_DB_PORT %>">
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="table-title">
+                                            Client:</td>
+                                        <td class="table-content">
+                                            <select name="HIS_DB_CLIENT" id="HIS_DB_CLIENT">
+                                                <option value="mysql"
+                                                    <% if (configs.HISDB.HIS_DB_CLIENT == 'mysql') { %>selected<% } %>>
+                                                    MySQL</option>
+                                                <option value="pg"
+                                                    <% if (configs.HISDB.HIS_DB_CLIENT == 'pg') { %>selected<% } %>>
+                                                    PgSQL</option>
+                                                <option value="mssql"
+                                                    <% if (configs.HISDB.HIS_DB_CLIENT == 'mssql') { %>selected<% } %>>
+                                                    MSSQL</option>
+                                                <option value="oracledb"
+                                                    <% if (configs.HISDB.HIS_DB_CLIENT == 'oracledb') { %>selected<% } %>>
+                                                    Oracle</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            Schema:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="HIS_DB_SCHEMA"
+                                                value="<%= configs.HISDB.HIS_DB_SCHEMA %>">
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="table-title">
+                                            DB Name:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="HIS_DB_NAME"
+                                                value="<%= configs.HISDB.HIS_DB_NAME %>">
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="table-title">
+                                            DB User:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="HIS_DB_USER"
+                                                value="<%= configs.HISDB.HIS_DB_USER %>">
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="table-title">
+                                            DB password:</td>
+                                        <td class="table-content">
+                                            <input type="password" name="HIS_DB_PASSWORD"
+                                                value="<%= configs.HISDB.HIS_DB_PASSWORD %>">
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="table-title">
+                                            Charset:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="HIS_DB_CHARSET"
+                                                value="<%= configs.HISDB.HIS_DB_CHARSET %>">
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="table-title">
+                                            Encrypt:</td>
+                                        <td class="table-content">
+                                            <input type="checkbox" name="HIS_DB_ENCRYPT" value="1"
+                                                <% if(configs.HISDB.HIS_DB_ENCRYPT==1) { %>checked <% } %>">
+                                        </td>
+                                    </tr>
+
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading" role="tab" id="headingNRefer"
+                            style="color: blue; background-color: aliceblue;">
+                            <h4 class="panel-title">
+                                <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion"
+                                    href="#collapseNRefer" aria-expanded="false" aria-controls="collapseNRefer">
+                                    3.Nation Refer (nRefer)
+                                </a>
+                            </h4>
+                        </div>
+                        <div id="collapseNRefer" class="panel-collapse collapse" role="tabpanel"
+                            aria-labelledby="headingNRefer">
+                            <div class="panel-body">
+                                <table class="table">
+                                    <tr>
+                                        <td class="table-title">
+                                            nRefer Webservice url:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="NREFER_URL1"
+                                                value="<%= configs.NRRFER.NREFER_URL1 %>">
+                                            <span class="comment">ตามที่กระทรวงฯ กำหนดให้</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            nRefer API Key:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="NREFER_APIKEY"
+                                                value="<%= configs.NRRFER.NREFER_APIKEY %>">
+                                            <span class="comment">ตามที่กระทรวงฯ กำหนดให้</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            nRefer API Secret Key:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="NREFER_SECRETKEY"
+                                                value="<%= configs.NRRFER.NREFER_SECRETKEY %>">
+                                            <span class="comment">ตามที่กระทรวงฯ กำหนดให้</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            nRefer Auto Send:</td>
+                                        <td class="table-content">
+                                            <input type="checkbox" name="NREFER_AUTO_SEND" value="1"
+                                                <% if(configs.NRRFER.NREFER_AUTO_SEND==1) { %>checked <% } %>">
+                                            <span class="comment">กรณีที่ต้องการให้ส่ง nRefer แบบอัตโนมัติ</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            nRefer Auto Send (นาที):</td>
+                                        <td class="table-content">
+                                            <input type="number" name="NREFER_AUTO_SEND_EVERY_MINUTE"
+                                                value="<%= configs.NRRFER.NREFER_AUTO_SEND_EVERY_MINUTE %>">
+                                            <span class="comment">ระยะเวลาที่จะส่งแบบ Auto เป็นนาที (0-59) เช่น 15 นาที
+                                                ระบบจะส่งทุกนาทีที่ 15,30,45,60 เป็นต้น</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            nRefer Auto Send (ชม.):</td>
+                                        <td class="table-content">
+                                            <input type="number" name="NREFER_AUTO_SEND_EVERY_HOUR"
+                                                value="<%= configs.NRRFER.NREFER_AUTO_SEND_EVERY_HOUR %>">
+                                            <span class="comment">ระยะเวลาที่จะส่งแบบ Auto เป็นชั่วโมง (0-23) เช่น 1 ชม.
+                                                ระบบจะส่งทุกๆ ชั่วโมง เป็นต้น
+                                                <br>กรณี Set เป็นนาทีแล้ว การ set
+                                                เป็นชั่วโมงจะไม่มีผล</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading" role="tab" id="headingThree"
+                            style="color: blue; background-color: aliceblue;">
+                            <h4 class="panel-title">
+                                <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion"
+                                    href="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    4.IS Online
+                                </a>
+                            </h4>
+                        </div>
+                        <div id="collapseThree" class="panel-collapse collapse" role="tabpanel"
+                            aria-labelledby="headingThree">
+                            <div class="panel-body">
+                                <table class="table">
+                                    <tr>
+                                        <td class="table-title">
+                                            DB Server:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="IS_DB_HOST"
+                                                value="<%= configs.ISONLINE.IS_DB_HOST %>">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            Server Port:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="IS_DB_PORT"
+                                                value="<%= configs.ISONLINE.IS_DB_PORT %>">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            Client:</td>
+                                        <td class="table-content">
+                                            <select name="IS_DB_CLIENT" id="IS_DB_CLIENT">
+                                                <option value="mysql"
+                                                    <% if (configs.ISONLINE.IS_DB_CLIENT == 'mysql') { %>selected<% } %>>
+                                                    MySQL</option>
+                                                <option value="pg"
+                                                    <% if (configs.ISONLINE.IS_DB_CLIENT == 'pg') { %>selected<% } %>>
+                                                    PgSQL</option>
+                                                <option value="mssql"
+                                                    <% if (configs.ISONLINE.IS_DB_CLIENT == 'mssql') { %>selected<% } %>>
+                                                    MSSQL</option>
+                                                <option value="oracledb"
+                                                    <% if (configs.ISONLINE.IS_DB_CLIENT == 'oracledb') { %>selected<% } %>>
+                                                    Oracle</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            Schema:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="IS_DB_SCHEMA"
+                                                value="<%= configs.ISONLINE.IS_DB_SCHEMA %>">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            DB Name:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="IS_DB_NAME"
+                                                value="<%= configs.ISONLINE.IS_DB_NAME %>">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            DB User:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="IS_DB_USER"
+                                                value="<%= configs.ISONLINE.IS_DB_USER %>">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            DB Password:</td>
+                                        <td class="table-content">
+                                            <input type="password" name="IS_DB_PASSWORD"
+                                                value="<%= configs.ISONLINE.IS_DB_PASSWORD %>">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            DB Charset:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="IS_DB_CHARSET"
+                                                value="<%= configs.ISONLINE.IS_DB_CHARSET %>">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            DB Encrypt:</td>
+                                        <td class="table-content">
+                                            <input type="checkbox" name="IS_DB_ENCRYPT" value="1"
+                                                <% if(configs.ISONLINE.IS_DB_ENCRYPT==1) { %>checked <% } %>">
+                                        </td>
+                                    </tr>
+                                    <!--
+                                    <tr>
+                                        <td class="table-title">
+                                            IS Auto Send:</td>
+                                        <td class="table-content">
+                                            <input type="checkbox" name="IS_AUTO_SEND" value="1"
+                                                <% if(configs.ISONLINE.IS_AUTO_SEND==1) { %>checked <% } %>">
+                                            <span class="comment">กรณีที่ต้องการให้ส่ง IS Online แบบอัตโนมัติ</span>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="table-title">
+                                            IS Auto Send (นาที):</td>
+                                        <td class="table-content">
+                                            <input type="number" name="IS_AUTO_SEND_EVERY_MINUTE"
+                                                value="<%= configs.ISONLINE.IS_AUTO_SEND_EVERY_MINUTE %>">
+                                            <span class="comment">ระยะเวลาที่จะส่งแบบ Auto เป็นนาที (0-59) เช่น 18 นาที
+                                                ระบบจะส่งทุกนาทีที่ 18,36,54 เป็นต้น</span>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="table-title">
+                                            IS Auto Send (ชม.):</td>
+                                        <td class="table-content">
+                                            <input type="number" name="IS_AUTO_SEND_EVERY_HOUR"
+                                                value="<%= configs.ISONLINE.IS_AUTO_SEND_EVERY_HOUR %>">
+                                            <span class="comment">ระยะเวลาที่จะส่งแบบ Auto เป็นชั่วโมง (0-23) เช่น 1 ชม.
+                                                ระบบจะส่งทุกๆ ชั่วโมง เป็นต้น
+                                                <br>กรณี Set เป็นนาทีแล้ว การ set
+                                                เป็นชั่วโมงจะไม่มีผล</span>
+                                        </td>
+                                    </tr>
+                                    -->
+                                    <tr>
+                                        <td class="table-title">
+                                            IS@MOPH server:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="IS_URL" value="<%= configs.ISONLINE.IS_URL %>"
+                                                style="width: 98%;">
+                                            <span class="comment">ตามที่กระทรวงฯ กำหนดเท่านั้น</span>
+                                        </td>
+                                    </tr>
+                                    <!--
+                                    <tr>
+                                        <td class="table-title">
+                                            IS@MOPH User:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="IS_MOPH_USER"
+                                                value="<%= configs.ISONLINE.IS_MOPH_USER %>" style="width: 98%;">
+                                            <span class="comment">ได้จากการลงทะเบียนที่
+                                                http://ae.moph.go.th/moph/#/login</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            IS@MOPH Password:</td>
+                                        <td class="table-content">
+                                            <input type="password" name="IS_MOPH_PASSWORD"
+                                                value="<%= configs.ISONLINE.IS_MOPH_PASSWORD %>">
+                                            <span class="comment">ได้จากการลงทะเบียนที่
+                                                http://ae.moph.go.th/moph/#/login</span>
+                                        </td>
+                                    </tr>
+                                    -->
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading" role="tab" id="headingCannabis"
+                            style="color: blue; background-color: aliceblue;">
+                            <h4 class="panel-title">
+                                <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion"
+                                    href="#collapseCannabis" aria-expanded="false" aria-controls="collapseCannabis">
+                                    5.Cannabis
+                                </a>
+                            </h4>
+                        </div>
+
+                        <div id="collapseCannabis" class="panel-collapse collapse" role="tabpanel"
+                            aria-labelledby="headingCannabis">
+                            <div class="panel-body">
+                                <h4 style="color:red; padding: 20px;">กำลังพัฒนา</h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading" role="tab" id="headingNotify"
+                            style="color: magenta; background-color: rgb(241, 211, 247);">
+                            <h4 class="panel-title">
+                                <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion"
+                                    href="#collapseNotify" aria-expanded="false" aria-controls="collapseNotify">
+                                    6.Notify
+                                </a>
+                            </h4>
+                        </div>
+
+                        <div id="collapseNotify" class="panel-collapse collapse" role="tabpanel"
+                            aria-labelledby="headingNotify">
+                            <div class="panel-body">
+                                <table class="table">
+
+                                    <tr>
+                                        <td class="table-title">
+                                            Notify Server:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="NOTIFY_URL"
+                                                value="<%= configs.NOTIFY.NOTIFY_URL %>">
+                                            <span class="comment">ควรแก้ไขตามที่กระทรวงกำหนด</span>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="table-title">
+                                            Server token:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="NOTIFY_TOKEN"
+                                                value="<%= configs.NOTIFY.NOTIFY_TOKEN %>">
+                                            <span class="comment">ควรแก้ไขตามที่กระทรวงกำหนด</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="table-title">
+                                            Hospital chanel (group name):</td>
+                                        <td class="table-content">
+                                            <input type="text" name="NOTIFY_CHANNEL"
+                                                value="<%= configs.NOTIFY.NOTIFY_CHANNEL %>">
+                                            <span class="comment">ห้ามซ้ำกันในแต่ละสถานพยาบาล</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading" role="tab" id="headingJWT"
+                            style="color: rgb(168, 83, 4); background-color: rgb(248, 242, 221);">
+                            <h4 class="panel-title">
+                                <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion"
+                                    href="#collapseJWT" aria-expanded="false" aria-controls="collapseJWT">
+                                    7.JWT (JSON Web Token) ใช้เฉพาะในสถานพยาบาล
+                                </a>
+                            </h4>
+                        </div>
+
+                        <div id="collapseJWT" class="panel-collapse collapse" role="tabpanel"
+                            aria-labelledby="headingJWT">
+                            <div class="panel-body">
+                                <table class="table">
+
+                                    <tr>
+                                        <td class="table-title">
+                                            Request Key:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="REQUEST_KEY"
+                                                value="<%= configs.JWT.REQUEST_KEY %>">
+                                            <span class="comment">ควรตั้งค่า 10-32 ตัวอักษร</span>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="table-title">
+                                            Secret Key:</td>
+                                        <td class="table-content">
+                                            <input type="text" name="SECRET_KEY" value="<%= configs.JWT.SECRET_KEY %>">
+                                            <span class="comment">ควรตั้งค่า 16-64 ตัวอักษร</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12 text-center">
+                <div class="well">
+                    <p><strong style="color: rgb(230, 106, 5);">Expire: <%= token %></strong></p>
+                    <p><button type="submit" class="btn btn-default">Apply</button></p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</form>
+
+<% include ./../../templates/includes/footer %>

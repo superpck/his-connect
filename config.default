@@ -1,0 +1,77 @@
+[Hospital]
+API_LEVEL=hospital
+HOSPCODE=00000
+HN_LENGTH=0
+
+[API]
+HTTPS=0
+PORT=3004
+ROUTE_PREFIX=
+START_TOOL=pm2
+PM2_NAME=his-connect
+PM2_INSTANCE=2
+AUTO_RESTART=1
+
+[DB]
+// valid db client type: mysql, pg, mssql, oracledb
+// valid HIS provider name: ezhosp, hosxpv3, hosxpv4, hosxppcu, infod, ssb, hospitalos
+//      kpstat, md, hospitalos, kpstat, md, mkhospital, thiades, nemo, mypcu other
+HIS_PROVIDER=hosxpv3
+HIS_DB_HOST=localhost
+HIS_DB_PORT=3306
+HIS_DB_CLIENT=mysql
+HIS_DB_SCHEMA=public
+HIS_DB_NAME=db
+HIS_DB_USER=user
+HIS_DB_PASSWORD=password
+HIS_DB_CHARSET=utf8
+HIS_DB_ENCRYPT=true
+HIS_DATACENTER_ENABLE=0
+HIS_DATACENTER_SEND_EVERY_HOUR=12
+HIS_DATACENTER_SEND_EVERY_MINUTE=0
+MAX_CONNECTION_PER_MINUTE=100000
+
+[ISDB]
+IS_DB_HOST=localhost
+IS_DB_PORT=3306
+IS_DB_CLIENT=mysql
+IS_DB_SCHEMA=public
+IS_DB_NAME=isdb
+IS_DB_USER=user
+IS_DB_PASSWORD=password
+IS_DB_CHARSET=utf8
+IS_DB_ENCRYPT=true
+IS_AUTO_SEND=1
+IS_AUTO_SEND_EVERY_MINUTE=30
+IS_AUTO_SEND_EVERY_HOUR=0
+IS_URL=http://ae.moph.go.th:3006
+
+#User from http://ae.moph.go.th/moph/#/login
+IS_MOPH_USER=??
+IS_MOPH_PASSWORD=??
+
+[nRefer]
+NREFER_URL1=http://203.157.103.33:8080/nrefer
+NREFER_URL=203.157.103.33
+NREFER_PORT=8080
+NREFER_PATH=/nrefer
+NREFER_APIKEY=??_please_fill_this_value
+NREFER_SECRETKEY=??_please_fill_this_value
+NREFER_AUTO_SEND=1
+NREFER_AUTO_SEND_EVERY_MINUTE=15
+NREFER_AUTO_SEND_EVERY_HOUR=0
+
+[MOPH]
+MOPH_URL1=http://203.157.103.176/moph-api
+MOPH_URL2=http://connnect.moph.go.th/api
+
+[Notify]
+NOTIFY_URL=http://203.157.103.33:8080/nrefer/message
+NOTIFY_TOKEN=$nRefer@MoPH$
+NOTIFY_CHANNEL=nRefer@????_please_fill_this_value
+
+[JWT]
+// REQUEST_KEY <10-32 char>
+// SECRET_KEY <16-128 char>
+REQUEST_KEY=reqKey@<hcode>
+SECRET_KEY=[Hospital]_please_fill_this_value
