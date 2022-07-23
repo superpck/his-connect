@@ -16,7 +16,7 @@
 ```
 2.1.สร้าง Folder ที่จะใช้เก็บ API เช่น mkdir c:\API
 2.2 cd api
-2.3 ทำการ clone source จาก github ด้วยคำสั่ง git clone https://github.com/superpck/hisgateway-nrefer-and-is his_connect
+2.3 ทำการ clone source จาก github ด้วยคำสั่ง git clone https://github.com/superpck/his-connect his_connect
 2.4 cd his_connect
 2.5 npm install
 2.6 กรณีพบ vulnerabilities ให้ทำการ fix ด้วยคำสั่ง npm audit fix --force
