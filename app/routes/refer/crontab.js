@@ -140,7 +140,7 @@ function getRefer_out(db, date) {
             let sentResult = {
                 date,
                 pid: process.pid,
-                referout: { success: 0, fail: 0 },
+                referout: { success: 0, fail: 0, vnFail: [] },
                 person: { success: 0, fail: 0 },
                 address: { success: 0, fail: 0 },
                 service: { success: 0, fail: 0 },
@@ -191,7 +191,7 @@ function getReferResult(db, date) {
             let index = 0;
             let sentResultResult = {
                 pid: process.pid,
-                referresult: { success: 0, fail: 0 },
+                referresult: { success: 0, fail: 0, vnFail: [] },
                 person: { success: 0, fail: 0 },
                 address: { success: 0, fail: 0 },
                 service: { success: 0, fail: 0 },
@@ -239,6 +239,7 @@ function sendReferOut(row, sentResult) {
         if (row) {
             const hcode = row.HOSPCODE || row.hospcode;
             const referId = row.REFERID || row.referid;
+            const SEQ = (row.SEQ || row.seq || row.vn || '') + '';
             const referProvId = hcode + referId;
             const dServe = row.DATETIME_SERV || row.REFER_DATE || row.refer_date;
             const dAdmit = row.DATETIME_ADMIT || row.datetime_admit || null;
@@ -248,7 +249,7 @@ function sendReferOut(row, sentResult) {
                 HOSPCODE: hcode,
                 REFERID: referId,
                 PID: row.PID || row.pid || row.HN || row.hn,
-                SEQ: (row.SEQ || row.seq || row.vn || '') + '',
+                SEQ,
                 AN: row.AN || row.an || '',
                 CID: row.CID || row.cid,
                 DATETIME_SERV: moment(dServe).format('YYYY-MM-DD HH:mm:ss'),
@@ -284,6 +285,7 @@ function sendReferOut(row, sentResult) {
             }
             else {
                 sentResult.referout.fail += 1;
+                sentResult.referout.vnFail.push(SEQ);
                 console.log('save-refer-history', data.REFERID, saveResult);
             }
             sentContent += '  - refer_history ' + data.REFERID + ' ' + (saveResult.result || saveResult.message) + '\r';
@@ -326,6 +328,7 @@ function sendReferResult(row, sentResult) {
             }
             else {
                 sentResult.referresult.fail += 1;
+                sentResult.referresult.vnFail.push(row.SEQ_IN);
                 console.log('save-refer-result', data.REFERID_SOURCE, saveResult);
             }
             sentContent += '  - refer_result ' + data.REFERID_SOURCE + ' ' + (saveResult.result || saveResult.message) + '\r';
