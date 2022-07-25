@@ -37,8 +37,8 @@ class HisHosxpPcuModel {
                 pt.sex AS sex,
                 r.request_text as REQUEST,
                 r.pdx AS dx, r.pre_diagnosis AS DIAGFIRST,
-                r.pmh as PH,
-                r.hpi as PI,
+                case when r.pmh then r.pmh else opdscreen.pmh end as PH,
+                case when r.hpi then r.hpi else opdscreen.hpi end as PI,
                 r.treatment_text as PHYSICALEXAM,
                 r.pre_diagnosis as DISGLAST,
                 IF((SELECT count(an) as cc from an_stat WHERE an =r.vn) = 1,r.vn,null) as an
@@ -46,6 +46,7 @@ class HisHosxpPcuModel {
                 referout r
                 INNER JOIN patient pt ON pt.hn = r.hn
                 left join an_stat on r.vn=an_stat.vn
+                left join opdscreen on r.vn=opdscreen.vn
             WHERE
                 r.refer_date = '${date}' and r.refer_hospcode!='' and !isnull(r.refer_hospcode)
             ORDER BY
