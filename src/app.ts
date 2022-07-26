@@ -40,7 +40,7 @@ app.register(require('fastify-cors'), {});
 app.register(require('fastify-no-icon'));
 app.register(helmet, { hidePoweredBy: { setTo: 'PHP 5.2.0' } });
 app.register(require('fastify-rate-limit'), {
-  max: +process.env.MAX_CONNECTION_PER_MINUTE || 1000000,
+  max: +process.env.MAX_CONNECTION_PER_MINUTE || 100,
   // skipOnError: true,
   // cache: 10000,
   timeWindow: '1 minute'
