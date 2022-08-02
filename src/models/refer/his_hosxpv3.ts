@@ -21,7 +21,7 @@ export class HisHosxpv3Model {
         SELECT (SELECT hospitalcode FROM opdconfig ) AS hospcode,
             concat(r.refer_date, ' ', r.refer_time) AS refer_date,
             r.refer_number AS referid,
-            r.refer_hospcode AS hosp_destination,
+            case when r.refer_hospcode then r.refer_hospcode else r.hospcode end AS hosp_destination,
             r.hn AS PID, r.hn AS hn, pt.cid AS CID, r.vn, r.vn as SEQ,
             an_stat.an as AN, pt.pname AS prename,
             pt.fname AS fname,
@@ -41,7 +41,7 @@ export class HisHosxpv3Model {
             left join an_stat on r.vn=an_stat.vn
             left join opdscreen on r.vn=opdscreen.vn
         WHERE
-            r.refer_date = '${date}' and r.refer_hospcode!='' and !isnull(r.refer_hospcode)
+            r.refer_date = '${date}' and (r.refer_hospcode!='' or r.hospcode!='') and (!isnull(r.refer_hospcode) or !isnull(r.hospcode))
         ORDER BY
             r.refer_date`;
 
