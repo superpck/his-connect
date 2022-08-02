@@ -147,6 +147,7 @@ function getRefer_out(db, date) {
                 diagnosisOpd: { success: 0, fail: 0 },
                 procedureOpd: { success: 0, fail: 0 },
                 drugOpd: { success: 0, fail: 0 },
+                drugAllergy: { success: 0, fail: 0 },
                 investigationRefer: { success: 0, fail: 0 }
             };
             for (let row of referout) {
@@ -199,6 +200,7 @@ function getReferResult(db, date) {
                 diagnosisOpd: { success: 0, fail: 0 },
                 procedureOpd: { success: 0, fail: 0 },
                 drugOpd: { success: 0, fail: 0 },
+                drugAllergy: { success: 0, fail: 0 },
                 investigationRefer: { success: 0, fail: 0 }
             };
             for (let row of referResult) {
@@ -940,7 +942,15 @@ function writeResult(file, content) {
 }
 const router = (request, reply, dbConn, config = {}) => {
     crontabConfig = config;
-    crontabConfig['client_ip'] = request.headers['x-real-ip'] || request.headers['x-forwarded-for'] || request.ip || request.raw['ip'] || '127.0.0.1';
+    crontabConfig['client_ip'] = '127.0.0.1';
+    if (request) {
+        if (request.headers) {
+            crontabConfig['client_ip'] = request.headers['x-real-ip'] || request.headers['x-forwarded-for'] || request.ip || request.raw['ip'] || crontabConfig['client_ip'];
+        }
+        else {
+            crontabConfig['client_ip'] = request.ip || crontabConfig['client_ip'];
+        }
+    }
     apiVersion = crontabConfig.version ? crontabConfig.version : '-';
     subVersion = crontabConfig.subVersion ? crontabConfig.subVersion : '-';
     return sendMoph(request, reply, dbConn);
