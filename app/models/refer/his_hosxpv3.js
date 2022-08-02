@@ -972,7 +972,7 @@ class HisHosxpv3Model {
             return result[0];
         });
     }
-    getDrugAllergy(db, hn, hospCode = hcode) {
+    getDrugAllergy__(db, hn, hospCode = hcode) {
         return __awaiter(this, void 0, void 0, function* () {
             const sql = `
             select 
@@ -1019,6 +1019,30 @@ class HisHosxpv3Model {
             `;
             const result = yield db.raw(sql);
             return result[0];
+        });
+    }
+    getDrugAllergy(db, hn, hospCode = hcode) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return db('opd_allergy as oe')
+                .leftJoin('drugitems_register as di', 'oe.agent', 'di.drugname')
+                .leftJoin('patient', 'oe.hn', 'patient.hn')
+                .leftJoin('person', 'oe.hn', 'person.patient_hn')
+                .select(db.raw('(select distinct opdconfig.hospitalcode from opdconfig) as HOSPCODE'))
+                .select('patient.hn as PID', 'patient.cid as CID', 'di.std_code as DRUGALLERGY', 'oe.agent as DNAME', 'oe.seriousness_id as ALEVE', 'oe.symptom as DETAIL', 'oe.opd_allergy_source_id as INFORMANT')
+                .select(db.raw(`if(oe.report_date is null 
+                    or trim(oe.report_date)=' ' 
+                    or oe.report_date like '0000-00-00%',
+                    '', date_format(oe.report_date,'%Y-%m-%d')) as DATERECORD`))
+                .select(db.raw('(select distinct opdconfig.hospitalcode from opdconfig) as INFORMHOSP'))
+                .select(db.raw(`(select case when 
+                    oe.allergy_relation_id in ('1','2','3','4','5') 
+                then  oe.allergy_relation_id
+                else  '1'  end) as TYPEDX`))
+                .select(db.raw(`'' as SYMPTOM`))
+                .select(db.raw(`if(oe.update_datetime is null or trim(oe.update_datetime) = '' 
+                or oe.update_datetime like '0000-00-00%', '', 
+                date_format(oe.update_datetime,'%Y-%m-%d %H:%i:%s')) as D_UPDATE`))
+                .where('oe.hn', hn);
         });
     }
     getAppointment(db, visitNo, hospCode = hcode) {
