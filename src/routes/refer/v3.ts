@@ -213,14 +213,13 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!hn) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
       return;
     }
 
     try {
       const result = await hisModel.getDrugAllergy(fastify.dbHIS, hn, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
-
+      reply.send({ statusCode: HttpStatus.OK, rows: result });
     } catch (error) {
       console.log('drug allergy', error.message);
       reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: HttpStatus.getStatusText(HttpStatus.INTERNAL_SERVER_ERROR) })

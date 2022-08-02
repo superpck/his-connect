@@ -88,7 +88,7 @@ const his = process.env.HIS_PROVIDER;
 const resultText = 'sent_result.txt';
 let sentContent = '';
 let nReferToken = '';
-let crontabConfig;
+let crontabConfig = { client_ip: '' };
 let apiVersion = '-';
 let subVersion = '-';
 function sendMoph(req, reply, db) {
@@ -147,6 +147,7 @@ function getRefer_out(db, date) {
                 diagnosisOpd: { success: 0, fail: 0 },
                 procedureOpd: { success: 0, fail: 0 },
                 drugOpd: { success: 0, fail: 0 },
+                drugAllergy: { success: 0, fail: 0 },
                 investigationRefer: { success: 0, fail: 0 }
             };
             for (let row of referout) {
@@ -161,6 +162,7 @@ function getRefer_out(db, date) {
                 yield getDiagnosisOpd(db, seq, sentResult);
                 yield getProcedureOpd(db, seq, sentResult);
                 yield getDrugOpd(db, seq, sentResult);
+                yield getDrugAllergy(db, hn, sentResult);
                 const ipd = yield getAdmission(db, seq);
                 const an = ipd && ipd.length ? ipd[0].an : '';
                 const procedureIpd = yield getProcedureIpd(db, an);
@@ -198,6 +200,7 @@ function getReferResult(db, date) {
                 diagnosisOpd: { success: 0, fail: 0 },
                 procedureOpd: { success: 0, fail: 0 },
                 drugOpd: { success: 0, fail: 0 },
+                drugAllergy: { success: 0, fail: 0 },
                 investigationRefer: { success: 0, fail: 0 }
             };
             for (let row of referResult) {
@@ -212,6 +215,7 @@ function getReferResult(db, date) {
                 yield getDiagnosisOpd(db, seq, sentResultResult);
                 yield getProcedureOpd(db, seq, sentResultResult);
                 yield getDrugOpd(db, seq, sentResultResult);
+                yield getDrugAllergy(db, hn, sentResultResult);
                 const ipd = yield getAdmission(db, seq);
                 const an = ipd && ipd.length ? ipd[0].an : '';
                 const procedureIpd = yield getProcedureIpd(db, an);
@@ -731,6 +735,47 @@ function getProcedureIpd(db, an) {
         return rowSave;
     });
 }
+function getDrugAllergy(db, hn, sentResult) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (!hn) {
+            return [];
+        }
+        const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
+        try {
+            let rowSave = [];
+            const rows = yield hisModel.getDrugAllergy(db, hn, hcode);
+            sentResult += '  - drugallergy = ' + rows.length + '\r';
+            if (rows && rows.length) {
+                for (const row of rows) {
+                    yield rowSave.push({
+                        HOSPCODE: hcode,
+                        PID: row.PID || row.pid || row.HN || row.hn,
+                        DATERECORD: row.DATERECORD || null,
+                        DRUGALLERGY: row.DRUGALLERGY || null,
+                        DNAME: row.DNAME || null,
+                        TYPEDX: row.TYPEDX || null,
+                        ALEVEL: row.ALEVEL || null,
+                        SYMPTOM: row.SYMPTOM || null,
+                        INFORMANT: row.INFORMANT || null,
+                        INFORMHOSP: row.INFORMHOSP || null,
+                        DETAIL: row.DETAIL || null,
+                        DID: row.DID || null,
+                        DID_TMT: row.DID_TMT,
+                        D_UPDATE: row.D_UPDATE || row.d_update || row.date || d_update,
+                        CID: row.CID || row.cid || '',
+                        ID: row.ID || '',
+                    });
+                }
+            }
+            const saveResult = yield referSending('/save-drugallergy', rowSave);
+            sentResult += '    -- ' + hn + ' ' + JSON.stringify(saveResult) + '\r';
+            return rowSave;
+        }
+        catch (error) {
+            return [];
+        }
+    });
+}
 function referSending(path, dataArray) {
     return __awaiter(this, void 0, void 0, function* () {
         const fixedUrl = process.env.NREFER_URL1 || 'http://connect.moph.go.th/nrefer-api';
@@ -741,7 +786,7 @@ function referSending(path, dataArray) {
         const hostDetail = mophUrl[2].split(':');
         hostDetail[1] = hostDetail[1] ? hostDetail[1] : 80;
         const dataSending = querystring.stringify({
-            ip: fastify.ipAddr || '127.0.0.1',
+            ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
             hospcode: hcode, data: JSON.stringify(dataArray),
             processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
             sourceApiName: 'HIS-connect', apiVersion, subVersion,
@@ -786,7 +831,7 @@ function getNReferToken(apiKey, secretKey) {
         urlPath += mophUrl[4] ? (mophUrl[4] + '/') : '';
         urlPath += mophUrl[5] ? (mophUrl[5] + '/') : '';
         const postData = querystring.stringify({
-            ip: fastify.ipAddr || '127.0.0.1',
+            ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
             apiKey: apiKey, secretKey: secretKey,
             hospcode: hcode,
             processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
@@ -835,7 +880,7 @@ function expireToken(token) {
         urlPath += mophUrl[4] ? (mophUrl[4] + '/') : '';
         urlPath += mophUrl[5] ? (mophUrl[5] + '/') : '';
         const postData = querystring.stringify({
-            ip: fastify.ipAddr || '127.0.0.1',
+            ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
             token: token
         });
         const options = {
@@ -897,6 +942,15 @@ function writeResult(file, content) {
 }
 const router = (request, reply, dbConn, config = {}) => {
     crontabConfig = config;
+    crontabConfig['client_ip'] = '127.0.0.1';
+    if (request) {
+        if (request.headers) {
+            crontabConfig['client_ip'] = request.headers['x-real-ip'] || request.headers['x-forwarded-for'] || request.ip || request.raw['ip'] || crontabConfig['client_ip'];
+        }
+        else {
+            crontabConfig['client_ip'] = request.ip || crontabConfig['client_ip'];
+        }
+    }
     apiVersion = crontabConfig.version ? crontabConfig.version : '-';
     subVersion = crontabConfig.subVersion ? crontabConfig.subVersion : '-';
     return sendMoph(request, reply, dbConn);
