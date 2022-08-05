@@ -620,16 +620,16 @@ export class HisHosxpv4Model {
         columnName = columnName === 'visitNo' ? 'q.vn' : columnName;
         const sql = `
             SELECT
-                (select hospitalcode from opdconfig) as HOSPCODE,
-                ifnull(p.person_id,'') as PID,
-                q.seq_id, o.vn as SEQ,
-                ifnull(i.an,'') as AN,
+                (select hospitalcode from opdconfig) as hospcode,
+                ifnull(p.person_id,'') pid,
+                q.seq_id, o.vn seq,
+                ifnull(i.an,'') an,
                 ifnull(
                     date_format(
                         concat(i.regdate, ' ', i.regtime),'%Y-%m-%d %H:%i:%s'
                     ),''
-                ) as DATETIME_ADMIT,
-                ifnull(s.provis_code,'') wardadmit,
+                ) datetime_admit,
+                ifnull(s.provis_code,'') wardadmit, ward.name as WARDADMITNAME,
                 ifnull(ps.pttype_std_code,'') instype,
                 ifnull(
                     RIGHT (
@@ -678,7 +678,7 @@ export class HisHosxpv4Model {
                 ifnull(
                     s.provis_code,
                     ''
-                ) warddisch,
+                ) warddisch, ward.name as WARDDISCHNAME,
                 ifnull(
                     ds.nhso_dchstts,
                     ''
@@ -774,7 +774,8 @@ export class HisHosxpv4Model {
                 LEFT JOIN provis_instype ps ON ps. CODE = p1.nhso_code
                 LEFT JOIN dchtype dt ON i.dchtype = dt.dchtype
                 LEFT JOIN dchstts ds ON i.dchstts = ds.dchstts
-                LEFT JOIN opitemrece c ON c.an = i.an           
+                LEFT JOIN opitemrece c ON c.an = i.an  
+                LEFT JOIN ward ON i.ward = ward.ward           
             WHERE                 
                 ${columnName}='${searchNo}'
             GROUP BY
