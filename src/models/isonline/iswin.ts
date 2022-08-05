@@ -218,6 +218,17 @@ export class IswinModel {
     }
   }
 
+  saveLibHosp(knex: Knex, saveType: string, arrData) {
+    if (saveType == 'UPDATE') {
+      return knex('lib_hosp').update(arrData)
+        .where('hospcode', '=', arrData.hospcode)
+        .andWhere('type','=',arrData.type)
+        .andWhere('off_id','=',arrData.off_id);
+    } else {
+      return knex('lib_hosp').insert(arrData);
+    }
+  }
+
   save(knex: Knex, datas: any) {
     return knex('is')
       .insert(datas);
