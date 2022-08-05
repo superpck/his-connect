@@ -230,7 +230,9 @@ export class HisEzhospModel {
             .select('ipd.hn as PID', 'ipd.vn as SEQ',
                 'ipd.AN')
             .select(db.raw('concat(ipd.admite, " " , ipd.time) as DATETIME_ADMIT'))
-            .select('ipd.ward_std as wardadmit', 'ipd.pttype_std1 as INSTYPE')
+            .select('ipd.ward_std as WARDADMIT', 
+                'ipd.ward_name as WARDADMITNAME',
+                'ipd.pttype_std1 as INSTYPE')
             .select(db.raw('case when ipd.refer="" then 1 else 3 end as TYPEIN '))
             .select('ipd.refer as REFERINHOSP')
             .select(db.raw('1 as CAUSEIN'))
@@ -238,6 +240,7 @@ export class HisEzhospModel {
             .select(db.raw('concat(ipd.disc, " " , ipd.timedisc) as DATETIME_DISCH'))
             .select('ipd.ward_std as WARDDISCH', 'ipd.dischstatus as DISCHSTATUS', 'ipd.dischtype as DISCHTYPE',
                 'ipd.price', 'ipd.paid as PAYPRICE')
+            .select(db.raw('case when ipd.disc then ipd.ward_name else "" end as WARDDISCHNAME'))
             .select(db.raw('0 as ACTUALPAY'))
             .select('ipd.dr_disc as PROVIDER')
             .select(db.raw('concat(ipd.disc, " " , ipd.timedisc) as D_UPDATE'))

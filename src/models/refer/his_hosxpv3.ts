@@ -657,7 +657,7 @@ export class HisHosxpv3Model {
                         concat(i.regdate, ' ', i.regtime),'%Y-%m-%d %H:%i:%s'
                     ),''
                 ) datetime_admit,
-                ifnull(s.provis_code,'') wardadmit,
+                ifnull(s.provis_code,'') wardadmit, ward.name as WARDADMITNAME,
                 ifnull(ps.pttype_std_code,'') instype,
                 ifnull(
                     RIGHT (
@@ -706,7 +706,7 @@ export class HisHosxpv3Model {
                 ifnull(
                     s.provis_code,
                     ''
-                ) warddisch,
+                ) warddisch, ward.name as WARDDISCHNAME,
                 ifnull(
                     ds.nhso_dchstts,
                     ''
@@ -802,7 +802,8 @@ export class HisHosxpv3Model {
                 LEFT JOIN provis_instype ps ON ps. CODE = p1.nhso_code
                 LEFT JOIN dchtype dt ON i.dchtype = dt.dchtype
                 LEFT JOIN dchstts ds ON i.dchstts = ds.dchstts
-                LEFT JOIN opitemrece c ON c.an = i.an           
+                LEFT JOIN opitemrece c ON c.an = i.an  
+                LEFT JOIN ward ON i.ward = ward.ward           
             WHERE                 
                 ${columnName}='${searchNo}'
             GROUP BY
