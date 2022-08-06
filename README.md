@@ -1,4 +1,4 @@
-# HIS Connect 3.2.1
+# HIS Connect 3.2.2
 # HIS Connection API สำหรับ nRefer, ISOnline, CUP Datacenter and Quality drug store
 
 ## การติดตั้ง
