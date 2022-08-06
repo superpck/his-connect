@@ -176,7 +176,7 @@ class HisEzhospModel {
         columnName = columnName === 'datedisc' ? 'ipd.disc' : columnName;
         return db('view_ipd_ipd as ipd')
             .select(db.raw('"' + hcode + '" as HOSPCODE'))
-            .select('ipd.hn as PID', 'ipd.vn as SEQ', 'ipd.AN')
+            .select('ipd.hn as PID', 'ipd.vn as SEQ', 'ipd.AN', 'ipd.hn')
             .select(db.raw('concat(ipd.admite, " " , ipd.time) as DATETIME_ADMIT'))
             .select('ipd.ward_std as WARDADMIT', 'ipd.ward_name as WARDADMITNAME', 'ipd.pttype_std1 as INSTYPE')
             .select(db.raw('case when ipd.refer="" then 1 else 3 end as TYPEIN '))

@@ -461,24 +461,6 @@ class HisHosxpv4Model {
             .whereNotNull('lab_order.lab_order_result')
             .limit(maxLimit);
     }
-    getLabResult__(db, columnName, searchNo, referID = '', hospCode = hcode) {
-        columnName = columnName === 'visitNo' ? 'lab.vn' : columnName;
-        columnName = columnName === 'hn' ? 'ovst.hn' : columnName;
-        columnName = columnName === 'cid' ? 'patient.cid' : columnName;
-        return db('lab_order as o')
-            .leftJoin(db.raw('lab_order_service as lab on o.lab_order_number=lab.lab_order_number and o.check_key_a=lab.lab_code'))
-            .innerJoin('ovst', 'lab.vn', 'ovst.vn')
-            .innerJoin('patient', 'ovst.hn', 'patient.hn')
-            .select(db.raw(`'${hospCode}' as HOSPCODE`))
-            .select(db.raw(`'LAB' as INVESTTYPE`))
-            .select("lab.vn as visitno", "lab.vn", "lab.vn as SEQ", "ovst.hn as PID", "patient.cid as CID", "o.lab_order_number as request_id", "lab.lab_code as LOCALCODE", "lab.lab_name as lab_group", "o.lab_items_name_ref as INVESTNAME", "o.lab_order_result as INVESTRESULT", "o.lab_items_normal_value_ref as UNIT", "lab.icode as ICDCM", "o.update_datetime as DATETIME_REPORT")
-            .select(db.raw("concat(ovst.vstdate,' ',ovst.vsttime) as DATETIME_INVEST"))
-            .where(columnName, searchNo)
-            .where(`o.confirm`, 'Y')
-            .whereNot(`o.lab_order_result`, '')
-            .whereRaw('!isnull(o.lab_order_result)')
-            .limit(maxLimit);
-    }
     getDrugOpd(db, visitNo, hospCode = hcode) {
         return __awaiter(this, void 0, void 0, function* () {
             const sql = `
@@ -543,7 +525,7 @@ class HisHosxpv4Model {
             const sql = `
             SELECT
                 (select hospitalcode from opdconfig) as hospcode,
-                ifnull(p.person_id,'') pid,
+                ifnull(p.person_id,'') pid, i.hn,
                 q.seq_id, o.vn seq,
                 ifnull(i.an,'') an,
                 ifnull(

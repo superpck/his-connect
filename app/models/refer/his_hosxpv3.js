@@ -462,7 +462,7 @@ class HisHosxpv3Model {
             .whereNotNull('lab_order.lab_order_result')
             .limit(maxLimit);
     }
-    getLabResult__(db, columnName, searchNo, referID = '', hospCode = hcode) {
+    getLabResult_old_source(db, columnName, searchNo, referID = '', hospCode = hcode) {
         columnName = columnName === 'visitNo' ? 'lab.vn' : columnName;
         columnName = columnName === 'hn' ? 'ovst.hn' : columnName;
         columnName = columnName === 'cid' ? 'patient.cid' : columnName;
@@ -544,7 +544,7 @@ class HisHosxpv3Model {
             const sql = `
             SELECT
                 (select hospitalcode from opdconfig) as hospcode,
-                ifnull(p.person_id,'') pid,
+                ifnull(p.person_id,'') pid, i.hn,
                 q.seq_id, o.vn seq,
                 ifnull(i.an,'') an,
                 ifnull(

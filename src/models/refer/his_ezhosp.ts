@@ -231,7 +231,7 @@ export class HisEzhospModel {
         return db('view_ipd_ipd as ipd')
             .select(db.raw('"' + hcode + '" as HOSPCODE'))
             .select('ipd.hn as PID', 'ipd.vn as SEQ',
-                'ipd.AN')
+                'ipd.AN', 'ipd.hn')
             .select(db.raw('concat(ipd.admite, " " , ipd.time) as DATETIME_ADMIT'))
             .select('ipd.ward_std as WARDADMIT', 
                 'ipd.ward_name as WARDADMITNAME',
