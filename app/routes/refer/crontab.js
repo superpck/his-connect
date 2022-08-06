@@ -739,6 +739,7 @@ function sendAdmission(row) {
             DATETIME_ADMIT: row.DATETIME_ADMIT || row.datetime_admit,
             WARDADMIT: row.WARDADMIT || row.wardadmit || '',
             WARDADMITNAME: row.WARDADMITNAME || row.wardadmitname || '',
+            WARDDISCHNAME: row.WARDDISCHNAME || row.warddischname || '',
             INSTYPE: row.INSTYPE || row.instype || '',
             TYPEIN: row.TYPEIN || row.typein || '',
             REFERINHOSP: row.REFERINHOSP || row.referinhosp || '',

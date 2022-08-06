@@ -68,6 +68,9 @@
 ```
 2022-08-06
   - เพิ่มการ select ข้อมูล IPD กรณีรับ Refer จากวันที่จำหน่าย
+  - เปลี่ยนการ select admission จาก p.person_id เป็น i.hn ใน HOSxP
+  - admission เพิ่ม local ward name ทั้ง WARDADMITNAME และ WARDDISCHNAME
+  - เปลี่ยนการ select รหัสสิทธิ์ จาก ipd.pttype_std1 เป็น ipd.pttype_std2 ใน iHospital
 
 2022-07-31
   - Get Drug allergy

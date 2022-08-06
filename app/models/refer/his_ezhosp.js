@@ -178,7 +178,7 @@ class HisEzhospModel {
             .select(db.raw('"' + hcode + '" as HOSPCODE'))
             .select('ipd.hn as PID', 'ipd.vn as SEQ', 'ipd.AN', 'ipd.hn')
             .select(db.raw('concat(ipd.admite, " " , ipd.time) as DATETIME_ADMIT'))
-            .select('ipd.ward_std as WARDADMIT', 'ipd.ward_name as WARDADMITNAME', 'ipd.pttype_std1 as INSTYPE')
+            .select('ipd.ward_std as WARDADMIT', 'ipd.ward_name as WARDADMITNAME', 'ipd.pttype_std2 as INSTYPE')
             .select(db.raw('case when ipd.refer="" then 1 else 3 end as TYPEIN '))
             .select('ipd.refer as REFERINHOSP')
             .select(db.raw('1 as CAUSEIN'))
