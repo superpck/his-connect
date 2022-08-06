@@ -277,7 +277,7 @@ async function getReferInIPDByDateDisc(db: any, sentResultResult: any) {
 }
 async function getReferInIPD(db, dateDisc, sentResultResult){
   let ipdData: any = await hisModel.getAdmission(db, 'datedisc', dateDisc);
-  console.log(moment().format('HH:mm:ss'), `Get refer result from IPD discharge date ${dateDisc} = ${ipdData.length} case`)
+  console.log(moment().format('HH:mm:ss'), process.env.HOSPCODE, `Get refer result from IPD discharge date ${dateDisc} = ${ipdData.length} case`)
   for (let row of ipdData) {
     await sendReferInIPD(db, row, sentResultResult);
   }
