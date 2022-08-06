@@ -74,7 +74,7 @@
   - แก้ไขการ select ข้อมูล Refer result (Refer In)
 
 2022-06-25
-  - แก้ไขการ select ผล Lab ใน HOSxP เป็นตาราง Lab_Head
+  - แก้ไขการ select ผล Lab
 ```
 
 # credit
