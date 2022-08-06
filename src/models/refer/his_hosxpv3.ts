@@ -642,10 +642,13 @@ export class HisHosxpv3Model {
         return result[0];
     }
 
-    async getAdmission(db: Knex, columnName, searchNo, hospCode = hcode) {
+    async getAdmission(db: Knex, columnName, searchValue, hospCode = hcode) {
         columnName = columnName === 'an' ? 'i.an' : columnName;
         columnName = columnName === 'hn' ? 'i.hn' : columnName;
         columnName = columnName === 'visitNo' ? 'q.vn' : columnName;
+        columnName = columnName === 'dateadmit' ? 'i.regdate' : columnName;
+        columnName = columnName === 'datedisc' ? 'i.dchdate' : columnName;
+        let validRefer = columnName === 'datedisc'? ' AND LENGTH(i.rfrilct)=5 ':'';
         const sql = `
             SELECT
                 (select hospitalcode from opdconfig) as hospcode,
@@ -804,11 +807,8 @@ export class HisHosxpv3Model {
                 LEFT JOIN dchstts ds ON i.dchstts = ds.dchstts
                 LEFT JOIN opitemrece c ON c.an = i.an  
                 LEFT JOIN ward ON i.ward = ward.ward           
-            WHERE                 
-                ${columnName}='${searchNo}'
-            GROUP BY
-                i.an
-            `;
+            WHERE ${columnName}='${searchValue}' ${validRefer}
+            GROUP BY i.an `;
         const result = await db.raw(sql);
         return result[0];
     }

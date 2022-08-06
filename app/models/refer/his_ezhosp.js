@@ -170,8 +170,10 @@ class HisEzhospModel {
             return result[0];
         });
     }
-    getAdmission(db, columnName, searchNo, hospCode = hcode) {
+    getAdmission(db, columnName, searchValue, hospCode = hcode) {
         columnName = columnName === 'visitNo' ? 'ipd.vn' : columnName;
+        columnName = columnName === 'dateadmit' ? 'ipd.admite' : columnName;
+        columnName = columnName === 'datedisc' ? 'ipd.disc' : columnName;
         return db('view_ipd_ipd as ipd')
             .select(db.raw('"' + hcode + '" as HOSPCODE'))
             .select('ipd.hn as PID', 'ipd.vn as SEQ', 'ipd.AN')
@@ -188,7 +190,8 @@ class HisEzhospModel {
             .select('ipd.dr_disc as PROVIDER')
             .select(db.raw('concat(ipd.disc, " " , ipd.timedisc) as D_UPDATE'))
             .select('ipd.drg as DRG', 'ipd.rw as RW', 'ipd.adjrw as ADJRW', 'ipd.drg_error as ERROR', 'ipd.drg_warning as WARNING', 'ipd.los as ACTLOS', 'ipd.grouper_version as GROUPER_VERSION', 'ipd.no_card as CID')
-            .where(columnName, "=", searchNo)
+            .where(columnName, "=", searchValue)
+            .whereRaw('LENGTH(ipd.refer)=5')
             .limit(maxLimit);
     }
     getDiagnosisIpd(db, columnName, searchNo, hospCode = hcode) {

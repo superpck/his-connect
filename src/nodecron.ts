@@ -42,16 +42,17 @@ export default async function cronjob(fastify: FastifyInstance) {
     timingSchedule['cupDataCenter'].minute = timingSchedule['cupDataCenter'].minute < 20 ? 20 : timingSchedule['cupDataCenter'].minute;
 
     // ตรวจสอบการ start ด้วยเวลาที่กำหนด (ทุกๆ 1 นาที)
+    const minuteSinceLastNight = (+moment().get('hour')) * 60 + (+moment().get('minute'));
     console.log("Hospcode", process.env.HOSPCODE);
-    console.log('crontab start: ', timingSch);
+    console.log('crontab start: ', timingSch, 'minuteSinceLastNight', minuteSinceLastNight);
     if (timingSchedule['nrefer'].autosend) {
-        console.log('crontab nRefer start every (minute)', timingSchedule['nrefer'].minute, ' from midnight.');
+        console.log('crontab nRefer start every', timingSchedule['nrefer'].minute, ' (minute) from midnight.');
     }
     if (timingSchedule['isonline'].autosend) {
-        console.log('crontab ISOnline start every (minute)', timingSchedule['isonline'].minute, ' from midnight.');
+        console.log('crontab ISOnline start every', timingSchedule['isonline'].minute, ' (minute) from midnight.');
     }
     if (timingSchedule['cupDataCenter'].autosend) {
-        console.log('crontab Data Center start every (minute)', timingSchedule['cupDataCenter'].minute, ' from midnight.');
+        console.log('crontab Data Center start every', timingSchedule['cupDataCenter'].minute, ' (minute) from midnight.');
     }
 
     cron.schedule(timingSch, async (req, res) => {

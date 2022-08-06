@@ -122,10 +122,9 @@ function sendMoph(req, reply, db) {
                 oldDate = moment(oldDate).add(1, 'days').format('YYYY-MM-DD');
             }
         }
-        const referOut_ = getRefer_out(db, dateNow);
-        const referResult_ = getReferResult(db, dateNow);
-        const referOut = yield referOut_;
-        const referResult = yield referResult_;
+        console.log(moment().format('HH:mm:ss'), '='.repeat(60));
+        const referOut = yield getRefer_out(db, dateNow);
+        const referResult = yield getReferResult(db, dateNow);
         return { date: dateNow, referOut, referResult };
     });
 }
@@ -155,15 +154,17 @@ function getRefer_out(db, date) {
                 const seq = row.seq || row.SEQ || row.vn || row.VN;
                 const referid = row.REFERID || row.referid;
                 sentContent += (index + 1) + '. refer no.' + referid + ', hn ' + hn + ', seq ' + seq + '\r';
-                yield sendReferOut(row, sentResult);
-                yield getPerson(db, hn, sentResult);
-                yield getAddress(db, hn, sentResult);
-                yield getService(db, seq, sentResult);
-                yield getDiagnosisOpd(db, seq, sentResult);
-                yield getProcedureOpd(db, seq, sentResult);
-                yield getDrugOpd(db, seq, sentResult);
-                yield getDrugAllergy(db, hn, sentResult);
-                const ipd = yield getAdmission(db, seq);
+                yield Promise.all([
+                    sendReferOut(row, sentResult),
+                    getPerson(db, hn, sentResult),
+                    getAddress(db, hn, sentResult),
+                    getService(db, seq, sentResult),
+                    getDiagnosisOpd(db, seq, sentResult),
+                    getProcedureOpd(db, seq, sentResult),
+                    getDrugOpd(db, seq, sentResult),
+                    getDrugAllergy(db, hn, sentResult)
+                ]);
+                let ipd = yield getAdmission(db, 'VN', seq);
                 const an = ipd && ipd.length ? ipd[0].an : '';
                 const procedureIpd = yield getProcedureIpd(db, an);
                 yield getLabResult(db, row, sentResult);
@@ -174,7 +175,7 @@ function getRefer_out(db, date) {
                     console.log(moment().format('HH:mm:ss.SSS'), 'finished...');
                 }
             }
-            console.log(process.env.HOSPCODE, ' nrefer sent ', sentResult);
+            console.log(' nrefer sent ', process.env.HOSPCODE, sentResult);
             return referout;
         }
         catch (error) {
@@ -186,37 +187,40 @@ function getRefer_out(db, date) {
 }
 function getReferResult(db, date) {
     return __awaiter(this, void 0, void 0, function* () {
+        let index = 0;
+        let sentResultResult = {
+            pid: process.pid,
+            referresult: { success: 0, fail: 0, vnFail: [] },
+            person: { success: 0, fail: 0 },
+            address: { success: 0, fail: 0 },
+            service: { success: 0, fail: 0 },
+            diagnosisOpd: { success: 0, fail: 0 },
+            procedureOpd: { success: 0, fail: 0 },
+            drugOpd: { success: 0, fail: 0 },
+            drugAllergy: { success: 0, fail: 0 },
+            investigationRefer: { success: 0, fail: 0 }
+        };
         try {
             const referResult = yield hisModel.getReferResult(db, date, hcode);
             sentContent += `\rsave refer_result ${date} \r`;
             sentContent += `\rsave refer service data ${date} \r`;
-            let index = 0;
-            let sentResultResult = {
-                pid: process.pid,
-                referresult: { success: 0, fail: 0, vnFail: [] },
-                person: { success: 0, fail: 0 },
-                address: { success: 0, fail: 0 },
-                service: { success: 0, fail: 0 },
-                diagnosisOpd: { success: 0, fail: 0 },
-                procedureOpd: { success: 0, fail: 0 },
-                drugOpd: { success: 0, fail: 0 },
-                drugAllergy: { success: 0, fail: 0 },
-                investigationRefer: { success: 0, fail: 0 }
-            };
+            console.log(moment().format('HH:mm:ss'), process.env.HOSPCODE, 'refer result (refer in)=', referResult.length, 'row');
             for (let row of referResult) {
                 const hn = row.PID_IN;
                 const seq = row.SEQ_IN;
                 const referid = row.REFERID_SOURCE;
                 sentContent += (index + 1) + '. refer no.' + referid + ', hn ' + hn + ', seq ' + seq + '\r';
-                yield sendReferResult(row, sentResultResult);
-                yield getPerson(db, hn, sentResultResult);
-                yield getAddress(db, hn, sentResultResult);
-                yield getService(db, seq, sentResultResult);
-                yield getDiagnosisOpd(db, seq, sentResultResult);
-                yield getProcedureOpd(db, seq, sentResultResult);
-                yield getDrugOpd(db, seq, sentResultResult);
-                yield getDrugAllergy(db, hn, sentResultResult);
-                const ipd = yield getAdmission(db, seq);
+                yield Promise.all([
+                    sendReferResult(row, sentResultResult),
+                    getPerson(db, hn, sentResultResult),
+                    getAddress(db, hn, sentResultResult),
+                    getService(db, seq, sentResultResult),
+                    getDiagnosisOpd(db, seq, sentResultResult),
+                    getProcedureOpd(db, seq, sentResultResult),
+                    getDrugOpd(db, seq, sentResultResult),
+                    getDrugAllergy(db, hn, sentResultResult)
+                ]);
+                let ipd = yield getAdmission(db, 'VN', seq);
                 const an = ipd && ipd.length ? ipd[0].an : '';
                 const procedureIpd = yield getProcedureIpd(db, an);
                 yield getLabResult(db, row, sentResultResult);
@@ -227,13 +231,53 @@ function getReferResult(db, date) {
                     console.log(moment().format('HH:mm:ss.SSS'), 'finished...');
                 }
             }
-            console.log(process.env.HOSPCODE, ' nrefer result', sentResultResult);
+            console.log(moment().format('HH:mm:ss.SSS'), 'sent >> refer result (refer in)', sentResultResult);
+            yield getReferResultByDateDisc(db, sentResultResult);
             return referResult;
         }
         catch (error) {
             console.log('crontab error:', error.message);
             sentContent += moment().format('HH:mm:ss.SSS') + 'crontab error ' + error.message + '\r\r';
             return [];
+        }
+    });
+}
+function getReferResultByDateDisc(db, sentResultResult) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            let backward = 2;
+            if (moment().get('hour') == 2 && moment().get('minute') >= (60 - crontabConfig.minute)) {
+                backward = 14;
+            }
+            let datedisc = moment().subtract(backward, 'days').format('YYYY-MM-DD');
+            for (let i = 0; i < backward; i++) {
+                console.log(moment().format('HH:mm:ss'), `Get refer result from IPD discharge date ${datedisc}`);
+                let ipdData = yield hisModel.getAdmission(db, 'datedisc', datedisc);
+                console.log(moment().format('HH:mm:ss'), `  >> ${ipdData.length} case`);
+                for (let row of ipdData) {
+                    const hn = row.PID || row.pid || row.HN || row.hn;
+                    const an = row.AN || row.an;
+                    const seq = row.SEQ || row.seq || row.VN || row.vn;
+                    const referid = row.REFERINHOSP;
+                    yield sendAdmission(row);
+                    yield getPerson(db, hn, sentResultResult);
+                    yield getAddress(db, hn, sentResultResult);
+                    yield getService(db, seq, sentResultResult);
+                    yield getDiagnosisOpd(db, seq, sentResultResult);
+                    yield getProcedureOpd(db, seq, sentResultResult);
+                    yield getDrugOpd(db, seq, sentResultResult);
+                    yield getDrugAllergy(db, hn, sentResultResult);
+                    const procedureIpd = yield getProcedureIpd(db, an);
+                    yield getLabResult(db, row, sentResultResult);
+                }
+                datedisc = moment().add(1, 'day').format('YYYY-MM-DD');
+            }
+            console.log(process.env.HOSPCODE, ' refer result (refer in)', sentResultResult);
+            return true;
+        }
+        catch (error) {
+            console.log('crontab error:', error.message);
+            return false;
         }
     });
 }
@@ -651,17 +695,23 @@ function getLabResult(db, row, sentResult) {
         return rowsLabResult;
     });
 }
-function getAdmission(db, visitNo) {
+function getAdmission(db, type = 'VN', searchValue) {
     return __awaiter(this, void 0, void 0, function* () {
         const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
-        const rows = yield hisModel.getAdmission(db, 'visitNo', visitNo, hcode);
+        let rows;
+        if (type == 'datedisc') {
+            rows = yield hisModel.getAdmission(db, 'datedisc', searchValue, hcode);
+        }
+        else {
+            rows = yield hisModel.getAdmission(db, 'visitNo', searchValue, hcode);
+        }
         sentContent += '  - admission = ' + rows.length + '\r';
         if (rows && rows.length) {
             for (const row of rows) {
                 const data = yield {
                     HOSPCODE: row.HOSPCODE || row.hospcode || hcode,
                     PID: row.PID || row.pid || row.HN || row.hn,
-                    SEQ: row.SEQ || row.seq || visitNo,
+                    SEQ: row.SEQ || row.seq || row.HN || row.vn,
                     AN: row.AN || row.an,
                     CID: row.CID || row.cid || '',
                     DATETIME_ADMIT: row.DATETIME_ADMIT || row.datetime_admit,
@@ -701,6 +751,51 @@ function getAdmission(db, visitNo) {
             }
         }
         return rows;
+    });
+}
+function sendAdmission(row) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
+        const data = yield {
+            HOSPCODE: row.HOSPCODE || row.hospcode || hcode,
+            PID: row.PID || row.pid || row.HN || row.hn,
+            SEQ: row.SEQ || row.seq || row.HN || row.vn,
+            AN: row.AN || row.an,
+            CID: row.CID || row.cid || '',
+            DATETIME_ADMIT: row.DATETIME_ADMIT || row.datetime_admit,
+            WARDADMIT: row.WARDADMIT || row.wardadmit || '',
+            WARDADMITNAME: row.WARDADMITNAME || row.wardadmitname || '',
+            INSTYPE: row.INSTYPE || row.instype || '',
+            TYPEIN: row.TYPEIN || row.typein || '',
+            REFERINHOSP: row.REFERINHOSP || row.referinhosp || '',
+            CAUSEIN: row.CAUSEIN || row.causein || '',
+            ADMITWEIGHT: row.ADMITWEIGHT || row.admitweight || 0,
+            ADMITHEIGHT: row.ADMITHEIGHT || row.admitheight || 0,
+            DATETIME_DISCH: row.DATETIME_DISCH || row.datetime_disch || '',
+            WARDDISCH: row.WARDDISCH || row.warddish || '',
+            DISCHSTATUS: row.DISCHSTATUS || row.dischstatus || '',
+            DISCHTYPE: row.DISCHTYPE || row.disctype || '',
+            REFEROUTHOSP: row.REFEROUTHOSP || row.referouthosp || '',
+            CAUSEOUT: row.CAUSEOUT || row.causeout || '',
+            COST: row.COST || row.cost || '',
+            PRICE: row.PRICE || row.price || '',
+            PAYPRICE: row.PAYPRICE || row.payprice || '',
+            ACTUALPAY: row.ACTUALPAY || row.actualpay || '',
+            PROVIDER: row.PROVIDER || row.provider || row.dr || '',
+            DRG: row.DRG || row.drg || '',
+            RW: row.RW || row.rw || 0,
+            ADJRW: row.ADJRW || row.adjrw || 0,
+            ERROR: row.ERROR || row.error || '',
+            WARNING: row.WARNING || row.warning || '',
+            ACTLOS: row.ACTLOS || row.actlos || 0,
+            GROUPER_VERSION: row.GROUPER_VERSION || row.grouper_version || '',
+            CLINIC: row.CLINIC || row.clinic || '',
+            MAIN: row.MAIN || row.main || '',
+            SUB: row.HSUB || row.hsub || row.SUB || row.sub || '',
+            D_UPDATE: row.D_UPDATE || row.d_update || d_update,
+        };
+        const saveResult = yield referSending('/save-admission', data);
+        sentContent += '    -- AN ' + data.AN + ' ' + (saveResult.result || saveResult.message) + '\r';
     });
 }
 function getProcedureIpd(db, an) {
