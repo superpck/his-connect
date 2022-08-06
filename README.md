@@ -64,6 +64,19 @@
 6.4 ควรยกเลิกการใช้งาน username ที่มีการย้ายงาน หรือ ย้ายสถานที่ทำงาน หรือ ลาออก
 ```
 
+# 7.Lastupdate
+```
+2022-08-06
+  - เพิ่มการ select ข้อมูล IPD กรณีรับ Refer จากวันที่จำหน่าย
+
+2022-07-31
+  - Get Drug allergy
+  - แก้ไขการ select ข้อมูล Refer result (Refer In)
+
+2022-06-25
+  - แก้ไขการ select ผล Lab ใน HOSxP เป็นตาราง Lab_Head
+```
+
 # credit
 ```
 - อ.สถิตย์ เรียนพิศ https://github.com/siteslave

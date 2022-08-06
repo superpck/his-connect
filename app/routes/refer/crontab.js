@@ -268,7 +268,7 @@ function getReferInIPDByDateDisc(db, sentResultResult) {
 function getReferInIPD(db, dateDisc, sentResultResult) {
     return __awaiter(this, void 0, void 0, function* () {
         let ipdData = yield hisModel.getAdmission(db, 'datedisc', dateDisc);
-        console.log(moment().format('HH:mm:ss'), `Get refer result from IPD discharge date ${dateDisc} = ${ipdData.length} case`);
+        console.log(moment().format('HH:mm:ss'), process.env.HOSPCODE, `Get refer result from IPD discharge date ${dateDisc} = ${ipdData.length} case`);
         for (let row of ipdData) {
             yield sendReferInIPD(db, row, sentResultResult);
         }
