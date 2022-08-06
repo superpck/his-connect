@@ -576,10 +576,10 @@ export class HisHosxpv4Model {
         let validRefer = columnName === 'datedisc'? ' AND LENGTH(i.rfrilct)=5 ':'';
         const sql = `
             SELECT
-                (select hospitalcode from opdconfig) as hospcode,
-                ifnull(p.person_id,'') pid, i.hn,
-                q.seq_id, o.vn seq,
-                ifnull(i.an,'') an,
+                (select hospitalcode from opdconfig) as HOSPCODE,
+                i.hn as PID,
+                q.seq_id, o.vn SEQ,
+                ifnull(i.an,'') AN,
                 ifnull(
                     date_format(
                         concat(i.regdate, ' ', i.regtime),'%Y-%m-%d %H:%i:%s'

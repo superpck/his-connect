@@ -68,6 +68,7 @@
 ```
 2022-08-06
   - เพิ่มการ select ข้อมูล IPD กรณีรับ Refer จากวันที่จำหน่าย
+  - เปลี่ยนการ select admission จาก p.person_id เป็น i.hn
 
 2022-07-31
   - Get Drug allergy
