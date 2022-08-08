@@ -398,6 +398,31 @@ const router = (fastify, { }, next) => {
     }
   })
 
+  fastify.post('/save-lib-hosp', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+    let saveType = req.body.saveType;
+    let formInput = req.body.formInput;
+    let tokenKey = req.body.tokenKey;
+    if (tokenKey === '') {
+      reply.send({ ok: false, error: 'token error' });
+      return false;
+    }
+    try {
+      const result: any = await isModel.saveLibHosp(fastify.dbISOnline, saveType, formInput);
+      fastify.dbISOnline.destroy;
+      reply.send({
+        statusCode: HttpStatus.OK, ok: true,
+        version: fastify.apiVersion,
+        subVersion: fastify.apiSubVersion,
+        rows: result[0]
+      });
+    } catch (error) {
+      reply.send({
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        ok: false, error: error, message: error.message
+      });
+    }
+  })
+
   fastify.post('/report-agegroup', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
     let reportType = req.body.reportType;
     let date1 = req.body.date1;
