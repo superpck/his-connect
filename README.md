@@ -66,6 +66,9 @@
 
 # 7.Lastupdate
 ```
+3.2.2 2022-08-08
+  - ISOnline เพิ่ม save-lib-hosp สำหรับบันทึกข้อมูล Lib เฉพาะสถานพยาบาล
+
 3.2.2 2022-08-06
   - เพิ่มการ select ข้อมูล IPD กรณีรับ Refer จากวันที่จำหน่าย
   - เปลี่ยนการ select admission จาก p.person_id เป็น i.hn ใน HOSxP
