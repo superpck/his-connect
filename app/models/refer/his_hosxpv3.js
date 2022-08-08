@@ -1039,7 +1039,7 @@ class HisHosxpv3Model {
                     oe.allergy_relation_id in ('1','2','3','4','5') 
                 then  oe.allergy_relation_id
                 else  '1'  end) as TYPEDX`))
-                .select(db.raw(`'' as SYMPTOM`))
+                .select(db.raw(`oe.symptom as SYMPTOM`))
                 .select(db.raw(`if(oe.update_datetime is null or trim(oe.update_datetime) = '' 
                 or oe.update_datetime like '0000-00-00%', '', 
                 date_format(oe.update_datetime,'%Y-%m-%d %H:%i:%s')) as D_UPDATE`))

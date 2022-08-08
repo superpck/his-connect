@@ -823,6 +823,7 @@ function getDrugAllergy(db, hn, sentResult) {
                         PID: row.PID || row.pid || row.HN || row.hn,
                         DATERECORD: row.DATERECORD || null,
                         DRUGALLERGY: row.DRUGALLERGY || null,
+                        DCODE: row.DCODE || null,
                         DNAME: row.DNAME || null,
                         TYPEDX: row.TYPEDX || null,
                         ALEVEL: row.ALEVEL || null,
@@ -831,8 +832,8 @@ function getDrugAllergy(db, hn, sentResult) {
                         INFORMHOSP: row.INFORMHOSP || null,
                         DETAIL: row.DETAIL || null,
                         DID: row.DID || null,
-                        DID_TMT: row.DID_TMT,
-                        D_UPDATE: row.D_UPDATE || row.d_update || row.date || d_update,
+                        DID_TMT: row.DID_TMT || null,
+                        D_UPDATE: row.D_UPDATE || row.d_update || row.DATERECORD || d_update,
                         CID: row.CID || row.cid || '',
                         ID: row.ID || '',
                     });
