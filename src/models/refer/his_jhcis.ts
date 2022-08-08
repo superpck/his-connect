@@ -291,8 +291,26 @@ export class HisJhcisModel {
         return [];
     }
 
-    getDrugAllergy(db, hn, hospCode = hcode) {
-        return [];
+    async getDrugAllergy(db: Knex, hn: string, hospCode = hcode) {
+        return db('personalergic as drugallg')
+            .leftJoin('cdrug', 'drugallg.drugcode','cdrug.drugcode')
+            .leftJoin('cdrugallergysymtom as sym', 'drugallg.symptom','sym.symtomcode')
+            .leftJoin('person', 'drugallg.pid','person.pid')
+            .select('person.pcucodeperson as HOSPCODE', 'person.pcucodeperson as INFORMHOSP',
+                'drugallg.pid as PID', 'person.idcard as CID',
+                'cdrug.drugcode24 as DRUGALLERGY',
+                'cdrug.drugcode as DCODE',
+                'cdrug.drugname as DNAME',
+                'drugallg.levelalergic as ALEVE',
+                'drugallg.symptom as SYMPTOM', 'sym.symtomname as DETAIL', 
+                'drugallg.typedx as TYPEDX',
+                'drugallg.informant as INFORMANT',
+                'cdrug.drugcode24 as DID','cdrug.tmtcode as DID_TMT',
+                'drugallg.daterecord as DATERECORD',
+                'drugallg.dateupdate as D_UPDATE')
+            // .select(db.raw('case when cdrug.drugcode24 then cdrug.drugcode24 else drugallg.drugcode end as DRUGALLERGY'))
+            .where('drugallg.pid',hn)
+            .whereRaw('(drugallg.informhosp is null or drugallg.pcucodeperson=drugallg.informhosp)');
     }
 
     getAppointment(db, visitNo, hospCode = hcode) {
