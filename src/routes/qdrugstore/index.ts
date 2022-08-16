@@ -88,8 +88,8 @@ const router = (fastify, { }, next) => {
   fastify.get('/', async (req: fastify.Request, reply: fastify.Reply) => {
     reply.send({
       api: 'Quality Drug Store',
-      version: fastify.apiVersion,
-      subVersion: fastify.apiSubVersion
+      version: fastify.appVersion.version,
+      subversion: fastify.appVersion.subVersion
     });
   });
 

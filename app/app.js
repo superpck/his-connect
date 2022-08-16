@@ -29,9 +29,7 @@ const app = fastify({
     },
     bodyLimit: 5 * 1048576,
 });
-app.apiName = name;
-app.apiVersion = version;
-app.apiSubVersion = subVersion;
+app.appVersion = { name, version, subVersion };
 app.register(router_1.default);
 app.register(require('fastify-formbody'));
 app.register(require('fastify-cors'), {});
@@ -162,7 +160,7 @@ app.listen(port, host, (err) => {
     app.ws.on('error', error => {
         console.log('WebSocket server error!', error);
     });
-    console.log('>>> ', app.startServerTime, `HIS Connection API (${app.apiVersion}) start on port`, port, 'PID', process.pid);
+    console.log('>>> ', app.startServerTime, `HIS Connection API (${app.appVersion.version}) start on port`, port, 'PID', process.pid);
 });
 function createConnectionOption(config) {
     if (['mssql'].includes(config.client)) {

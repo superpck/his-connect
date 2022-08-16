@@ -17,9 +17,9 @@ function cronjob(fastify) {
         const secondNow = +moment().get('second');
         const timingSch = `${secondNow} */1 * * * *`;
         let timingSchedule = [];
-        timingSchedule['isonline'] = { version: fastify.apiVersion, apiSubVersion: fastify.apiSubVersion };
-        timingSchedule['nrefer'] = { version: fastify.apiVersion, apiSubVersion: fastify.apiSubVersion };
-        timingSchedule['cupDataCenter'] = { version: fastify.apiVersion, apiSubVersion: fastify.apiSubVersion };
+        timingSchedule['isonline'] = { version: fastify.appVersion.version, apiSubVersion: fastify.appVersion.subVersion };
+        timingSchedule['nrefer'] = { version: fastify.appVersion.version, apiSubVersion: fastify.appVersion.subVersion };
+        timingSchedule['cupDataCenter'] = { version: fastify.appVersion.version, apiSubVersion: fastify.appVersion.subVersion };
         timingSchedule['isonline'].autosend = +process.env.IS_AUTO_SEND === 1 || false;
         timingSchedule['isonline'].minute = process.env.IS_AUTO_SEND_EVERY_MINUTE ? parseInt(process.env.IS_AUTO_SEND_EVERY_MINUTE) : 0;
         timingSchedule['isonline'].hour = process.env.IS_AUTO_SEND_EVERY_HOUR ? parseInt(process.env.IS_AUTO_SEND_EVERY_HOUR) : 0;

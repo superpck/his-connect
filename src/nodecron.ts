@@ -9,9 +9,9 @@ export default async function cronjob(fastify: FastifyInstance) {
     const secondNow = +moment().get('second');
     const timingSch = `${secondNow} */1 * * * *`;  // every minute
     let timingSchedule: any = [];
-    timingSchedule['isonline'] = { version: fastify.apiVersion, apiSubVersion: fastify.apiSubVersion };
-    timingSchedule['nrefer'] = { version: fastify.apiVersion, apiSubVersion: fastify.apiSubVersion };
-    timingSchedule['cupDataCenter'] = { version: fastify.apiVersion, apiSubVersion: fastify.apiSubVersion };
+    timingSchedule['isonline'] = { version: fastify.appVersion.version, apiSubVersion: fastify.appVersion.subVersion };
+    timingSchedule['nrefer'] = { version: fastify.appVersion.version, apiSubVersion: fastify.appVersion.subVersion };
+    timingSchedule['cupDataCenter'] = { version: fastify.appVersion.version, apiSubVersion: fastify.appVersion.subVersion };
 
     // Check IS-Online Auto Send
     timingSchedule['isonline'].autosend = +process.env.IS_AUTO_SEND === 1 || false;

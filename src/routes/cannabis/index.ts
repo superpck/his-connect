@@ -22,8 +22,8 @@ const router = (fastify, { }, next) => {
   fastify.get('/', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, reply: fastify.Reply) => {
     reply.send({
       api: 'Cannabis API Serivce',
-      version: fastify.apiVersion,
-      subVersion: fastify.apiSubVersion,
+      version: fastify.appVersion.version,
+      subversion: fastify.appVersion.subVersion,
       hisProvider
     });
   })
