@@ -17,6 +17,7 @@ export class HisInfodModel {
 
     getPerson(knex: Knex, columnName, searchText) {
         columnName = columnName == 'hn' ? "ltrim(PT.hn)": columnName;
+        
         var sql="SELECT   NULL AS age, PS.CardID, PT.hn, PTITLE.titleName AS titleCode "+
         ", PT.firstName, PT.lastName, PT.sex, PT.birthDay"+
         ", SUBSTRING(PT.birthDay, 7, 2) + '/' + SUBSTRING(PT.birthDay, 5, 2) + '/' + SUBSTRING(PT.birthDay, 1, 4) AS bday,"+
