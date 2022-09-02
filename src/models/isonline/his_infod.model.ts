@@ -16,10 +16,23 @@ export class HisInfodModel {
     }
 
     getPerson(knex: Knex, columnName, searchText) {
-        return knex
-        .select()
-        .from('VW_IS_PERSON')       
-        .where(columnName, "=", searchText);
+        columnName = columnName == 'hn' ? "ltrim(PT.hn)": columnName;
+        var sql="SELECT   NULL AS age, PS.CardID, PT.hn, PTITLE.titleName AS titleCode "+
+        ", PT.firstName, PT.lastName, PT.sex, PT.birthDay"+
+        ", SUBSTRING(PT.birthDay, 7, 2) + '/' + SUBSTRING(PT.birthDay, 5, 2) + '/' + SUBSTRING(PT.birthDay, 1, 4) AS bday,"+
+        "PT.marital, PT.occupation, PT.addr1, PT.addr2, PT.moo, PT.tambonCode, PT.regionCode, PT.areaCode"+
+        " FROM            dbo.PATIENT AS PT LEFT OUTER JOIN  "+
+       "dbo.PatSS AS PS ON PS.hn = PT.hn LEFT OUTER JOIN "+
+       "dbo.PTITLE AS PTITLE ON PT.titleCode = PTITLE.titleCode " +
+       " where "+ columnName + " = '"+searchText+"' " ;
+
+       var result = knex.raw(sql);
+       return result[0];
+
+        // return knex
+        // .select()
+        // .from('VW_IS_PERSON')       
+        // .where(columnName, "=", searchText);
     }
     
     getOpdService(db: Knex, hn, date, columnName = '', searchText = '') {
