@@ -48,6 +48,7 @@ switch (hisProvider) {
   case 'ssb':
     // hisModel = new HisSsbModel();
     break;
+  case 'homc':
   case 'infod':
     // hisModel = new HisInfodModel();
     break;
@@ -842,8 +843,8 @@ async function getDrugAllergy(db, hn, sentResult) {
 }
 
 async function referSending(path, dataArray) {
-  // const fixedUrl = fastify.mophService.nRefer || process.env.NREFER_URL1 || 'http://connect.moph.go.th/nrefer-api';
-  const fixedUrl = process.env.NREFER_URL1 || 'http://connect.moph.go.th/nrefer-api';
+  // const fixedUrl = fastify.mophService.nRefer || process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api';
+  const fixedUrl = process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api';
   const mophUrl = fixedUrl.split('/');
   let urlPath = '/' + mophUrl[3];
   urlPath += mophUrl[4] ? ('/' + mophUrl[4]) : '';
@@ -900,7 +901,7 @@ async function referSending(path, dataArray) {
 }
 
 async function getNReferToken(apiKey, secretKey) {
-  const fixedUrl = fastify.mophService.nRefer || process.env.NREFER_URL1 || 'http://connect.moph.go.th/nrefer-api/nrefer';
+  const fixedUrl = fastify.mophService.nRefer || process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api/nrefer';
   const mophUrl = fixedUrl.split('/');
   let urlPath = '/' + mophUrl[3] + '/';
   urlPath += mophUrl[4] ? (mophUrl[4] + '/') : '';
@@ -958,7 +959,7 @@ async function getNReferToken(apiKey, secretKey) {
 }
 
 async function expireToken(token) {
-  const fixedUrl = fastify.mophService.nRefer || process.env.NREFER_URL1 || 'http://connect.moph.go.th/nrefer-api';
+  const fixedUrl = fastify.mophService.nRefer || process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api';
   const mophUrl = fixedUrl.split('/');
   let urlPath = '/' + mophUrl[3] + '/';
   urlPath += mophUrl[4] ? (mophUrl[4] + '/') : '';
