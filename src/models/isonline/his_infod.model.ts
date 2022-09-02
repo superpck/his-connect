@@ -38,38 +38,51 @@ export class HisInfodModel {
         // .where(columnName, "=", searchText);
     }
 
-    async getOpdService(db: Knex, hn, date, columnName = '', searchText = '') {
-        // columnName = columnName == 'visitNo' || columnName == 'vn' ? 'visitno' : columnName;
-        // let where: any = {};
-        // if (hn) where['hn'] = hn;
-        // if (date) where['vstdate'] = date;
-        // if (columnName && searchText) where[columnName] = searchText;
-
+    getOpdService(db: Knex, hn, date, columnName = '', searchText = '') {
         date = (moment(date).get('year') + 543) + '' + moment(date).format("MMDD");
+        return db('dbo.OPD_H AS OH')
+            .leftOuterJoin(db.raw('dbo.Bill_h AS BH ON BH.hn = OH.hn AND BH.regNo = OH.regNo'))
+            .leftOuterJoin('dbo.PATIENT AS PT', 'PT.hn', 'OH.hn')
+            .leftOuterJoin(db.raw('dbo.SSREGIST AS SS ON SS.hn = OH.hn AND SS.RegNo = OH.regNo'))
+            .leftOuterJoin('dbo.HOSPCODE AS hos', 'BH.REFERIN', 'hos.OFF_ID')
+            .leftOuterJoin('dbo.HOSPCODE AS hos2', 'BH.REFEROUT', 'hos2.OFF_ID')
+            .select('OH.hn', 'OH.regNo', 'OH.registDate', 'OH.timePt AS TIME_SERV2')
+            .select(db.raw(`CASE WHEN OH.regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) 
+            + OH.regNo END AS SEQ`))
+            .select(db.raw(`CASE WHEN OH.regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) 
+            + OH.regNo END AS visitno`))
+            .select(db.raw(`CAST(CAST(SUBSTRING(OH.registDate, 1, 4) AS int) - 543 AS varchar(10)) +'-'+SUBSTRING(OH.registDate, 5, 2)+'-'+ SUBSTRING(OH.registDate, 7, 2) AS DATE_SERV`))
+            .select(db.raw(`left(OH.timePt,2)+':'+right(OH.timePt,2) as TIME_SERV`))
+            .select('BH.REFERIN',
+                'BH.TFReasonIn AS CAUSEIN', 'BH.REFEROUT', 'BH.TFReasonOut AS CAUSEOUT',
+                'SS.Weight', 'SS.Height', 'SS.Lbloodpress AS SBP', 'SS.Hbloodpress AS DBP',
+                'SS.Temperature AS BTEMP', 'SS.Pulse AS PR', 'SS.Breathe AS RR',
+                'hos.CHANGWAT AS chwin', 'hos2.CHANGWAT AS chwout')
+            .whereRaw(`OH.hn ='${hn}' and OH.registDate='${date}'`);
 
-        var sql = ` SELECT        OH.hn, CASE WHEN OH.regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) 
-                    + OH.regNo END AS SEQ
-                    ,CASE WHEN OH.regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) 
-                    + OH.regNo END AS visitno
-                    , OH.regNo, OH.registDate, CAST(CAST(SUBSTRING(OH.registDate, 1, 4) AS int) - 543 AS varchar(10)) +'-'+SUBSTRING(OH.registDate, 5, 2)+'-'+ SUBSTRING(OH.registDate, 7, 2) AS DATE_SERV, OH.timePt AS TIME_SERV2
-                    ,left(OH.timePt,2)+':'+right(OH.timePt,2) as TIME_SERV, BH.REFERIN, 
-                    BH.TFReasonIn AS CAUSEIN, BH.REFEROUT, BH.TFReasonOut AS CAUSEOUT, SS.Weight, SS.Height, SS.Lbloodpress AS SBP, SS.Hbloodpress AS DBP, SS.Temperature AS BTEMP, SS.Pulse AS PR, SS.Breathe AS RR, 
-                    hos.CHANGWAT AS chwin, hos2.CHANGWAT AS chwout
-                    FROM            dbo.OPD_H AS OH LEFT OUTER JOIN
-                    dbo.Bill_h AS BH ON BH.hn = OH.hn AND BH.regNo = OH.regNo LEFT OUTER JOIN
-                    dbo.PATIENT AS PT ON PT.hn = OH.hn LEFT OUTER JOIN
-                    dbo.SSREGIST AS SS ON SS.hn = OH.hn AND SS.RegNo = OH.regNo LEFT OUTER JOIN
-                    dbo.HOSPCODE AS hos ON BH.REFERIN = hos.OFF_ID LEFT OUTER JOIN
-                    dbo.HOSPCODE AS hos2 ON BH.REFEROUT = hos2.OFF_ID
-                    where OH.hn ='${hn}' and OH.registDate='${date}'  `;
-        // return db('getOpdService_isonline')
-        //     .where(where)
-        //     .orderBy('vstdate', 'desc')
-        //     .limit(maxLimit);
+        // var sql = ` SELECT        OH.hn, CASE WHEN OH.regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) 
+        //             + OH.regNo END AS SEQ
+        //             ,CASE WHEN OH.regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) 
+        //             + OH.regNo END AS visitno
+        //             , OH.regNo, OH.registDate, CAST(CAST(SUBSTRING(OH.registDate, 1, 4) AS int) - 543 AS varchar(10)) +'-'+SUBSTRING(OH.registDate, 5, 2)+'-'+ SUBSTRING(OH.registDate, 7, 2) AS DATE_SERV, OH.timePt AS TIME_SERV2
+        //             ,left(OH.timePt,2)+':'+right(OH.timePt,2) as TIME_SERV, BH.REFERIN, 
+        //             BH.TFReasonIn AS CAUSEIN, BH.REFEROUT, BH.TFReasonOut AS CAUSEOUT, SS.Weight, SS.Height, SS.Lbloodpress AS SBP, SS.Hbloodpress AS DBP, SS.Temperature AS BTEMP, SS.Pulse AS PR, SS.Breathe AS RR, 
+        //             hos.CHANGWAT AS chwin, hos2.CHANGWAT AS chwout
+        //             FROM            dbo.OPD_H AS OH 
+        //             LEFT OUTER JOIN dbo.Bill_h AS BH ON BH.hn = OH.hn AND BH.regNo = OH.regNo 
+        //             LEFT OUTER JOIN dbo.PATIENT AS PT ON PT.hn = OH.hn 
+        //             LEFT OUTER JOIN dbo.SSREGIST AS SS ON SS.hn = OH.hn AND SS.RegNo = OH.regNo 
+        //             LEFT OUTER JOIN dbo.HOSPCODE AS hos ON BH.REFERIN = hos.OFF_ID 
+        //             LEFT OUTER JOIN dbo.HOSPCODE AS hos2 ON BH.REFEROUT = hos2.OFF_ID
+        //             where OH.hn ='${hn}' and OH.registDate='${date}'  `;
+        // // return db('getOpdService_isonline')
+        // //     .where(where)
+        // //     .orderBy('vstdate', 'desc')
+        // //     .limit(maxLimit);
 
-        var result = await db.raw(sql);
-        // console.log("opdservice ==", result[0]);
-        return [result[0]];
+        // var result = await db.raw(sql);
+        // // console.log("opdservice ==", result[0]);
+        // return [result[0]];
 
     }
 
@@ -94,7 +107,7 @@ export class HisInfodModel {
         // var result = await db.raw(sql);
         // //    console.log(result[0]);
         // return [result[0]];
-        
+
     }
 
     getProcedureOpd(knex, columnName, searchNo, hospCode) {
