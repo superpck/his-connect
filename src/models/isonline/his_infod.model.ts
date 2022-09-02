@@ -24,7 +24,7 @@ export class HisInfodModel {
         " FROM            dbo.PATIENT AS PT LEFT OUTER JOIN  "+
        "dbo.PatSS AS PS ON PS.hn = PT.hn LEFT OUTER JOIN "+
        "dbo.PTITLE AS PTITLE ON PT.titleCode = PTITLE.titleCode " +
-       ` where ${columnName}= '${searchText}' ` ;
+       ` where ${columnName}='${searchText}' ` ;
 
        var result = knex.raw(sql);
        return result[0];
