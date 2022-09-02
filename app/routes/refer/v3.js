@@ -87,8 +87,8 @@ const router = (fastify, {}, next) => {
         reply.send({
             apiCode: 'nRefer',
             api: 'refer V.3',
-            version: fastify.apiVersion,
-            subVersion: fastify.apiSubVersion
+            version: fastify.appVersion.version,
+            subversion: fastify.appVersion.subVersion
         });
     }));
     fastify.get('/alive/:requestKey', (req, reply) => __awaiter(void 0, void 0, void 0, function* () {

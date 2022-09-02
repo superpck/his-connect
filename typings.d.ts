@@ -25,9 +25,7 @@ declare module 'fastify' {
     firstProcessPid: number;
     ws: any;
     mophService: any;
-    apiName: string;
-    apiVersion: string;
-    apiSubVersion: string;
+    appVersion: any;
   }
 }
 

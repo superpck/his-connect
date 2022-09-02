@@ -26,8 +26,8 @@ const router = (fastify, {}, next) => {
     fastify.get('/', { preHandler: [fastify.serviceMonitoring] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
         reply.send({
             api: 'Cannabis API Serivce',
-            version: fastify.apiVersion,
-            subVersion: fastify.apiSubVersion,
+            version: fastify.appVersion.version,
+            subversion: fastify.appVersion.subVersion,
             hisProvider
         });
     }));

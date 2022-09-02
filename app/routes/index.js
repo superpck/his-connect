@@ -27,10 +27,10 @@ const router = (fastify, {}, next) => {
         reply.send({
             ok: true,
             apiCode: 'HISCONNECT',
-            apiName: fastify.apiName,
+            apiName: fastify.appVersion.name,
             apiDesc: 'API for IS-Online, nRefer, PCC, CMI',
-            version: fastify.apiVersion,
-            subVersion: fastify.apiSubVersion,
+            version: fastify.appVersion.version,
+            subVersion: fastify.appVersion.subVersion,
             serviceName: "isonline",
             his_provider: process.env.HIS_PROVIDER,
             hospcode: process.env.HOSPCODE,

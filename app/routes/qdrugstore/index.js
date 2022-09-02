@@ -82,8 +82,8 @@ const router = (fastify, {}, next) => {
     fastify.get('/', (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
         reply.send({
             api: 'Quality Drug Store',
-            version: fastify.apiVersion,
-            subVersion: fastify.apiSubVersion
+            version: fastify.appVersion.version,
+            subversion: fastify.appVersion.subVersion
         });
     }));
     fastify.get('/alive/:requestKey', (req, reply) => __awaiter(void 0, void 0, void 0, function* () {

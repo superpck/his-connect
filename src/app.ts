@@ -30,9 +30,7 @@ const app: fastify.FastifyInstance<Server, IncomingMessage, ServerResponse> = fa
   bodyLimit: 5 * 1048576,
 });
 
-app.apiName = name;
-app.apiVersion = version;
-app.apiSubVersion = subVersion;
+app.appVersion = { name, version, subVersion };
 app.register(router);
 
 app.register(require('fastify-formbody'));
@@ -196,7 +194,7 @@ app.listen(port, host, (err) => {
     console.log('WebSocket server error!', error);
   });
 
-  console.log('>>> ', app.startServerTime, `HIS Connection API (${app.apiVersion}) start on port`, port, 'PID', process.pid);
+  console.log('>>> ', app.startServerTime, `HIS Connection API (${app.appVersion.version}) start on port`, port, 'PID', process.pid);
 });
 
 function createConnectionOption(config: any) {

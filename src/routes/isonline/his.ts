@@ -117,8 +117,8 @@ const router = (fastify, { }, next) => {
           ok: true,
           startServerTime: fastify.startServerTime,
           hisProvider: process.env.HIS_PROVIDER,
-          version: fastify.apiVersion,
-          subVersion: fastify.apiSubVersion,
+          version: fastify.appVersion.version,
+          subversion: fastify.appVersion.subVersion,
           connection: true
         });
       } else {
@@ -126,8 +126,8 @@ const router = (fastify, { }, next) => {
           statusCode: HttpStatus.NO_CONTENT,
           ok: true, startServerTime: fastify.startServerTime,
           hisProvider: process.env.HIS_PROVIDER,
-          version: fastify.apiVersion,
-          subVersion: fastify.apiSubVersion,
+          version: fastify.appVersion.version,
+          subversion: fastify.appVersion.subVersion,
           connection: false,
           message: result
         });
@@ -152,8 +152,8 @@ const router = (fastify, { }, next) => {
         res.send({
           statusCode: HttpStatus.OK,
           ok: true,
-          version: fastify.apiVersion,
-          subVersion: fastify.apiSubVersion,
+          version: fastify.appVersion.version,
+          subversion: fastify.appVersion.subVersion,
           hisProvider: process.env.HIS_PROVIDER,
           connection: true
         });
@@ -205,8 +205,8 @@ const router = (fastify, { }, next) => {
         fastify.dbHIS.destroy;
         res.send({
           statusCode: HttpStatus.OK,
-          version: fastify.apiVersion,
-          subVersion: fastify.apiSubVersion,
+          version: fastify.appVersion.version,
+          subversion: fastify.appVersion.subVersion,
           hisProvider: process.env.HIS_PROVIDER,
           reccount: result.length,
           rows: result
@@ -238,8 +238,8 @@ const router = (fastify, { }, next) => {
         fastify.dbHIS.destroy;
         res.send({
           statusCode: HttpStatus.OK,
-          version: fastify.apiVersion,
-          subVersion: fastify.apiSubVersion,
+          version: fastify.appVersion.version,
+          subversion: fastify.appVersion.subVersion,
           hisProvider: process.env.HIS_PROVIDER,
           reccount: result.length,
           rows: result
@@ -269,8 +269,8 @@ const router = (fastify, { }, next) => {
         fastify.dbHIS.destroy;
         res.send({
           statusCode: HttpStatus.OK,
-          version: fastify.apiVersion,
-          subVersion: fastify.apiSubVersion,
+          version: fastify.appVersion.version,
+          subversion: fastify.appVersion.subVersion,
           hisProvider: process.env.HIS_PROVIDER,
           reccount: result.length,
           rows: result

@@ -16,8 +16,8 @@ const router = (fastify, {}, next) => {
     fastify.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         res.send({
             apiCode: 'ISOnline',
-            version: fastify.apiVersion,
-            subVersion: fastify.apiSubVersion
+            version: fastify.appVersion.version,
+            subversion: fastify.appVersion.subVersion
         });
     }));
     fastify.get('/alive', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -25,8 +25,8 @@ const router = (fastify, {}, next) => {
             const result = yield isModel.getVersion(fastify.dbISOnline);
             res.send({
                 statusCode: HttpStatus.OK,
-                version: fastify.apiVersion,
-                subVersion: fastify.apiSubVersion,
+                version: fastify.appVersion.version,
+                subversion: fastify.appVersion.subVersion,
                 startServerTime: fastify.startServerTime,
                 idDb: process.env.IS_DB_NAME,
                 connnection: true
@@ -35,8 +35,8 @@ const router = (fastify, {}, next) => {
         catch (error) {
             res.send({
                 statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-                version: fastify.apiVersion,
-                subVersion: fastify.apiSubVersion,
+                version: fastify.appVersion.version,
+                subversion: fastify.appVersion.subVersion,
                 startServerTime: fastify.startServerTime,
                 connnection: false,
                 message: error.message
@@ -56,8 +56,8 @@ const router = (fastify, {}, next) => {
             fastify.dbISOnline.destroy;
             res.send({
                 statusCode: HttpStatus.OK,
-                version: fastify.apiVersion,
-                subVersion: fastify.apiSubVersion,
+                version: fastify.appVersion.version,
+                subversion: fastify.appVersion.subVersion,
                 ok: true, rows: result[0]
             });
         }
@@ -82,8 +82,8 @@ const router = (fastify, {}, next) => {
             console.log("lib code: " + groupCode + ' result: ' + result[0].length + ' record<s>');
             res.send({
                 statusCode: HttpStatus.OK,
-                version: fastify.apiVersion,
-                subVersion: fastify.apiSubVersion,
+                version: fastify.appVersion.version,
+                subversion: fastify.appVersion.subVersion,
                 ok: true, rows: result[0]
             });
         }
@@ -108,8 +108,8 @@ const router = (fastify, {}, next) => {
             fastify.dbISOnline.destroy;
             reply.send({
                 statusCode: HttpStatus.OK,
-                version: fastify.apiVersion,
-                subVersion: fastify.apiSubVersion,
+                version: fastify.appVersion.version,
+                subversion: fastify.appVersion.subVersion,
                 ok: true, rows: result[0]
             });
         }
@@ -133,8 +133,8 @@ const router = (fastify, {}, next) => {
             fastify.dbISOnline.destroy;
             reply.send({
                 statusCode: HttpStatus.OK,
-                version: fastify.apiVersion,
-                subVersion: fastify.apiSubVersion,
+                version: fastify.appVersion.version,
+                subversion: fastify.appVersion.subVersion,
                 ok: true, rows: result[0]
             });
         }
@@ -160,8 +160,8 @@ const router = (fastify, {}, next) => {
                     statusCode: HttpStatus.OK,
                     status: HttpStatus.OK,
                     ok: true,
-                    version: fastify.apiVersion,
-                    subVersion: fastify.apiSubVersion,
+                    version: fastify.appVersion.version,
+                    subversion: fastify.appVersion.subVersion,
                     hisProvider: process.env.HIS_PROVIDER,
                     rows: results
                 });
@@ -204,8 +204,8 @@ const router = (fastify, {}, next) => {
                     statusCode: HttpStatus.OK,
                     status: HttpStatus.OK,
                     ok: true,
-                    version: fastify.apiVersion,
-                    subVersion: fastify.apiSubVersion,
+                    version: fastify.appVersion.version,
+                    subversion: fastify.appVersion.subVersion,
                     rows: results[0]
                 });
             }
@@ -240,8 +240,8 @@ const router = (fastify, {}, next) => {
             fastify.dbISOnline.destroy;
             reply.send({
                 statusCode: HttpStatus.OK,
-                version: fastify.apiVersion,
-                subVersion: fastify.apiSubVersion,
+                version: fastify.appVersion.version,
+                subversion: fastify.appVersion.subVersion,
                 ok: true, rows: result[0]
             });
         }
@@ -267,8 +267,8 @@ const router = (fastify, {}, next) => {
             fastify.dbISOnline.destroy;
             reply.send({
                 statusCode: HttpStatus.OK,
-                version: fastify.apiVersion,
-                subVersion: fastify.apiSubVersion,
+                version: fastify.appVersion.version,
+                subversion: fastify.appVersion.subVersion,
                 ok: true, rows: result[0]
             });
         }
@@ -300,8 +300,8 @@ const router = (fastify, {}, next) => {
                     statusCode: HttpStatus.OK,
                     status: HttpStatus.OK,
                     ok: true,
-                    version: fastify.apiVersion,
-                    subVersion: fastify.apiSubVersion,
+                    version: fastify.appVersion.version,
+                    subversion: fastify.appVersion.subVersion,
                     rows: results[0]
                 });
             }
@@ -358,8 +358,8 @@ const router = (fastify, {}, next) => {
             fastify.dbISOnline.destroy;
             reply.send({
                 statusCode: HttpStatus.OK, ok: true,
-                version: fastify.apiVersion,
-                subVersion: fastify.apiSubVersion,
+                version: fastify.appVersion.version,
+                subversion: fastify.appVersion.subVersion,
                 rows: result[0]
             });
         }
@@ -383,8 +383,8 @@ const router = (fastify, {}, next) => {
             fastify.dbISOnline.destroy;
             reply.send({
                 statusCode: HttpStatus.OK, ok: true,
-                version: fastify.apiVersion,
-                subVersion: fastify.apiSubVersion,
+                version: fastify.appVersion.version,
+                subversion: fastify.appVersion.subVersion,
                 rows: result[0]
             });
         }
@@ -408,8 +408,8 @@ const router = (fastify, {}, next) => {
             fastify.dbISOnline.destroy;
             reply.send({
                 statusCode: HttpStatus.OK, ok: true,
-                version: fastify.apiVersion,
-                subVersion: fastify.apiSubVersion,
+                version: fastify.appVersion.version,
+                subversion: fastify.appVersion.subVersion,
                 rows: result[0]
             });
         }
@@ -431,8 +431,8 @@ const router = (fastify, {}, next) => {
             reply.send({
                 statusCode: HttpStatus.OK,
                 ok: true,
-                version: fastify.apiVersion,
-                subVersion: fastify.apiSubVersion,
+                version: fastify.appVersion.version,
+                subversion: fastify.appVersion.subVersion,
                 rows: result[0]
             });
         }
