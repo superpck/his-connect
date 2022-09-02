@@ -19,7 +19,11 @@ export class HisInfodModel {
         columnName = columnName == 'hn' ? "ltrim(PT.hn)" : columnName;
 
         var sql = ` SELECT   NULL AS age, PS.CardID as cid, PT.hn, PTITLE.titleName AS prename 
-                , PT.firstName as fname, PT.lastName as lname, PT.sex, PT.birthDay dob
+                , PT.firstName as fname, PT.lastName as lname
+                ,case when  PT.sex = 'ช' then 1
+					when PT.sex ='ญ' then 2
+					else '' end as sex
+                , cast( cast(SUBSTRING(PT.birthDay, 1, 4) as int) - 543 as varchar(10))+'-'+SUBSTRING(PT.birthDay, 5, 2)+'-'+SUBSTRING(PT.birthDay, 7, 2)   dob
                 , SUBSTRING(PT.birthDay, 7, 2) + '/' + SUBSTRING(PT.birthDay, 5, 2) + '/' + SUBSTRING(PT.birthDay, 1, 4) AS bday,
                 PT.marital, PT.occupation, trim(PT.addr1) +' '+rtrim(PT.addr2) as address, PT.moo, PT.tambonCode, PT.regionCode, PT.areaCode 
                 , PT.regionCode+PT.tambonCode  as addcode 
@@ -83,7 +87,7 @@ export class HisInfodModel {
         // var result = await db.raw(sql);
         // // console.log("opdservice ==", result[0]);
         // return [result[0]];
-
+    
     }
 
     getDiagnosisOpd(db: Knex, visitno) {
