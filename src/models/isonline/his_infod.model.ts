@@ -15,20 +15,22 @@ export class HisInfodModel {
         return db('VW_IS_PERSON').select('hn').limit(1)
     }
 
-    getPerson(knex: Knex, columnName, searchText) {
+   async getPerson(knex: Knex, columnName, searchText) {
         columnName = columnName == 'hn' ? "ltrim(PT.hn)": columnName;
         
-        var sql="SELECT   NULL AS age, PS.CardID, PT.hn, PTITLE.titleName AS titleCode "+
-        ", PT.firstName, PT.lastName, PT.sex, PT.birthDay"+
-        ", SUBSTRING(PT.birthDay, 7, 2) + '/' + SUBSTRING(PT.birthDay, 5, 2) + '/' + SUBSTRING(PT.birthDay, 1, 4) AS bday,"+
-        "PT.marital, PT.occupation, PT.addr1, PT.addr2, PT.moo, PT.tambonCode, PT.regionCode, PT.areaCode"+
-        " FROM            dbo.PATIENT AS PT LEFT OUTER JOIN  "+
-       "dbo.PatSS AS PS ON PS.hn = PT.hn LEFT OUTER JOIN "+
-       "dbo.PTITLE AS PTITLE ON PT.titleCode = PTITLE.titleCode " +
-       ` where ${columnName}='${searchText}' ` ;
+        var sql= ` SELECT   NULL AS age, PS.CardID as cid, PT.hn, PTITLE.titleName AS prename 
+        , PT.firstName as fname, PT.lastName as lname, PT.sex, PT.birthDay dob
+        , SUBSTRING(PT.birthDay, 7, 2) + '/' + SUBSTRING(PT.birthDay, 5, 2) + '/' + SUBSTRING(PT.birthDay, 1, 4) AS bday,
+        PT.marital, PT.occupation, trim(PT.addr1) +' '+rtrim(PT.addr2) as address, PT.moo, PT.tambonCode, PT.regionCode, PT.areaCode 
+        , PT.regionCode+PT.tambonCode  as addcode 
+         FROM            dbo.PATIENT AS PT LEFT OUTER JOIN  
+       dbo.PatSS AS PS ON PS.hn = PT.hn LEFT OUTER JOIN 
+       dbo.PTITLE AS PTITLE ON PT.titleCode = PTITLE.titleCode 
+        where ${columnName}='${searchText}' ` ;
 
-       var result = knex.raw(sql);
-       return result[0];
+       var result = await knex.raw(sql);
+    //    console.log(result[0]);
+       return [result[0]];
 
         // return knex
         // .select()
@@ -36,19 +38,38 @@ export class HisInfodModel {
         // .where(columnName, "=", searchText);
     }
     
-    getOpdService(db: Knex, hn, date, columnName = '', searchText = '') {
-        columnName = columnName == 'visitNo' || columnName == 'vn' ? 'visitno' : columnName;
-        let where: any = {};
-        if (hn) where['hn'] = hn;
-        if (date) where['vstdate'] = date;
-        if (columnName && searchText) where[columnName] = searchText;
+    async getOpdService(db: Knex, hn, date, columnName = '', searchText = '') {
+        // columnName = columnName == 'visitNo' || columnName == 'vn' ? 'visitno' : columnName;
+        // let where: any = {};
+        // if (hn) where['hn'] = hn;
+        // if (date) where['vstdate'] = date;
+        // if (columnName && searchText) where[columnName] = searchText;
 
-        return db('getOpdService_isonline')
-            .where(where)
-            .orderBy('vstdate', 'desc')
-            .limit(maxLimit);
+        date = (moment(date).get('year')+543)+''+moment(date).format("MMDD");
+
+        var sql= ` SELECT        OH.hn, CASE WHEN OH.regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) 
+        + OH.regNo END AS SEQ, OH.regNo, OH.registDate, CAST(CAST(SUBSTRING(OH.registDate, 1, 4) AS int) - 543 AS varchar(10)) +'-'+SUBSTRING(OH.registDate, 5, 2)+'-'+ SUBSTRING(OH.registDate, 7, 2) AS DATE_SERV, OH.timePt AS TIME_SERV2
+        ,left(OH.timePt,2)+':'+right(OH.timePt,2) as TIME_SERV, BH.REFERIN, 
+        BH.TFReasonIn AS CAUSEIN, BH.REFEROUT, BH.TFReasonOut AS CAUSEOUT, SS.Weight, SS.Height, SS.Lbloodpress AS SBP, SS.Hbloodpress AS DBP, SS.Temperature AS BTEMP, SS.Pulse AS PR, SS.Breathe AS RR, 
+        hos.CHANGWAT AS chwin, hos2.CHANGWAT AS chwout
+FROM            dbo.OPD_H AS OH LEFT OUTER JOIN
+        dbo.Bill_h AS BH ON BH.hn = OH.hn AND BH.regNo = OH.regNo LEFT OUTER JOIN
+        dbo.PATIENT AS PT ON PT.hn = OH.hn LEFT OUTER JOIN
+        dbo.SSREGIST AS SS ON SS.hn = OH.hn AND SS.RegNo = OH.regNo LEFT OUTER JOIN
+        dbo.HOSPCODE AS hos ON BH.REFERIN = hos.OFF_ID LEFT OUTER JOIN
+        dbo.HOSPCODE AS hos2 ON BH.REFEROUT = hos2.OFF_ID
+        where OH.hn ='${hn}' and OH.registDate='${date}'  ` ;
+        // return db('getOpdService_isonline')
+        //     .where(where)
+        //     .orderBy('vstdate', 'desc')
+        //     .limit(maxLimit);
+
+        var result = await knex.raw(sql);
+       console.log(result[0]);
+       return result[0];
+
     }
-
+ 
     getDiagnosisOpd(knex, visitno) {
         return knex
             .select('vn as visitno', 'diag as diagcode',
