@@ -15,7 +15,7 @@ export class HisInfodModel {
         return db('VW_IS_PERSON').select('hn').limit(1)
     }
 
-   async getPerson(knex: Knex, columnName, searchText) {
+   async getPerson(db: Knex, columnName, searchText) {
         columnName = columnName == 'hn' ? "ltrim(PT.hn)": columnName;
         
         var sql= ` SELECT   NULL AS age, PS.CardID as cid, PT.hn, PTITLE.titleName AS prename 
@@ -28,7 +28,7 @@ export class HisInfodModel {
        dbo.PTITLE AS PTITLE ON PT.titleCode = PTITLE.titleCode 
         where ${columnName}='${searchText}' ` ;
 
-       var result = await knex.raw(sql);
+       var result = await db.raw(sql);
     //    console.log(result[0]);
        return [result[0]];
 
@@ -48,7 +48,10 @@ export class HisInfodModel {
         date = (moment(date).get('year')+543)+''+moment(date).format("MMDD");
 
         var sql= ` SELECT        OH.hn, CASE WHEN OH.regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) 
-        + OH.regNo END AS SEQ, OH.regNo, OH.registDate, CAST(CAST(SUBSTRING(OH.registDate, 1, 4) AS int) - 543 AS varchar(10)) +'-'+SUBSTRING(OH.registDate, 5, 2)+'-'+ SUBSTRING(OH.registDate, 7, 2) AS DATE_SERV, OH.timePt AS TIME_SERV2
+        + OH.regNo END AS SEQ
+        ,CASE WHEN OH.regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) 
+        + OH.regNo END AS visitno
+        , OH.regNo, OH.registDate, CAST(CAST(SUBSTRING(OH.registDate, 1, 4) AS int) - 543 AS varchar(10)) +'-'+SUBSTRING(OH.registDate, 5, 2)+'-'+ SUBSTRING(OH.registDate, 7, 2) AS DATE_SERV, OH.timePt AS TIME_SERV2
         ,left(OH.timePt,2)+':'+right(OH.timePt,2) as TIME_SERV, BH.REFERIN, 
         BH.TFReasonIn AS CAUSEIN, BH.REFEROUT, BH.TFReasonOut AS CAUSEOUT, SS.Weight, SS.Height, SS.Lbloodpress AS SBP, SS.Hbloodpress AS DBP, SS.Temperature AS BTEMP, SS.Pulse AS PR, SS.Breathe AS RR, 
         hos.CHANGWAT AS chwin, hos2.CHANGWAT AS chwout
@@ -64,18 +67,31 @@ FROM            dbo.OPD_H AS OH LEFT OUTER JOIN
         //     .orderBy('vstdate', 'desc')
         //     .limit(maxLimit);
 
-        var result = await knex.raw(sql);
-       console.log(result[0]);
-       return result[0];
+        var result = await db.raw(sql);
+       console.log("opdservice ==",result[0]);
+       return [result[0]];
 
     }
  
-    getDiagnosisOpd(knex, visitno) {
-        return knex
-            .select('vn as visitno', 'diag as diagcode',
-            'type as diag_type')
-            .from('opd_dx')
-            .where('vn', "=", visitno);
+   async getDiagnosisOpd(db:Knex, visitno) {
+        // return knex
+        //     .select('vn as visitno', 'diag as diagcode',
+        //     'type as diag_type')
+        //     .from('opd_dx')
+        //     .where('vn', "=", visitno);
+        var hn= +( visitno.substring(0,7));
+        var regNo =visitno.substring(7);
+        var sql= ` SELECT       Hn as hn, regNo
+                    ,CASE WHEN regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(Hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(Hn AS Int) AS Char))), 7) 
+                            + regNo END AS visitno ,'' as d_update
+                    , VisitDate, DiagDate, DocCode, ICDCode as diagcode, DiagType, dxtype as diag_type, deptCode, pt_status, rxNo, DiagNo
+                    FROM            dbo.PATDIAG   
+                    where Hn='${hn}' and regNo='${regNo}' ` ;
+
+       var result = await db.raw(sql);
+             //    console.log(result[0]);
+       return [result[0]];
+
     }
 
     getProcedureOpd(knex, columnName, searchNo, hospCode) {
