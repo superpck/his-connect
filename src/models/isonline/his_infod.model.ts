@@ -10,15 +10,15 @@ export class HisInfodModel {
             .from('INFORMATION_SCHEMA.COLUMNS')
             .where('TABLE_CATALOG', '=', dbName);
     }
-    
+
     testConnect(db: Knex) {
         return db('VW_IS_PERSON').select('hn').limit(1)
     }
 
-   async getPerson(db: Knex, columnName, searchText) {
-        columnName = columnName == 'hn' ? "ltrim(PT.hn)": columnName;
-        
-        var sql= ` SELECT   NULL AS age, PS.CardID as cid, PT.hn, PTITLE.titleName AS prename 
+    async getPerson(db: Knex, columnName, searchText) {
+        columnName = columnName == 'hn' ? "ltrim(PT.hn)" : columnName;
+
+        var sql = ` SELECT   NULL AS age, PS.CardID as cid, PT.hn, PTITLE.titleName AS prename 
         , PT.firstName as fname, PT.lastName as lname, PT.sex, PT.birthDay dob
         , SUBSTRING(PT.birthDay, 7, 2) + '/' + SUBSTRING(PT.birthDay, 5, 2) + '/' + SUBSTRING(PT.birthDay, 1, 4) AS bday,
         PT.marital, PT.occupation, trim(PT.addr1) +' '+rtrim(PT.addr2) as address, PT.moo, PT.tambonCode, PT.regionCode, PT.areaCode 
@@ -26,18 +26,18 @@ export class HisInfodModel {
          FROM            dbo.PATIENT AS PT LEFT OUTER JOIN  
        dbo.PatSS AS PS ON PS.hn = PT.hn LEFT OUTER JOIN 
        dbo.PTITLE AS PTITLE ON PT.titleCode = PTITLE.titleCode 
-        where ${columnName}='${searchText}' ` ;
+        where ${columnName}='${searchText}' `;
 
-       var result = await db.raw(sql);
-    //    console.log(result[0]);
-       return [result[0]];
+        var result = await db.raw(sql);
+        //    console.log(result[0]);
+        return [result[0]];
 
         // return knex
         // .select()
         // .from('VW_IS_PERSON')       
         // .where(columnName, "=", searchText);
     }
-    
+
     async getOpdService(db: Knex, hn, date, columnName = '', searchText = '') {
         // columnName = columnName == 'visitNo' || columnName == 'vn' ? 'visitno' : columnName;
         // let where: any = {};
@@ -45,9 +45,9 @@ export class HisInfodModel {
         // if (date) where['vstdate'] = date;
         // if (columnName && searchText) where[columnName] = searchText;
 
-        date = (moment(date).get('year')+543)+''+moment(date).format("MMDD");
+        date = (moment(date).get('year') + 543) + '' + moment(date).format("MMDD");
 
-        var sql= ` SELECT        OH.hn, CASE WHEN OH.regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) 
+        var sql = ` SELECT        OH.hn, CASE WHEN OH.regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) 
         + OH.regNo END AS SEQ
         ,CASE WHEN OH.regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) 
         + OH.regNo END AS visitno
@@ -61,36 +61,38 @@ FROM            dbo.OPD_H AS OH LEFT OUTER JOIN
         dbo.SSREGIST AS SS ON SS.hn = OH.hn AND SS.RegNo = OH.regNo LEFT OUTER JOIN
         dbo.HOSPCODE AS hos ON BH.REFERIN = hos.OFF_ID LEFT OUTER JOIN
         dbo.HOSPCODE AS hos2 ON BH.REFEROUT = hos2.OFF_ID
-        where OH.hn ='${hn}' and OH.registDate='${date}'  ` ;
+        where OH.hn ='${hn}' and OH.registDate='${date}'  `;
         // return db('getOpdService_isonline')
         //     .where(where)
         //     .orderBy('vstdate', 'desc')
         //     .limit(maxLimit);
 
         var result = await db.raw(sql);
-       console.log("opdservice ==",result[0]);
-       return [result[0]];
+        console.log("opdservice ==", result[0]);
+        return [result[0]];
 
     }
- 
-   async getDiagnosisOpd(db:Knex, visitno) {
-        // return knex
-        //     .select('vn as visitno', 'diag as diagcode',
-        //     'type as diag_type')
-        //     .from('opd_dx')
-        //     .where('vn', "=", visitno);
-        var hn= +( visitno.substring(0,7));
-        var regNo =visitno.substring(7);
-        var sql= ` SELECT       Hn as hn, regNo
-                    ,CASE WHEN regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(Hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(Hn AS Int) AS Char))), 7) 
-                            + regNo END AS visitno ,'' as d_update
-                    , VisitDate, DiagDate, DocCode, ICDCode as diagcode, DiagType, dxtype as diag_type, deptCode, pt_status, rxNo, DiagNo
-                    FROM            dbo.PATDIAG   
-                    where Hn='${hn}' and regNo='${regNo}' ` ;
 
-       var result = await db.raw(sql);
-             //    console.log(result[0]);
-       return [result[0]];
+    getDiagnosisOpd(db: Knex, visitno) {
+        var hn = +(visitno.substring(0, 7));
+        var regNo = visitno.substring(7);
+        return db('dbo.PATDIAG')
+            .select('Hn as hn', 'regNo', 'VisitDate', 'DiagDate', 'DocCode',
+                'ICDCode as diagcode', 'DiagType', 'dxtype as diag_type',
+                'deptCode', 'pt_status', 'rxNo', 'DiagNo')
+            .select(db.raw(`CASE WHEN regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(Hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(Hn AS Int) AS Char))), 7) 
+            + regNo END AS visitno`))
+            .where({ hn, regNo });
+        // var sql = ` SELECT       Hn as hn, regNo
+        //             ,CASE WHEN regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(Hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(Hn AS Int) AS Char))), 7) 
+        //                     + regNo END AS visitno ,'' as d_update
+        //             , VisitDate, DiagDate, DocCode, ICDCode as diagcode, DiagType, dxtype as diag_type, deptCode, pt_status, rxNo, DiagNo
+        //             FROM            dbo.PATDIAG   
+        //             where Hn='${hn}' and regNo='${regNo}' `;
+
+        // var result = await db.raw(sql);
+        // //    console.log(result[0]);
+        // return [result[0]];
 
     }
 
