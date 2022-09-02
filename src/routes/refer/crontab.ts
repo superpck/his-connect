@@ -48,6 +48,7 @@ switch (hisProvider) {
   case 'ssb':
     // hisModel = new HisSsbModel();
     break;
+  case 'homc':
   case 'infod':
     // hisModel = new HisInfodModel();
     break;
