@@ -54,6 +54,7 @@ switch (hisProvider) {
     case 'ssb':
         break;
     case 'infod':
+    case 'homc':
         break;
     case 'hi':
         break;
