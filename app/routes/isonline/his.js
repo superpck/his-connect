@@ -64,6 +64,7 @@ switch (provider) {
         hisModel = new his_ssb_model_1.HisSsbModel();
         break;
     case 'infod':
+    case 'homc':
         hisModel = new his_infod_model_1.HisInfodModel();
         break;
     case 'hi':

@@ -1,21 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.IsUserModel = void 0;
+const moment = require("moment");
 class IsUserModel {
     list(knex, id) {
         if (id > 0) {
             console.log(knex('is_user')
-                .where('id', '=', id)
+                .where({ id })
                 .orderBy('fname')
                 .toString());
             return knex('is_user')
-                .where('id', '=', id)
+                .where({ id })
                 .orderBy('fname');
         }
         else {
-            console.log(knex('is_user')
-                .orderBy('fname')
-                .toString());
             return knex('is_user')
                 .orderBy('fname');
         }
@@ -60,11 +58,13 @@ class IsUserModel {
         return knex.raw(sql);
     }
     saveUser(knex, id, arrData) {
+        arrData.updated_at = moment().format('x');
         if (id > 0) {
             return knex('is_user').update(arrData)
                 .where('id', '=', id);
         }
         else {
+            arrData.created_at = moment().format('x');
             return knex('is_user').insert(arrData, 'id');
         }
     }

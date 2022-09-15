@@ -27,7 +27,7 @@ export class HisHosxpv4Model {
                 pt.fname AS fname,
                 pt.lname AS lname,
                 pt.birthday AS dob,
-                pt.sex AS sex,
+                pt.sex AS sex, r.referout_emergency_type_id as EMERGENCY, 
                 r.request_text as REQUEST,
                 r.pdx AS dx, r.pre_diagnosis AS DIAGFIRST,
                 case when r.pmh then r.pmh else opdscreen.pmh end as PH,
