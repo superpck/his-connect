@@ -1,7 +1,7 @@
 {
   "name": "HIS-Connect",
-  "version": "3.2.2",
-  "subVersion": "2022.08.06-01",
+  "version": "3.2.3",
+  "subVersion": "2022.08.14-01",
   "private": true,
   "scripts": {
     "start": "npx ts-node ./src/app.ts",
