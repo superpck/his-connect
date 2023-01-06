@@ -198,7 +198,7 @@ const router = (fastify, {}, next) => {
             });
         }
     }));
-    fastify.post('/person', { preHandler: [fastify.serviceMonitoring] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    fastify.post('/person', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         let columnName = req.body.columnName;
         let searchText = req.body.searchText;
         if (columnName && searchText) {

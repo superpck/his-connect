@@ -195,7 +195,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/person', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/person', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, res: fastify.Reply) => {
     let columnName: string = req.body.columnName;
     let searchText: string = req.body.searchText;
 
