@@ -1,11 +1,11 @@
-import * as knex from 'knex';
+import { Knex } from 'knex';
 const maxLimit = 2500;
 const dbName = process.env.CANNABIS_DB_NAME;
 const hcode = process.env.HOSPCODE;
 
 export class PmkModel {
 
-  testConnection(db: knex) {
+  testConnection(db: Knex) {
     return db('PATIENTS as p')
       .select(db.raw(`'${hcode}' AS "hospcode"`))
       .select('p.ID_CARD as cid', 'p.HN as hn', 'p.PRENAME as provis_pname'
@@ -28,7 +28,7 @@ export class PmkModel {
       .limit(1);
   }
 
-  searchPatient(db: knex, cid: any): Promise<any> {
+  searchPatient(db: Knex, cid: any): Promise<any> {
     return db('PATIENTS as p')
       .select(db.raw(`'${hcode}' AS "hospcode"`))
       .select('p.ID_CARD as cid', 'p.HN as hn', 'p.PRENAME as provis_pname'
@@ -52,7 +52,7 @@ export class PmkModel {
       .limit(1);
   }
 
-  async searchVisit(db: knex, hn: any, startDate = null, endDate = null): Promise<any> {
+  async searchVisit(db: Knex, hn: any, startDate = null, endDate = null): Promise<any> {
     let where = `o.hn='${hn}'`;
     if (startDate && endDate) {
       where = ` and o.vstdate between TO_DATE('${startDate}', 'YYYY-MM-DD HH24:MI:SS') and TO_DATE('${endDate}', 'YYYY-MM-DD HH24:MI:SS')`;
@@ -67,7 +67,7 @@ export class PmkModel {
       .limit(maxLimit);
   }
 
-  async patientInfo(db: knex, hn: any): Promise<any> {
+  async patientInfo(db: Knex, hn: any): Promise<any> {
     return db('PATIENTS as p')
       .select(db.raw(`'${hcode}' AS "hospcode"`))
       .select('p.ID_CARD as cid', 'p.HN as hn', 'p.PRENAME as provis_pname'
@@ -93,49 +93,49 @@ export class PmkModel {
     //      passport_no 
   }
 
-  async getVisitLab(db: knex, hn: any, vn: any): Promise<any> {
+  async getVisitLab(db: Knex, hn: any, vn: any): Promise<any> {
     return db(dbName + '.ccd_lab_result')
       .where('hn', hn)
       .where('vn', vn)
       .limit(maxLimit);
   }
 
-  async getVisitDrug(db: knex, hn: any, vn: any): Promise<any> {
+  async getVisitDrug(db: Knex, hn: any, vn: any): Promise<any> {
     return db(dbName + '.ccd_dispense_items')
       .where('hn', hn)
       .where('vn', vn)
       .limit(maxLimit);
   }
 
-  async getVisitAppointment(db: knex, hn: any, vn: any): Promise<any> {
+  async getVisitAppointment(db: Knex, hn: any, vn: any): Promise<any> {
     return db(dbName + '.ccd_appointment')
       .where('hn', hn)
       .where('vn', vn)
       .limit(maxLimit);
   }
 
-  async getVisitDiagText(db: knex, hn: any, vn: any): Promise<any> {
+  async getVisitDiagText(db: Knex, hn: any, vn: any): Promise<any> {
     return db(dbName + '.ccd_opd_visit_diag_text')
       .where('hn', hn)
       .where('vn', vn)
       .limit(maxLimit);
   }
 
-  async getVisitDiagnosis(db: knex, hn: any, vn: any): Promise<any> {
+  async getVisitDiagnosis(db: Knex, hn: any, vn: any): Promise<any> {
     return db(dbName + '.ccd_opd_visit_diag')
       .where('hn', hn)
       .where('vn', vn)
       .limit(maxLimit);
   }
 
-  async getVisitProcedure(db: knex, hn: any, vn: any): Promise<any> {
+  async getVisitProcedure(db: Knex, hn: any, vn: any): Promise<any> {
     return db(dbName + '.ccd_opd_visit_procedure')
       .where('hn', hn)
       .where('vn', vn)
       .limit(maxLimit);
   }
 
-  async getVisitScreening(db: knex, hn: any, vn: any): Promise<any> {
+  async getVisitScreening(db: Knex, hn: any, vn: any): Promise<any> {
     return db(dbName + '.ccd_opd_visit_screen')
       .where('hn', hn)
       .where('vn', vn)

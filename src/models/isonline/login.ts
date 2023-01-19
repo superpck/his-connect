@@ -1,4 +1,4 @@
-import Knex = require('knex');
+import { Knex } from 'knex';
 import { IisStructure } from '../model';
 import * as moment from 'moment';
 const dbName = process.env.DB_NAME;

@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import { Knex } from 'knex';
 import * as moment from 'moment';
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;

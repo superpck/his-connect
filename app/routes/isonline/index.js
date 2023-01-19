@@ -15,7 +15,7 @@ const isModel = new iswin_1.IswinModel();
 const router = (fastify, {}, next) => {
     fastify.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         res.send({
-            apiCode: 'ISOnline',
+            apiCode: 'ISOnline@MOPH',
             version: fastify.apiVersion,
             subVersion: fastify.apiSubVersion
         });

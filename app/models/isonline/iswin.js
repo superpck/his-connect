@@ -20,14 +20,12 @@ class IswinModel {
             .limit(1);
     }
     getTableName(knex) {
-        return knex
+        return knex('information_schema.tables')
             .select('table_name')
-            .from('information_schema.tables')
             .where('TABLE_SCHEMA', '=', dbName);
     }
     selectSqlK(knex, tableName, selectText, whereText, groupBy, orderBy, limit = '2000') {
-        let Sql = knex.select(selectText)
-            .from(tableName)
+        let Sql = knex(tableName).select(selectText)
             .where(whereText)
             .groupBy(groupBy)
             .orderBy(orderBy)

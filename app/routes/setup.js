@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -18,8 +18,6 @@ const configFileName = 'config';
 let shell = require("shelljs");
 let setupSession = '';
 const router = (fastify, {}, next) => {
-    const sessionName = 'admin-session';
-    var db = fastify.knex;
     fastify.get('/', (req, reply) => {
         reply.view('/templates/pages/index.ejs', {
             token: getSession(), req: req.ip, env: process.env

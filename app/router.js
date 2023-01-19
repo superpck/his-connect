@@ -21,6 +21,7 @@ function router(fastify) {
         fastify.register(require('./routes/refer/send'), { prefix: `${rootPrefix}/refer/send-moph`, logger: true });
         fastify.register(require('./routes/hdc/index'), { prefix: `${rootPrefix}/hdc`, logger: true });
         fastify.register(require('./routes/isonline/index'), { prefix: `${rootPrefix}/isonline`, logger: true });
+        fastify.register(require('./routes/isonline/login'), { prefix: `${rootPrefix}/isonline/login`, logger: true });
         fastify.register(require('./routes/isonline/login'), { prefix: `${rootPrefix}/login`, logger: true });
         fastify.register(require('./routes/isonline/index'), { prefix: `${rootPrefix}/iswin`, logger: true });
         fastify.register(require('./routes/isonline/index'), { prefix: `${rootPrefix}/is`, logger: true });

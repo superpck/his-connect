@@ -34,16 +34,12 @@ class IsUserModel {
         return knex.raw(sql);
     }
     getByID(knex, userID) {
-        return knex
-            .select('*')
-            .from('is_user')
+        return knex('is_user')
             .where('id', userID)
             .orderBy('fname', 'lname');
     }
     getByUserName(knex, userName) {
-        return knex
-            .select('*')
-            .from('is_user')
+        return knex('is_user')
             .where('username', userName)
             .orderBy('fname', 'lname');
     }

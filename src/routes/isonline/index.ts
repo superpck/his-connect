@@ -1,6 +1,6 @@
 /// <reference path="../../../typings.d.ts" />
 
-import * as Knex from 'knex';
+import { Knex } from 'knex';
 import * as fastify from 'fastify';
 import * as HttpStatus from 'http-status-codes';
 
@@ -10,7 +10,7 @@ const isModel = new IswinModel();
 const router = (fastify, { }, next) => {
   fastify.get('/', async (req: fastify.Request, res: fastify.Reply) => {
     res.send({
-      apiCode: 'ISOnline',
+      apiCode: 'ISOnline@MOPH',
       version: fastify.apiVersion,
       subVersion: fastify.apiSubVersion
     });

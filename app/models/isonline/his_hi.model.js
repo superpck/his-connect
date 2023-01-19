@@ -5,18 +5,16 @@ const dbName = process.env.HIS_DB_NAME;
 const maxLimit = 250;
 class HisHiModel {
     getTableName(knex) {
-        return knex
+        return knex('information_schema.tables')
             .select('TABLE_NAME')
-            .from('information_schema.tables')
             .where('TABLE_SCHEMA', '=', dbName);
     }
     testConnect(db) {
         return db('hospdata.patient').select('hn').limit(1);
     }
     getPerson(knex, columnName, searchText) {
-        return knex
+        return knex('hospdata.patient')
             .select('hn', 'no_card as cid', 'title as prename', 'name as fname', 'surname as lname', 'birth as dob', 'sex', 'address', 'moo', 'road', 'add as addcode', 'tel', 'zip', 'occupa as occupation')
-            .from('hospdata.patient')
             .where(columnName, "=", searchText);
     }
     getOpdService(db, hn, date, columnName = '', searchText = '') {
@@ -35,75 +33,54 @@ class HisHiModel {
             .limit(maxLimit);
     }
     getDiagnosisOpd(knex, visitno) {
-        return knex
+        return knex('opd_dx')
             .select('vn as visitno', 'diag as diagcode', 'type as diag_type')
-            .from('opd_dx')
             .where('vn', "=", visitno);
     }
     getProcedureOpd(knex, columnName, searchNo, hospCode) {
-        return knex
+        return knex('procedure_opd')
             .select('*')
-            .from('procedure_opd')
             .where(columnName, "=", searchNo);
     }
     getChargeOpd(knex, columnName, searchNo, hospCode) {
-        return knex
+        return knex('charge_opd')
             .select('*')
-            .from('charge_opd')
             .where(columnName, "=", searchNo);
     }
     getDrugOpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('drug_opd')
+        return knex('drug_opd')
             .where(columnName, "=", searchNo);
     }
     getAdmission(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('admission')
+        return knex('admission')
             .where(columnName, "=", searchNo);
     }
     getDiagnosisIpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('diagnosis_ipd')
+        return knex('diagnosis_ipd')
             .where(columnName, "=", searchNo);
     }
     getProcedureIpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('procedure_ipd')
+        return knex('procedure_ipd')
             .where(columnName, "=", searchNo);
     }
     getChargeIpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('charge_ipd')
+        return knex('charge_ipd')
             .where(columnName, "=", searchNo);
     }
     getDrugIpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('drug_ipd')
+        return knex('drug_ipd')
             .where(columnName, "=", searchNo);
     }
     getAccident(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('accident')
+        return knex('accident')
             .where(columnName, "=", searchNo);
     }
     getAppointment(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('appointment')
+        return knex('appointment')
             .where(columnName, "=", searchNo);
     }
     getData(knex, tableName, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from(tableName)
+        return knex(tableName)
             .where(columnName, "=", searchNo)
             .limit(5000);
     }

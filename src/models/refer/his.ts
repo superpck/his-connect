@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import { Knex } from 'knex';
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 const dbName = process.env.HIS_DB_NAME;

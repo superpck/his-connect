@@ -1,4 +1,4 @@
-import Knex = require('knex');
+import { Knex } from 'knex';
 import * as moment from 'moment';
 
 export class IsUserModel {
@@ -35,17 +35,13 @@ export class IsUserModel {
   }
 
   getByID(knex: Knex, userID: number) {
-    return knex
-      .select('*')
-      .from('is_user')
+    return knex('is_user')
       .where('id', userID)
       .orderBy('fname', 'lname');
   }
 
   getByUserName(knex: Knex, userName: string) {
-    return knex
-      .select('*')
-      .from('is_user')
+    return knex('is_user')
       .where('username', userName)
       .orderBy('fname', 'lname');
   }

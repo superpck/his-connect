@@ -1,7 +1,7 @@
 /// <reference path="../../../typings.d.ts" />
 
 // ห้ามแก้ไข file นี้ // 
-import * as Knex from 'knex';
+import { Knex } from 'knex';
 import * as fastify from 'fastify';
 import * as HttpStatus from 'http-status-codes';
 import * as moment from 'moment';

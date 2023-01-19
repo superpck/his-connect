@@ -96,6 +96,35 @@ const router = (fastify, {}, next) => {
             });
         }
     }));
+    fastify.post('/api-login', { preHandler: [fastify.serviceMonitoring] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        let body = req.body;
+        let username = body.username;
+        let password = body.password;
+        const ip = req.headers["x-real-ip"] || req.headers["x-forwarded-for"] || req.ip;
+        console.log('api-login', req.headers["x-real-ip"], req.headers["x-forwarded-for"], req.ip);
+        if (ip == '203.157.103.55' && username.length == 5 && password) {
+            let today = moment().format('YYYY-MM-DD HH:mm:ss');
+            let expire = moment().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
+            const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
+            const payload = {
+                hcode: username,
+                tokenKey: tokenKey,
+                create: today,
+                expire: expire
+            };
+            const token = fastify.jwt.sign(payload, { expiresIn: '8h' });
+            res.send({
+                statusCode: HttpStatus.OK,
+                token: token
+            });
+        }
+        else {
+            res.send({
+                statusCode: HttpStatus.UNAUTHORIZED,
+                message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED)
+            });
+        }
+    }));
     fastify.post('/token-status/:tokenKey', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         let tokenKey = req.params.tokenKey;
         if (tokenKey) {

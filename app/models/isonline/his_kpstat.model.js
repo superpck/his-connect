@@ -4,9 +4,8 @@ exports.HisKpstatModel = void 0;
 const dbName = process.env.HIS_DB_NAME;
 class HisKpstatModel {
     getTableName(knex) {
-        return knex
+        return knex('information_schema.tables')
             .select('TABLE_NAME')
-            .from('information_schema.tables')
             .where('TABLE_SCHEMA', '=', dbName);
     }
     testConnect(db) {
@@ -14,88 +13,63 @@ class HisKpstatModel {
     }
     getPerson(knex, columnName, searchText) {
         columnName = columnName === 'cid' ? 'idpop' : columnName;
-        return knex
+        return knex('mrls.pt')
             .select('hn', 'idpop as cid', 'pname as prename', 'fname', 'lname', 'brthdate as dob', 'mate as sex', 'addrpart as address', 'moopart as moo', 'road', 'soi', 'add as addcode', 'tel', 'zip', 'occptn as occupation')
-            .from('mrls.pt')
             .where(columnName, "=", searchText);
     }
     getOpdService(knex, hn, date, columnName = '', searchText = '') {
-        return knex
+        return knex('mrls.ovst')
             .select('hn', 'vstno as visitno', 'vstdate as date', 'vsttime as time', 'bp1 as bp_systolic', 'bp2 as bp_diastolic', 'puls as pr', 'rate as rr')
-            .from('mrls.ovst')
             .where('hn', "=", hn)
             .where('vstdate', "=", date);
     }
     getDiagnosisOpd(knex, visitno) {
-        return knex
+        return knex('ovstdiag')
             .select('vstno as visitno', 'icd10 as diagcode', 'dxtype as diag_type')
-            .from('ovstdiag')
             .where('vstno', "=", visitno);
     }
     getProcedureOpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('procedure_opd')
+        return knex('procedure_opd')
             .where(columnName, "=", searchNo);
     }
     getChargeOpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('charge_opd')
+        return knex('charge_opd')
             .where(columnName, "=", searchNo);
     }
     getDrugOpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('drug_opd')
+        return knex('drug_opd')
             .where(columnName, "=", searchNo);
     }
     getAdmission(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('admission')
+        return knex('admission')
             .where(columnName, "=", searchNo);
     }
     getDiagnosisIpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('diagnosis_ipd')
+        return knex('diagnosis_ipd')
             .where(columnName, "=", searchNo);
     }
     getProcedureIpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('procedure_ipd')
+        return knex('procedure_ipd')
             .where(columnName, "=", searchNo);
     }
     getChargeIpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('charge_ipd')
+        return knex('charge_ipd')
             .where(columnName, "=", searchNo);
     }
     getDrugIpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('drug_ipd')
+        return knex('drug_ipd')
             .where(columnName, "=", searchNo);
     }
     getAccident(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('accident')
+        return knex('accident')
             .where(columnName, "=", searchNo);
     }
     getAppointment(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('appointment')
+        return knex('appointment')
             .where(columnName, "=", searchNo);
     }
     getData(knex, tableName, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from(tableName)
+        return knex(tableName)
             .where(columnName, "=", searchNo)
             .limit(5000);
     }

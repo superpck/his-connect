@@ -198,121 +198,142 @@ const router = (fastify, {}, next) => {
             });
         }
     }));
-    fastify.post('/person', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-        let columnName = req.body.columnName;
-        let searchText = req.body.searchText;
-        if (columnName && searchText) {
-            try {
-                const result = yield hisModel.getPerson(fastify.dbHIS, columnName, searchText);
-                fastify.dbHIS.destroy;
-                res.send({
-                    statusCode: HttpStatus.OK,
-                    version: fastify.apiVersion,
-                    subVersion: fastify.apiSubVersion,
-                    hisProvider: process.env.HIS_PROVIDER,
-                    reccount: result.length,
-                    rows: result
-                });
-            }
-            catch (error) {
-                console.log('person', error.message);
-                res.send({
-                    statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-                    message: error.message
-                });
-            }
-        }
-        else {
+    fastify.post('/person', { preHandler: [fastify.serviceMonitoring] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        const userInfo = yield decodeToken(req);
+        if (!userInfo || !userInfo.hcode) {
             res.send({
-                statusCode: HttpStatus.BAD_REQUEST,
-                message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+                statusCode: HttpStatus.UNAUTHORIZED,
+                message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED)
             });
         }
-    }));
-    fastify.post('/opd-service', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-        let hn = req.body.hn;
-        let date = req.body.date;
-        let visitNo = req.body.visitNo || '';
-        if (visitNo + hn) {
-            try {
-                const result = yield hisModel.getOpdService(fastify.dbHIS, hn, date, 'vn', visitNo);
-                fastify.dbHIS.destroy;
-                res.send({
-                    statusCode: HttpStatus.OK,
-                    version: fastify.apiVersion,
-                    subVersion: fastify.apiSubVersion,
-                    hisProvider: process.env.HIS_PROVIDER,
-                    reccount: result.length,
-                    rows: result
-                });
+        else {
+            let columnName = req.body.columnName;
+            let searchText = req.body.searchText;
+            console.log('search person', userInfo.hcode);
+            if (columnName && searchText) {
+                try {
+                    const result = yield hisModel.getPerson(fastify.dbHIS, columnName, searchText);
+                    fastify.dbHIS.destroy;
+                    res.send({
+                        statusCode: HttpStatus.OK,
+                        version: fastify.apiVersion,
+                        subVersion: fastify.apiSubVersion,
+                        hisProvider: process.env.HIS_PROVIDER,
+                        reccount: result.length,
+                        rows: result
+                    });
+                }
+                catch (error) {
+                    console.log('person', error.message);
+                    res.send({
+                        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                        message: error.message
+                    });
+                }
             }
-            catch (error) {
-                console.log('opd-service', error.message);
+            else {
                 res.send({
-                    statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-                    message: error.message
+                    statusCode: HttpStatus.BAD_REQUEST,
+                    message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
                 });
             }
         }
-        else {
+    }));
+    fastify.post('/opd-service', { preHandler: [fastify.serviceMonitoring] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        const userInfo = yield decodeToken(req);
+        if (!userInfo || !userInfo.hcode) {
             res.send({
-                statusCode: HttpStatus.BAD_REQUEST,
-                message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+                statusCode: HttpStatus.UNAUTHORIZED,
+                message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED)
             });
         }
-    }));
-    fastify.post('/opd-diagnosis', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-        let visitNo = req.body.visitNo || req.body.vn;
-        if (visitNo) {
-            try {
-                const result = yield hisModel.getDiagnosisOpd(fastify.dbHIS, visitNo);
-                fastify.dbHIS.destroy;
-                res.send({
-                    statusCode: HttpStatus.OK,
-                    version: fastify.apiVersion,
-                    subVersion: fastify.apiSubVersion,
-                    hisProvider: process.env.HIS_PROVIDER,
-                    reccount: result.length,
-                    rows: result
-                });
+        else {
+            let hn = req.body.hn;
+            let date = req.body.date;
+            let visitNo = req.body.visitNo || '';
+            if (visitNo + hn) {
+                try {
+                    const result = yield hisModel.getOpdService(fastify.dbHIS, hn, date, 'vn', visitNo);
+                    fastify.dbHIS.destroy;
+                    res.send({
+                        statusCode: HttpStatus.OK,
+                        version: fastify.apiVersion,
+                        subVersion: fastify.apiSubVersion,
+                        hisProvider: process.env.HIS_PROVIDER,
+                        reccount: result.length,
+                        rows: result
+                    });
+                }
+                catch (error) {
+                    console.log('opd-service', error.message);
+                    res.send({
+                        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                        message: error.message
+                    });
+                }
             }
-            catch (error) {
-                console.log('opd-diagnosis', error.message);
+            else {
                 res.send({
-                    statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-                    message: error.message
+                    statusCode: HttpStatus.BAD_REQUEST,
+                    message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
                 });
             }
         }
-        else {
+    }));
+    fastify.post('/opd-diagnosis', { preHandler: [fastify.serviceMonitoring] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        const userInfo = yield decodeToken(req);
+        if (!userInfo || !userInfo.hcode) {
             res.send({
-                statusCode: HttpStatus.BAD_REQUEST,
-                message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+                statusCode: HttpStatus.UNAUTHORIZED,
+                message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED)
             });
         }
+        else {
+            let visitNo = req.body.visitNo || req.body.vn;
+            if (visitNo) {
+                try {
+                    const result = yield hisModel.getDiagnosisOpd(fastify.dbHIS, visitNo);
+                    fastify.dbHIS.destroy;
+                    res.send({
+                        statusCode: HttpStatus.OK,
+                        version: fastify.apiVersion,
+                        subVersion: fastify.apiSubVersion,
+                        hisProvider: process.env.HIS_PROVIDER,
+                        reccount: result.length,
+                        rows: result
+                    });
+                }
+                catch (error) {
+                    console.log('opd-diagnosis', error.message);
+                    res.send({
+                        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                        message: error.message
+                    });
+                }
+            }
+            else {
+                res.send({
+                    statusCode: HttpStatus.BAD_REQUEST,
+                    message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+                });
+            }
+        }
     }));
-    function verifyToken(req, res) {
+    function decodeToken(req) {
         return __awaiter(this, void 0, void 0, function* () {
             let token = null;
-            if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
-                token = req.headers.authorization.split(' ')[1];
-            }
-            else if (req.query && req.query.token) {
-                token = req.query.token;
-            }
-            else if (req.body && req.body.token) {
+            if (req.body && req.body.token) {
                 token = req.body.token;
             }
+            else if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+                token = req.headers.authorization.split(' ')[1];
+            }
             try {
-                yield fastify.jwt.verify(token);
-                return true;
+                const decode = yield fastify.jwt.verify(token);
+                return decode;
             }
             catch (error) {
-                console.log('authen fail!', error.message);
-                res.status(HttpStatus.UNAUTHORIZED).send({
-                    statusCode: HttpStatus.UNAUTHORIZED,
-                    message: error.message
-                });
+                return null;
             }
         });
     }

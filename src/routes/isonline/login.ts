@@ -1,6 +1,5 @@
 /// <reference path="../../../typings.d.ts" />
 
-import * as Knex from 'knex';
 import * as fastify from 'fastify';
 import * as HttpStatus from 'http-status-codes';
 import * as moment from 'moment';
@@ -90,6 +89,35 @@ const router = (fastify, { }, next) => {
         status: 400,
         ok: false,
         message: 'กรุณาระบุชื่อผู้ใช้งานและรหัสผ่าน'
+      })
+    }
+  })
+
+  fastify.post('/api-login', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+    let body: any = req.body;
+    let username = body.username;
+    let password = body.password;
+    const ip = req.headers["x-real-ip"] || req.headers["x-forwarded-for"] || req.ip;
+    console.log('api-login', req.headers["x-real-ip"], req.headers["x-forwarded-for"],req.ip)
+    if (ip == '203.157.103.55' && username.length==5 && password) {
+      let today = moment().format('YYYY-MM-DD HH:mm:ss');
+      let expire = moment().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
+      const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
+      const payload = {
+        hcode: username,
+        tokenKey: tokenKey,
+        create: today,
+        expire: expire
+      };
+      const token = fastify.jwt.sign(payload, { expiresIn: '8h' });
+      res.send({
+        statusCode: HttpStatus.OK,
+        token: token
+      })
+    } else {
+      res.send({
+        statusCode: HttpStatus.UNAUTHORIZED,
+        message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED)
       })
     }
   })

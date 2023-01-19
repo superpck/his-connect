@@ -1,4 +1,4 @@
-import Knex = require('knex');
+import { Knex } from 'knex';
 import * as moment from 'moment';
 
 const maxLimit = 250;

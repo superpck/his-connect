@@ -1,4 +1,4 @@
-import Knex = require('knex');
+import { Knex } from 'knex';
 import { IisStructure } from '../model';
 import * as moment from 'moment';
 const dbName = process.env.DB_NAME;
@@ -13,15 +13,13 @@ export class IswinModel {
   }
 
   getTableName(knex: Knex) {
-    return knex
+    return knex('information_schema.tables')
       .select('table_name')
-      .from('information_schema.tables')
       .where('TABLE_SCHEMA', '=', dbName);
   }
 
   selectSqlK(knex: Knex, tableName: string, selectText: string, whereText: string, groupBy: string, orderBy: string, limit = '2000') {
-    let Sql: string = knex.select(selectText)
-      .from(tableName)
+    let Sql: string = knex(tableName).select(selectText)
       .where(whereText)
       .groupBy(groupBy)
       .orderBy(orderBy)

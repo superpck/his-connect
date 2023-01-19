@@ -5,9 +5,8 @@ const dbName = process.env.HIS_DB_NAME;
 const maxLimit = 100;
 class HisHospitalOsModel {
     getTableName(knex) {
-        return knex
+        return knex('information_schema.tables')
             .select('table_name')
-            .from('information_schema.tables')
             .where('table_catalog', '=', dbName);
     }
     testConnect(db) {
@@ -16,7 +15,7 @@ class HisHospitalOsModel {
     getPerson(knex, columnName, searchText) {
         columnName = columnName == 'hn' ? 'patient.patient_hn' : columnName;
         columnName = columnName == 'cid' ? 'patient.patient_pid' : columnName;
-        return knex
+        return knex('t_patient as patient')
             .select('patient.patient_hn as hn', 'patient.patient_pid as cid', 'f_patient_prefix.patient_prefix_description as prename', 'patient.patient_firstname as fname', 'patient.patient_lastname as lname', 'patient.f_sex_id as sex', 'patient.patient_moo as moo', 'patient.patient_road as road', 'patient.patient_house as address', 'patient.patient_phone_number as tel', 'patient.patient_tambon as addcode')
             .select(knex.raw(`'' as zip, concat(to_number(substr(patient.patient_birthday,1,4),'9999')-543 ,'-',substr(patient.patient_birthday,6)) as dob, CASE WHEN f_patient_occupation.r_rp1853_occupation_id IN ('001') THEN '07' 
 			WHEN f_patient_occupation.r_rp1853_occupation_id IN ('002') THEN '14'
@@ -33,7 +32,6 @@ class HisHospitalOsModel {
 			WHEN f_patient_occupation.r_rp1853_occupation_id IN ('014') THEN '19' 
 			WHEN f_patient_occupation.r_rp1853_occupation_id IN ('015') THEN '08' 
 			WHEN f_patient_occupation.r_rp1853_occupation_id IN ('900','901') THEN '99' ELSE 'N' END AS occupation`))
-            .from('t_patient as patient')
             .leftJoin('f_patient_prefix', 'f_patient_prefix.f_patient_prefix_id', 'patient.f_patient_prefix_id')
             .leftJoin('f_patient_occupation', 'patient.f_patient_occupation_id', 'f_patient_occupation.f_patient_occupation_id')
             .orderBy('patient.patient_tambon')
@@ -46,7 +44,10 @@ class HisHospitalOsModel {
             where['t_visit.visit_hn'] = hn;
         if (columnName && searchText)
             where[columnName] = searchText;
-        return knex
+        return knex('t_visit')
+            .leftJoin(`t_accident`, 't_accident.t_visit_id', 't_visit.t_visit_id')
+            .leftJoin(`t_visit_vital_sign`, 't_visit_vital_sign.t_visit_id', 't_visit.t_visit_id')
+            .leftJoin('t_visit_service', 't_visit_service.t_visit_id', 't_visit.t_visit_id')
             .select('t_visit.visit_hn as hn', 't_visit.visit_vn as visitno ', 't_accident.accident_time as time')
             .select(knex.raw(` concat(to_number(substr(t_accident.accident_date,1,4),'9999')-543 ,'-',substr(t_accident.accident_date,6),' ',t_accident.accident_time,':00') as adate ,
     
@@ -142,74 +143,52 @@ class HisHospitalOsModel {
       WHEN t_visit.f_visit_ipd_discharge_type_id in ('8','9') THEN '5'
       WHEN t_visit.f_visit_ipd_discharge_type_id in ('5','6') THEN '6' ELSE '' END AS staward
       `))
-            .from('t_visit')
-            .leftJoin(`t_accident`, 't_accident.t_visit_id', 't_visit.t_visit_id')
-            .leftJoin(`t_visit_vital_sign`, 't_visit_vital_sign.t_visit_id', 't_visit.t_visit_id')
-            .leftJoin('t_visit_service', 't_visit_service.t_visit_id', 't_visit.t_visit_id')
             .where(where)
             .whereRaw(`concat(to_number(substr(t_accident.accident_to_hos_date,1,4),'9999')-543
             ,'-',substr(t_accident.accident_to_hos_date,6)) = ?`, [date])
             .limit(maxLimit);
     }
     getDiagnosisOpd(knex, visitno) {
-        return knex
+        return knex('t_accident')
             .select('t_visit.visit_vn as visitno', 't_accident.icd10_number as diagcode')
-            .from('t_accident')
             .innerJoin('t_visit', 't_accident.t_visit_id', 't_visit.t_visit_id')
             .where('t_visit.visit_vn', "=", visitno);
     }
     getProcedureOpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('procedure_opd')
+        return knex('procedure_opd')
             .where(columnName, "=", searchNo);
     }
     getChargeOpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('charge_opd')
+        return knex('charge_opd')
             .where(columnName, "=", searchNo);
     }
     getDrugOpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('drug_opd')
+        return knex('drug_opd')
             .where(columnName, "=", searchNo);
     }
     getAdmission(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('admission')
+        return knex('admission')
             .where(columnName, "=", searchNo);
     }
     getDiagnosisIpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('diagnosis_ipd')
+        return knex('diagnosis_ipd')
             .where(columnName, "=", searchNo);
     }
     getProcedureIpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('procedure_ipd')
+        return knex('procedure_ipd')
             .where(columnName, "=", searchNo);
     }
     getChargeIpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('charge_ipd')
+        return knex('charge_ipd')
             .where(columnName, "=", searchNo);
     }
     getDrugIpd(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('drug_ipd')
+        return knex('drug_ipd')
             .where(columnName, "=", searchNo);
     }
     getAccident(knex, visitno) {
-        return knex
+        return knex('er_regist')
             .select('er_regist.vn', 'ovst.hn', 'ovst.vstdate as adate', 'ovst.vsttime as atime', 'er_nursing_detail.accident_person_type_id', 'er_nursing_detail.accident_belt_type_id as belt', 'opdscreen.bps as bp1', 'opdscreen.bpd as bp2', 'er_nursing_detail.gcs_e as e', 'er_nursing_detail.gcs_v as v', 'er_nursing_detail.gcs_m as m')
-            .from('er_regist')
             .leftJoin(`ovst`, function () { this.on('ovst.vn', '=', 'er_regist.vn'); })
             .leftJoin(`patient`, function () { this.on('patient.hn', '=', 'ovst.hn'); })
             .leftJoin(`er_nursing_detail`, function () { this.on('er_nursing_detail.vn', '=', 'ovst.vn'); })
@@ -217,15 +196,11 @@ class HisHospitalOsModel {
             .where('er_regist.vn', "=", visitno);
     }
     getAppointment(knex, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from('appointment')
+        return knex('appointment')
             .where(columnName, "=", searchNo);
     }
     getData(knex, tableName, columnName, searchNo, hospCode) {
-        return knex
-            .select('*')
-            .from(tableName)
+        return knex(tableName)
             .where(columnName, "=", searchNo)
             .limit(5000);
     }

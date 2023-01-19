@@ -48,7 +48,7 @@ app.register(require('point-of-view'), {
     }
 });
 app.register(fastifyCookie);
-app.register(require('fastify-jwt'), {
+app.register(require('@fastify/jwt'), {
     secret: process.env.SECRET_KEY
 });
 app.register(require('fastify-ws'), {});
@@ -110,24 +110,25 @@ app.register(require('./plugins/db'), {
     }),
     connectionName: 'dbCannabis'
 });
-app.decorate("authenticate", (request, reply) => __awaiter(void 0, void 0, void 0, function* () {
+app.decorate("authenticate", (request, reply, next) => __awaiter(void 0, void 0, void 0, function* () {
     let token = null;
-    if (request.headers.authorization && request.headers.authorization.split(' ')[0] === 'Bearer') {
-        token = yield request.headers.authorization.split(' ')[1];
-    }
-    else if (request.body && request.body.token) {
+    if (request.body && request.body.token) {
         token = yield request.body.token;
     }
+    else if (request.headers.authorization && request.headers.authorization.split(' ')[0] === 'Bearer') {
+        token = yield request.headers.authorization.split(' ')[1];
+    }
     try {
-        const decoded = yield request.jwtVerify(token);
+        yield request.jwtVerify(token, process.env.SECRET_KEY);
     }
     catch (err) {
-        console.log(moment().format('HH:mm:ss.SSS'), 'authenticate fail', err.message);
+        console.log(moment().format('HH:mm:ss.SSS'), 'error:' + HttpStatus.UNAUTHORIZED, err.message);
         reply.send({
             statusCode: HttpStatus.UNAUTHORIZED,
             message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED)
         });
     }
+    next();
 }));
 app.decorate("checkRequestKey", (request, reply) => __awaiter(void 0, void 0, void 0, function* () {
     let skey = null;
@@ -148,7 +149,7 @@ app.decorate("serviceMonitoring", (request, reply) => __awaiter(void 0, void 0, 
 }));
 app.register(nodecron_1.default);
 const port = +process.env.PORT || 3001;
-const host = '0.0.0.0';
+const host = process.env.HOST || '0.0.0.0';
 app.listen(port, host, (err) => {
     app.startServerTime = moment().locale('th').format('YYYY-MM-DD HH:mm:ss');
     if (err)

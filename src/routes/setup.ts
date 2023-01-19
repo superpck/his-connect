@@ -1,10 +1,7 @@
-'use strict';
 /// <reference path="../../typings.d.ts" />
 
-import * as Knex from 'knex';
 import * as fastify from 'fastify';
 import * as moment from 'moment';
-import * as HttpStatus from 'http-status-codes';
 import path = require('path');
 // import { localStorage, sessionStorage } from "webstorage-node";
 
@@ -16,10 +13,6 @@ let shell = require("shelljs");
 let setupSession: any = '';
 
 const router = (fastify, { }, next) => {
-
-  const sessionName = 'admin-session';
-  var db: Knex = fastify.knex;
-
   fastify.get('/', (req: fastify.Request, reply: fastify.Reply) => {
     reply.view('/templates/pages/index.ejs', {
       token: getSession(), req: req.ip, env: process.env

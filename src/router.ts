@@ -17,6 +17,7 @@ export default async function router(fastify: FastifyInstance) {
 
 // ISOnline service
   fastify.register(require('./routes/isonline/index'), { prefix: `${rootPrefix}/isonline`, logger: true });
+  fastify.register(require('./routes/isonline/login'), { prefix: `${rootPrefix}/isonline/login`, logger: true });
   fastify.register(require('./routes/isonline/login'), { prefix: `${rootPrefix}/login`, logger: true });
   fastify.register(require('./routes/isonline/index'), { prefix: `${rootPrefix}/iswin`, logger: true });
   fastify.register(require('./routes/isonline/index'), { prefix: `${rootPrefix}/is`, logger: true });

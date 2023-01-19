@@ -195,122 +195,139 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/person', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, res: fastify.Reply) => {
-    let columnName: string = req.body.columnName;
-    let searchText: string = req.body.searchText;
-
-    if (columnName && searchText) {
-      try {
-        const result = await hisModel.getPerson(fastify.dbHIS, columnName, searchText);
-        fastify.dbHIS.destroy;
-        res.send({
-          statusCode: HttpStatus.OK,
-          version: fastify.apiVersion,
-          subVersion: fastify.apiSubVersion,
-          hisProvider: process.env.HIS_PROVIDER,
-          reccount: result.length,
-          rows: result
-        });
-      } catch (error) {
-        console.log('person', error.message);
-        res.send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: error.message
-        })
-      }
-    } else {
+  fastify.post('/person', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+    const userInfo: any = await decodeToken(req);
+    if (!userInfo || !userInfo.hcode) {
       res.send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
-      })
+        statusCode: HttpStatus.UNAUTHORIZED,
+        message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED)
+      });
+    } else {
+      let columnName: string = req.body.columnName;
+      let searchText: string = req.body.searchText;
+      console.log('search person', userInfo.hcode)
+      if (columnName && searchText) {
+        try {
+          const result = await hisModel.getPerson(fastify.dbHIS, columnName, searchText);
+          fastify.dbHIS.destroy;
+          res.send({
+            statusCode: HttpStatus.OK,
+            version: fastify.apiVersion,
+            subVersion: fastify.apiSubVersion,
+            hisProvider: process.env.HIS_PROVIDER,
+            reccount: result.length,
+            rows: result
+          });
+        } catch (error) {
+          console.log('person', error.message);
+          res.send({
+            statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+            message: error.message
+          })
+        }
+      } else {
+        res.send({
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+        })
+
+      }
 
     }
   })
 
-  fastify.post('/opd-service', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, res: fastify.Reply) => {
-    let hn: string = req.body.hn;
-    let date: string = req.body.date;
-    let visitNo: string = req.body.visitNo || '';
+  fastify.post('/opd-service', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+    const userInfo: any = await decodeToken(req);
+    if (!userInfo || !userInfo.hcode) {
+      res.send({
+        statusCode: HttpStatus.UNAUTHORIZED,
+        message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED)
+      });
+    } else {
+      let hn: string = req.body.hn;
+      let date: string = req.body.date;
+      let visitNo: string = req.body.visitNo || '';
 
-    if (visitNo + hn) {
-      try {
-        const result = await hisModel.getOpdService(fastify.dbHIS, hn, date, 'vn', visitNo);
-        fastify.dbHIS.destroy;
+      if (visitNo + hn) {
+        try {
+          const result = await hisModel.getOpdService(fastify.dbHIS, hn, date, 'vn', visitNo);
+          fastify.dbHIS.destroy;
+          res.send({
+            statusCode: HttpStatus.OK,
+            version: fastify.apiVersion,
+            subVersion: fastify.apiSubVersion,
+            hisProvider: process.env.HIS_PROVIDER,
+            reccount: result.length,
+            rows: result
+          });
+        } catch (error) {
+          console.log('opd-service', error.message);
+          res.send({
+            statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+            message: error.message
+          })
+        }
+      } else {
         res.send({
-          statusCode: HttpStatus.OK,
-          version: fastify.apiVersion,
-          subVersion: fastify.apiSubVersion,
-          hisProvider: process.env.HIS_PROVIDER,
-          reccount: result.length,
-          rows: result
-        });
-      } catch (error) {
-        console.log('opd-service', error.message);
-        res.send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: error.message
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
         })
       }
-    } else {
-      res.send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
-      })
-
     }
   })
 
-  fastify.post('/opd-diagnosis', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, res: fastify.Reply) => {
-    let visitNo: string = req.body.visitNo || req.body.vn;
+  fastify.post('/opd-diagnosis', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+    const userInfo: any = await decodeToken(req);
+    if (!userInfo || !userInfo.hcode) {
+      res.send({
+        statusCode: HttpStatus.UNAUTHORIZED,
+        message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED)
+      });
+    } else {
+      let visitNo: string = req.body.visitNo || req.body.vn;
 
-    if (visitNo) {
-      try {
-        const result = await hisModel.getDiagnosisOpd(fastify.dbHIS, visitNo);
-        fastify.dbHIS.destroy;
+      if (visitNo) {
+        try {
+          const result = await hisModel.getDiagnosisOpd(fastify.dbHIS, visitNo);
+          fastify.dbHIS.destroy;
+          res.send({
+            statusCode: HttpStatus.OK,
+            version: fastify.apiVersion,
+            subVersion: fastify.apiSubVersion,
+            hisProvider: process.env.HIS_PROVIDER,
+            reccount: result.length,
+            rows: result
+          });
+        } catch (error) {
+          console.log('opd-diagnosis', error.message);
+          res.send({
+            statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+            message: error.message
+          })
+        }
+      } else {
         res.send({
-          statusCode: HttpStatus.OK,
-          version: fastify.apiVersion,
-          subVersion: fastify.apiSubVersion,
-          hisProvider: process.env.HIS_PROVIDER,
-          reccount: result.length,
-          rows: result
-        });
-      } catch (error) {
-        console.log('opd-diagnosis', error.message);
-        res.send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: error.message
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
         })
       }
-    } else {
-      res.send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
-      })
-
     }
   })
 
-  async function verifyToken(req, res) {
+  async function decodeToken(req) {
     let token: string = null;
 
-    if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
-      token = req.headers.authorization.split(' ')[1];
-    } else if (req.query && req.query.token) {
-      token = req.query.token;
-    } else if (req.body && req.body.token) {
+    if (req.body && req.body.token) {
       token = req.body.token;
+    } else if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+      token = req.headers.authorization.split(' ')[1];
     }
 
     try {
-      await fastify.jwt.verify(token);
-      return true;
+      const decode = await fastify.jwt.verify(token);
+      return decode;
     } catch (error) {
-      console.log('authen fail!', error.message);
-      res.status(HttpStatus.UNAUTHORIZED).send({
-        statusCode: HttpStatus.UNAUTHORIZED,
-        message: error.message
-      })
+      return null;
     }
   }
 

@@ -1,13 +1,12 @@
-import Knex = require('knex');
+import { Knex } from 'knex';
 import * as moment from 'moment';
 const dbName = process.env.HIS_DB_NAME;
 const maxLimit = 100;
 
 export class HisHosxpv4Model {
     getTableName(knex: Knex) {
-        return knex
+        return knex('information_schema.tables')
             .select('table_name')
-            .from('information_schema.tables')
             .where('table_catalog', '=', dbName);
 
     }
@@ -84,91 +83,80 @@ export class HisHosxpv4Model {
     }
 
     getProcedureOpd(knex, columnName, searchNo, hospCode) {
-        return knex
+        return knex('procedure_opd')
             .select('*')
-            .from('procedure_opd')
             .where(columnName, "=", searchNo);
     }
 
     getChargeOpd(knex, columnName, searchNo, hospCode) {
-        return knex
+        return knex('charge_opd')
             .select('*')
-            .from('charge_opd')
             .where(columnName, "=", searchNo);
     }
 
     getDrugOpd(knex, columnName, searchNo, hospCode) {
-        return knex
+        return knex('drug_opd')
             .select('*')
-            .from('drug_opd')
             .where(columnName, "=", searchNo);
     }
 
     getAdmission(knex, columnName, searchNo, hospCode) {
-        return knex
+        return knex('admission')
             .select('*')
-            .from('admission')
             .where(columnName, "=", searchNo);
     }
 
     getDiagnosisIpd(knex, columnName, searchNo, hospCode) {
-        return knex
+        return knex('diagnosis_ipd')
             .select('*')
-            .from('diagnosis_ipd')
             .where(columnName, "=", searchNo);
     }
 
     getProcedureIpd(knex, columnName, searchNo, hospCode) {
-        return knex
+        return knex('procedure_ipd')
             .select('*')
-            .from('procedure_ipd')
             .where(columnName, "=", searchNo);
     }
 
     getChargeIpd(knex, columnName, searchNo, hospCode) {
-        return knex
+        return knex('charge_ipd')
             .select('*')
-            .from('charge_ipd')
             .where(columnName, "=", searchNo);
     }
 
     getDrugIpd(knex, columnName, searchNo, hospCode) {
-        return knex
+        return knex('drug_ipd')
             .select('*')
-            .from('drug_ipd')
             .where(columnName, "=", searchNo);
     }
 
     getAccident(knex, visitno) {
-        return knex
+        return knex('er_regist')
             .select('er_regist.vn', 'ovst.hn', 'ovst.vstdate as adate',
                 'ovst.vsttime as atime', 'er_nursing_detail.accident_person_type_id',
                 'er_nursing_detail.accident_belt_type_id as belt',
                 'opdscreen.bps as bp1', 'opdscreen.bpd as bp2',
                 'er_nursing_detail.gcs_e as e', 'er_nursing_detail.gcs_v as v', 'er_nursing_detail.gcs_m as m')
-            .from('er_regist')
             .leftJoin(`ovst`, function () { this.on('ovst.vn', '=', 'er_regist.vn') })
             .leftJoin(`patient`, function () { this.on('patient.hn', '=', 'ovst.hn') })
             .leftJoin(`er_nursing_detail`, function () { this.on('er_nursing_detail.vn', '=', 'ovst.vn') })
             .leftJoin(`opdscreen`, function () { this.on('opdscreen.hn', '=', 'ovst.hn') })
             //.leftJoin('patient' on 'patient'.'hn' = 'ovst'.'hn')
             .where('er_regist.vn', "=", visitno);
-        //         db.select('*').from('users').leftJoin('accounts', function() {
+        //         db('users').select('*').leftJoin('accounts', function() {
         //   this.on('accounts.id', '=', 'users.account_id').orOn('accounts.owner_id', '=', 'users.id')
         // })
     }
 
     getAppointment(knex, columnName, searchNo, hospCode) {
-        return knex
+        return knex('appointment')
             .select('*')
-            .from('appointment')
             .where(columnName, "=", searchNo);
     }
 
     getData(knex, tableName, columnName, searchNo, hospCode) {
-        return knex
+        return knex(tableName)
             .select('*')
-            .from(tableName)
             .where(columnName, "=", searchNo)
             .limit(5000);
     }
