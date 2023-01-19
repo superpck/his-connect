@@ -1,5 +1,5 @@
-# HIS Connect 3.2.2
-# HIS Connection API สำหรับ nRefer, ISOnline, CUP Datacenter and Quality drug store
+# HIS Connect 3.3.0
+# HIS Connection API สำหรับ nRefer, ISOnline, และ PHER Plus
 
 ## การติดตั้ง
 
@@ -66,6 +66,9 @@
 
 # 7.Lastupdate
 ```
+3.3.0 2023-01-19
+  - ปรับให้รองรับ PHER Plus
+
 3.2.2 2022-08-08
   - ISOnline เพิ่ม save-lib-hosp สำหรับบันทึกข้อมูล Lib เฉพาะสถานพยาบาล
   - JHCIS: Get DrugAllergy จากตาราง personalergic
@@ -90,4 +93,4 @@
 ```
 
 เอกสารการติดตั้ง
-https://docs.google.com/document/d/1jKXwA12WNyRr-phcjQXRLz9xTJz5BreTPDBy2saWpOs
+http://ae.moph.go.th/pher-plus/#/main/link
