@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisMyPcuModel = void 0;
 const moment = require("moment");
@@ -79,9 +70,8 @@ class HisMyPcuModel {
         return db('m_procedure_opd')
             .where('SEQ', visitNo);
     }
-    getChargeOpd(db, visitNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `
+    async getChargeOpd(db, visitNo, hospCode = hcode) {
+        const sql = `
             select
                 (select hospitalcode from opdconfig) as hospcode,
                 pt.hn as pid,
@@ -122,9 +112,8 @@ class HisMyPcuModel {
             where 
                 os.vn = "${visitNo}"
             `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
     getLabRequest(db, columnName, searchNo, hospCode = hcode) {
         columnName = columnName === 'visitNo' ? 'vn' : columnName;
@@ -214,11 +203,10 @@ class HisMyPcuModel {
         visitDate = moment(visitDate).format('YYYY-MM-DD');
         return [];
     }
-    getProvider(db, columnName, searchNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            columnName = columnName === 'licenseNo' ? 'd.code' : columnName;
-            columnName = columnName === 'cid' ? 'd.cid' : columnName;
-            const sql = `
+    async getProvider(db, columnName, searchNo, hospCode = hcode) {
+        columnName = columnName === 'licenseNo' ? 'd.code' : columnName;
+        columnName = columnName === 'cid' ? 'd.cid' : columnName;
+        const sql = `
             select 
                 (select hospitalcode from opdconfig) as hospcode,
                 d.code as provider,
@@ -245,9 +233,8 @@ class HisMyPcuModel {
             where 
                 ${columnName}="${searchNo}"
             `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
     getData(db, tableName, columnName, searchNo, hospCode = hcode) {
         return db(tableName)

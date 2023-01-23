@@ -1,6 +1,3 @@
-/// <reference path="../../typings.d.ts" />
-
-import * as fastify from 'fastify';
 import * as moment from 'moment';
 import path = require('path');
 // import { localStorage, sessionStorage } from "webstorage-node";
@@ -13,24 +10,24 @@ let shell = require("shelljs");
 let setupSession: any = '';
 
 const router = (fastify, { }, next) => {
-  fastify.get('/', (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/', (req: any, reply: any) => {
     reply.view('/templates/pages/index.ejs', {
       token: getSession(), req: req.ip, env: process.env
     });
   });
 
-  fastify.get('/about', (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/about', (req: any, reply: any) => {
     reply.view('/templates/pages/about.ejs', {
       token: getSession(), req: req.ip, env: process.env
     });
   });
 
-  fastify.get('/login', (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/login', (req: any, reply: any) => {
     removeSession();
     reply.view('/templates/pages/login.ejs', { token: '' });
   });
 
-  fastify.get('/form', (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/form', (req: any, reply: any) => {
     const now = moment().format('YYYYMMDDHHmmss');
     let setupSess = getSession();
     let isLogin = setupSess > now;
@@ -59,7 +56,7 @@ const router = (fastify, { }, next) => {
 
   });
 
-  fastify.post('/save', async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/save', async (req: any, reply: any) => {
     const dataInput = req.body;
     const configs = await resetVar();
 

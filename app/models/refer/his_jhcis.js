@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisJhcisModel = void 0;
 const maxLimit = 250;
@@ -162,16 +153,14 @@ class HisJhcisModel {
     getAccident(db, visitNo, hospCode = hcode) {
         return [];
     }
-    getDrugAllergy(db, hn, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return db('personalergic as drugallg')
-                .leftJoin('cdrug', 'drugallg.drugcode', 'cdrug.drugcode')
-                .leftJoin('cdrugallergysymtom as sym', 'drugallg.symptom', 'sym.symtomcode')
-                .leftJoin('person', 'drugallg.pid', 'person.pid')
-                .select('person.pcucodeperson as HOSPCODE', 'person.pcucodeperson as INFORMHOSP', 'drugallg.pid as PID', 'person.idcard as CID', 'cdrug.drugcode24 as DRUGALLERGY', 'cdrug.drugcode as DCODE', 'cdrug.drugname as DNAME', 'drugallg.levelalergic as ALEVE', 'drugallg.symptom as SYMPTOM', 'sym.symtomname as DETAIL', 'drugallg.typedx as TYPEDX', 'drugallg.informant as INFORMANT', 'cdrug.drugcode24 as DID', 'cdrug.tmtcode as DID_TMT', 'drugallg.daterecord as DATERECORD', 'drugallg.dateupdate as D_UPDATE')
-                .where('drugallg.pid', hn)
-                .whereRaw('(drugallg.informhosp is null or drugallg.pcucodeperson=drugallg.informhosp)');
-        });
+    async getDrugAllergy(db, hn, hospCode = hcode) {
+        return db('personalergic as drugallg')
+            .leftJoin('cdrug', 'drugallg.drugcode', 'cdrug.drugcode')
+            .leftJoin('cdrugallergysymtom as sym', 'drugallg.symptom', 'sym.symtomcode')
+            .leftJoin('person', 'drugallg.pid', 'person.pid')
+            .select('person.pcucodeperson as HOSPCODE', 'person.pcucodeperson as INFORMHOSP', 'drugallg.pid as PID', 'person.idcard as CID', 'cdrug.drugcode24 as DRUGALLERGY', 'cdrug.drugcode as DCODE', 'cdrug.drugname as DNAME', 'drugallg.levelalergic as ALEVE', 'drugallg.symptom as SYMPTOM', 'sym.symtomname as DETAIL', 'drugallg.typedx as TYPEDX', 'drugallg.informant as INFORMANT', 'cdrug.drugcode24 as DID', 'cdrug.tmtcode as DID_TMT', 'drugallg.daterecord as DATERECORD', 'drugallg.dateupdate as D_UPDATE')
+            .where('drugallg.pid', hn)
+            .whereRaw('(drugallg.informhosp is null or drugallg.pcucodeperson=drugallg.informhosp)');
     }
     getAppointment(db, visitNo, hospCode = hcode) {
         return [];

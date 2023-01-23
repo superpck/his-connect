@@ -1,101 +1,68 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const knex_1 = require("knex");
+var timezone = 'Asia/Bangkok';
+var options = {
+    ISONLINE: {
+        client: process.env.IS_DB_CLIENT || process.env.HIS_DB_CLIENT || 'mysql',
+        connection: {
+            host: process.env.IS_DB_HOST || process.env.HIS_DB_HOST,
+            user: process.env.IS_DB_USER || process.env.HIS_DB_USER,
+            password: process.env.IS_DB_PASSWORD || process.env.HIS_DB_PASSWORD,
+            database: process.env.IS_DB_NAME || 'isdb',
+            port: +process.env.IS_DB_PORT || +process.env.HIS_DB_PORT || 3306,
+            charSet: process.env.IS_DB_CHARSET || process.env.HIS_DB_CHARSET || 'utf8',
+            schema: process.env.IS_DB_SCHEMA || process.env.HIS_DB_SCHEMA,
+            encrypt: process.env.IS_DB_ENCRYPT || process.env.HIS_DB_ENCRYPT || true,
+            timezone
+        }
+    },
+    HIS: {
+        client: process.env.HIS_DB_CLIENT || 'mysql',
+        connection: {
+            host: process.env.HIS_DB_HOST,
+            user: process.env.HIS_DB_USER,
+            password: process.env.HIS_DB_PASSWORD,
+            database: process.env.HIS_DB_NAME,
+            port: +process.env.HIS_DB_PORT || 3306,
+            charSet: process.env.HIS_DB_CHARSET || 'utf8',
+            schema: process.env.HIS_DB_SCHEMA || 'public',
+            encrypt: process.env.HIS_DB_ENCRYPT || true,
+            timezone
+        }
+    },
+    REFER: {
+        client: process.env.REFER_DB_CLIENT || process.env.REFER_DB_CLIENT || 'mysql',
+        connection: {
+            host: process.env.REFER_DB_HOST || process.env.HIS_DB_HOST,
+            user: process.env.REFER_DB_USER || process.env.HIS_DB_USER,
+            password: process.env.REFER_DB_PASSWORD || process.env.HIS_DB_PASSWORD,
+            database: process.env.REFER_DB_NAME || process.env.HIS_DB_NAME,
+            port: +process.env.REFER_DB_PORT || +process.env.HIS_DB_PORT || 3306,
+            charSet: process.env.REFER_DB_CHARSET || process.env.HIS_DB_CHARSET || 'utf8',
+            schema: process.env.REFER_DB_SCHEMA || process.env.HIS_DB_SCHEMA || 'public',
+            encrypt: process.env.REFER_DB_ENCRYPT || process.env.HIS_DB_ENCRYPT || true,
+            timezone
+        }
+    },
+    CANNABIS: {
+        client: process.env.CANNABIS_DB_CLIENT || process.env.HIS_DB_CLIENT || 'mysql',
+        connection: {
+            host: process.env.CANNABIS_DB_HOST || process.env.HIS_DB_HOST,
+            user: process.env.CANNABIS_DB_USER || process.env.HIS_DB_USER,
+            password: process.env.CANNABIS_DB_PASSWORD || process.env.HIS_DB_PASSWORD,
+            database: process.env.CANNABIS_DB_NAME || process.env.HIS_DB_NAME,
+            port: +process.env.CANNABIS_DB_PORT || +process.env.HIS_DB_PORT || 3306,
+            charSet: process.env.CANNABIS_DB_CHARSET || process.env.HIS_DB_CHARSET || 'utf8',
+            schema: process.env.CANNABIS_DB_SCHEMA || process.env.HIS_DB_SCHEMA || 'public',
+            encrypt: process.env.CANNABIS_DB_ENCRYPT || process.env.HIS_DB_ENCRYPT || true,
+            timezone
+        }
+    },
 };
-var fastifyPlugin = require('fastify-plugin');
-var knex = require('knex');
-function fastifyKnexJS(fastify, opts, next) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            let connection;
-            if (opts.config && opts.config.host && opts.config.client) {
-                connection = createConnectionOption(opts.config);
-            }
-            else {
-                connection = opts.connection;
-            }
-            const handler = yield knex(connection);
-            yield fastify.decorate(opts.connectionName, handler);
-            next();
-        }
-        catch (err) {
-            next(err);
-        }
-    });
-}
-function createConnectionOption(config) {
-    if (['mssql'].includes(config.client)) {
-        return {
-            client: config.client,
-            connection: {
-                server: config.host,
-                user: config.user,
-                password: config.password,
-                database: config.dbName,
-                options: {
-                    port: +config.port,
-                    schema: config.schema,
-                    encrypt: config.encrypt
-                }
-            }
-        };
-    }
-    if (config.client == 'oracledb') {
-        return {
-            client: config.client,
-            caseSensitive: false,
-            connection: {
-                connectString: `${config.host}/${config.schema}`,
-                user: config.user,
-                password: config.password,
-                port: +config.port,
-                externalAuth: false,
-                fetchAsString: ['DATE'],
-            }
-        };
-    }
-    if (config.client == 'pg') {
-        return {
-            client: config.client,
-            connection: {
-                host: config.host,
-                port: +config.port,
-                user: config.user,
-                password: config.password,
-                database: config.dbName,
-            },
-            pool: {
-                min: 0,
-                max: 100,
-            }
-        };
-    }
-    else {
-        return {
-            client: config.client,
-            connection: {
-                host: config.host,
-                port: +config.port,
-                user: config.user,
-                password: config.password,
-                database: config.dbName,
-            },
-            pool: {
-                min: 0,
-                max: 7,
-                afterCreate: (conn, done) => {
-                    conn.query('SET NAMES ' + config.charSet, (err) => {
-                        done(err, conn);
-                    });
-                }
-            },
-            debug: false,
-        };
-    }
-}
-module.exports = fastifyPlugin(fastifyKnexJS, '>=0.30.0');
+const dbConnection = (type = 'HIS') => {
+    let option = options[type.toUpperCase()];
+    option['pool'] = { min: 0, max: 10 };
+    return (0, knex_1.default)(option);
+};
+module.exports = dbConnection;

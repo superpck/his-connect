@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisPmkModel = void 0;
 const moment = require("moment");
@@ -27,57 +18,51 @@ class HisPmkModel {
                 .where('TABLE_SCHEMA', '=', dbName);
         }
     }
-    getReferOut(db, date, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            date = moment(date).format('YYYY-MM-DD');
-            let where = `REFER_IN_DATETIME BETWEEN TO_DATE('${date} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE('${date} 23:59:59', 'YYYY-MM-DD HH24:MI:SS') AND "referout".REFERTYPE=2`;
-            const result = yield db('PATIENTS_REFER_HX as referout')
-                .join('OPDS', 'referout.OPD_NO', 'OPDS.OPD_NO')
-                .join('PATIENTS as patient', function () {
-                this.on('OPDS.PAT_RUN_HN', '=', 'patient.RUN_HN')
-                    .andOn('OPDS.PAT_YEAR_HN', '=', 'patient.YEAR_HN');
-            })
-                .select(db.raw(`'${hospCode}' AS "HOSPCODE"`))
-                .select(db.raw(`concat(concat(to_char(OPDS.PAT_RUN_HN),'/'),to_char(OPDS.PAT_YEAR_HN)) AS "hn"`))
-                .select('referout.OPD_NO as seq', 'referout.REFER_NO as referid', 'referout.HOS_IN_CARD as hosp_destination', 'referout.REFER_IN_DATETIME as refer_date', 'patient.ID_CARD as cid', 'patient.PRENAME as prename', 'patient.NAME as fname', 'patient.SURNAME as lname', 'patient.BIRTHDAY as dob')
-                .select(db.raw(`case when SEX='F' then 2 else 1 end as "sex"`))
-                .whereRaw(db.raw(where));
-            return result;
-        });
+    async getReferOut(db, date, hospCode = hcode) {
+        date = moment(date).format('YYYY-MM-DD');
+        let where = `REFER_IN_DATETIME BETWEEN TO_DATE('${date} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE('${date} 23:59:59', 'YYYY-MM-DD HH24:MI:SS') AND "referout".REFERTYPE=2`;
+        const result = await db('PATIENTS_REFER_HX as referout')
+            .join('OPDS', 'referout.OPD_NO', 'OPDS.OPD_NO')
+            .join('PATIENTS as patient', function () {
+            this.on('OPDS.PAT_RUN_HN', '=', 'patient.RUN_HN')
+                .andOn('OPDS.PAT_YEAR_HN', '=', 'patient.YEAR_HN');
+        })
+            .select(db.raw(`'${hospCode}' AS "HOSPCODE"`))
+            .select(db.raw(`concat(concat(to_char(OPDS.PAT_RUN_HN),'/'),to_char(OPDS.PAT_YEAR_HN)) AS "hn"`))
+            .select('referout.OPD_NO as seq', 'referout.REFER_NO as referid', 'referout.HOS_IN_CARD as hosp_destination', 'referout.REFER_IN_DATETIME as refer_date', 'patient.ID_CARD as cid', 'patient.PRENAME as prename', 'patient.NAME as fname', 'patient.SURNAME as lname', 'patient.BIRTHDAY as dob')
+            .select(db.raw(`case when SEX='F' then 2 else 1 end as "sex"`))
+            .whereRaw(db.raw(where));
+        return result;
     }
-    getReferHistory(db, columnName, searchNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let where = '';
-            if (columnName == 'visitNo' || columnName == 'vn') {
-                where = `"referout".OPD_NO='${searchNo}' AND "referout".REFERTYPE=2`;
-            }
-            else if (columnName == 'referNo' || columnName == 'referId') {
-                where = `"referout".REFER_NO='${searchNo}' AND "referout".REFERTYPE=2`;
-            }
-            else if (columnName == 'date' || columnName == 'referDate') {
-                const date = moment(searchNo).format('YYYY-MM-DD');
-                where = `REFER_IN_DATETIME BETWEEN TO_DATE('${date} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE('${date} 23:59:59', 'YYYY-MM-DD HH24:MI:SS') AND "referout".REFERTYPE=2`;
-            }
-            else {
-                where = `"referout".${columnName}='${searchNo}' AND "referout".REFERTYPE=2`;
-            }
-            return db('PATIENTS_REFER_HX as referout')
-                .join('OPDS', 'referout.OPD_NO', 'OPDS.OPD_NO')
-                .join('PATIENTS as patient', function () {
-                this.on('OPDS.PAT_RUN_HN', '=', 'patient.RUN_HN')
-                    .andOn('OPDS.PAT_YEAR_HN', '=', 'patient.YEAR_HN');
-            })
-                .select(db.raw(`'${hospCode}' AS "HOSPCODE"`))
-                .select(db.raw(`concat(concat(to_char(OPDS.PAT_RUN_HN),'/'),to_char(OPDS.PAT_YEAR_HN)) AS "hn"`))
-                .select('referout.OPD_NO as seq', 'referout.REFER_NO as referid', 'referout.HOS_IN_CARD as hosp_destination', 'referout.REFER_IN_DATETIME as refer_date', 'patient.ID_CARD as cid', 'patient.PRENAME as prename', 'patient.NAME as fname', 'patient.SURNAME as lname', 'patient.BIRTHDAY as dob')
-                .select(db.raw(`case when SEX='F' then 2 else 1 end as "sex"`))
-                .whereRaw(db.raw(where));
-        });
+    async getReferHistory(db, columnName, searchNo, hospCode = hcode) {
+        let where = '';
+        if (columnName == 'visitNo' || columnName == 'vn') {
+            where = `"referout".OPD_NO='${searchNo}' AND "referout".REFERTYPE=2`;
+        }
+        else if (columnName == 'referNo' || columnName == 'referId') {
+            where = `"referout".REFER_NO='${searchNo}' AND "referout".REFERTYPE=2`;
+        }
+        else if (columnName == 'date' || columnName == 'referDate') {
+            const date = moment(searchNo).format('YYYY-MM-DD');
+            where = `REFER_IN_DATETIME BETWEEN TO_DATE('${date} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE('${date} 23:59:59', 'YYYY-MM-DD HH24:MI:SS') AND "referout".REFERTYPE=2`;
+        }
+        else {
+            where = `"referout".${columnName}='${searchNo}' AND "referout".REFERTYPE=2`;
+        }
+        return db('PATIENTS_REFER_HX as referout')
+            .join('OPDS', 'referout.OPD_NO', 'OPDS.OPD_NO')
+            .join('PATIENTS as patient', function () {
+            this.on('OPDS.PAT_RUN_HN', '=', 'patient.RUN_HN')
+                .andOn('OPDS.PAT_YEAR_HN', '=', 'patient.YEAR_HN');
+        })
+            .select(db.raw(`'${hospCode}' AS "HOSPCODE"`))
+            .select(db.raw(`concat(concat(to_char(OPDS.PAT_RUN_HN),'/'),to_char(OPDS.PAT_YEAR_HN)) AS "hn"`))
+            .select('referout.OPD_NO as seq', 'referout.REFER_NO as referid', 'referout.HOS_IN_CARD as hosp_destination', 'referout.REFER_IN_DATETIME as refer_date', 'patient.ID_CARD as cid', 'patient.PRENAME as prename', 'patient.NAME as fname', 'patient.SURNAME as lname', 'patient.BIRTHDAY as dob')
+            .select(db.raw(`case when SEX='F' then 2 else 1 end as "sex"`))
+            .whereRaw(db.raw(where));
     }
-    getReferResult(db, date, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return [];
-        });
+    async getReferResult(db, date, hospCode = hcode) {
+        return [];
     }
     getReferResult1(db, date, hospCode = hcode) {
         date = moment(date).format('YYYY-MM-DD');
@@ -182,18 +167,16 @@ class HisPmkModel {
             .select('patient.HN as PID', 'OPDDIAGS.OPD_OPD_NO as SEQ', 'OPDDIAGS.ICD_CODE as DIAGCODE', 'OPDDIAGS.TYPE as DIAGTYPE', 'OPDDIAGS.DATE_CREATED as D_UPDATE', 'OPDDIAGS.OPD_DATE as DATE_SERV', 'patient.ID_CARD as CID', 'OPDS.DD_DOC_CODE as PROVIDER')
             .where('OPDDIAGS.OPD_OPD_NO', visitno + '');
     }
-    getProcedureOpd(db, visitNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (visitNo) {
-                return db('EXP18_PROCED')
-                    .select('PCUCODE as HOSPCODE', 'HN as PID', 'SEQ', 'DATE_SERV', 'PROCED as PROCEDCODE', 'PROVIDER', 'CID', 'SERVPRIC as SERVICEPRICE', 'CLINIC', 'D_UPDATE')
-                    .where('SEQ', visitNo + '')
-                    .limit(maxLimit);
-            }
-            else {
-                return [];
-            }
-        });
+    async getProcedureOpd(db, visitNo, hospCode = hcode) {
+        if (visitNo) {
+            return db('EXP18_PROCED')
+                .select('PCUCODE as HOSPCODE', 'HN as PID', 'SEQ', 'DATE_SERV', 'PROCED as PROCEDCODE', 'PROVIDER', 'CID', 'SERVPRIC as SERVICEPRICE', 'CLINIC', 'D_UPDATE')
+                .where('SEQ', visitNo + '')
+                .limit(maxLimit);
+        }
+        else {
+            return [];
+        }
     }
     getChargeOpd(knex, columnName, searchNo, hospCode) {
         return knex
@@ -201,32 +184,30 @@ class HisPmkModel {
             .from('charge_opd')
             .where(columnName, "=", searchNo);
     }
-    getDrugOpd(db, visitNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (visitNo) {
-                const result = yield db('H4U_DRUG as drug')
-                    .where("SEQ", visitNo + '');
-                let data = [];
-                for (let row of result) {
-                    const line = row.USAGE_LINE1 ? row.USAGE_LINE1.split('\r|\n') : [];
-                    yield data.push({
-                        HOSPCODE: hospCode,
-                        PID: row.HN, SEQ: row.SEQ,
-                        DATE_SERV: moment(row.DATE_SERV).format('YYYY-MM-DD') +
-                            moment(row.TIME_SERV).format(' HH:mm:ss'),
-                        AMOUNT: row.QTY, UNIT: row.UNIT,
-                        drug_usage: line[1] + ' ' + line[2],
-                        caution: line[3],
-                        D_UPDATE: moment(row.DATE_SERV).format('YYYY-MM-DD') +
-                            moment(row.TIME_SERV).format(' HH:mm:ss'),
-                    });
-                }
-                return data;
+    async getDrugOpd(db, visitNo, hospCode = hcode) {
+        if (visitNo) {
+            const result = await db('H4U_DRUG as drug')
+                .where("SEQ", visitNo + '');
+            let data = [];
+            for (let row of result) {
+                const line = row.USAGE_LINE1 ? row.USAGE_LINE1.split('\r|\n') : [];
+                await data.push({
+                    HOSPCODE: hospCode,
+                    PID: row.HN, SEQ: row.SEQ,
+                    DATE_SERV: moment(row.DATE_SERV).format('YYYY-MM-DD') +
+                        moment(row.TIME_SERV).format(' HH:mm:ss'),
+                    AMOUNT: row.QTY, UNIT: row.UNIT,
+                    drug_usage: line[1] + ' ' + line[2],
+                    caution: line[3],
+                    D_UPDATE: moment(row.DATE_SERV).format('YYYY-MM-DD') +
+                        moment(row.TIME_SERV).format(' HH:mm:ss'),
+                });
             }
-            else {
-                return [];
-            }
-        });
+            return data;
+        }
+        else {
+            return [];
+        }
     }
     getLabResult(db, columnName, searchNo, referID = '', hospCode = hcode) {
         return [];

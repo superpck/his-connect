@@ -1,6 +1,3 @@
-/// <reference path="../../../typings.d.ts" />
-
-import { Knex } from 'knex';
 import * as fastify from 'fastify';
 import * as HttpStatus from 'http-status-codes';
 
@@ -8,21 +5,21 @@ import { IswinModel } from '../../models/isonline/iswin';
 const isModel = new IswinModel();
 
 const router = (fastify, { }, next) => {
-  fastify.get('/', async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.get('/', async (req: any, res: any) => {
     res.send({
       apiCode: 'ISOnline@MOPH',
-      version: fastify.apiVersion,
-      subVersion: fastify.apiSubVersion
+      version: global.appDetail.version,
+      subVersion: global.appDetail.subVersion
     });
   })
 
-  fastify.get('/alive', async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.get('/alive', async (req: any, res: any) => {
     try {
-      const result = await isModel.getVersion(fastify.dbISOnline);
+      const result = await isModel.getVersion(global.dbISOnline);
       res.send({
         statusCode: HttpStatus.OK,
-        version: fastify.apiVersion,
-        subVersion: fastify.apiSubVersion,
+        version: global.appDetail.version,
+        subVersion: global.appDetail.subVersion,
         startServerTime: fastify.startServerTime,
         idDb: process.env.IS_DB_NAME,
         connnection: true
@@ -30,8 +27,8 @@ const router = (fastify, { }, next) => {
     } catch (error) {
       res.send({
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        version: fastify.apiVersion,
-        subVersion: fastify.apiSubVersion,
+        version: global.appDetail.version,
+        subVersion: global.appDetail.subVersion,
         startServerTime: fastify.startServerTime,
         connnection: false,
         message: error.message
@@ -40,7 +37,7 @@ const router = (fastify, { }, next) => {
 
   })
 
-  fastify.post('/getbyref', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/getbyref', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
     let refSeach: number = req.body.refSeach;
     let hospCode: string = req.body.hospCode;
     let tokenKey = req.body.tokenKey;
@@ -50,12 +47,12 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const result = await isModel.getByRef(fastify.dbISOnline, refSeach, hospCode);
-      fastify.dbISOnline.destroy;
+      const result = await isModel.getByRef(global.dbISOnline, refSeach, hospCode);
+      global.dbISOnline.destroy;
       res.send({
         statusCode: HttpStatus.OK,
-        version: fastify.apiVersion,
-        subVersion: fastify.apiSubVersion,
+        version: global.appDetail.version,
+        subVersion: global.appDetail.subVersion,
         ok: true, rows: result[0]
       });
     } catch (error) {
@@ -67,7 +64,7 @@ const router = (fastify, { }, next) => {
 
   })
 
-  fastify.post('/get-libs', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/get-libs', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
     let groupCode: string = req.body.groupCode;
     let hospCode: string = req.body.hospCode;
     let tokenKey = req.body.tokenKey;
@@ -77,13 +74,13 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const result = await isModel.getLibs(fastify.dbISOnline, hospCode, groupCode);
-      fastify.dbISOnline.destroy;
+      const result = await isModel.getLibs(global.dbISOnline, hospCode, groupCode);
+      global.dbISOnline.destroy;
       console.log("lib code: " + groupCode + ' result: ' + result[0].length + ' record<s>');
       res.send({
         statusCode: HttpStatus.OK,
-        version: fastify.apiVersion,
-        subVersion: fastify.apiSubVersion,
+        version: global.appDetail.version,
+        subVersion: global.appDetail.subVersion,
         ok: true, rows: result[0]
       });
     } catch (error) {
@@ -94,7 +91,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/get-lib', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/get-lib', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     let columnsName: string = req.body.columnsName;
     let textSearch: string = req.body.textSearch;
     let hospCode: string = req.body.hospCode;
@@ -105,12 +102,12 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const result = await isModel.getLib(fastify.dbISOnline, hospCode, 'lib_code', columnsName, textSearch);
-      fastify.dbISOnline.destroy;
+      const result = await isModel.getLib(global.dbISOnline, hospCode, 'lib_code', columnsName, textSearch);
+      global.dbISOnline.destroy;
       reply.send({
         statusCode: HttpStatus.OK,
-        version: fastify.apiVersion,
-        subVersion: fastify.apiSubVersion,
+        version: global.appDetail.version,
+        subVersion: global.appDetail.subVersion,
         ok: true, rows: result[0]
       });
     } catch (error) {
@@ -121,7 +118,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/get-office', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/get-office', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     let textSearch: string = req.body.textSearch;
     let hospCode: string = req.body.hospCode;
     let tokenKey = req.body.tokenKey;
@@ -131,12 +128,12 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const result = await isModel.getOffices(fastify.dbISOnline, hospCode, textSearch);
-      fastify.dbISOnline.destroy;
+      const result = await isModel.getOffices(global.dbISOnline, hospCode, textSearch);
+      global.dbISOnline.destroy;
       reply.send({
         statusCode: HttpStatus.OK,
-        version: fastify.apiVersion,
-        subVersion: fastify.apiSubVersion,
+        version: global.appDetail.version,
+        subVersion: global.appDetail.subVersion,
         ok: true, rows: result[0]
       });
     } catch (error) {
@@ -147,7 +144,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/getbydate', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/getbydate', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
     let dDate: string = req.body.date;
     let dDate1: string = req.body.date1 || req.body.date;
     let dDate2: string = req.body.date2 || req.body.date;
@@ -156,15 +153,15 @@ const router = (fastify, { }, next) => {
 
     try {
       typeDate = (typeDate || typeDate != "") ? typeDate : 'adate';
-      const results: any = await isModel.getByDate(fastify.dbISOnline, typeDate, dDate1, dDate2, hospCode);
-      fastify.dbISOnline.destroy;
+      const results: any = await isModel.getByDate(global.dbISOnline, typeDate, dDate1, dDate2, hospCode);
+      global.dbISOnline.destroy;
       if (results) {
         res.send({
           statusCode: HttpStatus.OK,
           status: HttpStatus.OK,
           ok: true,
-          version: fastify.apiVersion,
-          subVersion: fastify.apiSubVersion,
+          version: global.appDetail.version,
+          subVersion: global.appDetail.subVersion,
           hisProvider: process.env.HIS_PROVIDER,
           rows: results
         });
@@ -186,7 +183,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/reportByDate', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/reportByDate', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
     let date1: string = req.body.date1;
     let date2: string = req.body.date2;
     let typeDate: string = req.body.typeDate;
@@ -198,16 +195,16 @@ const router = (fastify, { }, next) => {
     }
     try {
       typeDate = (typeDate || typeDate != "") ? typeDate : 'adate';
-      const results: any = await isModel.reportByDate(fastify.dbISOnline, typeDate, date1, date2, hospCode);
-      fastify.dbISOnline.destroy;
+      const results: any = await isModel.reportByDate(global.dbISOnline, typeDate, date1, date2, hospCode);
+      global.dbISOnline.destroy;
       if (results) {
         console.log("reportByDate: " + typeDate + ': ' + date1 + ' - ' + date2 + " hcode: " + hospCode + ' result: ' + results[0].length + ' record<s>');
         res.send({
           statusCode: HttpStatus.OK,
           status: HttpStatus.OK,
           ok: true,
-          version: fastify.apiVersion,
-          subVersion: fastify.apiSubVersion,
+          version: global.appDetail.version,
+          subVersion: global.appDetail.subVersion,
           rows: results[0]
         });
       } else {
@@ -228,7 +225,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/getbyid', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/getbyid', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     let id: string = req.body.idSeach;
     let hospCode: string = req.body.hospCode;
     let tokenKey = req.body.tokenKey;
@@ -237,12 +234,12 @@ const router = (fastify, { }, next) => {
       return false;
     }
     try {
-      const result = await isModel.getByID(fastify.dbISOnline, id, hospCode);
-      fastify.dbISOnline.destroy;
+      const result = await isModel.getByID(global.dbISOnline, id, hospCode);
+      global.dbISOnline.destroy;
       reply.send({
         statusCode: HttpStatus.OK,
-        version: fastify.apiVersion,
-        subVersion: fastify.apiSubVersion,
+        version: global.appDetail.version,
+        subVersion: global.appDetail.subVersion,
         ok: true, rows: result[0]
       });
     } catch (error) {
@@ -254,7 +251,7 @@ const router = (fastify, { }, next) => {
 
   })
 
-  fastify.post('/getbyname', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/getbyname', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     let id: string = req.body.idSeach;
     let typeSearch: string = req.body.typeSearch;
     let valSearch: string = req.body.valSearch;
@@ -265,12 +262,12 @@ const router = (fastify, { }, next) => {
       return false;
     }
     try {
-      const result = await isModel.getByName(fastify.dbISOnline, typeSearch, valSearch, hospCode);
-      fastify.dbISOnline.destroy;
+      const result = await isModel.getByName(global.dbISOnline, typeSearch, valSearch, hospCode);
+      global.dbISOnline.destroy;
       reply.send({
         statusCode: HttpStatus.OK,
-        version: fastify.apiVersion,
-        subVersion: fastify.apiSubVersion,
+        version: global.appDetail.version,
+        subVersion: global.appDetail.subVersion,
         ok: true, rows: result[0]
       });
     } catch (error) {
@@ -281,7 +278,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/selectData', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/selectData', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
     let tableName = req.body.tableName;
     let selectText = req.body.selectText;
     let whereText = req.body.whereText;
@@ -294,16 +291,16 @@ const router = (fastify, { }, next) => {
       return false;
     }
     try {
-      const results: any = await isModel.selectSql(fastify.dbISOnline, tableName, selectText, whereText, groupBy, orderText, limit);
-      fastify.dbISOnline.destroy;
+      const results: any = await isModel.selectSql(global.dbISOnline, tableName, selectText, whereText, groupBy, orderText, limit);
+      global.dbISOnline.destroy;
       if (results) {
         console.log("get: " + tableName + ' = ' + results[0].length + ' record<s> founded.');
         res.send({
           statusCode: HttpStatus.OK,
           status: HttpStatus.OK,
           ok: true,
-          version: fastify.apiVersion,
-          subVersion: fastify.apiSubVersion,
+          version: global.appDetail.version,
+          subVersion: global.appDetail.subVersion,
           rows: results[0]
         });
       } else {
@@ -324,7 +321,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/saveis', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/saveis', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     let ref = req.body.ref;
     let data = req.body.data;
     let tokenKey = req.body.tokenKey;
@@ -334,8 +331,8 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const result: any = await isModel.saveIs(fastify.dbISOnline, ref, data);
-      fastify.dbISOnline.destroy;
+      const result: any = await isModel.saveIs(global.dbISOnline, ref, data);
+      global.dbISOnline.destroy;
       reply.send({ statusCode: HttpStatus.OK, ok: true, rows: result[0] });
     } catch (error) {
       reply.send({
@@ -345,7 +342,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/save-map-point', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/save-map-point', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     let ref = req.body.ref;
     let formInput = req.body.formInput;
     let tokenKey = req.body.tokenKey;
@@ -355,14 +352,14 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const result: any = await isModel.saveMapPoint(fastify.dbISOnline, ref, formInput);
+      const result: any = await isModel.saveMapPoint(global.dbISOnline, ref, formInput);
       console.log("save map point: " + ref);
-      isModel.saveMapPointIs(fastify.dbISOnline, formInput);
-      fastify.dbISOnline.destroy;
+      isModel.saveMapPointIs(global.dbISOnline, formInput);
+      global.dbISOnline.destroy;
       reply.send({
         statusCode: HttpStatus.OK, ok: true,
-        version: fastify.apiVersion,
-        subVersion: fastify.apiSubVersion,
+        version: global.appDetail.version,
+        subVersion: global.appDetail.subVersion,
         rows: result[0]
       });
     } catch (error) {
@@ -373,7 +370,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/save-lib', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/save-lib', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     let saveType = req.body.saveType;
     let formInput = req.body.formInput;
     let tokenKey = req.body.tokenKey;
@@ -382,12 +379,12 @@ const router = (fastify, { }, next) => {
       return false;
     }
     try {
-      const result: any = await isModel.saveLib(fastify.dbISOnline, saveType, formInput);
-      fastify.dbISOnline.destroy;
+      const result: any = await isModel.saveLib(global.dbISOnline, saveType, formInput);
+      global.dbISOnline.destroy;
       reply.send({
         statusCode: HttpStatus.OK, ok: true,
-        version: fastify.apiVersion,
-        subVersion: fastify.apiSubVersion,
+        version: global.appDetail.version,
+        subVersion: global.appDetail.subVersion,
         rows: result[0]
       });
     } catch (error) {
@@ -398,7 +395,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/save-lib-hosp', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/save-lib-hosp', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     let saveType = req.body.saveType;
     let formInput = req.body.formInput;
     let tokenKey = req.body.tokenKey;
@@ -407,12 +404,12 @@ const router = (fastify, { }, next) => {
       return false;
     }
     try {
-      const result: any = await isModel.saveLibHosp(fastify.dbISOnline, saveType, formInput);
-      fastify.dbISOnline.destroy;
+      const result: any = await isModel.saveLibHosp(global.dbISOnline, saveType, formInput);
+      global.dbISOnline.destroy;
       reply.send({
         statusCode: HttpStatus.OK, ok: true,
-        version: fastify.apiVersion,
-        subVersion: fastify.apiSubVersion,
+        version: global.appDetail.version,
+        subVersion: global.appDetail.subVersion,
         rows: result[0]
       });
     } catch (error) {
@@ -423,20 +420,20 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/report-agegroup', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/report-agegroup', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     let reportType = req.body.reportType;
     let date1 = req.body.date1;
     let date2 = req.body.date2;
     let hospCode = req.body.hospCode;
 
     try {
-      const result = await isModel.reportAgeGroup1(fastify.dbISOnline, date1, date2, hospCode);
-      fastify.dbISOnline.destroy;
+      const result = await isModel.reportAgeGroup1(global.dbISOnline, date1, date2, hospCode);
+      global.dbISOnline.destroy;
       reply.send({
         statusCode: HttpStatus.OK,
         ok: true,
-        version: fastify.apiVersion,
-        subVersion: fastify.apiSubVersion,
+        version: global.appDetail.version,
+        subVersion: global.appDetail.subVersion,
         rows: result[0]
       });
     } catch (error) {
@@ -447,7 +444,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/save-to-csv', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/save-to-csv', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     let tokenKey = req.body.tokenKey;
     if (tokenKey === '') {
       reply.send({ ok: false, error: 'token error' });
@@ -493,14 +490,14 @@ const router = (fastify, { }, next) => {
     });
   })
 
-  fastify.post('/remove', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/remove', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     let id = req.body.id;
     let ref = req.body.ref;
     let hospCode = req.body.hospCode;
 
     try {
-      const result = await isModel.remove(fastify.dbISOnline, ref);
-      fastify.dbISOnline.destroy;
+      const result = await isModel.remove(global.dbISOnline, ref);
+      global.dbISOnline.destroy;
       reply.send({ statusCode: HttpStatus.OK, result });
     } catch (error) {
       reply.send({

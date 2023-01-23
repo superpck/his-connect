@@ -1,5 +1,3 @@
-/// <reference path="../../typings.d.ts" />
-
 import * as fastify from 'fastify';
 import * as moment from 'moment'
 import * as HttpStatus from 'http-status-codes';
@@ -13,20 +11,20 @@ const resultText = './sent_result.txt';
 const router = (fastify, { }, next) => {
   var startServer = fastify.startServerTime;
 
-  fastify.register(require('fastify-cookie'), {
+  fastify.register(require('@fastify/cookie'), {
     secret: process.env.SECRET_KEY,
     parseOptions: {}
   })
 
-  fastify.get('/', async (req, reply: fastify.Reply) => {
+  fastify.get('/', async (req, reply: any) => {
     const cookieValue = req.cookies;
     reply.send({
       ok: true,
       apiCode: 'HISCONNECT',
       apiName: fastify.apiName,
       apiDesc: 'API for IS-Online, nRefer, PCC, CMI',
-      version: fastify.apiVersion,
-      subVersion: fastify.apiSubVersion,
+      version: global.appDetail.version,
+      subVersion: global.appDetail.subVersion,
       serviceName: "isonline",   // for isonline only
       his_provider: process.env.HIS_PROVIDER,
       hospcode: process.env.HOSPCODE,
@@ -35,7 +33,7 @@ const router = (fastify, { }, next) => {
     });
   })
 
-  fastify.get('/get-token/:key', async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/get-token/:key', async (req: any, reply: any) => {
     const key = req.params.key;
     console.log(req.headers.host);
     const trust = req.headers.host.search('localhost|127.0.0.1|192.168.0.89') > -1;
@@ -59,7 +57,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.get('/sign-token/:requestKey', async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/sign-token/:requestKey', async (req: any, reply: any) => {
     const requestKey = req.params.requestKey || '??';
     var hashRequestKey = crypto.createHash('md5').update(process.env.REQUEST_KEY).digest('hex');
     if (requestKey === hashRequestKey) {
@@ -72,7 +70,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.get('/env', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/env', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     reply.status(HttpStatus.OK).send({
       statusCode: HttpStatus.OK,
       env: {
@@ -102,7 +100,7 @@ const router = (fastify, { }, next) => {
     });
   })
 
-  fastify.post('/get-config/:requestKey', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/get-config/:requestKey', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const requestKey = req.params.requestKey || '??';
     const status = req.body.status || 0;
     const province = req.body.province || 0;
@@ -119,7 +117,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/save-config/:requestKey', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/save-config/:requestKey', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const requestKey = req.params.requestKey || '??';
     const province = req.body.province || 0;
     const userInfo = req.body.userInfo;
@@ -160,7 +158,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.get('/status', async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/status', async (req: any, reply: any) => {
     var ua = req.headers['user-agent'];
     let browserDevice = 'desktop';
     let mobileType = null;
@@ -242,7 +240,7 @@ const router = (fastify, { }, next) => {
     });
   })
 
-  fastify.get('/autosent-result', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/autosent-result', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     try {
       var contents = fs.readFileSync(resultText);
       reply.status(HttpStatus.OK).send({

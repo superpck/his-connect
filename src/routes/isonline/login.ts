@@ -1,5 +1,3 @@
-/// <reference path="../../../typings.d.ts" />
-
 import * as fastify from 'fastify';
 import * as HttpStatus from 'http-status-codes';
 import * as moment from 'moment';
@@ -9,13 +7,13 @@ import { IsLoginModel } from '../../models/isonline/login';
 const loginModel = new IsLoginModel()
 
 const router = (fastify, { }, next) => {
-  fastify.post('/', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/',  async (req: any, res: any) => {
     let username = req.body.username;
     let password = req.body.password;
 
     if (username && password) {
       let encPassword = await crypto.createHash('sha256').update(password).digest('hex');
-      loginModel.doLogin(fastify.dbISOnline, username, encPassword)
+      loginModel.doLogin(global.dbISOnline, username, encPassword)
         .then(async (results: any) => {
           if (results.length) {
             let today = moment().locale('th').format('YYYY-MM-DD HH:mm:ss');
@@ -49,7 +47,7 @@ const router = (fastify, { }, next) => {
               type: 1
             };
 
-            await loginModel.saveToken(fastify.dbISOnline, tokenInfo)
+            await loginModel.saveToken(global.dbISOnline, tokenInfo)
               .then((saveToken: any) => {
                 console.log('save token: ', saveToken);
               }).catch(errort => {
@@ -93,7 +91,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/api-login', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/api-login',  async (req: any, res: any) => {
     let body: any = req.body;
     let username = body.username;
     let password = body.password;
@@ -122,11 +120,11 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/token-status/:tokenKey', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/token-status/:tokenKey', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
     let tokenKey = req.params.tokenKey;
     if (tokenKey) {
       try {
-        const result = await loginModel.checkToken(fastify.dbISOnline, tokenKey);
+        const result = await loginModel.checkToken(global.dbISOnline, tokenKey);
         if (result.length) {
 
           res.send({
@@ -161,12 +159,12 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/token-status__/:tokenKey', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/token-status__/:tokenKey', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
     verifyToken(req, res);
 
     let tokenKey = req.params.tokenKey;
     if (tokenKey) {
-      loginModel.checkToken(fastify.dbISOnline, tokenKey)
+      loginModel.checkToken(global.dbISOnline, tokenKey)
         .then((results: any) => {
           if (results.length) {
             res.send({

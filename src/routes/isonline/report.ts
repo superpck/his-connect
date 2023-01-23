@@ -1,5 +1,3 @@
-/// <reference path="../../../typings.d.ts" />
-
 import * as fastify from 'fastify';
 import * as HttpStatus from 'http-status-codes';
 import * as moment from 'moment';
@@ -9,7 +7,7 @@ const reportModel = new IsReportModel;
 
 const router = (fastify, { }, next) => {
 
-  fastify.post('/', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/',  async (req: any, reply: any) => {
     verifyToken(req, reply);
     let tokenKey = req.body.tokenKey;
     if (tokenKey === '') {
@@ -27,7 +25,7 @@ const router = (fastify, { }, next) => {
   
     if (reportID) {
       try {
-        await reportModel.getReport(fastify.dbISOnline, reportID)
+        await reportModel.getReport(global.dbISOnline, reportID)
           .then((results: any) => {
             console.log("\nreport id:" + reportID);
             const row = results[0];
@@ -64,7 +62,7 @@ const router = (fastify, { }, next) => {
               console.log(rawSql);
               console.log("\r\n");
   
-              reportModel.getData(fastify.dbISOnline, rawSql)
+              reportModel.getData(global.dbISOnline, rawSql)
                 .then((results: any) => {
                   console.log("\nreport id:" + reportID + ' result = ' + results[0].length);
                   reply.send({ ok: true, rows: results[0] });
@@ -83,7 +81,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/report1', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/report1',  async (req: any, reply: any) => {
     verifyToken(req, reply);
     let tokenKey = req.body.tokenKey;
     if (tokenKey === '') {
@@ -101,7 +99,7 @@ const router = (fastify, { }, next) => {
       region: req.body.region,
       prov: req.body.prov,
     };
-    reportModel.getReport1(fastify.dbISOnline, reportCond)
+    reportModel.getReport1(global.dbISOnline, reportCond)
       .then((results: any) => {
         console.log("token: " + tokenKey + " report ID: " + reportID + " hcode: " + hospCode + ' result: ' + results[0].length + ' record<s>');
         reply.send({ ok: true, rows: results[0] });

@@ -1,31 +1,18 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisModel = void 0;
 const dbName = process.env.HIS_DB_NAME;
 const dbClient = process.env.HIS_DB_CLIENT;
 const maxLimit = 100;
 class HisModel {
-    getTableName(db, dbname = dbName) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'TABLE_SCHEMA';
-            const result = yield db('information_schema.tables')
-                .where(whereDB, dbname);
-            return result;
-        });
+    async getTableName(db, dbname = dbName) {
+        const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'TABLE_SCHEMA';
+        const result = await db('information_schema.tables')
+            .where(whereDB, dbname);
+        return result;
     }
-    testConnect(db) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return db('hospdata.patient').select('hn').limit(1);
-        });
+    async testConnect(db) {
+        return db('hospdata.patient').select('hn').limit(1);
     }
     getPerson(knex, columnName, searchText) {
         return knex('hospdata.patient')

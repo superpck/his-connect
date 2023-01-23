@@ -69,8 +69,8 @@ export class HisHosxppcuModel {
                 'ipt.ward as wardcode',
                 'referin.refer_hospcode as htohosp'
             )
-            .select(knex.raw('if(ovstdiag.diagtype =1,ovstdiag.icd10,null) as diag1'))
-            .select(knex.raw('if(ovstdiag.diagtype =2,ovstdiag.icd10,null) as diag2'))
+            .select(db.raw('if(ovstdiag.diagtype =1,ovstdiag.icd10,null) as diag1'))
+            .select(db.raw('if(ovstdiag.diagtype =2,ovstdiag.icd10,null) as diag2'))
             .where(where)
             // .orderBy('opdscreen.vstdate', 'desc')
             .limit(maxLimit);

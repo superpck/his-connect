@@ -10,7 +10,7 @@ export default async function router(fastify: FastifyInstance) {
   fastify.register(require('./routes/refer/local'), { prefix: `${rootPrefix}/refer/local` });
 
   // save nrefer to local nRefer@Hospital
-  fastify.register(require('./routes/refer/send'), { prefix: `${rootPrefix}/refer/send-moph`, logger: true });
+  // fastify.register(require('./routes/refer/send'), { prefix: `${rootPrefix}/refer/send-moph`, logger: true });
 
 // HDC Connect (รอประสาน สสจ.)
   fastify.register(require('./routes/hdc/index'), { prefix: `${rootPrefix}/hdc`, logger: true });
@@ -34,12 +34,12 @@ export default async function router(fastify: FastifyInstance) {
   fastify.register(require('./routes/pcc/index'), { prefix: `${rootPrefix}/pcc`, logger: true });
 
 // Cannabis Connect ข้อมูลกัญชา
-  fastify.register(require('./routes/cannabis/index'), { prefix: `${rootPrefix}/cannabis`, logger: true });
+  // fastify.register(require('./routes/cannabis/index'), { prefix: `${rootPrefix}/cannabis`, logger: true });
 
 // ร้านยาคุณภาพ
   fastify.register(require('./routes/qdrugstore/index'), { prefix: `${rootPrefix}/qdrugstore`, logger: true });
 
 // รายงาน 506
-  fastify.register(require('./routes/rp506/index'), { prefix: `${rootPrefix}/rp506`, logger: true });
+  // fastify.register(require('./routes/rp506/index'), { prefix: `${rootPrefix}/rp506`, logger: true });
 
 }

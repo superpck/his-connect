@@ -35,8 +35,8 @@ class HisJhcisModel {
             where[columnName] = searchText;
         return db('visit')
             .select('pid as hn', 'visitno', 'visitdate as date', 'timestart as time')
-            .select(knex.raw("case when LOCATE('/', pressure) then SUBSTR(pressure,1,LOCATE('/', pressure)-1) else '' end as bp_systolic"))
-            .select(knex.raw("case when LOCATE('/', pressure) then SUBSTR(pressure,LOCATE('/', pressure)+1) else '' end as bp_diastolic"))
+            .select(db.raw("case when LOCATE('/', pressure) then SUBSTR(pressure,1,LOCATE('/', pressure)-1) else '' end as bp_systolic"))
+            .select(db.raw("case when LOCATE('/', pressure) then SUBSTR(pressure,LOCATE('/', pressure)+1) else '' end as bp_diastolic"))
             .select('pulse as pr', 'respri as rr', 'weight', 'height', 'waist', 'temperature as tem')
             .where(where)
             .orderBy('visitdate', 'desc')

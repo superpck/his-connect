@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const HttpStatus = require("http-status-codes");
 var crypto = require('crypto');
@@ -74,7 +65,7 @@ switch (hisProvider) {
         hisModel = new his_1.HisModel();
 }
 const router = (fastify, {}, next) => {
-    fastify.post('/check-requestkey', { preHandler: [fastify.serviceMonitoring] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    fastify.post('/check-requestkey', async (req, reply) => {
         let requestKey = req.body.requestKey || '??';
         const isEncode = req.body.md5;
         if (isEncode == 0) {
@@ -92,14 +83,14 @@ const router = (fastify, {}, next) => {
             statusCode: HttpStatus.OK,
             skey: requestKey
         });
-    }));
-    fastify.post('/person', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/person', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const hospcode = req.body.hospcode;
         const searchType = req.body.searchType;
         const searchValue = req.body.searchValue;
         if (searchType && searchValue) {
             try {
-                const result = yield pccHisModel.getPerson(fastify.dbHIS, searchType, searchValue);
+                const result = await pccHisModel.getPerson(global.dbHIS, searchType, searchValue);
                 reply.status(HttpStatus.OK).send({
                     statusCode: HttpStatus.OK,
                     rows: result
@@ -119,14 +110,14 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
-    fastify.post('/person-by-name', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/person-by-name', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const hospcode = req.body.hospcode;
         const fname = req.body.fname;
         const lname = req.body.lname;
         if (fname + lname) {
             try {
-                const result = yield pccHisModel.getPersonByName(fastify.dbHIS, fname, lname);
+                const result = await pccHisModel.getPersonByName(global.dbHIS, fname, lname);
                 reply.status(HttpStatus.OK).send({
                     statusCode: HttpStatus.OK,
                     rows: result
@@ -146,14 +137,14 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
-    fastify.post('/person-chronic', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/person-chronic', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const hospcode = req.body.hospcode;
         const cid = req.body.cid;
         const pid = req.body.pid;
         if (cid || pid) {
             try {
-                const result = yield pccHisModel.getChronic(fastify.dbHIS, pid, cid);
+                const result = await pccHisModel.getChronic(global.dbHIS, pid, cid);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -181,14 +172,14 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
-    fastify.post('/drug-allergy', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/drug-allergy', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const hospcode = req.body.hospcode;
         const pid = req.body.pid;
         const cid = req.body.cid;
         if (pid || cid) {
             try {
-                const result = yield pccHisModel.getDrugAllergy(fastify.dbHIS, pid, cid);
+                const result = await pccHisModel.getDrugAllergy(global.dbHIS, pid, cid);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -216,8 +207,8 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
-    fastify.post('/visit', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/visit', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const hospcode = req.body.hospcode;
         const hn = req.body.hn;
         const cid = req.body.cid;
@@ -225,7 +216,7 @@ const router = (fastify, {}, next) => {
         const date = req.body.date;
         if (hn + cid) {
             try {
-                const rows = yield pccHisModel.getServiceByHn(fastify.dbHIS, hn, cid, date, visitNo);
+                const rows = await pccHisModel.getServiceByHn(global.dbHIS, hn, cid, date, visitNo);
                 reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
             }
             catch (error) {
@@ -242,12 +233,12 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
-    fastify.post('/diagnosis', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/diagnosis', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const visitNo = req.body.visitNo;
         if (visitNo) {
             try {
-                const result = yield pccHisModel.getDiagnosis(fastify.dbHIS, visitNo);
+                const result = await pccHisModel.getDiagnosis(global.dbHIS, visitNo);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -275,12 +266,12 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
-    fastify.post('/diagnosis-by-hn', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/diagnosis-by-hn', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const hn = req.body.hn;
         if (hn) {
             try {
-                const result = yield pccHisModel.getDiagnosisByHn(fastify.dbHIS, hn);
+                const result = await pccHisModel.getDiagnosisByHn(global.dbHIS, hn);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -308,12 +299,12 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
-    fastify.post('/drug', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/drug', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const visitNo = req.body.visitNo;
         if (visitNo) {
             try {
-                const result = yield pccHisModel.getDrug(fastify.dbHIS, visitNo);
+                const result = await pccHisModel.getDrug(global.dbHIS, visitNo);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -341,12 +332,12 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
-    fastify.post('/drug-by-hn', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/drug-by-hn', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const hn = req.body.hn;
         if (hn) {
             try {
-                const result = yield pccHisModel.getDrugByHn(fastify.dbHIS, hn);
+                const result = await pccHisModel.getDrugByHn(global.dbHIS, hn);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -374,12 +365,12 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
-    fastify.post('/anc', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/anc', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const visitNo = req.body.visitNo;
         if (visitNo) {
             try {
-                const result = yield pccHisModel.getAnc(fastify.dbHIS, visitNo);
+                const result = await pccHisModel.getAnc(global.dbHIS, visitNo);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -407,12 +398,12 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
-    fastify.post('/anc-by-hn', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/anc-by-hn', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const hn = req.body.hn;
         if (hn) {
             try {
-                const result = yield pccHisModel.getAncByHn(fastify.dbHIS, hn);
+                const result = await pccHisModel.getAncByHn(global.dbHIS, hn);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -440,12 +431,12 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
-    fastify.post('/epi', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/epi', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const visitNo = req.body.visitNo;
         if (visitNo) {
             try {
-                const result = yield pccHisModel.getEpi(fastify.dbHIS, visitNo);
+                const result = await pccHisModel.getEpi(global.dbHIS, visitNo);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -473,12 +464,12 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
-    fastify.post('/epi-by-hn', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/epi-by-hn', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const hn = req.body.hn;
         if (hn) {
             try {
-                const result = yield pccHisModel.getEpiByHn(fastify.dbHIS, hn);
+                const result = await pccHisModel.getEpiByHn(global.dbHIS, hn);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -506,12 +497,12 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
-    fastify.post('/fp', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/fp', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const visitNo = req.body.visitNo;
         if (visitNo) {
             try {
-                const result = yield pccHisModel.getFp(fastify.dbHIS, visitNo);
+                const result = await pccHisModel.getFp(global.dbHIS, visitNo);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -539,12 +530,12 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
-    fastify.post('/fp-by-hn', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/fp-by-hn', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const hn = req.body.hn;
         if (hn) {
             try {
-                const result = yield pccHisModel.getFpByHn(fastify.dbHIS, hn);
+                const result = await pccHisModel.getFpByHn(global.dbHIS, hn);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -572,12 +563,12 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
-    fastify.post('/nutrition', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/nutrition', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const visitNo = req.body.visitNo;
         if (visitNo) {
             try {
-                const result = yield pccHisModel.getNutrition(fastify.dbHIS, visitNo);
+                const result = await pccHisModel.getNutrition(global.dbHIS, visitNo);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -605,12 +596,12 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
-    fastify.post('/nutrition-by-hn', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/nutrition-by-hn', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const hn = req.body.hn;
         if (hn) {
             try {
-                const result = yield pccHisModel.getNutritionByHn(fastify.dbHIS, hn);
+                const result = await pccHisModel.getNutritionByHn(global.dbHIS, hn);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -638,13 +629,13 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
-    fastify.post('/lab-result', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/lab-result', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const searchType = req.body.searchType || 'visitno';
         const searchValue = req.body.searchValue;
         if (searchType && searchValue) {
             try {
-                const result = yield pccHisModel.getLabResult(fastify.dbHIS, searchType, searchValue);
+                const result = await pccHisModel.getLabResult(global.dbHIS, searchType, searchValue);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -672,13 +663,13 @@ const router = (fastify, {}, next) => {
                 message: 'Invalid parameter'
             });
         }
-    }));
-    fastify.post('/lib-drug', { preHandler: [fastify.serviceMonitoring, fastify.checkRequestKey] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/lib-drug', { preHandler: [fastify.checkRequestKey] }, async (req, reply) => {
         const searchType = req.body.searchType;
         const searchValue = req.body.searchValue;
         if (searchType && searchValue) {
             try {
-                const result = yield pccHisModel.libDrug(fastify.dbHIS, searchType, searchValue);
+                const result = await pccHisModel.libDrug(global.dbHIS, searchType, searchValue);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -706,7 +697,7 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
+    });
     next();
 };
 module.exports = router;

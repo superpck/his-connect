@@ -1,5 +1,3 @@
-/// <reference path="./../../../typings.d.ts" />
-
 var fastify = require('fastify');
 import * as moment from 'moment';
 import { IswinModel } from '../../models/isonline/iswin';

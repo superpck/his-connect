@@ -1,14 +1,12 @@
-/// <reference path="../../../typings.d.ts" />
-
 import * as fastify from 'fastify';
 
 const router = (fastify, { }, next) => {
 
-  fastify.get('/', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/',  async (req: any, reply: any) => {
     reply.send({ api: 'MoPH ISOnline' });
   })
 
-  fastify.post('/token-create', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/token-create',  async (req: any, reply: any) => {
     let username = req.body.username;
     let password = req.body.password;
   

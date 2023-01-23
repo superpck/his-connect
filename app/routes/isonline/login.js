@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const HttpStatus = require("http-status-codes");
 const moment = require("moment");
@@ -15,13 +6,13 @@ const crypto = require('crypto');
 const login_1 = require("../../models/isonline/login");
 const loginModel = new login_1.IsLoginModel();
 const router = (fastify, {}, next) => {
-    fastify.post('/', { preHandler: [fastify.serviceMonitoring] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    fastify.post('/', async (req, res) => {
         let username = req.body.username;
         let password = req.body.password;
         if (username && password) {
-            let encPassword = yield crypto.createHash('sha256').update(password).digest('hex');
-            loginModel.doLogin(fastify.dbISOnline, username, encPassword)
-                .then((results) => __awaiter(void 0, void 0, void 0, function* () {
+            let encPassword = await crypto.createHash('sha256').update(password).digest('hex');
+            loginModel.doLogin(global.dbISOnline, username, encPassword)
+                .then(async (results) => {
                 if (results.length) {
                     let today = moment().locale('th').format('YYYY-MM-DD HH:mm:ss');
                     let expire = moment().locale('th').add(12, 'hours').format('YYYY-MM-DD HH:mm:ss');
@@ -52,7 +43,7 @@ const router = (fastify, {}, next) => {
                         expire: expire,
                         type: 1
                     };
-                    yield loginModel.saveToken(fastify.dbISOnline, tokenInfo)
+                    await loginModel.saveToken(global.dbISOnline, tokenInfo)
                         .then((saveToken) => {
                         console.log('save token: ', saveToken);
                     }).catch(errort => {
@@ -75,7 +66,7 @@ const router = (fastify, {}, next) => {
                         message: 'ชื่อผู้ใช้งานหรือรหัสผ่าน ไม่ถูกต้อง'
                     });
                 }
-            }))
+            })
                 .catch(err => {
                 console.log('login', err.message);
                 console.log('Error:', err);
@@ -95,8 +86,8 @@ const router = (fastify, {}, next) => {
                 message: 'กรุณาระบุชื่อผู้ใช้งานและรหัสผ่าน'
             });
         }
-    }));
-    fastify.post('/api-login', { preHandler: [fastify.serviceMonitoring] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/api-login', async (req, res) => {
         let body = req.body;
         let username = body.username;
         let password = body.password;
@@ -124,12 +115,12 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED)
             });
         }
-    }));
-    fastify.post('/token-status/:tokenKey', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/token-status/:tokenKey', { preHandler: [fastify.authenticate] }, async (req, res) => {
         let tokenKey = req.params.tokenKey;
         if (tokenKey) {
             try {
-                const result = yield loginModel.checkToken(fastify.dbISOnline, tokenKey);
+                const result = await loginModel.checkToken(global.dbISOnline, tokenKey);
                 if (result.length) {
                     res.send({
                         statusCode: HttpStatus.OK,
@@ -164,12 +155,12 @@ const router = (fastify, {}, next) => {
                 message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
             });
         }
-    }));
-    fastify.post('/token-status__/:tokenKey', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/token-status__/:tokenKey', { preHandler: [fastify.authenticate] }, async (req, res) => {
         verifyToken(req, res);
         let tokenKey = req.params.tokenKey;
         if (tokenKey) {
-            loginModel.checkToken(fastify.dbISOnline, tokenKey)
+            loginModel.checkToken(global.dbISOnline, tokenKey)
                 .then((results) => {
                 if (results.length) {
                     res.send({
@@ -206,31 +197,29 @@ const router = (fastify, {}, next) => {
                 message: 'Token not found'
             });
         }
-    }));
-    function verifyToken(req, res) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let token = null;
-            if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
-                token = req.headers.authorization.split(' ')[1];
-            }
-            else if (req.query && req.query.token) {
-                token = req.query.token;
-            }
-            else if (req.body && req.body.token) {
-                token = req.body.token;
-            }
-            try {
-                yield fastify.jwt.verify(token);
-                return true;
-            }
-            catch (error) {
-                console.log('authen fail!', error.message);
-                res.status(HttpStatus.UNAUTHORIZED).send({
-                    statusCode: HttpStatus.UNAUTHORIZED,
-                    message: error.message
-                });
-            }
-        });
+    });
+    async function verifyToken(req, res) {
+        let token = null;
+        if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+            token = req.headers.authorization.split(' ')[1];
+        }
+        else if (req.query && req.query.token) {
+            token = req.query.token;
+        }
+        else if (req.body && req.body.token) {
+            token = req.body.token;
+        }
+        try {
+            await fastify.jwt.verify(token);
+            return true;
+        }
+        catch (error) {
+            console.log('authen fail!', error.message);
+            res.status(HttpStatus.UNAUTHORIZED).send({
+                statusCode: HttpStatus.UNAUTHORIZED,
+                message: error.message
+            });
+        }
     }
     next();
 };

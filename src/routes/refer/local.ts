@@ -1,5 +1,3 @@
-/// <reference path="../../../typings.d.ts" />
-
 // ห้ามแก้ไข file นี้ // 
 import * as fastify from 'fastify';
 import * as HttpStatus from 'http-status-codes';
@@ -11,14 +9,14 @@ const referModel = new ReferModel();
 
 const router = (fastify, { }, next) => {
   // =============================================================
-  fastify.get('/', async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/', async (req: any, reply: any) => {
     reply.send({
       api: 'nRefer@Hospital'
     });
   });
 
   // =============================================================
-  fastify.get('/tbl', async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/tbl', async (req: any, reply: any) => {
     try {
       const result = await referModel.getTableName(fastify.dbRefer);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, tblCount: result.length });

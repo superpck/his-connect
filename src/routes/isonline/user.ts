@@ -1,6 +1,3 @@
-/// <reference path="../../../typings.d.ts" />
-
-import * as fastify from 'fastify';
 import * as HttpStatus from 'http-status-codes';
 
 import { IsUserModel } from '../../models/isonline/users';
@@ -8,12 +5,12 @@ const userModel = new IsUserModel;
 
 const router = (fastify, { }, next) => {
 
-  fastify.post('/', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/',  async (req: any, res: any) => {
     verifyToken(req, res);
     let id: number = req.body.idSeach;
 
     try {
-      const result: any = await userModel.list(fastify.dbISOnline, id);
+      const result: any = await userModel.list(global.dbISOnline, id);
       if (id > 0) {
         console.log("is_user id: " + id);
         res.send({
@@ -35,12 +32,12 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/getbyid', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/getbyid',  async (req: any, res: any) => {
     verifyToken(req, res);
     let id: number = req.body.idSeach;
 
     try {
-      const result: any = await userModel.getByID(fastify.dbISOnline, id);
+      const result: any = await userModel.getByID(global.dbISOnline, id);
       console.log("user id: " + id + ', ' + result.length + ' record<s> founded.');
       res.send({
         statusCode: HttpStatus.OK,
@@ -54,12 +51,12 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/getbyusername', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/getbyusername',  async (req: any, res: any) => {
     verifyToken(req, res);
     let userName: string = req.body.userName;
 
     try {
-      const result = await userModel.getByUserName(fastify.dbISOnline, userName)
+      const result = await userModel.getByUserName(global.dbISOnline, userName)
       res.send({
         statusCode: HttpStatus.OK,
         ok: true, rows: result[0]
@@ -72,7 +69,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/selectData', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/selectData',  async (req: any, res: any) => {
     verifyToken(req, res);
     let tableName = req.body.tableName;
     let selectText = req.body.selectText;
@@ -81,7 +78,7 @@ const router = (fastify, { }, next) => {
     let orderText = req.body.orderText;
 
     try {
-      const result = await userModel.selectSql(fastify.dbISOnline, tableName, selectText, whereText, groupBy, orderText)
+      const result = await userModel.selectSql(global.dbISOnline, tableName, selectText, whereText, groupBy, orderText)
       console.log("\nget: " + tableName + ' = ' + result[0].length + ' record<s> founded.');
       res.send({
         statusCode: HttpStatus.OK,
@@ -95,13 +92,13 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/save', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/save',  async (req: any, res: any) => {
     verifyToken(req, res);
     let id = req.body.id;
     let data = req.body.data;
 
     try {
-      const result: any = await userModel.saveUser(fastify.dbISOnline, id, data);
+      const result: any = await userModel.saveUser(global.dbISOnline, id, data);
       console.log("\save: user id: " + id);
       res.send({ statusCode: HttpStatus.OK, ok: true, rows: result[0] });
     } catch (error) {
@@ -113,12 +110,12 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/remove', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/remove',  async (req: any, res: any) => {
     verifyToken(req, res);
     let id = req.body.id;
 
     try {
-      const result: any = await userModel.remove(fastify.dbISOnline, id);
+      const result: any = await userModel.remove(global.dbISOnline, id);
       console.log("\delete: user id: " + id);
       res.send({
         statusCode: HttpStatus.OK,

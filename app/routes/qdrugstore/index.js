@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const HttpStatus = require("http-status-codes");
 const moment = require("moment");
@@ -79,19 +70,19 @@ switch (hisProvider) {
 const cannabis_1 = require("../../models/cannabis/cannabis");
 const cannabisModel = new cannabis_1.CannabisModel();
 const router = (fastify, {}, next) => {
-    fastify.get('/', (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    fastify.get('/', async (req, reply) => {
         reply.send({
             api: 'Quality Drug Store',
-            version: fastify.apiVersion,
-            subVersion: fastify.apiSubVersion
+            version: global.appDetail.version,
+            subVersion: global.appDetail.subVersion
         });
-    }));
-    fastify.get('/alive/:requestKey', (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.get('/alive/:requestKey', async (req, reply) => {
         const requestKey = req.params.requestKey;
         var hashRequestKey = crypto.createHash('md5').update(process.env.REQUEST_KEY).digest('hex');
         const requestKeyVerified = requestKey === hashRequestKey;
         try {
-            const result = yield hisModel.getTableName(fastify.dbHIS);
+            const result = await hisModel.getTableName(global.dbHIS);
             if (result && result.length) {
                 reply.status(HttpStatus.OK).send({
                     statusCode: HttpStatus.OK,
@@ -107,8 +98,8 @@ const router = (fastify, {}, next) => {
             console.log('alive', error.message);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message, RequestKey: requestKeyVerified });
         }
-    }));
-    fastify.get('/tbl/:requestKey', (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.get('/tbl/:requestKey', async (req, reply) => {
         const requestKey = req.params.requestKey;
         var hashRequestKey = crypto.createHash('md5').update(process.env.REQUEST_KEY).digest('hex');
         if (requestKey !== hashRequestKey) {
@@ -116,15 +107,15 @@ const router = (fastify, {}, next) => {
             return false;
         }
         try {
-            const result = yield hisModel.getTableName(fastify.dbHIS);
+            const result = await hisModel.getTableName(global.dbHIS);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, tblCount: result.length });
         }
         catch (error) {
             console.log('tbl', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: HttpStatus.getStatusText(HttpStatus.INTERNAL_SERVER_ERROR) });
         }
-    }));
-    fastify.post('/service', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/service', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const hn = req.body.hn || '';
         const visitNo = req.body.visitNo || '';
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -139,19 +130,19 @@ const router = (fastify, {}, next) => {
                 typeSearch = 'visitNo';
                 textSearch = visitNo;
             }
-            const result = yield cannabisModel.searchVisit(fastify.dbHIS, textSearch);
+            const result = await cannabisModel.searchVisit(global.dbHIS, textSearch);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('service', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message });
         }
-    }));
-    fastify.post('/visit', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/visit', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const hn = req.body.hn || '';
         if (hn) {
             try {
-                const result = yield cannabisModel.searchVisit(fastify.dbHIS, hn);
+                const result = await cannabisModel.searchVisit(global.dbHIS, hn);
                 reply.send({
                     statusCode: HttpStatus.OK,
                     rows: result
@@ -171,12 +162,12 @@ const router = (fastify, {}, next) => {
                 message: 'parameter not found.'
             });
         }
-    }));
-    fastify.post('/patient-info', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/patient-info', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const hn = req.body.hn || '';
         if (hn) {
             try {
-                const result = yield cannabisModel.patientInfo(fastify.dbHIS, hn);
+                const result = await cannabisModel.patientInfo(global.dbHIS, hn);
                 reply.send({
                     statusCode: HttpStatus.OK,
                     rows: result
@@ -196,13 +187,13 @@ const router = (fastify, {}, next) => {
                 message: 'parameter not found.'
             });
         }
-    }));
-    fastify.post('/lab', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/lab', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const hn = req.body.hn || '';
         const vn = req.body.vn || '';
         if (hn && vn) {
             try {
-                const result = yield cannabisModel.getVisitLab(fastify.dbHIS, hn, vn);
+                const result = await cannabisModel.getVisitLab(global.dbHIS, hn, vn);
                 reply.send({
                     statusCode: HttpStatus.OK,
                     rows: result
@@ -222,13 +213,13 @@ const router = (fastify, {}, next) => {
                 message: 'parameter not found.'
             });
         }
-    }));
-    fastify.post('/drug-opd', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/drug-opd', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const hn = req.body.hn || '';
         const vn = req.body.vn || '';
         if (hn && vn) {
             try {
-                const result = yield cannabisModel.getVisitDrug(fastify.dbHIS, hn, vn);
+                const result = await cannabisModel.getVisitDrug(global.dbHIS, hn, vn);
                 reply.send({
                     statusCode: HttpStatus.OK,
                     rows: result
@@ -248,13 +239,13 @@ const router = (fastify, {}, next) => {
                 message: 'parameter not found.'
             });
         }
-    }));
-    fastify.post('/appointment', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/appointment', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const hn = req.body.hn || '';
         const vn = req.body.vn || '';
         if (hn && vn) {
             try {
-                const result = yield cannabisModel.getVisitAppointment(fastify.dbHIS, hn, vn);
+                const result = await cannabisModel.getVisitAppointment(global.dbHIS, hn, vn);
                 reply.send({
                     statusCode: HttpStatus.OK,
                     rows: result
@@ -274,13 +265,13 @@ const router = (fastify, {}, next) => {
                 message: 'parameter not found.'
             });
         }
-    }));
-    fastify.post('/diag-text', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/diag-text', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const hn = req.body.hn || '';
         const vn = req.body.vn || '';
         if (hn && vn) {
             try {
-                const result = yield cannabisModel.getVisitDiagText(fastify.dbHIS, hn, vn);
+                const result = await cannabisModel.getVisitDiagText(global.dbHIS, hn, vn);
                 reply.send({
                     statusCode: HttpStatus.OK,
                     rows: result
@@ -300,13 +291,13 @@ const router = (fastify, {}, next) => {
                 message: 'parameter not found.'
             });
         }
-    }));
-    fastify.post('/diagnosis', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/diagnosis', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const hn = req.body.hn || '';
         const vn = req.body.vn || '';
         if (hn && vn) {
             try {
-                const result = yield cannabisModel.getVisitDiagnosis(fastify.dbHIS, hn, vn);
+                const result = await cannabisModel.getVisitDiagnosis(global.dbHIS, hn, vn);
                 reply.send({
                     statusCode: HttpStatus.OK,
                     rows: result
@@ -326,13 +317,13 @@ const router = (fastify, {}, next) => {
                 message: 'parameter not found.'
             });
         }
-    }));
-    fastify.post('/procedure', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/procedure', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const hn = req.body.hn || '';
         const vn = req.body.vn || '';
         if (hn && vn) {
             try {
-                const result = yield cannabisModel.getVisitProcedure(fastify.dbHIS, hn, vn);
+                const result = await cannabisModel.getVisitProcedure(global.dbHIS, hn, vn);
                 reply.send({
                     statusCode: HttpStatus.OK,
                     rows: result
@@ -352,13 +343,13 @@ const router = (fastify, {}, next) => {
                 message: 'parameter not found.'
             });
         }
-    }));
-    fastify.post('/screening', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/screening', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const hn = req.body.hn || '';
         const vn = req.body.vn || '';
         if (hn && vn) {
             try {
-                const result = yield cannabisModel.getVisitScreening(fastify.dbHIS, hn, vn);
+                const result = await cannabisModel.getVisitScreening(global.dbHIS, hn, vn);
                 reply.send({
                     statusCode: HttpStatus.OK,
                     rows: result
@@ -378,13 +369,13 @@ const router = (fastify, {}, next) => {
                 message: 'parameter not found.'
             });
         }
-    }));
-    fastify.post('/referout', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/referout', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const now = moment().locale('th').format('YYYY-MM-DD');
         const date = req.body.date || now;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         try {
-            const result = yield hisModel.getReferOut(fastify.dbHIS, date, hospcode);
+            const result = await hisModel.getReferOut(global.dbHIS, date, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
             console.log('referout', result.length, 'reccords.');
         }
@@ -392,8 +383,8 @@ const router = (fastify, {}, next) => {
             console.log('referout', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message });
         }
-    }));
-    fastify.post('/person', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/person', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const hn = req.body.hn || '';
         const cid = req.body.cid || '';
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -409,15 +400,15 @@ const router = (fastify, {}, next) => {
                 typeSearch = 'cid';
                 textSearch = cid;
             }
-            const result = yield hisModel.getPerson(fastify.dbHIS, typeSearch, textSearch, hospcode);
+            const result = await hisModel.getPerson(global.dbHIS, typeSearch, textSearch, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('person', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: HttpStatus.getStatusText(HttpStatus.INTERNAL_SERVER_ERROR) });
         }
-    }));
-    fastify.post('/address', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/address', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const hn = req.body.hn || '';
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         if (!hn) {
@@ -427,15 +418,15 @@ const router = (fastify, {}, next) => {
         try {
             let typeSearch = 'hn';
             let textSearch = hn;
-            const result = yield hisModel.getAddress(fastify.dbHIS, typeSearch, textSearch, hospcode);
+            const result = await hisModel.getAddress(global.dbHIS, typeSearch, textSearch, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('address', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: HttpStatus.getStatusText(HttpStatus.INTERNAL_SERVER_ERROR) });
         }
-    }));
-    fastify.post('/drugallergy', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/drugallergy', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const hn = req.body.hn || '';
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         if (!hn) {
@@ -443,15 +434,15 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const result = yield hisModel.getDrugAllergy(fastify.dbHIS, hn, hospcode);
+            const result = await hisModel.getDrugAllergy(global.dbHIS, hn, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('drug allergy', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: HttpStatus.getStatusText(HttpStatus.INTERNAL_SERVER_ERROR) });
         }
-    }));
-    fastify.post('/admission', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/admission', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const typeSearch = req.body.typeSearch;
         const textSearch = req.body.textSearch;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -461,7 +452,7 @@ const router = (fastify, {}, next) => {
         }
         else {
             try {
-                const result = yield hisModel.getAdmission(fastify.dbHIS, typeSearch, textSearch, hospcode);
+                const result = await hisModel.getAdmission(global.dbHIS, typeSearch, textSearch, hospcode);
                 reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
             }
             catch (error) {
@@ -469,8 +460,8 @@ const router = (fastify, {}, next) => {
                 reply.send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message });
             }
         }
-    }));
-    fastify.post('/diagnosis-opd', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/diagnosis-opd', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const visitNo = req.body.visitNo;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         if (!visitNo) {
@@ -478,15 +469,15 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const result = yield hisModel.getDiagnosisOpd(fastify.dbHIS, visitNo, hospcode);
+            const result = await hisModel.getDiagnosisOpd(global.dbHIS, visitNo, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('diagnosis_opd', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message });
         }
-    }));
-    fastify.post('/diagnosis-ipd', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/diagnosis-ipd', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const an = req.body.an;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         if (!an) {
@@ -495,7 +486,7 @@ const router = (fastify, {}, next) => {
         }
         else {
             try {
-                const result = yield hisModel.getDiagnosisIpd(fastify.dbHIS, 'an', an, hospcode);
+                const result = await hisModel.getDiagnosisIpd(global.dbHIS, 'an', an, hospcode);
                 reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
             }
             catch (error) {
@@ -503,8 +494,8 @@ const router = (fastify, {}, next) => {
                 reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: HttpStatus.getStatusText(HttpStatus.INTERNAL_SERVER_ERROR) });
             }
         }
-    }));
-    fastify.post('/procedure-opd', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/procedure-opd', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const visitNo = req.body.visitNo;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         if (!visitNo) {
@@ -512,15 +503,15 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const result = yield hisModel.getProcedureOpd(fastify.dbHIS, visitNo, hospcode);
+            const result = await hisModel.getProcedureOpd(global.dbHIS, visitNo, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('procudure_opd', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message });
         }
-    }));
-    fastify.post('/procedure-ipd', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/procedure-ipd', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const an = req.body.an;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         if (!an) {
@@ -528,15 +519,15 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const result = yield hisModel.getProcedureIpd(fastify.dbHIS, an, hospcode);
+            const result = await hisModel.getProcedureIpd(global.dbHIS, an, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('procudure_opd', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message });
         }
-    }));
-    fastify.post('/drug-opd-refer', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/drug-opd-refer', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const visitNo = req.body.visitNo;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         if (!visitNo) {
@@ -544,15 +535,15 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const result = yield hisModel.getDrugOpd(fastify.dbHIS, visitNo, hospcode);
+            const result = await hisModel.getDrugOpd(global.dbHIS, visitNo, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('drug_opd', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message });
         }
-    }));
-    fastify.post('/drug-ipd', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/drug-ipd', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const an = req.body.an;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         if (!an) {
@@ -560,15 +551,15 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const result = yield hisModel.getDrugIpd(fastify.dbHIS, an, hospcode);
+            const result = await hisModel.getDrugIpd(global.dbHIS, an, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('drug_ipd', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message });
         }
-    }));
-    fastify.post('/charge-opd', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/charge-opd', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const visitNo = req.body.visitNo;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         if (!visitNo) {
@@ -576,15 +567,15 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const result = yield hisModel.getChargeOpd(fastify.dbHIS, visitNo, hospcode);
+            const result = await hisModel.getChargeOpd(global.dbHIS, visitNo, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('charge_opd', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message });
         }
-    }));
-    fastify.post('/charge-ipd', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/charge-ipd', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const an = req.body.an;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         if (!an) {
@@ -592,15 +583,15 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const result = yield hisModel.getChargeIpd(fastify.dbHIS, an, hospcode);
+            const result = await hisModel.getChargeIpd(global.dbHIS, an, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('charge_ipd', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message });
         }
-    }));
-    fastify.post('/accident', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/accident', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const visitNo = req.body.visitNo;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         if (!visitNo) {
@@ -608,15 +599,15 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const result = yield hisModel.getAccident(fastify.dbHIS, visitNo, hospcode);
+            const result = await hisModel.getAccident(global.dbHIS, visitNo, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('accident', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message });
         }
-    }));
-    fastify.post('/appointment_refer', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/appointment_refer', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const visitNo = req.body.visitNo;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         if (!visitNo) {
@@ -624,15 +615,15 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const result = yield hisModel.getAppointment(fastify.dbHIS, visitNo, hospcode);
+            const result = await hisModel.getAppointment(global.dbHIS, visitNo, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('appointment', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message });
         }
-    }));
-    fastify.post('/refer-history', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/refer-history', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const visitNo = req.body.visitNo;
         const referNo = req.body.referNo;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -647,15 +638,15 @@ const router = (fastify, {}, next) => {
                 typeSearch = 'visitNo';
                 textSearch = visitNo;
             }
-            const result = yield hisModel.getReferHistory(fastify.dbHIS, typeSearch, textSearch, hospcode);
+            const result = await hisModel.getReferHistory(global.dbHIS, typeSearch, textSearch, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('refer_history', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message });
         }
-    }));
-    fastify.post('/clinical-refer', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/clinical-refer', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const referNo = req.body.referNo;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         if (!referNo) {
@@ -663,15 +654,15 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const result = yield hisModel.getClinicalRefer(fastify.dbHIS, referNo, hospcode);
+            const result = await hisModel.getClinicalRefer(global.dbHIS, referNo, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('clinical_refer', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message });
         }
-    }));
-    fastify.post('/investigation-refer', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/investigation-refer', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const referNo = req.body.referNo;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         if (!referNo) {
@@ -679,15 +670,15 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const result = yield hisModel.getInvestigationRefer(fastify.dbHIS, referNo, hospcode);
+            const result = await hisModel.getInvestigationRefer(global.dbHIS, referNo, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('investigation_refer', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message });
         }
-    }));
-    fastify.post('/care-refer', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/care-refer', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const referNo = req.body.referNo;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         if (!referNo) {
@@ -695,15 +686,15 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const result = yield hisModel.getCareRefer(fastify.dbHIS, referNo, hospcode);
+            const result = await hisModel.getCareRefer(global.dbHIS, referNo, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('care_refer', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message });
         }
-    }));
-    fastify.post('/refer-result', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/refer-result', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const hospDestination = req.body.hospDestination;
         const referNo = req.body.referNo;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -712,15 +703,15 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const result = yield hisModel.getReferResult(fastify.dbHIS, hospDestination, referNo, hospcode);
+            const result = await hisModel.getReferResult(global.dbHIS, hospDestination, referNo, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('refer_result', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message });
         }
-    }));
-    fastify.post('/provider', { preHandler: [fastify.authenticate] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/provider', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const licenseNo = req.body.licenseNo;
         const cid = req.body.cid;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -735,14 +726,14 @@ const router = (fastify, {}, next) => {
             textSearch = licenseNo;
         }
         try {
-            const result = yield hisModel.getProvider(fastify.dbHIS, typeSearch, textSearch, hospcode);
+            const result = await hisModel.getProvider(global.dbHIS, typeSearch, textSearch, hospcode);
             reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
         }
         catch (error) {
             console.log('provider', error.message);
             reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message });
         }
-    }));
+    });
     next();
 };
 module.exports = router;

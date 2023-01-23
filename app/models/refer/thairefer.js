@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ThaiReferModel = void 0;
 const maxLimit = 500;
@@ -68,9 +59,8 @@ class ThaiReferModel {
     check() {
         return true;
     }
-    getReferOut(db, date, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `
+    async getReferOut(db, date, hospCode = hcode) {
+        const sql = `
               select 
                   (select hospitalcode from opdconfig) as HOSPCODE,
                   refer.refer_hospcode as HOSP_DESTINATION,
@@ -119,9 +109,8 @@ class ThaiReferModel {
                   refer.refer_date="${date}"
                   and os.seq_id is not null              
           `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
     getPerson(db, columnName, searchText, hospCode = hcode) {
         return db("patient as pt")
@@ -131,9 +120,8 @@ class ThaiReferModel {
             .where(columnName, "=", searchText)
             .limit(maxLimit);
     }
-    getAddress(db, columnName, searchText, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `
+    async getAddress(db, columnName, searchText, hospCode = hcode) {
+        const sql = `
               select distinct 
                   (select hospitalcode from opdconfig) as hospcode,
                   pt.hn as pid,
@@ -180,14 +168,12 @@ class ThaiReferModel {
   
               where ${columnName}="${searchText}"
           `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
-    getService(db, columnName, searchText, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            columnName = columnName === "visitNo" ? "os.seq_id" : columnName;
-            const sql = `
+    async getService(db, columnName, searchText, hospCode = hcode) {
+        columnName = columnName === "visitNo" ? "os.seq_id" : columnName;
+        const sql = `
               select 
                   (select hospitalcode from opdconfig) as hospcode,
                   pt.hn as pid,
@@ -269,13 +255,11 @@ class ThaiReferModel {
                   left join ovst_seq os on os.vn = o.vn 
               where ${columnName}="${searchText}"
               `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
-    getDiagnosisOpd(db, visitNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `
+    async getDiagnosisOpd(db, visitNo, hospCode = hcode) {
+        const sql = `
               select 
                   (select hospitalcode from opdconfig) as hospcode,
                   pt.hn as pid,
@@ -312,13 +296,11 @@ class ThaiReferModel {
                   and og.icd10 in (select code from icd101) 
                   and os.seq_id = "${visitNo}"
               `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
-    getProcedureOpd(db, visitNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `
+    async getProcedureOpd(db, visitNo, hospCode = hcode) {
+        const sql = `
               select 
                   (select hospitalcode from opdconfig) as hospcode,
                   pt.hn as pid,
@@ -419,13 +401,11 @@ class ThaiReferModel {
                   and e.icd10tm_operation_code is not null
                   and os.seq_id = "${visitNo}"
               `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
-    getChargeOpd(db, visitNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `
+    async getChargeOpd(db, visitNo, hospCode = hcode) {
+        const sql = `
               select
                   (select hospitalcode from opdconfig) as hospcode,
                   pt.hn as pid,
@@ -466,9 +446,8 @@ class ThaiReferModel {
               where 
                   os.seq_id = "${visitNo}"
               `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
     getLabRequest(db, columnName, searchNo, hospCode = hcode) {
         columnName = columnName === "visitNo" ? "vn" : columnName;
@@ -489,9 +468,8 @@ class ThaiReferModel {
             .where("confirm", "=", "Y")
             .limit(maxLimit);
     }
-    getDrugOpd(db, visitNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `
+    async getDrugOpd(db, visitNo, hospCode = hcode) {
+        const sql = `
               select 
                   (select hospitalcode from opdconfig) as hospcode,
                   pt.hn as pid,
@@ -535,16 +513,14 @@ class ThaiReferModel {
                   and opi.icode in (select d.icode from drugitems d) 
                   and os.seq_id = "${visitNo}"
               `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
-    getAdmission(db, columnName, searchNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            columnName = columnName === "an" ? "ipt.an" : columnName;
-            columnName = columnName === "hn" ? "ipt.hn" : columnName;
-            columnName = columnName === "visitNo" ? "ipt.vn" : columnName;
-            const sql = `
+    async getAdmission(db, columnName, searchNo, hospCode = hcode) {
+        columnName = columnName === "an" ? "ipt.an" : columnName;
+        columnName = columnName === "hn" ? "ipt.hn" : columnName;
+        columnName = columnName === "visitNo" ? "ipt.vn" : columnName;
+        const sql = `
               select 
                   (select hospitalcode from opdconfig) as hospcode,
                   pt.hn as pid,
@@ -659,13 +635,11 @@ class ThaiReferModel {
                   (ipt.an is not null or ipt.an <> '') 
                   and ${columnName}="${searchNo}"
               `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
-    getDiagnosisIpd(db, an, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `
+    async getDiagnosisIpd(db, an, hospCode = hcode) {
+        const sql = `
               select 
                   (select hospitalcode from opdconfig) as hospcode,
                   pt.hn as pid,
@@ -691,13 +665,11 @@ class ThaiReferModel {
               where 
                   ipt.an="${an}"
               `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
-    getProcedureIpd(db, an, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `
+    async getProcedureIpd(db, an, hospCode = hcode) {
+        const sql = `
               select 
                   (select hospitalcode from opdconfig) as hospcode,
                   pt.hn as pid,
@@ -795,13 +767,11 @@ class ThaiReferModel {
               where              
                   ipt.an="${an}"                  
               `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
-    getChargeIpd(db, an, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `
+    async getChargeIpd(db, an, hospCode = hcode) {
+        const sql = `
               select
                   (select hospitalcode from opdconfig) as hospcode,
                   pt.hn as pid,
@@ -843,13 +813,11 @@ class ThaiReferModel {
                   and o.unitprice <> '0'
                   and ipt.an="${an}"                  
               `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
-    getDrugIpd(db, an, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `
+    async getDrugIpd(db, an, hospCode = hcode) {
+        const sql = `
               select
                   (select hospitalcode from opdconfig) as hospcode,
                   pt.hn as pid,
@@ -890,13 +858,11 @@ class ThaiReferModel {
                   and ipt.an="${an}"       
               group by d.name           
               `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
-    getAccident(db, visitNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `
+    async getAccident(db, visitNo, hospCode = hcode) {
+        const sql = `
               select 
                   (select hospitalcode from opdconfig) as hospcode,
                   pt.hn as pid,
@@ -952,13 +918,11 @@ class ThaiReferModel {
               where                 
                   os.seq_id = "${visitNo}"
               `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
-    getDrugAllergy(db, hn, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `
+    async getDrugAllergy(db, hn, hospCode = hcode) {
+        const sql = `
               select 
                   (select hospitalcode from opdconfig) as hospcode,
                   pt.hn as pid,
@@ -1001,9 +965,8 @@ class ThaiReferModel {
               where                 
                   oe.hn = "${hn}"
               `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
     getAppointment(db, visitNo, hospCode = hcode) {
         return db("view_opd_fu")
@@ -1012,11 +975,10 @@ class ThaiReferModel {
             .where("vn", "=", visitNo)
             .limit(maxLimit);
     }
-    getReferHistory(db, columnName, searchNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            columnName = columnName === "visitNo" ? "os.seq_id" : columnName;
-            columnName = columnName === "referNo" ? "ro.refer_number" : columnName;
-            const sql = `
+    async getReferHistory(db, columnName, searchNo, hospCode = hcode) {
+        columnName = columnName === "visitNo" ? "os.seq_id" : columnName;
+        columnName = columnName === "referNo" ? "ro.refer_number" : columnName;
+        const sql = `
               select
                   (select hospitalcode from opdconfig) as hospcode,
                   ro.refer_number as referid,
@@ -1091,9 +1053,8 @@ class ThaiReferModel {
               where 
                   ${columnName}="${searchNo}"
               `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
     getClinicalRefer(db, referNo, hospCode = hcode) {
         return db("view_clinical_refer")
@@ -1109,9 +1070,8 @@ class ThaiReferModel {
             .where("refer_no", "=", referNo)
             .limit(maxLimit);
     }
-    getCareRefer(db, referNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `
+    async getCareRefer(db, referNo, hospCode = hcode) {
+        const sql = `
               select 
                   (select hospitalcode from opdconfig) as hospcode,
                   ro.refer_number as referid,
@@ -1130,18 +1090,16 @@ class ThaiReferModel {
               where 
                   ro.refer_number = "${referNo}"
               `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
     getReferResult(db, hospDestination, referNo, hospCode = hcode) {
         return [];
     }
-    getProvider(db, columnName, searchNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            columnName = columnName === "licenseNo" ? "d.code" : columnName;
-            columnName = columnName === "cid" ? "d.cid" : columnName;
-            const sql = `
+    async getProvider(db, columnName, searchNo, hospCode = hcode) {
+        columnName = columnName === "licenseNo" ? "d.code" : columnName;
+        columnName = columnName === "cid" ? "d.cid" : columnName;
+        const sql = `
               select 
                   (select hospitalcode from opdconfig) as hospcode,
                   d.code as provider,
@@ -1168,9 +1126,8 @@ class ThaiReferModel {
               where 
                   ${columnName}="${searchNo}"
               `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
     getData(db, tableName, columnName, searchNo, hospCode = hcode) {
         return db(tableName)

@@ -9,9 +9,9 @@ export default async function cronjob(fastify: FastifyInstance) {
     const secondNow = +moment().get('second');
     const timingSch = `${secondNow} */1 * * * *`;  // every minute
     let timingSchedule: any = [];
-    timingSchedule['isonline'] = { version: fastify.apiVersion, apiSubVersion: fastify.apiSubVersion };
-    timingSchedule['nrefer'] = { version: fastify.apiVersion, apiSubVersion: fastify.apiSubVersion };
-    timingSchedule['cupDataCenter'] = { version: fastify.apiVersion, apiSubVersion: fastify.apiSubVersion };
+    timingSchedule['isonline'] = { version: global.appDetail.version, apiSubVersion: global.appDetail.subVersion };
+    timingSchedule['nrefer'] = { version: global.appDetail.version, apiSubVersion: global.appDetail.subVersion };
+    timingSchedule['cupDataCenter'] = { version: global.appDetail.version, apiSubVersion: global.appDetail.subVersion };
 
     // Check IS-Online Auto Send
     timingSchedule['isonline'].autosend = +process.env.IS_AUTO_SEND === 1 || false;
@@ -87,15 +87,15 @@ export default async function cronjob(fastify: FastifyInstance) {
         if (process.env.START_TOOL === 'nodemon') {
             firstProcessPid = process.pid;
         } else {
-            if (!fastify.firstProcessPid) {
+            if (!global.firstProcessPid) {
                 await getFirstProcessPid();
             }
-            firstProcessPid = fastify.firstProcessPid ? fastify.firstProcessPid : -1;
+            firstProcessPid = global.firstProcessPid ? global.firstProcessPid : -1;
         }
 
         if (firstProcessPid === process.pid) {
             const now = moment().locale('th').format('HH:mm:ss');
-            const db = serviceName == 'isonline' ? fastify.dbISOnline : fastify.dbHIS;
+            const db = serviceName == 'isonline' ? global.dbISOnline : global.dbHIS;
             console.log(`${now} start cronjob '${serviceName}' on PID ${process.pid}`);
             await require(functionName)(req, res, db, timingSchedule[serviceName]);
         }
@@ -113,12 +113,12 @@ export default async function cronjob(fastify: FastifyInstance) {
         }
 
         if (processList.length) {
-            fastify.firstProcessPid = processList[0].pid;
+            global.firstProcessPid = processList[0].pid;
         }
     }
 
     async function getmophUrl() {
-        fastify.mophService = await require('./routes/main/crontab')(fastify.mophService, {});
+        global.mophService = await require('./routes/main/crontab')(global.mophService, {});
     }
 
 }

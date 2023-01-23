@@ -1,15 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const HttpStatus = require("http-status-codes");
+const http_status_codes_1 = require("http-status-codes");
 var http = require('http');
 var fs = require('fs');
 const opsUrl1 = 'gishealth.moph.go.th';
@@ -17,7 +8,7 @@ const Path1 = '/api/get_gishealth.php';
 const opsUrl2 = '203.157.88.8';
 const Path2 = '/kkh/ws/moph/ops.php';
 const router = (fastify, {}, next) => {
-    fastify.post('/general1', { preHandler: [fastify.serviceMonitoring] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    fastify.post('/general1', async (req, res) => {
         verifyToken(req, res);
         let url = req.body.url;
         let path = req.body.path;
@@ -38,8 +29,8 @@ const router = (fastify, {}, next) => {
         }).on('error', function (e) {
             res.send(e);
         });
-    }));
-    fastify.post('/general', { preHandler: [fastify.serviceMonitoring] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/general', async (req, res) => {
         verifyToken(req, res);
         var str = '';
         let type = req.body.type;
@@ -61,8 +52,8 @@ const router = (fastify, {}, next) => {
                 res.send({ ok: true, data: str });
             });
         }).end();
-    }));
-    fastify.post('/general2', { preHandler: [fastify.serviceMonitoring] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/general2', async (req, res) => {
         verifyToken(req, res);
         var str = '';
         let type = req.body.type;
@@ -84,8 +75,8 @@ const router = (fastify, {}, next) => {
                 res.send(str);
             });
         }).end();
-    }));
-    fastify.post('/items', { preHandler: [fastify.serviceMonitoring] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/items', async (req, res) => {
         verifyToken(req, res);
         var str = '';
         let type = req.body.type;
@@ -117,8 +108,8 @@ const router = (fastify, {}, next) => {
                 res.send({ ok: true, data: str });
             });
         }).end();
-    }));
-    fastify.post('/general-data', { preHandler: [fastify.serviceMonitoring] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/general-data', async (req, res) => {
         verifyToken(req, res);
         let type = req.body.type;
         let area = req.body.area;
@@ -138,8 +129,8 @@ const router = (fastify, {}, next) => {
         }, function (error, response, body) {
             res.send(body);
         });
-    }));
-    fastify.post('/general-data2', { preHandler: [fastify.serviceMonitoring] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/general-data2', async (req, res) => {
         verifyToken(req, res);
         let type = req.body.type;
         let area = req.body.area;
@@ -159,31 +150,29 @@ const router = (fastify, {}, next) => {
         }, function (error, response, body) {
             res.send(body);
         });
-    }));
-    function verifyToken(req, res) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let token = null;
-            if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
-                token = req.headers.authorization.split(' ')[1];
-            }
-            else if (req.query && req.query.token) {
-                token = req.query.token;
-            }
-            else if (req.body && req.body.token) {
-                token = req.body.token;
-            }
-            try {
-                yield fastify.jwt.verify(token);
-                return true;
-            }
-            catch (error) {
-                console.log('authen fail!', error.message);
-                res.status(HttpStatus.UNAUTHORIZED).send({
-                    statusCode: HttpStatus.UNAUTHORIZED,
-                    message: error.message
-                });
-            }
-        });
+    });
+    async function verifyToken(req, res) {
+        let token = null;
+        if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+            token = req.headers.authorization.split(' ')[1];
+        }
+        else if (req.query && req.query.token) {
+            token = req.query.token;
+        }
+        else if (req.body && req.body.token) {
+            token = req.body.token;
+        }
+        try {
+            await fastify.jwt.verify(token);
+            return true;
+        }
+        catch (error) {
+            console.log('authen fail!', error.message);
+            res.status(http_status_codes_1.StatusCodes.UNAUTHORIZED).send({
+                statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED,
+                message: error.message
+            });
+        }
     }
     next();
 };
