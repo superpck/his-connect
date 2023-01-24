@@ -44,7 +44,7 @@ global.dbRefer = dbConnection('REFER');
 global.dbIs = dbConnection('ISONLINE');
 global.dbISOnline = global.dbIs;
 global.dbCannabis = dbConnection('CANNABIS');
-app.decorate("authenticate", async (request, reply, next) => {
+app.decorate("authenticate", async (request, reply) => {
     let token = null;
     if (request.body && request.body.token) {
         token = await request.body.token;
@@ -53,16 +53,15 @@ app.decorate("authenticate", async (request, reply, next) => {
         token = await request.headers.authorization.split(' ')[1];
     }
     try {
-        await request.jwtVerify(token, process.env.SECRET_KEY);
+        await request.jwtVerify();
     }
     catch (err) {
         console.log(moment().format('HH:mm:ss.SSS'), 'error:' + http_status_codes_1.StatusCodes.UNAUTHORIZED, err.message);
         reply.send({
             statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED,
-            message: (0, http_status_codes_1.getStatusText)(http_status_codes_1.StatusCodes.UNAUTHORIZED)
+            message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED)
         });
     }
-    next();
 });
 app.decorate("checkRequestKey", async (request, reply) => {
     let skey = null;
@@ -74,7 +73,7 @@ app.decorate("checkRequestKey", async (request, reply) => {
         console.log('invalid key', requestKey);
         reply.send({
             statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED,
-            message: (0, http_status_codes_1.getStatusText)(http_status_codes_1.StatusCodes.UNAUTHORIZED) + ' or invalid key'
+            message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED) + ' or invalid key'
         });
     }
 });

@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Jwt = void 0;
-var jwt = require('jsonwebtoken');
+var jwt = require('@fastify/jwt');
 class Jwt {
     sign(payload, expire = '2h') {
         let token = jwt.sign(payload, process.env.SECRET_KEY, {

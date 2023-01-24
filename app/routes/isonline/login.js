@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const HttpStatus = require("http-status-codes");
+const http_status_codes_1 = require("http-status-codes");
 const moment = require("moment");
 const crypto = require('crypto');
 const login_1 = require("../../models/isonline/login");
@@ -10,9 +10,9 @@ const router = (fastify, {}, next) => {
         let username = req.body.username;
         let password = req.body.password;
         if (username && password) {
-            let encPassword = await crypto.createHash('sha256').update(password).digest('hex');
-            loginModel.doLogin(global.dbISOnline, username, encPassword)
-                .then(async (results) => {
+            try {
+                let encPassword = await crypto.createHash('sha256').update(password).digest('hex');
+                const results = await loginModel.doLogin(global.dbISOnline, username, encPassword);
                 if (results.length) {
                     let today = moment().locale('th').format('YYYY-MM-DD HH:mm:ss');
                     let expire = moment().locale('th').add(12, 'hours').format('YYYY-MM-DD HH:mm:ss');
@@ -49,8 +49,8 @@ const router = (fastify, {}, next) => {
                     }).catch(errort => {
                         console.log('save token: error = ', errort);
                     });
-                    res.send({
-                        statusCode: HttpStatus.OK,
+                    res.status(http_status_codes_1.StatusCodes.OK).send({
+                        statusCode: http_status_codes_1.StatusCodes.OK,
                         status: 200,
                         ok: true,
                         user: payload, token: token,
@@ -61,29 +61,27 @@ const router = (fastify, {}, next) => {
                 else {
                     console.log('Login error:', username);
                     res.send({
-                        statusCode: HttpStatus.BAD_REQUEST,
+                        statusCode: http_status_codes_1.StatusCodes.BAD_REQUEST,
                         status: 400, ok: false,
                         message: 'ชื่อผู้ใช้งานหรือรหัสผ่าน ไม่ถูกต้อง'
                     });
                 }
-            })
-                .catch(err => {
-                console.log('login', err.message);
-                console.log('Error:', err);
+            }
+            catch (error) {
+                console.log('login', error.message);
                 res.send({
-                    statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                    statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR,
                     status: 500,
                     ok: false,
-                    message: err.message
+                    message: error.message
                 });
-            });
+            }
         }
         else {
             res.send({
-                statusCode: HttpStatus.BAD_REQUEST,
-                status: 400,
-                ok: false,
-                message: 'กรุณาระบุชื่อผู้ใช้งานและรหัสผ่าน'
+                statusCode: http_status_codes_1.StatusCodes.BAD_REQUEST,
+                status: 400, ok: false,
+                message: 'Invalid parameter'
             });
         }
     });
@@ -91,9 +89,10 @@ const router = (fastify, {}, next) => {
         let body = req.body;
         let username = body.username;
         let password = body.password;
+        let ipAddr = body.ip;
         const ip = req.headers["x-real-ip"] || req.headers["x-forwarded-for"] || req.ip;
-        console.log('api-login', req.headers["x-real-ip"], req.headers["x-forwarded-for"], req.ip);
-        if (ip == '203.157.103.55' && username.length == 5 && password) {
+        console.log('api-login', ip);
+        if (['203.157.103.55', '::1', '127.0.0.1'].indexOf(ip) >= 0 && username.length == 5 && password) {
             let today = moment().format('YYYY-MM-DD HH:mm:ss');
             let expire = moment().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
             const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
@@ -105,14 +104,14 @@ const router = (fastify, {}, next) => {
             };
             const token = fastify.jwt.sign(payload, { expiresIn: '8h' });
             res.send({
-                statusCode: HttpStatus.OK,
+                statusCode: http_status_codes_1.StatusCodes.OK,
                 token: token
             });
         }
         else {
             res.send({
-                statusCode: HttpStatus.UNAUTHORIZED,
-                message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED)
+                statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED,
+                message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED)
             });
         }
     });
@@ -123,16 +122,16 @@ const router = (fastify, {}, next) => {
                 const result = await loginModel.checkToken(global.dbISOnline, tokenKey);
                 if (result.length) {
                     res.send({
-                        statusCode: HttpStatus.OK,
-                        status: HttpStatus.OK,
+                        statusCode: http_status_codes_1.StatusCodes.OK,
+                        status: http_status_codes_1.StatusCodes.OK,
                         ok: true,
                         rows: result
                     });
                 }
                 else {
                     res.send({
-                        statusCode: HttpStatus.BAD_REQUEST,
-                        status: HttpStatus.BAD_REQUEST,
+                        statusCode: http_status_codes_1.StatusCodes.BAD_REQUEST,
+                        status: http_status_codes_1.StatusCodes.BAD_REQUEST,
                         ok: false,
                         message: 'Invalid token'
                     });
@@ -140,8 +139,8 @@ const router = (fastify, {}, next) => {
             }
             catch (error) {
                 res.send({
-                    statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-                    status: HttpStatus.INTERNAL_SERVER_ERROR,
+                    statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR,
+                    status: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR,
                     ok: false,
                     message: error.message
                 });
@@ -149,10 +148,10 @@ const router = (fastify, {}, next) => {
         }
         else {
             res.send({
-                statusCode: HttpStatus.BAD_REQUEST,
-                status: HttpStatus.BAD_REQUEST,
+                statusCode: http_status_codes_1.StatusCodes.BAD_REQUEST,
+                status: http_status_codes_1.StatusCodes.BAD_REQUEST,
                 ok: false,
-                message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+                message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.BAD_REQUEST)
             });
         }
     });
@@ -164,7 +163,7 @@ const router = (fastify, {}, next) => {
                 .then((results) => {
                 if (results.length) {
                     res.send({
-                        statusCode: HttpStatus.OK,
+                        statusCode: http_status_codes_1.StatusCodes.OK,
                         status: 200,
                         ok: true,
                         rows: results
@@ -172,7 +171,7 @@ const router = (fastify, {}, next) => {
                 }
                 else {
                     res.send({
-                        statusCode: HttpStatus.BAD_REQUEST,
+                        statusCode: http_status_codes_1.StatusCodes.BAD_REQUEST,
                         status: 400,
                         ok: false,
                         message: 'Invalid token'
@@ -182,7 +181,7 @@ const router = (fastify, {}, next) => {
                 .catch(err => {
                 console.log('token-status', err.message);
                 res.send({
-                    statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                    statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR,
                     status: 500,
                     ok: false,
                     message: err.message
@@ -191,7 +190,7 @@ const router = (fastify, {}, next) => {
         }
         else {
             res.send({
-                statusCode: HttpStatus.BAD_REQUEST,
+                statusCode: http_status_codes_1.StatusCodes.BAD_REQUEST,
                 status: 400,
                 ok: false,
                 message: 'Token not found'
@@ -215,12 +214,12 @@ const router = (fastify, {}, next) => {
         }
         catch (error) {
             console.log('authen fail!', error.message);
-            res.status(HttpStatus.UNAUTHORIZED).send({
-                statusCode: HttpStatus.UNAUTHORIZED,
+            res.status(http_status_codes_1.StatusCodes.UNAUTHORIZED).send({
+                statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED,
                 message: error.message
             });
         }
     }
     next();
 };
-module.exports = router;
+exports.default = router;

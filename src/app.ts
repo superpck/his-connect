@@ -1,5 +1,5 @@
 import path = require('path');
-import { StatusCodes, getStatusText } from 'http-status-codes';
+import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import fastify from 'fastify';
 import * as moment from 'moment';
 import cronjob from './nodecron';
@@ -78,7 +78,7 @@ global.dbISOnline = global.dbIs;
 global.dbCannabis = dbConnection('CANNABIS');
 
 // check token ===========================================================
-app.decorate("authenticate", async (request, reply, next) => {
+app.decorate("authenticate", async (request, reply) => {
   let token: string = null;
 
   if (request.body && request.body.token) {
@@ -88,15 +88,14 @@ app.decorate("authenticate", async (request, reply, next) => {
   }
 
   try {
-    await request.jwtVerify(token, process.env.SECRET_KEY);
+    await request.jwtVerify();
   } catch (err) {
     console.log(moment().format('HH:mm:ss.SSS'), 'error:'+StatusCodes.UNAUTHORIZED, err.message);
     reply.send({
       statusCode: StatusCodes.UNAUTHORIZED,
-      message: getStatusText(StatusCodes.UNAUTHORIZED)
+      message: getReasonPhrase(StatusCodes.UNAUTHORIZED)
     });
   }
-  next();
 });
 // end: check token ===========================================================
 
@@ -110,7 +109,7 @@ app.decorate("checkRequestKey", async (request, reply) => {
     console.log('invalid key', requestKey);
     reply.send({
       statusCode: StatusCodes.UNAUTHORIZED,
-      message: getStatusText(StatusCodes.UNAUTHORIZED) + ' or invalid key'
+      message: getReasonPhrase(StatusCodes.UNAUTHORIZED) + ' or invalid key'
     });
   }
 

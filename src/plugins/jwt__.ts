@@ -1,4 +1,4 @@
-var jwt = require('jsonwebtoken');
+var jwt = require('@fastify/jwt');
 
 export class Jwt {
   sign(payload: any, expire='2h') {
