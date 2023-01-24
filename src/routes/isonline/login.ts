@@ -1,5 +1,4 @@
-import * as fastify from 'fastify';
-import * as HttpStatus from 'http-status-codes';
+import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import * as moment from 'moment';
 const crypto = require('crypto');
 
@@ -7,97 +6,96 @@ import { IsLoginModel } from '../../models/isonline/login';
 const loginModel = new IsLoginModel()
 
 const router = (fastify, { }, next) => {
-  fastify.post('/',  async (req: any, res: any) => {
+  fastify.post('/', async (req: any, res: any) => {
     let username = req.body.username;
     let password = req.body.password;
 
     if (username && password) {
-      let encPassword = await crypto.createHash('sha256').update(password).digest('hex');
-      loginModel.doLogin(global.dbISOnline, username, encPassword)
-        .then(async (results: any) => {
-          if (results.length) {
-            let today = moment().locale('th').format('YYYY-MM-DD HH:mm:ss');
-            let expire = moment().locale('th').add(12, 'hours').format('YYYY-MM-DD HH:mm:ss');
-            const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
-            const payload = {
-              fullname: results[0].prename + results[0].fname + ' ' + results[0].lname,
-              uid: results[0].id,
-              hcode: results[0].hcode,
-              username: results[0].username,
-              email: results[0].email,
-              hospprov: results[0].hospprov,
-              hospname: results[0].hospname,
-              level: results[0].user_level,
-              position: results[0].position + results[0].position_level,
-              division: results[0].division,
-              tokenKey: tokenKey,
-              create: today,
-              expire: expire
-            };
-            const token = fastify.jwt.sign(payload, { expiresIn: '8h' });
-            console.log('Login success: ', username);
+      try {
+        let encPassword = await crypto.createHash('sha256').update(password).digest('hex');
+        const results: any = await loginModel.doLogin(global.dbISOnline, username, encPassword);
+        if (results.length) {
+          let today = moment().locale('th').format('YYYY-MM-DD HH:mm:ss');
+          let expire = moment().locale('th').add(12, 'hours').format('YYYY-MM-DD HH:mm:ss');
+          const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
+          const payload = {
+            fullname: results[0].prename + results[0].fname + ' ' + results[0].lname,
+            uid: results[0].id,
+            hcode: results[0].hcode,
+            username: results[0].username,
+            email: results[0].email,
+            hospprov: results[0].hospprov,
+            hospname: results[0].hospname,
+            level: results[0].user_level,
+            position: results[0].position + results[0].position_level,
+            division: results[0].division,
+            tokenKey: tokenKey,
+            create: today,
+            expire: expire
+          };
+          const token = fastify.jwt.sign(payload, { expiresIn: '8h' });
+          console.log('Login success: ', username);
 
-            const tokenInfo = {
-              date: today,
-              created_at: today,
-              uid: results[0].id,
-              token: tokenKey,
-              job: 'login',
-              expire: expire,
-              type: 1
-            };
+          const tokenInfo = {
+            date: today,
+            created_at: today,
+            uid: results[0].id,
+            token: tokenKey,
+            job: 'login',
+            expire: expire,
+            type: 1
+          };
 
-            await loginModel.saveToken(global.dbISOnline, tokenInfo)
-              .then((saveToken: any) => {
-                console.log('save token: ', saveToken);
-              }).catch(errort => {
-                console.log('save token: error = ', errort);
-              });
+          await loginModel.saveToken(global.dbISOnline, tokenInfo)
+            .then((saveToken: any) => {
+              console.log('save token: ', saveToken);
+            }).catch(errort => {
+              console.log('save token: error = ', errort);
+            });
 
-            res.send({
-              statusCode: HttpStatus.OK,
-              status: 200,
-              ok: true,
-              user: payload, token: token,
-              tokenKey: tokenKey,
-              tokenExpire: expire
-            })
-          } else {
-            console.log('Login error:', username);
-            res.send({
-              statusCode: HttpStatus.BAD_REQUEST,
-              status: 400, ok: false,
-              message: 'ชื่อผู้ใช้งานหรือรหัสผ่าน ไม่ถูกต้อง'
-            })
-          }
-        })
-        .catch(err => {
-          console.log('login', err.message);
-          console.log('Error:', err);
-          res.send({
-            statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-            status: 500,
-            ok: false,
-            message: err.message
+          res.status(StatusCodes.OK).send({
+            statusCode: StatusCodes.OK,
+            status: 200,
+            ok: true,
+            user: payload, token: token,
+            tokenKey: tokenKey,
+            tokenExpire: expire
           });
-        })
+        } else {
+          console.log('Login error:', username);
+          res.send({
+            statusCode: StatusCodes.BAD_REQUEST,
+            status: 400, ok: false,
+            message: 'ชื่อผู้ใช้งานหรือรหัสผ่าน ไม่ถูกต้อง'
+          });
+        }
+      } catch (error) {
+        console.log('login', error.message);
+        res.send({
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+          status: 500,
+          ok: false,
+          message: error.message
+        });
+      }
     } else {
       res.send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        status: 400,
-        ok: false,
-        message: 'กรุณาระบุชื่อผู้ใช้งานและรหัสผ่าน'
-      })
+        statusCode: StatusCodes.BAD_REQUEST,
+        status: 400, ok: false,
+        message: 'Invalid parameter'
+      });
     }
   })
 
-  fastify.post('/api-login',  async (req: any, res: any) => {
+  fastify.post('/api-login', async (req: any, res: any) => {
     let body: any = req.body;
     let username = body.username;
     let password = body.password;
+    let ipAddr = body.ip;
+
     const ip = req.headers["x-real-ip"] || req.headers["x-forwarded-for"] || req.ip;
-    console.log('api-login', req.headers["x-real-ip"], req.headers["x-forwarded-for"],req.ip)
-    if (ip == '203.157.103.55' && username.length==5 && password) {
+    console.log('api-login', ip);
+    if (['203.157.103.55', '::1', '127.0.0.1'].indexOf(ip) >= 0 && username.length == 5 && password) {
       let today = moment().format('YYYY-MM-DD HH:mm:ss');
       let expire = moment().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
       const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
@@ -109,13 +107,13 @@ const router = (fastify, { }, next) => {
       };
       const token = fastify.jwt.sign(payload, { expiresIn: '8h' });
       res.send({
-        statusCode: HttpStatus.OK,
+        statusCode: StatusCodes.OK,
         token: token
-      })
+      });
     } else {
       res.send({
-        statusCode: HttpStatus.UNAUTHORIZED,
-        message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED)
+        statusCode: StatusCodes.UNAUTHORIZED,
+        message: getReasonPhrase(StatusCodes.UNAUTHORIZED)
       })
     }
   })
@@ -128,33 +126,33 @@ const router = (fastify, { }, next) => {
         if (result.length) {
 
           res.send({
-            statusCode: HttpStatus.OK,
-            status: HttpStatus.OK,
+            statusCode: StatusCodes.OK,
+            status: StatusCodes.OK,
             ok: true,
             rows: result
           });
         } else {
           res.send({
-            statusCode: HttpStatus.BAD_REQUEST,
-            status: HttpStatus.BAD_REQUEST,
+            statusCode: StatusCodes.BAD_REQUEST,
+            status: StatusCodes.BAD_REQUEST,
             ok: false,
             message: 'Invalid token'
           });
         }
       } catch (error) {
         res.send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+          status: StatusCodes.INTERNAL_SERVER_ERROR,
           ok: false,
           message: error.message
         });
       }
     } else {
       res.send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        status: HttpStatus.BAD_REQUEST,
+        statusCode: StatusCodes.BAD_REQUEST,
+        status: StatusCodes.BAD_REQUEST,
         ok: false,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })
@@ -168,14 +166,14 @@ const router = (fastify, { }, next) => {
         .then((results: any) => {
           if (results.length) {
             res.send({
-              statusCode: HttpStatus.OK,
+              statusCode: StatusCodes.OK,
               status: 200,
               ok: true,
               rows: results
             })
           } else {
             res.send({
-              statusCode: HttpStatus.BAD_REQUEST,
+              statusCode: StatusCodes.BAD_REQUEST,
               status: 400,
               ok: false,
               message: 'Invalid token'
@@ -185,7 +183,7 @@ const router = (fastify, { }, next) => {
         .catch(err => {
           console.log('token-status', err.message);
           res.send({
-            statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+            statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
             status: 500,
             ok: false,
             message: err.message
@@ -194,7 +192,7 @@ const router = (fastify, { }, next) => {
 
     } else {
       res.send({
-        statusCode: HttpStatus.BAD_REQUEST,
+        statusCode: StatusCodes.BAD_REQUEST,
         status: 400,
         ok: false,
         message: 'Token not found'
@@ -218,8 +216,8 @@ const router = (fastify, { }, next) => {
       return true;
     } catch (error) {
       console.log('authen fail!', error.message);
-      res.status(HttpStatus.UNAUTHORIZED).send({
-        statusCode: HttpStatus.UNAUTHORIZED,
+      res.status(StatusCodes.UNAUTHORIZED).send({
+        statusCode: StatusCodes.UNAUTHORIZED,
         message: error.message
       })
     }
@@ -228,4 +226,4 @@ const router = (fastify, { }, next) => {
   next();
 }
 
-module.exports = router;
+export default router;

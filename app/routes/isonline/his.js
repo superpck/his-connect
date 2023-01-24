@@ -19,7 +19,8 @@ const his_jhos_model_1 = require("./../../models/isonline/his_jhos.model");
 const login_1 = require("./../../models/isonline/login");
 const his_medical2020_model_1 = require("../../models/isonline/his_medical2020.model");
 const his_kpstat_1 = require("../../models/refer/his_kpstat");
-var jwt = require('@fastify/jwt');
+const jwt_1 = require("./../../plugins/jwt");
+var jwt = new jwt_1.Jwt();
 const loginModel = new login_1.IsLoginModel();
 const hisModels = {
     ezhosp: new his_ezhosp_model_1.HisEzhospModel(),
@@ -192,6 +193,7 @@ const router = (fastify, {}, next) => {
     });
     fastify.post('/person', async (req, res) => {
         const userInfo = await decodeToken(req);
+        console.log(req.url);
         console.log(userInfo);
         if (!userInfo || !userInfo.hcode) {
             res.send({
@@ -314,17 +316,18 @@ const router = (fastify, {}, next) => {
     });
     async function decodeToken(req) {
         let token = null;
-        if (req.body && req.body.token) {
-            token = req.body.token;
-        }
-        else if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+        if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
             token = req.headers.authorization.split(' ')[1];
         }
+        else if (req.body && req.body.token) {
+            token = req.body.token;
+        }
+        console.log(token);
         try {
-            const decode = await jwt.verify(token, process.env.SECRET_KEY);
-            return decode;
+            return await jwt.verify(token);
         }
         catch (error) {
+            console.log('jwtVerify', error);
             return null;
         }
     }

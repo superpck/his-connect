@@ -18,7 +18,9 @@ import { IsLoginModel } from './../../models/isonline/login';
 import { HisMedical2020Model } from '../../models/isonline/his_medical2020.model';
 import { HisKpstatModel } from '../../models/refer/his_kpstat';
 
-var jwt = require('@fastify/jwt');
+import { Jwt } from './../../plugins/jwt';
+var jwt = new Jwt();
+
 const loginModel = new IsLoginModel();
 const hisModels = {
   ezhosp: new HisEzhospModel(),
@@ -105,7 +107,7 @@ const allowTableNames = [
 
 const router = (fastify, { }, next) => {
 
-  fastify.get('/alive',  async (req: any, res: any) => {
+  fastify.get('/alive', async (req: any, res: any) => {
     try {
       const result = await hisModel.testConnect(global.dbHIS);
       global.dbHIS.destroy;
@@ -193,8 +195,9 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/person',  async (req: any, res: any) => {
+  fastify.post('/person', async (req: any, res: any) => {
     const userInfo: any = await decodeToken(req);
+    console.log(req.url);
     console.log(userInfo);
     if (!userInfo || !userInfo.hcode) {
       res.send({
@@ -204,7 +207,7 @@ const router = (fastify, { }, next) => {
     } else {
       let columnName: string = req.body.columnName;
       let searchText: string = req.body.searchText;
-      console.log('search person', userInfo.hcode)
+      console.log('search person', userInfo.hcode);
       if (columnName && searchText) {
         try {
           const result = await hisModel.getPerson(global.dbHIS, columnName, searchText);
@@ -235,7 +238,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/opd-service',  async (req: any, res: any) => {
+  fastify.post('/opd-service', async (req: any, res: any) => {
     const userInfo: any = await decodeToken(req);
     if (!userInfo || !userInfo.hcode) {
       res.send({
@@ -275,7 +278,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/opd-diagnosis',  async (req: any, res: any) => {
+  fastify.post('/opd-diagnosis', async (req: any, res: any) => {
     const userInfo: any = await decodeToken(req);
     if (!userInfo || !userInfo.hcode) {
       res.send({
@@ -315,17 +318,16 @@ const router = (fastify, { }, next) => {
 
   async function decodeToken(req) {
     let token: string = null;
-
-    if (req.body && req.body.token) {
-      token = req.body.token;
-    } else if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+    if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
       token = req.headers.authorization.split(' ')[1];
+    } else if (req.body && req.body.token) {
+      token = req.body.token;
     }
-
+    console.log(token);
     try {
-      const decode = await jwt.verify(token, process.env.SECRET_KEY);
-      return decode;
+      return await jwt.verify(token);
     } catch (error) {
+      console.log('jwtVerify', error);
       return null;
     }
   }
