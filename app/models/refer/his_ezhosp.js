@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisEzhospModel = void 0;
 const moment = require("moment");
@@ -24,15 +15,13 @@ class HisEzhospModel {
         return db('information_schema.tables')
             .where(whereDB, dbname);
     }
-    getPerson1(db, columnName, searchText) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `
+    async getPerson1(db, columnName, searchText) {
+        const sql = `
             select xxx from xxx
             where ${columnName}="${searchText}"
             order by mmm `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
     getReferOut(db, date, hospCode = hcode) {
         return db('hospdata.refer_out as refer')
@@ -148,9 +137,8 @@ class HisEzhospModel {
             .whereRaw('result.lab_code NOT LIKE "03037%" AND result.lab_code NOT LIKE "HIV%"')
             .limit(maxLimit);
     }
-    getDrugOpd(db, visitNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `
+    async getDrugOpd(db, visitNo, hospCode = hcode) {
+        const sql = `
             SELECT '${hospCode}' as hospcode, drug.hn as pid, drug.vn as seq
                 , concat(visit.date,' ',visit.time) as date_serv
                 , visit.clinic, std.stdcode as didstd, drug.drugname as dname
@@ -166,9 +154,8 @@ class HisEzhospModel {
                     std.code_group='OPD' and std.type='CODE24' and (isnull(std.expire) or std.expire='0000-00-00')
                 WHERE drug.vn='${visitNo}'
                 limit 1000`;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
     getAdmission(db, columnName, searchValue, hospCode = hcode) {
         columnName = columnName === 'visitNo' ? 'ipd.vn' : columnName;
@@ -255,11 +242,10 @@ class HisEzhospModel {
             .where('vn', "=", visitNo)
             .limit(maxLimit);
     }
-    getReferHistory(db, columnName, searchNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            columnName = columnName === 'visitNo' ? 'refer.vn' : ('refer.' + columnName);
-            columnName = columnName === 'refer.referNo' ? 'refer.refer_no' : columnName;
-            const sql = `
+    async getReferHistory(db, columnName, searchNo, hospCode = hcode) {
+        columnName = columnName === 'visitNo' ? 'refer.vn' : ('refer.' + columnName);
+        columnName = columnName === 'refer.referNo' ? 'refer.refer_no' : columnName;
+        const sql = `
             SELECT ${hospCode} as hospcode, refer.refer_no as referid
                 , concat('${hospCode}',refer.refer_no) as referid_province
                 , refer.hn as pid, refer.vn as seq, refer.an
@@ -286,9 +272,8 @@ class HisEzhospModel {
             WHERE refer.hcode='${hospCode}' and ${columnName}='${searchNo}'
             limit ${maxLimit};
         `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
     getClinicalRefer(db, referNo, hospCode = hcode) {
         return db('view_clinical_refer')

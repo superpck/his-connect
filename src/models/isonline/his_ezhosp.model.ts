@@ -10,11 +10,11 @@ export class HisEzhospModel {
         return true;
     }
 
-    async getTableName(db: Knex, dbname = dbName) {
+    getTableName(db: Knex, dbname = dbName) {
+        console.log(dbClient)
         const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'TABLE_SCHEMA';
-        const result = await db('information_schema.tables')
+        return db('information_schema.tables')
             .where(whereDB, dbname);
-        return result
     }
 
     getTableName1(knex: Knex, dbname = dbName) {

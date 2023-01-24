@@ -1,20 +1,11 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const HttpStatus = require("http-status-codes");
 const moment = require("moment");
 const report_1 = require("../../models/isonline/report");
 const reportModel = new report_1.IsReportModel;
 const router = (fastify, {}, next) => {
-    fastify.post('/', { preHandler: [fastify.serviceMonitoring] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    fastify.post('/', async (req, reply) => {
         verifyToken(req, reply);
         let tokenKey = req.body.tokenKey;
         if (tokenKey === '') {
@@ -30,7 +21,7 @@ const router = (fastify, {}, next) => {
         let Where = req.body.Where;
         if (reportID) {
             try {
-                yield reportModel.getReport(fastify.dbISOnline, reportID)
+                await reportModel.getReport(global.dbISOnline, reportID)
                     .then((results) => {
                     console.log("\nreport id:" + reportID);
                     const row = results[0];
@@ -61,7 +52,7 @@ const router = (fastify, {}, next) => {
                         console.log("\r\n SQL: \r\n ");
                         console.log(rawSql);
                         console.log("\r\n");
-                        reportModel.getData(fastify.dbISOnline, rawSql)
+                        reportModel.getData(global.dbISOnline, rawSql)
                             .then((results) => {
                             console.log("\nreport id:" + reportID + ' result = ' + results[0].length);
                             reply.send({ ok: true, rows: results[0] });
@@ -81,8 +72,8 @@ const router = (fastify, {}, next) => {
         else {
             reply.send({ ok: false, error: 'report id not found' });
         }
-    }));
-    fastify.post('/report1', { preHandler: [fastify.serviceMonitoring] }, (req, reply) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/report1', async (req, reply) => {
         verifyToken(req, reply);
         let tokenKey = req.body.tokenKey;
         if (tokenKey === '') {
@@ -99,7 +90,7 @@ const router = (fastify, {}, next) => {
             region: req.body.region,
             prov: req.body.prov,
         };
-        reportModel.getReport1(fastify.dbISOnline, reportCond)
+        reportModel.getReport1(global.dbISOnline, reportCond)
             .then((results) => {
             console.log("token: " + tokenKey + " report ID: " + reportID + " hcode: " + hospCode + ' result: ' + results[0].length + ' record<s>');
             reply.send({ ok: true, rows: results[0] });
@@ -107,31 +98,29 @@ const router = (fastify, {}, next) => {
             .catch(error => {
             reply.send({ ok: false, error: error });
         });
-    }));
-    function verifyToken(req, res) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let token = null;
-            if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
-                token = req.headers.authorization.split(' ')[1];
-            }
-            else if (req.query && req.query.token) {
-                token = req.query.token;
-            }
-            else if (req.body && req.body.token) {
-                token = req.body.token;
-            }
-            try {
-                yield fastify.jwt.verify(token);
-                return true;
-            }
-            catch (error) {
-                console.log('authen fail!', error.message);
-                res.status(HttpStatus.UNAUTHORIZED).send({
-                    statusCode: HttpStatus.UNAUTHORIZED,
-                    message: error.message
-                });
-            }
-        });
+    });
+    async function verifyToken(req, res) {
+        let token = null;
+        if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+            token = req.headers.authorization.split(' ')[1];
+        }
+        else if (req.query && req.query.token) {
+            token = req.query.token;
+        }
+        else if (req.body && req.body.token) {
+            token = req.body.token;
+        }
+        try {
+            await fastify.jwt.verify(token);
+            return true;
+        }
+        catch (error) {
+            console.log('authen fail!', error.message);
+            res.status(HttpStatus.UNAUTHORIZED).send({
+                statusCode: HttpStatus.UNAUTHORIZED,
+                message: error.message
+            });
+        }
     }
     next();
 };

@@ -1,4 +1,4 @@
-/// <reference path="../../../typings.d.ts" />
+
 
 import { Knex } from 'knex';
 import * as fastify from 'fastify';
@@ -6,7 +6,7 @@ import * as fastify from 'fastify';
 const router = (fastify, { }, next) => {
   var db: Knex = fastify.knex;
 
-  fastify.get('/', async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/', async (req: any, reply: any) => {
     reply.send({ api: 'hdc' });
   })
 

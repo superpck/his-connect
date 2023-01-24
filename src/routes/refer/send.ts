@@ -1,26 +1,21 @@
-/// <reference path="../../../typings.d.ts" />
-
 // ห้ามแก้ไข file นี้ // 
-import { Knex } from 'knex';
-import * as fastify from 'fastify';
-import * as HttpStatus from 'http-status-codes';
+// import * as fastify from 'fastify';
+import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import * as moment from 'moment';
 var http = require('http');
 var querystring = require('querystring');
 const request = require('request');
 
 const router = (fastify, { }, next) => {
-  // =============================================================
-  fastify.get('/sending-process/:?date', async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/sending-process/:?date', async (req: any, reply: any) => {
     
     const now = moment().locale('th').format('YYYY-MM-DD');
     const trust = req.headers.host.search('localhost|127.0.0.1') > -1;
     const apiKey = process.env.NREFER_APIKEY;
     const secretKey = process.env.NREFER_SECRETKEY;
-    const date = req.params.date || now;
 
     if (!trust || !apiKey || !secretKey) {
-      reply.status(HttpStatus.UNAUTHORIZED).send({ statusCode: HttpStatus.UNAUTHORIZED, message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED) })
+      reply.status(StatusCodes.UNAUTHORIZED).send({ statusCode: StatusCodes.UNAUTHORIZED, message: getReasonPhrase(StatusCodes.UNAUTHORIZED) })
     }
 
     let tokenLocal = '';
@@ -36,8 +31,8 @@ const router = (fastify, { }, next) => {
       }
     }
     catch (error) {
-      reply.status(HttpStatus.OK).send({ 
-        statusCode: HttpStatus.BAD_REQUEST, 
+      reply.status(StatusCodes.OK).send({ 
+        statusCode: StatusCodes.BAD_REQUEST, 
         message: error.message
       })
     }
@@ -49,15 +44,15 @@ const router = (fastify, { }, next) => {
         token = result.token;
         // console.log('token', token);
       } else {
-        reply.status(HttpStatus.OK).send({ 
-          statusCode: HttpStatus.BAD_REQUEST, 
-          message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST), 
+        reply.status(StatusCodes.OK).send({ 
+          statusCode: StatusCodes.BAD_REQUEST, 
+          message: getReasonPhrase(StatusCodes.BAD_REQUEST), 
           error: result.message })
         return false;
       }
     } catch (error) {
-      reply.status(HttpStatus.OK).send({ 
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR, 
+      reply.status(StatusCodes.OK).send({ 
+        statusCode: StatusCodes.INTERNAL_SERVER_ERROR, 
         message: error.message, 
         error: error })
       return false;
@@ -69,42 +64,42 @@ const router = (fastify, { }, next) => {
     //   if (result.statusCode && result.statusCode === 200 && result.token) {
     //     tokenNRefer = result.token;
     //   } else {
-    //     reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST), error: result.message })
+    //     reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST), error: result.message })
     //     return false;
     //   }
     // } catch (error) {
-    //   reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: HttpStatus.getStatusText(HttpStatus.INTERNAL_SERVER_ERROR), error: error.message })
+    //   reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR), error: error.message })
     //   return false;
     // };
 
     // data prepare ------------------------------
     // let referOut: any = [];
-    let noCases = 0;
+    // let noCases = 0;
     // if (tokenNRefer) {
     //   try {
     //     const resultReferout: any = await getReferOut(tokenLocal, date);
     //     if (resultReferout.statusCode === 200) {
     //       referOut = resultReferout.rows;
     //     } else {
-    //       reply.status(HttpStatus.OK).send({
-    //         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-    //         message: HttpStatus.getStatusText(HttpStatus.INTERNAL_SERVER_ERROR),
+    //       reply.status(StatusCodes.OK).send({
+    //         statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+    //         message: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR),
     //         error: resultReferout.message
     //       });
     //       return false;
     //     }
     //   } catch (error) {
     //     console.log('referOut error:', error.message);
-    //     reply.status(HttpStatus.OK).send({
-    //       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-    //       message: HttpStatus.getStatusText(HttpStatus.INTERNAL_SERVER_ERROR),
+    //     reply.status(StatusCodes.OK).send({
+    //       statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+    //       message: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR),
     //       error: error.message
     //     });
     //     return false;
     //   }
 
     // } else {
-    //   reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: HttpStatus.getStatusText(HttpStatus.INTERNAL_SERVER_ERROR) })
+    //   reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR) })
     //   return false;
     // }
 
@@ -140,14 +135,14 @@ const router = (fastify, { }, next) => {
     try {
       const result: any = await expireToken(tokenNRefer);
     } catch (error) {
-      reply.status(HttpStatus.OK).send({
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      reply.status(StatusCodes.OK).send({
+        statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
         message: error.message
       })
     }
 
-    // reply.status(HttpStatus.OK).send({ 
-    //   statusCode: HttpStatus.OK, 
+    // reply.status(StatusCodes.OK).send({ 
+    //   statusCode: StatusCodes.OK, 
     //   message: noCases });
   });
 
@@ -223,7 +218,7 @@ async function getToken(apiKey, secretKey) {
 
 async function getNReferToken(apiKey, secretKey) {
   let url = process.env.NREFER_URL1;
-  url += url.substr(-1, 1) === '/' ? '' : '/';
+  url += url.substring(url.length-1) === '/' ? '' : '/';
 
   const postData = querystring.stringify({
     apiKey: apiKey, secretKey: secretKey
@@ -266,7 +261,7 @@ async function getNReferToken(apiKey, secretKey) {
 
 async function expireToken(token) {
   let url = process.env.NREFER_URL1;
-  url += url.substr(-1, 1) === '/' ? '' : '/';
+  url += url.substring(url.length-1) === '/' ? '' : '/';
 
   const postData = querystring.stringify({
     token: token
@@ -372,7 +367,7 @@ async function getData(routeName: string, tokenLocal: string, postData) {
 
 async function sendPerson(tableName, tokenNRefer: string, data) {
   let url = process.env.NREFER_URL1;
-  url += url.substr(-1, 1) === '/' ? '' : '/';
+  url += url.substring(url.length-1) === '/' ? '' : '/';
   url += 'ws/save-person';
 
   const formData = { token: tokenNRefer, tableName: tableName, data: JSON.stringify(data) };

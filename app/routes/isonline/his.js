@@ -1,15 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const HttpStatus = require("http-status-codes");
+const http_status_codes_1 = require("http-status-codes");
 const his_model_1 = require("./../../models/isonline/his.model");
 const his_ezhosp_model_1 = require("./../../models/isonline/his_ezhosp.model");
 const his_hosxpv3_model_1 = require("./../../models/isonline/his_hosxpv3.model");
@@ -28,6 +19,7 @@ const his_jhos_model_1 = require("./../../models/isonline/his_jhos.model");
 const login_1 = require("./../../models/isonline/login");
 const his_medical2020_model_1 = require("../../models/isonline/his_medical2020.model");
 const his_kpstat_1 = require("../../models/refer/his_kpstat");
+var jwt = require('@fastify/jwt');
 const loginModel = new login_1.IsLoginModel();
 const hisModels = {
     ezhosp: new his_ezhosp_model_1.HisEzhospModel(),
@@ -108,28 +100,28 @@ const allowTableNames = [
     'patient', 'view_opd_visit', 'opd_dx', 'opd_op', 'opd_vs', 'ipd_ipd', 'view_pharmacy_opd_drug_item',
 ];
 const router = (fastify, {}, next) => {
-    fastify.get('/alive', { preHandler: [fastify.serviceMonitoring] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    fastify.get('/alive', async (req, res) => {
         try {
-            const result = yield hisModel.testConnect(fastify.dbHIS);
-            fastify.dbHIS.destroy;
+            const result = await hisModel.testConnect(global.dbHIS);
+            global.dbHIS.destroy;
             if (result && result.length) {
                 res.send({
-                    statusCode: HttpStatus.OK,
+                    statusCode: http_status_codes_1.StatusCodes.OK,
                     ok: true,
                     startServerTime: fastify.startServerTime,
                     hisProvider: process.env.HIS_PROVIDER,
-                    version: fastify.apiVersion,
-                    subVersion: fastify.apiSubVersion,
+                    version: global.appDetail.version,
+                    subVersion: global.appDetail.subVersion,
                     connection: true
                 });
             }
             else {
                 res.send({
-                    statusCode: HttpStatus.NO_CONTENT,
+                    statusCode: http_status_codes_1.StatusCodes.NO_CONTENT,
                     ok: true, startServerTime: fastify.startServerTime,
                     hisProvider: process.env.HIS_PROVIDER,
-                    version: fastify.apiVersion,
-                    subVersion: fastify.apiSubVersion,
+                    version: global.appDetail.version,
+                    subVersion: global.appDetail.subVersion,
                     connection: false,
                     message: result
                 });
@@ -138,7 +130,7 @@ const router = (fastify, {}, next) => {
         catch (error) {
             console.log('alive fail', error.message);
             res.send({
-                statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR,
                 status: 500,
                 ok: false,
                 hisProvider: provider,
@@ -146,23 +138,23 @@ const router = (fastify, {}, next) => {
                 message: error.message
             });
         }
-    }));
-    fastify.post('/alive', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/alive', { preHandler: [fastify.authenticate] }, async (req, res) => {
         try {
-            const result = yield hisModel.getTableName(fastify.dbHIS);
+            const result = await hisModel.getTableName(global.dbHIS);
             if (result && result.length) {
                 res.send({
-                    statusCode: HttpStatus.OK,
+                    statusCode: http_status_codes_1.StatusCodes.OK,
                     ok: true,
-                    version: fastify.apiVersion,
-                    subVersion: fastify.apiSubVersion,
+                    version: global.appDetail.version,
+                    subVersion: global.appDetail.subVersion,
                     hisProvider: process.env.HIS_PROVIDER,
                     connection: true
                 });
             }
             else {
                 res.send({
-                    statusCode: HttpStatus.NO_CONTENT,
+                    statusCode: http_status_codes_1.StatusCodes.NO_CONTENT,
                     ok: true,
                     hisProvider: process.env.HIS_PROVIDER,
                     connection: false,
@@ -173,7 +165,7 @@ const router = (fastify, {}, next) => {
         catch (error) {
             console.log('alive fail', error.message);
             res.send({
-                statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR,
                 status: 500,
                 ok: false,
                 hisProvider: provider,
@@ -181,29 +173,30 @@ const router = (fastify, {}, next) => {
                 message: error.message
             });
         }
-    }));
-    fastify.post('/showTbl', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    fastify.post('/showTbl', { preHandler: [fastify.authenticate] }, async (req, res) => {
         try {
-            const result = yield hisModel.getTableName(fastify.dbHIS);
+            const result = await hisModel.getTableName(global.dbHIS);
             res.send({
-                statusCode: HttpStatus.OK,
+                statusCode: http_status_codes_1.StatusCodes.OK,
                 rows: result
             });
         }
         catch (error) {
             console.log('showTbl', error.message);
             res.send({
-                statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR,
                 message: error.message
             });
         }
-    }));
-    fastify.post('/person', { preHandler: [fastify.serviceMonitoring] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-        const userInfo = yield decodeToken(req);
+    });
+    fastify.post('/person', async (req, res) => {
+        const userInfo = await decodeToken(req);
+        console.log(userInfo);
         if (!userInfo || !userInfo.hcode) {
             res.send({
-                statusCode: HttpStatus.UNAUTHORIZED,
-                message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED)
+                statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED,
+                message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED)
             });
         }
         else {
@@ -212,12 +205,12 @@ const router = (fastify, {}, next) => {
             console.log('search person', userInfo.hcode);
             if (columnName && searchText) {
                 try {
-                    const result = yield hisModel.getPerson(fastify.dbHIS, columnName, searchText);
-                    fastify.dbHIS.destroy;
+                    const result = await hisModel.getPerson(global.dbHIS, columnName, searchText);
+                    global.dbHIS.destroy;
                     res.send({
-                        statusCode: HttpStatus.OK,
-                        version: fastify.apiVersion,
-                        subVersion: fastify.apiSubVersion,
+                        statusCode: http_status_codes_1.StatusCodes.OK,
+                        version: global.appDetail.version,
+                        subVersion: global.appDetail.subVersion,
                         hisProvider: process.env.HIS_PROVIDER,
                         reccount: result.length,
                         rows: result
@@ -226,25 +219,25 @@ const router = (fastify, {}, next) => {
                 catch (error) {
                     console.log('person', error.message);
                     res.send({
-                        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                        statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR,
                         message: error.message
                     });
                 }
             }
             else {
                 res.send({
-                    statusCode: HttpStatus.BAD_REQUEST,
-                    message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+                    statusCode: http_status_codes_1.StatusCodes.BAD_REQUEST,
+                    message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.BAD_REQUEST)
                 });
             }
         }
-    }));
-    fastify.post('/opd-service', { preHandler: [fastify.serviceMonitoring] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-        const userInfo = yield decodeToken(req);
+    });
+    fastify.post('/opd-service', async (req, res) => {
+        const userInfo = await decodeToken(req);
         if (!userInfo || !userInfo.hcode) {
             res.send({
-                statusCode: HttpStatus.UNAUTHORIZED,
-                message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED)
+                statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED,
+                message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED)
             });
         }
         else {
@@ -253,12 +246,12 @@ const router = (fastify, {}, next) => {
             let visitNo = req.body.visitNo || '';
             if (visitNo + hn) {
                 try {
-                    const result = yield hisModel.getOpdService(fastify.dbHIS, hn, date, 'vn', visitNo);
-                    fastify.dbHIS.destroy;
+                    const result = await hisModel.getOpdService(global.dbHIS, hn, date, 'vn', visitNo);
+                    global.dbHIS.destroy;
                     res.send({
-                        statusCode: HttpStatus.OK,
-                        version: fastify.apiVersion,
-                        subVersion: fastify.apiSubVersion,
+                        statusCode: http_status_codes_1.StatusCodes.OK,
+                        version: global.appDetail.version,
+                        subVersion: global.appDetail.subVersion,
                         hisProvider: process.env.HIS_PROVIDER,
                         reccount: result.length,
                         rows: result
@@ -267,37 +260,37 @@ const router = (fastify, {}, next) => {
                 catch (error) {
                     console.log('opd-service', error.message);
                     res.send({
-                        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                        statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR,
                         message: error.message
                     });
                 }
             }
             else {
                 res.send({
-                    statusCode: HttpStatus.BAD_REQUEST,
-                    message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+                    statusCode: http_status_codes_1.StatusCodes.BAD_REQUEST,
+                    message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.BAD_REQUEST)
                 });
             }
         }
-    }));
-    fastify.post('/opd-diagnosis', { preHandler: [fastify.serviceMonitoring] }, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-        const userInfo = yield decodeToken(req);
+    });
+    fastify.post('/opd-diagnosis', async (req, res) => {
+        const userInfo = await decodeToken(req);
         if (!userInfo || !userInfo.hcode) {
             res.send({
-                statusCode: HttpStatus.UNAUTHORIZED,
-                message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED)
+                statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED,
+                message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED)
             });
         }
         else {
             let visitNo = req.body.visitNo || req.body.vn;
             if (visitNo) {
                 try {
-                    const result = yield hisModel.getDiagnosisOpd(fastify.dbHIS, visitNo);
-                    fastify.dbHIS.destroy;
+                    const result = await hisModel.getDiagnosisOpd(global.dbHIS, visitNo);
+                    global.dbHIS.destroy;
                     res.send({
-                        statusCode: HttpStatus.OK,
-                        version: fastify.apiVersion,
-                        subVersion: fastify.apiSubVersion,
+                        statusCode: http_status_codes_1.StatusCodes.OK,
+                        version: global.appDetail.version,
+                        subVersion: global.appDetail.subVersion,
                         hisProvider: process.env.HIS_PROVIDER,
                         reccount: result.length,
                         rows: result
@@ -306,36 +299,34 @@ const router = (fastify, {}, next) => {
                 catch (error) {
                     console.log('opd-diagnosis', error.message);
                     res.send({
-                        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                        statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR,
                         message: error.message
                     });
                 }
             }
             else {
                 res.send({
-                    statusCode: HttpStatus.BAD_REQUEST,
-                    message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+                    statusCode: http_status_codes_1.StatusCodes.BAD_REQUEST,
+                    message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.BAD_REQUEST)
                 });
             }
         }
-    }));
-    function decodeToken(req) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let token = null;
-            if (req.body && req.body.token) {
-                token = req.body.token;
-            }
-            else if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
-                token = req.headers.authorization.split(' ')[1];
-            }
-            try {
-                const decode = yield fastify.jwt.verify(token);
-                return decode;
-            }
-            catch (error) {
-                return null;
-            }
-        });
+    });
+    async function decodeToken(req) {
+        let token = null;
+        if (req.body && req.body.token) {
+            token = req.body.token;
+        }
+        else if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+            token = req.headers.authorization.split(' ')[1];
+        }
+        try {
+            const decode = await jwt.verify(token, process.env.SECRET_KEY);
+            return decode;
+        }
+        catch (error) {
+            return null;
+        }
     }
     next();
 };

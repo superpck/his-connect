@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.IswinModel = void 0;
 const moment = require("moment");
@@ -16,7 +7,7 @@ const defaultHCode = process.env.HOSPCODE;
 class IswinModel {
     getVersion(db) {
         return db('version')
-            .where('id', 'IS')
+            .where({ id: 'IS' })
             .limit(1);
     }
     getTableName(knex) {
@@ -88,18 +79,16 @@ class IswinModel {
             .where('hosp', HospCode)
             .orderBy(typeSearch, 'DESC');
     }
-    getByDate(db, typeDate, dateStart, dateEnd, HospCode = defaultHCode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (dateStart.length < 13) {
-                dateStart = dateStart + ' 00:00:00';
-                dateEnd = dateEnd + ' 23:59:59';
-            }
-            return db('is')
-                .whereBetween(typeDate, [dateStart, dateEnd])
-                .where('hosp', HospCode)
-                .orderBy(typeDate, 'desc')
-                .limit(2500);
-        });
+    async getByDate(db, typeDate, dateStart, dateEnd, HospCode = defaultHCode) {
+        if (dateStart.length < 13) {
+            dateStart = dateStart + ' 00:00:00';
+            dateEnd = dateEnd + ' 23:59:59';
+        }
+        return db('is')
+            .whereBetween(typeDate, [dateStart, dateEnd])
+            .where('hosp', HospCode)
+            .orderBy(typeDate, 'desc')
+            .limit(2500);
     }
     getByRef(knex, refSeach, HospCode) {
         let sql = 'select * from `is` where ref=' + refSeach
@@ -230,28 +219,25 @@ class IswinModel {
         return knex('id')
             .where('id', isId);
     }
-    remove(db, ref) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const exists = yield db.schema.hasTable('is_deleted');
-            if (!exists) {
-                yield this.createISDeleted(db);
-            }
-            const isData = yield db('is').where('ref', ref);
-            if (isData && isData.length) {
-                yield db('is_deleted').insert({
-                    is_id: isData[0].id,
-                    hcode: isData[0].hosp,
-                    date: moment().locale('th').format('YYYY-MM-DD HH:mm:ss')
-                });
-            }
-            return db('is')
-                .where('ref', ref)
-                .del();
-        });
+    async remove(db, ref) {
+        const exists = await db.schema.hasTable('is_deleted');
+        if (!exists) {
+            await this.createISDeleted(db);
+        }
+        const isData = await db('is').where('ref', ref);
+        if (isData && isData.length) {
+            await db('is_deleted').insert({
+                is_id: isData[0].id,
+                hcode: isData[0].hosp,
+                date: moment().locale('th').format('YYYY-MM-DD HH:mm:ss')
+            });
+        }
+        return db('is')
+            .where('ref', ref)
+            .del();
     }
-    createISDeleted(db) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `CREATE TABLE is_deleted (
+    async createISDeleted(db) {
+        const sql = `CREATE TABLE is_deleted (
       ref int(11) unsigned NOT NULL AUTO_INCREMENT,
       hcode varchar(5) DEFAULT NULL,
       is_id bigint(15) unsigned NOT NULL,
@@ -264,8 +250,7 @@ class IswinModel {
       KEY date (date),
       KEY moph_deleted (moph_deleted)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8;`;
-            return db.raw(sql);
-        });
+        return db.raw(sql);
     }
 }
 exports.IswinModel = IswinModel;

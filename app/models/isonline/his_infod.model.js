@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisInfodModel = void 0;
 const moment = require("moment");
@@ -22,10 +13,9 @@ class HisInfodModel {
     testConnect(db) {
         return db('VW_IS_PERSON').select('hn').limit(1);
     }
-    getPerson(db, columnName, searchText) {
-        return __awaiter(this, void 0, void 0, function* () {
-            columnName = columnName == 'hn' ? "ltrim(PT.hn)" : columnName;
-            var sql = ` SELECT   NULL AS age, PS.CardID as cid, PT.hn, PTITLE.titleName AS prename 
+    async getPerson(db, columnName, searchText) {
+        columnName = columnName == 'hn' ? "ltrim(PT.hn)" : columnName;
+        var sql = ` SELECT   NULL AS age, PS.CardID as cid, PT.hn, PTITLE.titleName AS prename 
                 , PT.firstName as fname, PT.lastName as lname
                 ,case when  PT.sex = 'ช' then 1
 					when PT.sex ='ญ' then 2
@@ -38,9 +28,8 @@ class HisInfodModel {
                 dbo.PatSS AS PS ON PS.hn = PT.hn LEFT OUTER JOIN 
                 dbo.PTITLE AS PTITLE ON PT.titleCode = PTITLE.titleCode 
                 where ${columnName}='${searchText}' `;
-            var result = yield db.raw(sql);
-            return [result[0]];
-        });
+        var result = await db.raw(sql);
+        return [result[0]];
     }
     getOpdService(db, hn, date, columnName = '', searchText = '') {
         date = (moment(date).get('year') + 543) + '' + moment(date).format("MMDD");

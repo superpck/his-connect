@@ -4,8 +4,8 @@ import * as moment from 'moment';
 const dbName = process.env.DB_NAME;
 
 export class IsLoginModel {
-  doLogin(knex: Knex, username: string, password: string) {
-    return knex('is_user')
+  doLogin(db: Knex, username: string, password: string) {
+    return db('is_user')
       .leftJoin('lib_hospcode', 'hcode', 'off_id')
       .select('is_user.*', 'lib_hospcode.name as hospname', 'lib_hospcode.changwatcode as hospprov')
       .where({

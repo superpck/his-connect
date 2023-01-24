@@ -1,4 +1,4 @@
-/// <reference path="../../../typings.d.ts" />
+
 
 // ห้ามแก้ไข file นี้ // 
 import { Knex } from 'knex';
@@ -10,10 +10,10 @@ var querystring = require('querystring');
 const request = require('request');
 
 const router = (fastify, { }, next) => {
-  var db: Knex = fastify.dbHIS;
+  var db: Knex = global.dbHIS;
 
   // =============================================================
-  fastify.get('/sending-process/:?date', async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/sending-process/:?date', async (req: any, reply: any) => {
     const now = moment().locale('th').format('YYYY-MM-DD');
     const trust = req.headers.host.search('localhost|127.0.0.1') > -1;
     const apiKey = process.env.NREFER_APIKEY;

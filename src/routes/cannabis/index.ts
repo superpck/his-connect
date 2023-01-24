@@ -1,4 +1,4 @@
-/// <reference path="../../../typings.d.ts" />
+
 
 import { Knex } from 'knex';
 import * as fastify from 'fastify';
@@ -19,16 +19,16 @@ switch (hisProvider) {
 }
 
 const router = (fastify, { }, next) => {
-  fastify.get('/', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/',  async (req: any, reply: any) => {
     reply.send({
       api: 'Cannabis API Serivce',
-      version: fastify.apiVersion,
-      subVersion: fastify.apiSubVersion,
+      version: global.appDetail.version,
+      subVersion: global.appDetail.subVersion,
       hisProvider
     });
   })
 
-  fastify.get('/test/db', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/test/db',  async (req: any, reply: any) => {
     try {
       const result: any = await cannabisModel.testConnection(fastify.dbCannabis);
       reply.send(result[0]);
@@ -41,7 +41,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/test-connection', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/test-connection',  async (req: any, reply: any) => {
     try {
       const result: any = await cannabisModel.testConnection(fastify.dbCannabis);
       reply.send({
@@ -56,7 +56,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/api/search/person/cid', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/api/search/person/cid', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const cid = req.body.cid;
 
     if (cid) {
@@ -78,7 +78,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/patient', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/patient', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const cid = req.body.cid;
 
     if (cid) {
@@ -103,7 +103,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/api/search/visit', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/api/search/visit', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const hn = req.body.hn || '';
     const startDate = req.body.startDate;
     const endDate = req.body.endDate;
@@ -130,7 +130,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/visit', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/visit', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const hn = req.body.hn || '';
     const startDate = req.body.startDate;
     const endDate = req.body.endDate;
@@ -157,7 +157,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/api/patient/info', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/api/patient/info', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const hn = req.body.hn || '';
 
     if (hn) {
@@ -179,7 +179,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/patient-info', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/patient-info', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const hn = req.body.hn || '';
 
     if (hn) {
@@ -204,7 +204,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/api/visit/lab', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/api/visit/lab', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const hn = req.body.hn || '';
     const vn = req.body.vn || '';
 
@@ -235,7 +235,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/lab', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/lab', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const hn = req.body.hn || '';
     const vn = req.body.vn || '';
 
@@ -261,7 +261,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/api/visit/drug', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/api/visit/drug', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const hn = req.body.hn || '';
     const vn = req.body.vn || '';
 
@@ -292,7 +292,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/drug', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/drug', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const hn = req.body.hn || '';
     const vn = req.body.vn || '';
 
@@ -318,7 +318,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/api/visit/appointment', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/api/visit/appointment', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const hn = req.body.hn || '';
     const vn = req.body.vn || '';
 
@@ -345,7 +345,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/appointment', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/appointment', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const hn = req.body.hn || '';
     const vn = req.body.vn || '';
 
@@ -371,7 +371,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/api/visit/diag-text', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/api/visit/diag-text', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const hn = req.body.hn || '';
     const vn = req.body.vn || '';
 
@@ -398,7 +398,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/diag-text', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/diag-text', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const hn = req.body.hn || '';
     const vn = req.body.vn || '';
 
@@ -424,7 +424,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/api/visit/diagnosis', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/api/visit/diagnosis', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const hn = req.body.hn || '';
     const vn = req.body.vn || '';
 
@@ -453,7 +453,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/diagnosis', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/diagnosis', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const hn = req.body.hn || '';
     const vn = req.body.vn || '';
 
@@ -479,7 +479,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/api/visit/procedures', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/api/visit/procedures', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const hn = req.body.hn || '';
     const vn = req.body.vn || '';
 
@@ -508,7 +508,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/procedure', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/procedure', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const hn = req.body.hn || '';
     const vn = req.body.vn || '';
 
@@ -534,7 +534,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/api/visit/screening', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/api/visit/screening', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const hn = req.body.hn || '';
     const vn = req.body.vn || '';
 
@@ -559,7 +559,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/screening', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/screening', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const hn = req.body.hn || '';
     const vn = req.body.vn || '';
 

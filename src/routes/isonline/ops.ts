@@ -1,7 +1,5 @@
-/// <reference path="../../../typings.d.ts" />
-
-import * as fastify from 'fastify';
-import * as HttpStatus from 'http-status-codes';
+import fastify from 'fastify';
+import { StatusCodes } from 'http-status-codes';
 
 var http = require('http');
 var fs = require('fs');
@@ -14,7 +12,7 @@ const Path2 = '/kkh/ws/moph/ops.php';
 
 const router = (fastify, { }, next) => {
 
-  fastify.post('/general1', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/general1',  async (req: any, res: any) => {
     verifyToken(req, res);
     let url: number = req.body.url;
     let path: number = req.body.path;
@@ -41,7 +39,7 @@ const router = (fastify, { }, next) => {
 
   })
 
-  fastify.post('/general', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/general',  async (req: any, res: any) => {
     verifyToken(req, res);
     var str = '';
     let type: number = req.body.type;
@@ -69,7 +67,7 @@ const router = (fastify, { }, next) => {
     }).end();
   })
 
-  fastify.post('/general2', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/general2',  async (req: any, res: any) => {
     verifyToken(req, res);
     var str = '';
     let type: number = req.body.type;
@@ -97,7 +95,7 @@ const router = (fastify, { }, next) => {
     }).end();
   })
 
-  fastify.post('/items', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/items',  async (req: any, res: any) => {
     verifyToken(req, res);
     var str = '';
     let type: string = req.body.type;
@@ -134,7 +132,7 @@ const router = (fastify, { }, next) => {
     }).end();
   })
 
-  fastify.post('/general-data', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/general-data',  async (req: any, res: any) => {
     verifyToken(req, res);
     let type: number = req.body.type;
     let area: number = req.body.area;
@@ -158,7 +156,7 @@ const router = (fastify, { }, next) => {
     });
   })
 
-  fastify.post('/general-data2', { preHandler: [fastify.serviceMonitoring] }, async (req: fastify.Request, res: fastify.Reply) => {
+  fastify.post('/general-data2',  async (req: any, res: any) => {
     verifyToken(req, res);
     let type: number = req.body.type;
     let area: number = req.body.area;
@@ -198,8 +196,8 @@ const router = (fastify, { }, next) => {
       return true;
     } catch (error) {
       console.log('authen fail!', error.message);
-      res.status(HttpStatus.UNAUTHORIZED).send({
-        statusCode: HttpStatus.UNAUTHORIZED,
+      res.status(StatusCodes.UNAUTHORIZED).send({
+        statusCode: StatusCodes.UNAUTHORIZED,
         message: error.message
       })
     }

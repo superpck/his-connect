@@ -1,5 +1,3 @@
-/// <reference path="../../../typings.d.ts" />
-
 // ห้ามแก้ไข file นี้ // 
 import { Knex } from 'knex';
 import * as fastify from 'fastify';
@@ -89,23 +87,23 @@ switch (hisProvider) {
 const router = (fastify, { }, next) => {
 
   // =============================================================
-  fastify.get('/', async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/', async (req: any, reply: any) => {
     reply.send({
       apiCode: 'nRefer',
       api: 'refer V.3',
-      version: fastify.apiVersion,
-      subVersion: fastify.apiSubVersion
+      version: global.appDetail.version,
+      subVersion: global.appDetail.subVersion
     });
   });
 
   // =============================================================
   // ตรวจสอบฐานข้อมูล
-  fastify.get('/alive/:requestKey', async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/alive/:requestKey', async (req: any, reply: any) => {
     const requestKey = req.params.requestKey;
     var hashRequestKey = crypto.createHash('md5').update(process.env.REQUEST_KEY).digest('hex');
     const requestKeyVerified = requestKey === hashRequestKey;
     try {
-      const result = await hisModel.getTableName(fastify.dbHIS);
+      const result = await hisModel.getTableName(global.dbHIS);
       if (result && result.length) {
         reply.status(HttpStatus.OK).send({
           statusCode: HttpStatus.OK,
@@ -123,7 +121,7 @@ const router = (fastify, { }, next) => {
   });
 
   // =============================================================
-  fastify.get('/tbl/:requestKey', async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.get('/tbl/:requestKey', async (req: any, reply: any) => {
     const requestKey = req.params.requestKey;
     var hashRequestKey = crypto.createHash('md5').update(process.env.REQUEST_KEY).digest('hex');
     if (requestKey !== hashRequestKey) {
@@ -132,7 +130,7 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const result = await hisModel.getTableName(fastify.dbHIS);
+      const result = await hisModel.getTableName(global.dbHIS);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, tblCount: result.length });
     } catch (error) {
       console.log('tbl', error.message);
@@ -141,14 +139,14 @@ const router = (fastify, { }, next) => {
   });
 
   // =============================================================
-  fastify.post('/referout', { preHandler: [fastify.serviceMonitoring, fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/referout', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const now = moment().locale('th').format('YYYY-MM-DD');
     const date = req.body.date || now;
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     try {
-      const result = await hisModel.getReferOut(fastify.dbHIS, date, hospcode);
+      const result = await hisModel.getReferOut(global.dbHIS, date, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
     } catch (error) {
       console.log('referout', error.message);
@@ -156,7 +154,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/person', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/person', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const hn = req.body.hn || '';
     const cid = req.body.cid || '';
@@ -176,7 +174,7 @@ const router = (fastify, { }, next) => {
         textSearch = cid;
       }
 
-      const result = await hisModel.getPerson(fastify.dbHIS, typeSearch, textSearch, hospcode);
+      const result = await hisModel.getPerson(global.dbHIS, typeSearch, textSearch, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
 
     } catch (error) {
@@ -185,7 +183,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/address', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/address', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const hn = req.body.hn || '';
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -199,7 +197,7 @@ const router = (fastify, { }, next) => {
       let typeSearch = 'hn';
       let textSearch = hn;
 
-      const result = await hisModel.getAddress(fastify.dbHIS, typeSearch, textSearch, hospcode);
+      const result = await hisModel.getAddress(global.dbHIS, typeSearch, textSearch, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
 
     } catch (error) {
@@ -208,7 +206,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/drugallergy', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/drugallergy', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const hn = req.body.hn || '';
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -219,7 +217,7 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const result = await hisModel.getDrugAllergy(fastify.dbHIS, hn, hospcode);
+      const result = await hisModel.getDrugAllergy(global.dbHIS, hn, hospcode);
       reply.send({ statusCode: HttpStatus.OK, rows: result });
     } catch (error) {
       console.log('drug allergy', error.message);
@@ -227,7 +225,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/service', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/service', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const hn = req.body.hn || '';
     const visitNo = req.body.visitNo || '';
@@ -246,7 +244,7 @@ const router = (fastify, { }, next) => {
         textSearch = visitNo;
       }
 
-      const result = await hisModel.getService(fastify.dbHIS, typeSearch, textSearch, hospcode);
+      const result = await hisModel.getService(global.dbHIS, typeSearch, textSearch, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
 
     } catch (error) {
@@ -255,7 +253,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/admission', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/admission', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const typeSearch = req.body.typeSearch;
     const textSearch = req.body.textSearch;
@@ -266,7 +264,7 @@ const router = (fastify, { }, next) => {
       return;
     } else {
       try {
-        const result = await hisModel.getAdmission(fastify.dbHIS, typeSearch, textSearch, hospcode);
+        const result = await hisModel.getAdmission(global.dbHIS, typeSearch, textSearch, hospcode);
         reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
 
       } catch (error) {
@@ -276,7 +274,7 @@ const router = (fastify, { }, next) => {
     }
   });
 
-  fastify.post('/diagnosis-opd', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/diagnosis-opd', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const visitNo = req.body.visitNo;
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -287,7 +285,7 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const result = await hisModel.getDiagnosisOpd(fastify.dbHIS, visitNo, hospcode);
+      const result = await hisModel.getDiagnosisOpd(global.dbHIS, visitNo, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
     } catch (error) {
       console.log('diagnosis_opd', error.message);
@@ -295,7 +293,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/diagnosis-ipd', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/diagnosis-ipd', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const an = req.body.an;
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -305,7 +303,7 @@ const router = (fastify, { }, next) => {
       return;
     } else {
       try {
-        const result = await hisModel.getDiagnosisIpd(fastify.dbHIS, 'an', an, hospcode);
+        const result = await hisModel.getDiagnosisIpd(global.dbHIS, 'an', an, hospcode);
         reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
 
       } catch (error) {
@@ -315,7 +313,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/procedure-opd', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/procedure-opd', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const visitNo = req.body.visitNo;
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -326,7 +324,7 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const rows = await hisModel.getProcedureOpd(fastify.dbHIS, visitNo, hospcode);
+      const rows = await hisModel.getProcedureOpd(global.dbHIS, visitNo, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
 
     } catch (error) {
@@ -336,7 +334,7 @@ const router = (fastify, { }, next) => {
   })
 
   // =============================================================
-  fastify.post('/procedure-ipd', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/procedure-ipd', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const an = req.body.an;
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -347,7 +345,7 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const rows = await hisModel.getProcedureIpd(fastify.dbHIS, an, hospcode);
+      const rows = await hisModel.getProcedureIpd(global.dbHIS, an, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
     } catch (error) {
       console.log('procudure_opd', error.message);
@@ -356,7 +354,7 @@ const router = (fastify, { }, next) => {
   })
 
   // =============================================================
-  fastify.post('/drug-opd', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/drug-opd', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const visitNo = req.body.visitNo;
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -367,7 +365,7 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const rows = await hisModel.getDrugOpd(fastify.dbHIS, visitNo, hospcode);
+      const rows = await hisModel.getDrugOpd(global.dbHIS, visitNo, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
     } catch (error) {
       console.log('drug_opd', error.message);
@@ -376,7 +374,7 @@ const router = (fastify, { }, next) => {
   })
 
   // =============================================================
-  fastify.post('/drug-ipd', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/drug-ipd', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const an = req.body.an;
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -387,7 +385,7 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const rows = await hisModel.getDrugIpd(fastify.dbHIS, an, hospcode);
+      const rows = await hisModel.getDrugIpd(global.dbHIS, an, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
     } catch (error) {
       console.log('drug_ipd', error.message);
@@ -396,7 +394,7 @@ const router = (fastify, { }, next) => {
   })
 
   // =============================================================
-  fastify.post('/charge-opd', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/charge-opd', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const visitNo = req.body.visitNo;
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -407,7 +405,7 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const rows = await hisModel.getChargeOpd(fastify.dbHIS, visitNo, hospcode);
+      const rows = await hisModel.getChargeOpd(global.dbHIS, visitNo, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
     } catch (error) {
       console.log('charge_opd', error.message);
@@ -416,7 +414,7 @@ const router = (fastify, { }, next) => {
   })
 
   // =============================================================
-  fastify.post('/charge-ipd', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/charge-ipd', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const an = req.body.an;
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -427,7 +425,7 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const rows = await hisModel.getChargeIpd(fastify.dbHIS, an, hospcode);
+      const rows = await hisModel.getChargeIpd(global.dbHIS, an, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
     } catch (error) {
       console.log('charge_ipd', error.message);
@@ -436,7 +434,7 @@ const router = (fastify, { }, next) => {
   })
 
   // =============================================================
-  fastify.post('/accident', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/accident', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const visitNo = req.body.visitNo;
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -447,7 +445,7 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const rows = await hisModel.getAccident(fastify.dbHIS, visitNo, hospcode);
+      const rows = await hisModel.getAccident(global.dbHIS, visitNo, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
     } catch (error) {
       console.log('accident', error.message);
@@ -456,7 +454,7 @@ const router = (fastify, { }, next) => {
   })
 
   // =============================================================
-  fastify.post('/appointment', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/appointment', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const visitNo = req.body.visitNo;
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -467,7 +465,7 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const rows = await hisModel.getAppointment(fastify.dbHIS, visitNo, hospcode);
+      const rows = await hisModel.getAppointment(global.dbHIS, visitNo, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
 
     } catch (error) {
@@ -477,7 +475,7 @@ const router = (fastify, { }, next) => {
   })
 
   // =============================================================
-  fastify.post('/refer-history', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/refer-history', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const visitNo = req.body.visitNo;
     const referNo = req.body.referNo;
@@ -495,7 +493,7 @@ const router = (fastify, { }, next) => {
         typeSearch = 'visitNo';
         textSearch = visitNo;
       }
-      const rows = await hisModel.getReferHistory(fastify.dbHIS, typeSearch, textSearch, hospcode);
+      const rows = await hisModel.getReferHistory(global.dbHIS, typeSearch, textSearch, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
 
     } catch (error) {
@@ -505,7 +503,7 @@ const router = (fastify, { }, next) => {
   })
 
   // =============================================================
-  fastify.post('/clinical-refer', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/clinical-refer', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const referNo = req.body.referNo;
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -516,7 +514,7 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const rows = await hisModel.getClinicalRefer(fastify.dbHIS, referNo, hospcode);
+      const rows = await hisModel.getClinicalRefer(global.dbHIS, referNo, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
 
     } catch (error) {
@@ -526,7 +524,7 @@ const router = (fastify, { }, next) => {
   })
 
   // =============================================================
-  fastify.post('/investigation-refer', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/investigation-refer', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const referNo = req.body.referNo;
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -537,7 +535,7 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const rows = await hisModel.getInvestigationRefer(fastify.dbHIS, referNo, hospcode);
+      const rows = await hisModel.getInvestigationRefer(global.dbHIS, referNo, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
     } catch (error) {
       console.log('investigation_refer', error.message);
@@ -546,7 +544,7 @@ const router = (fastify, { }, next) => {
   })
 
   // =============================================================
-  fastify.post('/care-refer', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/care-refer', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const referNo = req.body.referNo;
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
@@ -557,7 +555,7 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const rows = await hisModel.getCareRefer(fastify.dbHIS, referNo, hospcode);
+      const rows = await hisModel.getCareRefer(global.dbHIS, referNo, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
     } catch (error) {
       console.log('care_refer', error.message);
@@ -566,7 +564,7 @@ const router = (fastify, { }, next) => {
   })
 
   // =============================================================
-  fastify.post('/refer-result', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/refer-result', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const hospDestination = req.body.hospDestination;
     const referNo = req.body.referNo;
@@ -578,7 +576,7 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const rows = await hisModel.getReferResult(fastify.dbHIS, hospDestination, referNo, hospcode);
+      const rows = await hisModel.getReferResult(global.dbHIS, hospDestination, referNo, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
     } catch (error) {
       console.log('refer_result', error.message);
@@ -587,7 +585,7 @@ const router = (fastify, { }, next) => {
   })
 
   // =============================================================
-  fastify.post('/provider', { preHandler: [fastify.authenticate] }, async (req: fastify.Request, reply: fastify.Reply) => {
+  fastify.post('/provider', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const licenseNo = req.body.licenseNo;
     const cid = req.body.cid;
@@ -605,7 +603,7 @@ const router = (fastify, { }, next) => {
       textSearch = licenseNo;
     }
     try {
-      const rows = await hisModel.getProvider(fastify.dbHIS, typeSearch, textSearch, hospcode);
+      const rows = await hisModel.getProvider(global.dbHIS, typeSearch, textSearch, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
     } catch (error) {
       console.log('provider', error.message);

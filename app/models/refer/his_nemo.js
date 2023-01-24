@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisNemoModel = void 0;
 const maxLimit = 250;
@@ -21,9 +12,8 @@ class HisNemoModel {
             .select('TABLE_NAME')
             .where('TABLE_SCHEMA', '=', dbName);
     }
-    getReferOut(db, date, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `select a.DATETIME_REFER refer_date,a.hospcode,a.hosp_destination,
+    async getReferOut(db, date, hospCode = hcode) {
+        const sql = `select a.DATETIME_REFER refer_date,a.hospcode,a.hosp_destination,
                     a.REFERID as referid,
                     a.pid as hn,
                     b.CID as cid,
@@ -42,45 +32,36 @@ class HisNemoModel {
                     left join damasac.refer_out_data e on convert(a.hospcode using tis620)=b.hospcode and convert(hex(encode(a.SEQ,'nemocarethailand')) using tis620)=e.vn
                     left join nemo_refer.cprename f on b.PRENAME=f.id_prename
                     where  b.PRENAME is not null and date(a.DATETIME_REFER)="${date}"`;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
-    getPerson(db, columnName, searchText, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            console.log(hospCode);
-            columnName = columnName.toUpperCase();
-            const sql = `select * from nrefer_person 
+    async getPerson(db, columnName, searchText, hospCode = hcode) {
+        console.log(hospCode);
+        columnName = columnName.toUpperCase();
+        const sql = `select * from nrefer_person 
                     where ${columnName}="${searchText}" and hospcode="${hospCode}"`;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
-    getAddress(db, columnName, searchNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `select * from nrefer_address 
+    async getAddress(db, columnName, searchNo, hospCode = hcode) {
+        const sql = `select * from nrefer_address 
                     where ${columnName}="${searchNo}" and hospcode="${hospCode}"`;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
-    getService(db, columnName, searchNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            columnName = columnName === 'visitNo' ? 'seq' : columnName;
-            columnName = columnName === 'date_serv' ? 'service.DATE_SERV' : columnName;
-            const sql = `select * from nrefer_service 
+    async getService(db, columnName, searchNo, hospCode = hcode) {
+        columnName = columnName === 'visitNo' ? 'seq' : columnName;
+        columnName = columnName === 'date_serv' ? 'service.DATE_SERV' : columnName;
+        const sql = `select * from nrefer_service 
                     where ${columnName}="${searchNo}" and hospcode="${hospCode}"`;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
-    getDiagnosisOpd(db, visitNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `select * from nrefer_diagnosis_opd 
+    async getDiagnosisOpd(db, visitNo, hospCode = hcode) {
+        const sql = `select * from nrefer_diagnosis_opd 
                     where SEQ = "${visitNo}" and hospcode="${hospCode}"`;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
     getProcedureOpd(db, visitno, hospCode = hcode) {
         return db('view_opd_op')
@@ -112,29 +93,23 @@ class HisNemoModel {
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
     }
-    getDrugOpd(db, seq, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `select * from nrefer_drug_opd 
+    async getDrugOpd(db, seq, hospCode = hcode) {
+        const sql = `select * from nrefer_drug_opd 
             where SEQ = "${seq}" and hospcode="${hospCode}" `;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
-    getAdmission(db, columnName, searchNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `select * from nrefer_admission 
+    async getAdmission(db, columnName, searchNo, hospCode = hcode) {
+        const sql = `select * from nrefer_admission 
             where ${columnName}="${searchNo}" and hospcode="${hospCode}"`;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
-    getDiagnosisIpd(db, an, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `select * from nrefer_diagnosis_ipd 
+    async getDiagnosisIpd(db, an, hospCode = hcode) {
+        const sql = `select * from nrefer_diagnosis_ipd 
                     where AN = "${an}" and hospcode="${hospCode}"`;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
     getProcedureIpd(db, an, hospCode = hcode) {
         return db('procedure_ipd')
@@ -150,21 +125,17 @@ class HisNemoModel {
             .where('an', "=", an)
             .limit(maxLimit);
     }
-    getDrugIpd(db, an, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `select * from nrefer_drug_ipd 
+    async getDrugIpd(db, an, hospCode = hcode) {
+        const sql = `select * from nrefer_drug_ipd 
         where AN = "${an}" and hospcode="${hospCode}"`;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
-    getAccident(db, visitNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const sql = `select * from nrefer_accident 
+    async getAccident(db, visitNo, hospCode = hcode) {
+        const sql = `select * from nrefer_accident 
         where SEQ = "${visitNo}" and hospcode="${hospCode}"`;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
     getDrugAllergy(db, hn, hospCode = hcode) {
         return db('view_drug_allergy')
@@ -180,14 +151,12 @@ class HisNemoModel {
             .where('vn', "=", visitNo)
             .limit(maxLimit);
     }
-    getReferHistory(db, columnName, searchNo, hospCode = hcode) {
-        return __awaiter(this, void 0, void 0, function* () {
-            columnName = columnName === 'visitNo' ? 'SEQ' : columnName;
-            const sql = `select * from nrefer_refer_history 
+    async getReferHistory(db, columnName, searchNo, hospCode = hcode) {
+        columnName = columnName === 'visitNo' ? 'SEQ' : columnName;
+        const sql = `select * from nrefer_refer_history 
                 where ${columnName}="${searchNo}" and hospcode="${hospCode}"`;
-            const result = yield db.raw(sql);
-            return result[0];
-        });
+        const result = await db.raw(sql);
+        return result[0];
     }
     getClinicalRefer(db, referNo, hospCode = hcode) {
         return db('view_clinical_refer')

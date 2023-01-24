@@ -8,8 +8,8 @@ export class IswinModel {
 
   getVersion(db: Knex) {
     return db('version')
-      .where('id', 'IS')
-      .limit(1)
+      .where({ id: 'IS' })
+      .limit(1);
   }
 
   getTableName(knex: Knex) {
@@ -220,8 +220,8 @@ export class IswinModel {
     if (saveType == 'UPDATE') {
       return knex('lib_hosp').update(arrData)
         .where('hospcode', '=', arrData.hospcode)
-        .andWhere('type','=',arrData.type)
-        .andWhere('off_id','=',arrData.off_id);
+        .andWhere('type', '=', arrData.type)
+        .andWhere('off_id', '=', arrData.off_id);
     } else {
       return knex('lib_hosp').insert(arrData);
     }

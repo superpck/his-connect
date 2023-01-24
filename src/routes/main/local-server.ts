@@ -1,4 +1,4 @@
-/// <reference path="./../../../typings.d.ts" />
+
 
 var fastify = require('fastify');
 var http = require('http');
