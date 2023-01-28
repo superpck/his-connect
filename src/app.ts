@@ -129,7 +129,6 @@ app.addHook('preHandler', async (request, reply) => {
 });
 app.register(require('./route'));
 
-
 app.register(cronjob);
 
 var options: any = {
@@ -139,5 +138,5 @@ var options: any = {
 
 app.listen(options, (err) => {
   if (err) throw err;
-  console.log('>>> ', `HIS Connection API (${global.appDetail.version}) start on port`, options.port, 'PID', process.pid);
+  console.log('>>> ', `HIS Connection API (${global.appDetail.version}) started on`, app.addresses(), 'PID', process.pid);
 });
