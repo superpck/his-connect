@@ -90,10 +90,12 @@ app.addHook('preHandler', async (request, reply) => {
 });
 app.register(require('./route'));
 app.register(nodecron_1.default);
-const port = +process.env.PORT || 3001;
-const host = process.env.HOST || '0.0.0.0';
-app.listen({ port }, (err) => {
+var options = {
+    port: process.env.PORT || 3001,
+    host: process.env.HOST || '0.0.0.0'
+};
+app.listen(options, (err) => {
     if (err)
         throw err;
-    console.log('>>> ', `HIS Connection API (${global.appDetail.version}) start on port`, port, 'PID', process.pid);
+    console.log('>>> ', `HIS Connection API (${global.appDetail.version}) started on`, app.addresses(), 'PID', process.pid);
 });
