@@ -1,7 +1,7 @@
 {
   "name": "HIS-Connect",
   "version": "3.3.1",
-  "subVersion": "2023.01.24-01",
+  "subVersion": "2023.01.30-01",
   "private": true,
   "scripts": {
     "start": "npx ts-node ./src/app.ts",
@@ -17,7 +17,6 @@
     "@fastify/rate-limit": "^7.6.0",
     "@fastify/static": "^6.6.1",
     "@fastify/view": "^7.4.0",
-    "alert-node": "^5.0.1",
     "dotenv": "^16.0.3",
     "ejs": "^3.1.8",
     "ejs-mate": "^4.0.0",

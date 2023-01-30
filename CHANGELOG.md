@@ -1,3 +1,7 @@
+# 3.3.1 - 2023.01.30-01
+## Feature
+  - remove alert-node เนื่องจาก windows มักมีปัญหา
+
 # 3.3.1 - 2023.01.24-01
 ## Feature
   - แก้ไข Bug การแจ้งเตือน Unauthorize

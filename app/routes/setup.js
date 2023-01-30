@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const moment = require("moment");
 const path = require("path");
 var fs = require('fs');
-var alert = require('alert-node');
 const crypto = require('crypto');
 const configFileName = 'config';
 let shell = require("shelljs");
