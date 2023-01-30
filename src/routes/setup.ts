@@ -3,7 +3,6 @@ import path = require('path');
 // import { localStorage, sessionStorage } from "webstorage-node";
 
 var fs = require('fs');
-var alert = require('alert-node');
 const crypto = require('crypto');
 const configFileName = 'config';
 let shell = require("shelljs");
