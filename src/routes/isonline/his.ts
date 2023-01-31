@@ -24,6 +24,7 @@ var jwt = new Jwt();
 const loginModel = new IsLoginModel();
 const hisModels = {
   ezhosp: new HisEzhospModel(),
+  ihospital: new HisEzhospModel(),
   hosxpv3: new HisHosxpv3Model(),
   hosxpv4: new HisHosxpv4Model(),
   hosxppcu: new HisHosxppcuModel(),
@@ -47,6 +48,7 @@ let currentRoutePath = '';
 
 switch (provider) {
   case 'ezhosp':
+  case 'ihospital':
     hisModel = new HisEzhospModel();
     break;
   case 'hosxpv3':

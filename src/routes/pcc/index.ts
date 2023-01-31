@@ -25,6 +25,7 @@ var pccHisModel: any;
 var hisModel: any;
 
 switch (hisProvider) {
+  case 'ihospital':
   case 'ezhosp':
     pccHisModel = new PccHisEzhospModel();
     // hisModel = new HisEzhospModel();
