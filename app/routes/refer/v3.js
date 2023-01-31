@@ -20,6 +20,7 @@ const his_mypcu_1 = require("../../models/refer/his_mypcu");
 const hisProvider = process.env.HIS_PROVIDER;
 let hisModel;
 switch (hisProvider) {
+    case 'ihospital':
     case 'ezhosp':
         hisModel = new his_ezhosp_1.HisEzhospModel();
         break;

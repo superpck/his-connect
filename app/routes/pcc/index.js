@@ -16,6 +16,7 @@ const hisProvider = process.env.HIS_PROVIDER;
 var pccHisModel;
 var hisModel;
 switch (hisProvider) {
+    case 'ihospital':
     case 'ezhosp':
         pccHisModel = new his_ezhosp_model_1.PccHisEzhospModel();
         break;
