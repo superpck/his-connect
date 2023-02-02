@@ -56,7 +56,6 @@ export class HisNemoModel {
 
         //columnName = cid, hn
         //columnName = columnName === 'cid' ? 'no_card' : columnName;
-        console.log(hospCode);
          columnName=columnName.toUpperCase();
         const sql=`select * from nrefer_person 
                     where ${columnName}="${searchText}" and hospcode="${hospCode}"`;

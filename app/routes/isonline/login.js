@@ -5,6 +5,7 @@ const moment = require("moment");
 const crypto = require('crypto');
 const login_1 = require("../../models/isonline/login");
 const loginModel = new login_1.IsLoginModel();
+var http = require('http');
 const router = (fastify, {}, next) => {
     fastify.post('/', async (req, res) => {
         let username = req.body.username;
@@ -90,8 +91,8 @@ const router = (fastify, {}, next) => {
         let username = body.username;
         let password = body.password;
         let ipAddr = body.ip;
-        const ip = req.headers["x-real-ip"] || req.headers["x-forwarded-for"] || req.ip;
-        console.log('api-login', ip);
+        const ip = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;
+        console.log('api-login', ip, ipAddr);
         if (['203.157.103.55', '::1', '127.0.0.1'].indexOf(ip) >= 0 && username.length == 5 && password) {
             let today = moment().format('YYYY-MM-DD HH:mm:ss');
             let expire = moment().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
@@ -106,6 +107,40 @@ const router = (fastify, {}, next) => {
             res.send({
                 statusCode: http_status_codes_1.StatusCodes.OK,
                 token: token
+            });
+        }
+        else {
+            res.send({
+                statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED,
+                message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED)
+            });
+        }
+    });
+    fastify.post('/login-by-code', async (req, res) => {
+        let body = req.body;
+        let loginCode = body.loginCode;
+        if (loginCode) {
+            checkLoginCode(loginCode)
+                .then((data) => {
+                let today = moment().format('YYYY-MM-DD HH:mm:ss');
+                let expire = moment().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
+                const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
+                const payload = {
+                    hcode: process.env.HOSPCODE,
+                    tokenKey: tokenKey,
+                    create: today,
+                    expire: expire
+                };
+                const token = fastify.jwt.sign(payload, { expiresIn: '8h' });
+                res.send({
+                    statusCode: http_status_codes_1.StatusCodes.OK,
+                    token: token, data
+                });
+            }).catch((error) => {
+                res.send({
+                    statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED,
+                    message: error.message
+                });
             });
         }
         else {
@@ -219,6 +254,20 @@ const router = (fastify, {}, next) => {
                 message: error.message
             });
         }
+    }
+    async function checkLoginCode(loginCode) {
+        var options = {
+            host: 'connect.moph.go.th',
+            port: 443,
+            path: `/is-api/login/check-his-login-code/` + process.env.HOSPCODE + `/${loginCode}`
+        };
+        http.get(options, function (res) {
+            res.on("data", function (chunk) {
+                return chunk;
+            });
+        }).on('error', function (e) {
+            return null;
+        });
     }
     next();
 };

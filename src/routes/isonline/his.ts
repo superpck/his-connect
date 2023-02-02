@@ -24,6 +24,7 @@ var jwt = new Jwt();
 const loginModel = new IsLoginModel();
 const hisModels = {
   ezhosp: new HisEzhospModel(),
+  ihospital: new HisEzhospModel(),
   hosxpv3: new HisHosxpv3Model(),
   hosxpv4: new HisHosxpv4Model(),
   hosxppcu: new HisHosxppcuModel(),
@@ -47,6 +48,7 @@ let currentRoutePath = '';
 
 switch (provider) {
   case 'ezhosp':
+  case 'ihospital':
     hisModel = new HisEzhospModel();
     break;
   case 'hosxpv3':
@@ -197,8 +199,6 @@ const router = (fastify, { }, next) => {
 
   fastify.post('/person', async (req: any, res: any) => {
     const userInfo: any = await decodeToken(req);
-    console.log(req.url);
-    console.log(userInfo);
     if (!userInfo || !userInfo.hcode) {
       res.send({
         statusCode: StatusCodes.UNAUTHORIZED,
@@ -323,7 +323,6 @@ const router = (fastify, { }, next) => {
     } else if (req.body && req.body.token) {
       token = req.body.token;
     }
-    console.log(token);
     try {
       return await jwt.verify(token);
     } catch (error) {

@@ -30,7 +30,6 @@ export class HisThiadesModel {
     }
 
     async getPerson(db: Knex, columnName, searchText, hospCode=hcode) {
-        console.log(hospCode);
         columnName=columnName.toUpperCase();
         const sql=`select * from person 
                     where ${columnName}="${searchText}" and HOSPCODE="${hospCode}"`;

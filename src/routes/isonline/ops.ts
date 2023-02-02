@@ -115,7 +115,6 @@ const router = (fastify, { }, next) => {
       host: '35.185.177.172',
       path: path
     };
-    console.log(options);
   
     if (!tokenKey || tokenKey === '') {
       res.send({ok: false, data: null});

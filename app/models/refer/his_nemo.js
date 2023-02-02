@@ -36,7 +36,6 @@ class HisNemoModel {
         return result[0];
     }
     async getPerson(db, columnName, searchText, hospCode = hcode) {
-        console.log(hospCode);
         columnName = columnName.toUpperCase();
         const sql = `select * from nrefer_person 
                     where ${columnName}="${searchText}" and hospcode="${hospCode}"`;

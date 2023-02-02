@@ -23,6 +23,7 @@ import { HisPmkModel } from '../../models/refer/his_pmk';
 const hisProvider = process.env.HIS_PROVIDER;
 let hisModel: any;
 switch (hisProvider) {
+  case 'ihospital':
   case 'ezhosp':
     hisModel = new HisEzhospModel();
     break;

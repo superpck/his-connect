@@ -19,7 +19,6 @@ class HisThiadesModel {
         return result[0];
     }
     async getPerson(db, columnName, searchText, hospCode = hcode) {
-        console.log(hospCode);
         columnName = columnName.toUpperCase();
         const sql = `select * from person 
                     where ${columnName}="${searchText}" and HOSPCODE="${hospCode}"`;
