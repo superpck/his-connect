@@ -36,7 +36,6 @@ app.register(require('@fastify/rate-limit'), {
   // cache: 10000,
   timeWindow: '1 minute'
 });
-
 app.register(serveStatic(path.join(__dirname, '../public')));
 
 app.register(require('@fastify/view'), {
