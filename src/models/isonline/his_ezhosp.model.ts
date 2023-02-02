@@ -11,7 +11,6 @@ export class HisEzhospModel {
     }
 
     getTableName(db: Knex, dbname = dbName) {
-        console.log(dbClient)
         const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'TABLE_SCHEMA';
         return db('information_schema.tables')
             .where(whereDB, dbname);

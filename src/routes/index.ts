@@ -35,7 +35,6 @@ const router = (fastify, { }, next) => {
 
   fastify.get('/get-token/:key', async (req: any, reply: any) => {
     const key = req.params.key;
-    console.log(req.headers.host);
     const trust = req.headers.host.search('localhost|127.0.0.1|192.168.0.89') > -1;
     if (trust) {
       const now = moment().locale('th').format('YYYYMMDDTHHmmss');

@@ -53,7 +53,6 @@ export class IswinModel {
   }
 
   selectSql(knex: Knex, tableName: string, selectText: string, whereText: string, groupBy: string, orderBy: string, limit: string) {
-    console.log(dbName);
     let sql = 'select ' + selectText + ' from ' + tableName;
     if (whereText != '') {
       sql = sql + ' where ' + whereText;
