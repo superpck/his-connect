@@ -263,7 +263,6 @@ const router = (fastify, {}, next) => {
         };
         http.get(options, function (res) {
             res.on("data", function (chunk) {
-                console.log('  ==> checkLoginCode:', chunk);
                 return chunk;
             });
         }).on('error', function (e) {
