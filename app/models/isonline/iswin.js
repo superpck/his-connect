@@ -46,7 +46,6 @@ class IswinModel {
         return knex.raw(Sql);
     }
     selectSql(knex, tableName, selectText, whereText, groupBy, orderBy, limit) {
-        console.log(dbName);
         let sql = 'select ' + selectText + ' from ' + tableName;
         if (whereText != '') {
             sql = sql + ' where ' + whereText;

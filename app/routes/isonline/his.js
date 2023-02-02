@@ -195,8 +195,6 @@ const router = (fastify, {}, next) => {
     });
     fastify.post('/person', async (req, res) => {
         const userInfo = await decodeToken(req);
-        console.log(req.url);
-        console.log(userInfo);
         if (!userInfo || !userInfo.hcode) {
             res.send({
                 statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED,
@@ -324,7 +322,6 @@ const router = (fastify, {}, next) => {
         else if (req.body && req.body.token) {
             token = req.body.token;
         }
-        console.log(token);
         try {
             return await jwt.verify(token);
         }

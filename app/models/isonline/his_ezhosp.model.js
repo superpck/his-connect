@@ -10,7 +10,6 @@ class HisEzhospModel {
         return true;
     }
     getTableName(db, dbname = dbName) {
-        console.log(dbClient);
         const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'TABLE_SCHEMA';
         return db('information_schema.tables')
             .where(whereDB, dbname);

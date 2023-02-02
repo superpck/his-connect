@@ -5,10 +5,6 @@ const moment = require("moment");
 class IsUserModel {
     list(knex, id) {
         if (id > 0) {
-            console.log(knex('is_user')
-                .where({ id })
-                .orderBy('fname')
-                .toString());
             return knex('is_user')
                 .where({ id })
                 .orderBy('fname');
@@ -30,7 +26,6 @@ class IsUserModel {
             sql = sql + ' order by ' + orderBy;
         }
         sql = sql + ' limit 0,500';
-        console.log(sql);
         return knex.raw(sql);
     }
     getByID(knex, userID) {
