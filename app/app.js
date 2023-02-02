@@ -25,7 +25,6 @@ app.register(require('@fastify/rate-limit'), {
     max: +process.env.MAX_CONNECTION_PER_MINUTE || 100,
     timeWindow: '1 minute'
 });
-app.register(require('fastify-axios'));
 app.register(serveStatic(path.join(__dirname, '../public')));
 app.register(require('@fastify/view'), {
     engine: {
