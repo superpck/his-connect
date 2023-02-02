@@ -1,3 +1,7 @@
+# 3.3.2 - 2023.02.02-01
+## Feature
+  - เพิ่มการ Login ด้วย Keycode จาก Server กระทรวง
+
 # 3.3.1 - 2023.01.31-01
 ## Feature
   - เพิ่ม HIS iHospital
