@@ -43,7 +43,6 @@ global.dbHIS = dbConnection('HIS');
 global.dbRefer = dbConnection('REFER');
 global.dbIs = dbConnection('ISONLINE');
 global.dbISOnline = global.dbIs;
-global.dbCannabis = dbConnection('CANNABIS');
 app.decorate("authenticate", async (request, reply) => {
     let token = null;
     if (request.body && request.body.token) {
