@@ -74,7 +74,6 @@ global.dbHIS = dbConnection('HIS');
 global.dbRefer = dbConnection('REFER');
 global.dbIs = dbConnection('ISONLINE');
 global.dbISOnline = global.dbIs;
-global.dbCannabis = dbConnection('CANNABIS');
 
 // check token ===========================================================
 app.decorate("authenticate", async (request, reply) => {
