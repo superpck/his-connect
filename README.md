@@ -5,7 +5,7 @@
 
 ### 1.ติดตั้งโปรแกรมที่จำเป็นในการใช้งาน
 ```
-1.1 NodeJS
+1.1 NodeJS version 16 ขึ้นไป
    1.1.1 Windows, Mac download ที่ https://nodejs.org/en/download/
    1.1.2 Linux ทำตามขั้นตอน https://github.com/nodesource/distributions/blob/master/README.md#rpminstall
 1.2 ติดตั้ง package ที่จำเป็น > npm install -g pm2 nodemon typescript ts-node
