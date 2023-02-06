@@ -1,6 +1,7 @@
 # 3.3.2 - 2023.02.06-01
 ## Feature
   - แก้ไข charSet เป็น charset
+  - set charset เฉพาะ MySQL
 
 # 3.3.2 - 2023.02.02-01
 ## Feature
