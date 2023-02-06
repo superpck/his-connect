@@ -47,15 +47,19 @@ var options = {
 };
 
 const dbConnection = (type = 'HIS') => {
-  let option = options[type.toUpperCase()];
-  option['pool'] = { 
-    min: 0, max: 10,
-    afterCreate: (conn, done) => {
-      conn.query('SET NAMES ' + option.connection.charset, (err) => {
-        done(err, conn);
-      });
-    }
-   };
+  let option: any = options[type.toUpperCase()];
+  if (['mysql', 'mysql2'].indexOf(option.client) >= 0) {
+    option['pool'] = {
+      min: 0, max: 10,
+      afterCreate: (conn, done) => {
+        conn.query('SET NAMES ' + option.connection.charset, (err) => {
+          done(err, conn);
+        });
+      }
+    };
+  } else {
+    option['pool'] = { min: 0, max: 10 };
+  }
   return knex(option);
 };
 
