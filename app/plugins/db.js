@@ -48,14 +48,19 @@ var options = {
 };
 const dbConnection = (type = 'HIS') => {
     let option = options[type.toUpperCase()];
-    option['pool'] = {
-        min: 0, max: 10,
-        afterCreate: (conn, done) => {
-            conn.query('SET NAMES ' + option.connection.charset, (err) => {
-                done(err, conn);
-            });
-        }
-    };
+    if (['mysql', 'mysql2'].indexOf(option.client) >= 0) {
+        option['pool'] = {
+            min: 0, max: 10,
+            afterCreate: (conn, done) => {
+                conn.query('SET NAMES ' + option.connection.charset, (err) => {
+                    done(err, conn);
+                });
+            }
+        };
+    }
+    else {
+        option['pool'] = { min: 0, max: 10 };
+    }
     return (0, knex_1.default)(option);
 };
 module.exports = dbConnection;
