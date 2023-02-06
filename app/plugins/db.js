@@ -48,7 +48,14 @@ var options = {
 };
 const dbConnection = (type = 'HIS') => {
     let option = options[type.toUpperCase()];
-    option['pool'] = { min: 0, max: 10 };
+    option['pool'] = {
+        min: 0, max: 10,
+        afterCreate: (conn, done) => {
+            conn.query('SET NAMES ' + option.connection.charset, (err) => {
+                done(err, conn);
+            });
+        }
+    };
     return (0, knex_1.default)(option);
 };
 module.exports = dbConnection;
