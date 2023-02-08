@@ -1,4 +1,8 @@
-# 3.3.2 - 2023.02.06-01
+# 3.3.4 - 2023.02.09-01
+## Feature
+  - เพิ่มการ Connect Oracle, MSSql
+
+# 3.3.3 - 2023.02.06-01
 ## Feature
   - แก้ไข charSet เป็น charset
   - set charset เฉพาะ MySQL
