@@ -47,20 +47,80 @@ var options = {
     }
 };
 const dbConnection = (type = 'HIS') => {
-    let option = options[type.toUpperCase()];
-    if (['mysql', 'mysql2'].indexOf(option.client) >= 0) {
-        option['pool'] = {
-            min: 0, max: 10,
-            afterCreate: (conn, done) => {
-                conn.query('SET NAMES ' + option.connection.charset, (err) => {
-                    done(err, conn);
-                });
+    type = type.toUpperCase();
+    const config = options[type];
+    const connection = config.connection;
+    let opt = {};
+    if (['mssql'].includes(config.client)) {
+        opt = {
+            client: config.client,
+            connection: {
+                server: connection.host,
+                user: connection.user,
+                password: connection.password,
+                database: connection.database,
+                encrypt: connection.encrypt,
+                options: {
+                    port: +connection.port,
+                    schema: connection.schema
+                }
+            }
+        };
+    }
+    if (config.client == 'oracledb') {
+        opt = {
+            client: config.client,
+            caseSensitive: false,
+            connection: {
+                connectString: `${connection.host}/${connection.schema}`,
+                user: connection.user,
+                password: connection.password,
+                port: +connection.port,
+                externalAuth: false,
+                fetchAsString: ['DATE'],
+            }
+        };
+    }
+    if (config.client == 'pg') {
+        opt = {
+            client: config.client,
+            connection: {
+                host: connection.host,
+                port: +connection.port,
+                user: connection.user,
+                password: connection.password,
+                database: connection.database,
+                timezone
+            },
+            pool: {
+                min: 0,
+                max: 100,
             }
         };
     }
     else {
-        option['pool'] = { min: 0, max: 10 };
+        opt = {
+            client: config.client,
+            connection: {
+                host: connection.host,
+                port: +connection.port,
+                user: connection.user,
+                password: connection.password,
+                database: connection.database,
+                timezone
+            },
+            pool: {
+                min: 0,
+                max: 7,
+                afterCreate: (conn, done) => {
+                    conn.query('SET NAMES ' + connection.charset, (err) => {
+                        done(err, conn);
+                    });
+                }
+            },
+            debug: false,
+        };
     }
-    return (0, knex_1.default)(option);
+    return (0, knex_1.default)(opt);
 };
 module.exports = dbConnection;

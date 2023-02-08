@@ -47,20 +47,96 @@ var options = {
 };
 
 const dbConnection = (type = 'HIS') => {
-  let option: any = options[type.toUpperCase()];
-  if (['mysql', 'mysql2'].indexOf(option.client) >= 0) {
-    option['pool'] = {
-      min: 0, max: 10,
-      afterCreate: (conn, done) => {
-        conn.query('SET NAMES ' + option.connection.charset, (err) => {
-          done(err, conn);
-        });
+  type = type.toUpperCase();
+  // let option: any = options[type];
+
+  const config: any = options[type];
+  const connection = config.connection;
+  let opt: any = {};
+  if (['mssql'].includes(config.client)) {
+    opt = {
+      client: config.client,
+      connection: {
+        server: connection.host,
+        user: connection.user,
+        password: connection.password,
+        database: connection.database,
+        encrypt: connection.encrypt,
+        options: {
+          port: +connection.port,
+          schema: connection.schema
+        }
+      }
+    };
+  } if (config.client == 'oracledb') {
+    opt = {
+      client: config.client,
+      caseSensitive: false,
+      connection: {
+        connectString: `${connection.host}/${connection.schema}`,
+        user: connection.user,
+        password: connection.password,
+        port: +connection.port,
+        externalAuth: false,
+        fetchAsString: ['DATE'],
+      }
+    };
+  } if (config.client == 'pg') {
+    opt = {
+      client: config.client,
+      connection: {
+        host: connection.host,
+        port: +connection.port,
+        user: connection.user,
+        password: connection.password,
+        database: connection.database,
+        timezone
+      },
+      pool: {
+        min: 0,
+        max: 100,
       }
     };
   } else {
-    option['pool'] = { min: 0, max: 10 };
+    opt = {
+      client: config.client,
+      connection: {
+        host: connection.host,
+        port: +connection.port,
+        user: connection.user,
+        password: connection.password,
+        database: connection.database,
+        timezone
+      },
+      pool: {
+        min: 0,
+        max: 7,
+        afterCreate: (conn, done) => {
+          conn.query('SET NAMES ' + connection.charset, (err) => {
+            done(err, conn);
+          });
+        }
+      },
+      debug: false,
+    };
   }
-  return knex(option);
+  return knex(opt);
+
+
+
+  // if (['mysql', 'mysql2'].indexOf(option.client) >= 0) {
+  //   option['pool'] = {
+  //     min: 0, max: 10,
+  //     afterCreate: (conn, done) => {
+  //       conn.query('SET NAMES ' + option.connection.charset, (err) => {
+  //         done(err, conn);
+  //       });
+  //     }
+  //   };
+  // } else {
+  //   option['pool'] = { min: 0, max: 10 };
+  // }
+  // return knex(option);
 };
 
 module.exports = dbConnection;
