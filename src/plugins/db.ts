@@ -31,7 +31,7 @@ var options = {
     }
   },
   REFER: {
-    client: process.env.REFER_DB_CLIENT || process.env.REFER_DB_CLIENT || 'mysql',
+    client: process.env.REFER_DB_CLIENT || process.env.HIS_DB_CLIENT || 'mysql',
     connection: {
       host: process.env.REFER_DB_HOST || process.env.HIS_DB_HOST,
       user: process.env.REFER_DB_USER || process.env.HIS_DB_USER,
