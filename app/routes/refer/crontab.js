@@ -88,7 +88,8 @@ async function sendMoph(req, reply, db) {
     const dateNow = moment().format('YYYY-MM-DD');
     const apiKey = process.env.NREFER_APIKEY || 'api-key';
     const secretKey = process.env.NREFER_SECRETKEY || 'secret-key';
-    sentContent = moment().format('YYYY-MM-DD HH:mm:ss') + ' data:' + dateNow + "\r\n";
+    sentContent = `${global.appDetail.name} v.${global.appDetail.version}-${global.appDetail.subVersion} ` +
+        moment().format('YYYY-MM-DD HH:mm:ss') + ' data:' + dateNow + "\r\n";
     const resultToken = await getNReferToken(apiKey, secretKey);
     if (resultToken && resultToken.statusCode == 200 && resultToken.token) {
         nReferToken = resultToken.token;
