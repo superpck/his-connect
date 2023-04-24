@@ -874,7 +874,7 @@ async function referSending(path, dataArray) {
 }
 
 async function getNReferToken(apiKey: string, secretKey: string) {
-  const fixedUrl = process.env.NREFER_URL1 || fastify.mophService.nRefer || 'https://connect.moph.go.th/refer-api/nrefer';
+  const fixedUrl = process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api';
   const postData = querystring.stringify({
     ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
     apiKey, secretKey, hospcode: hcode,
