@@ -116,8 +116,15 @@ app.decorate("checkRequestKey", async (request, reply) => {
 // Add Route path ================================
 var geoip = require('geoip-lite');
 app.addHook('preHandler', async (request, reply) => {
-  const ip = request.headers["x-real-ip"] ||
-    request.headers["x-forwarded-for"] || request.ip;
+  const headers = {
+    "Cache-Control": "no-store",
+    Pragma: "no-cache",
+  };
+  reply.headers(headers);
+  
+  let ipAddr: any = request.headers["x-forwarded-for"] || request.headers["x-real-ip"] || request.ip;
+  ipAddr = ipAddr? ipAddr.split(','):[''];
+  const ip = ipAddr[0].trim();
   var geo = geoip.lookup(ip);
   if (geo && geo.country && geo.country != 'TH'){
     console.log(`Unacceptable country: ${geo.country}`);

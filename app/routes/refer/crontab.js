@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var fastify = require('fastify');
 const moment = require("moment");
+const axios_1 = require("axios");
 var fs = require('fs');
 var http = require('http');
 var querystring = require('querystring');
@@ -805,51 +806,60 @@ async function getDrugAllergy(db, hn, sentResult) {
     }
 }
 async function referSending(path, dataArray) {
+    const qs = require('qs');
     const fixedUrl = process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api';
-    const mophUrl = fixedUrl.split('/');
-    let urlPath = '/' + mophUrl[3];
-    urlPath += mophUrl[4] ? ('/' + mophUrl[4]) : '';
-    urlPath += mophUrl[5] ? ('/' + mophUrl[5]) : '';
-    const hostDetail = mophUrl[2].split(':');
-    hostDetail[1] = hostDetail[1] ? hostDetail[1] : 80;
-    const dataSending = querystring.stringify({
+    const data = {
         ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
         hospcode: hcode, data: JSON.stringify(dataArray),
         processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
         sourceApiName: 'HIS-connect', apiVersion, subVersion,
         hisProvider: process.env.HIS_PROVIDER
-    });
-    const options = {
-        hostname: hostDetail[0],
-        port: hostDetail[1],
-        path: urlPath + path,
-        method: 'POST',
+    };
+    const option = {
+        method: 'post',
+        url: fixedUrl + path,
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Authorization': 'Bearer ' + nReferToken,
-            'Content-Length': Buffer.byteLength(dataSending)
-        }
+            'Content-Length': Buffer.byteLength(qs.stringify(data))
+        },
+        data: qs.stringify(data)
     };
-    let ret = '';
-    return new Promise((resolve, reject) => {
-        const req = http.request(options, (res) => {
-            res.setEncoding('utf8');
-            res.on('data', (chunk) => {
-                ret += chunk;
-            });
-            res.on('end', () => {
-                const data = JSON.parse(ret);
-                resolve(data);
-            });
-        });
-        req.on('error', (e) => {
-            reject(e);
-        });
-        req.write(dataSending);
-        req.end();
-    });
+    try {
+        const response = await (0, axios_1.default)(option);
+        return response.data;
+    }
+    catch (error) {
+        return error;
+    }
 }
 async function getNReferToken(apiKey, secretKey) {
+    const fixedUrl = fastify.mophService.nRefer || process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api/nrefer';
+    const postData = querystring.stringify({
+        ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
+        apiKey, secretKey, hospcode: hcode,
+        processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
+        sourceApiName: 'HIS-connect', apiVersion, subVersion,
+        hisProvider: process.env.HIS_PROVIDER
+    });
+    const option = {
+        method: 'post',
+        url: fixedUrl + '/login/api-key',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Length': Buffer.byteLength(postData)
+        },
+        data: postData
+    };
+    try {
+        const response = await (0, axios_1.default)(option);
+        return response.data;
+    }
+    catch (error) {
+        return error;
+    }
+}
+async function getNReferToken__(apiKey, secretKey) {
     const fixedUrl = fastify.mophService.nRefer || process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api/nrefer';
     const mophUrl = fixedUrl.split('/');
     let urlPath = '/' + mophUrl[3] + '/';
@@ -867,6 +877,7 @@ async function getNReferToken(apiKey, secretKey) {
         hostname: mophUrl[2],
         path: urlPath + 'login/api-key',
         method: 'POST',
+        port: mophUrl[0] == 'https' ? 443 : 80,
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Content-Length': Buffer.byteLength(postData)
@@ -963,7 +974,7 @@ const router = (request, reply, dbConn, config = {}) => {
     crontabConfig['client_ip'] = '127.0.0.1';
     if (request) {
         if (request.headers) {
-            crontabConfig['client_ip'] = request.headers['x-real-ip'] || request.headers['x-forwarded-for'] || request.ip || request.raw['ip'] || crontabConfig['client_ip'];
+            crontabConfig['client_ip'] = request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || request.ip || request.raw['ip'] || crontabConfig['client_ip'];
         }
         else {
             crontabConfig['client_ip'] = request.ip || crontabConfig['client_ip'];
