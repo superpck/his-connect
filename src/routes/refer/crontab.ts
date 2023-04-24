@@ -1,5 +1,6 @@
 var fastify = require('fastify');
 import * as moment from 'moment';
+import axios from 'axios';
 var fs = require('fs');
 var http = require('http');
 var querystring = require('querystring');
@@ -98,8 +99,8 @@ async function sendMoph(req, reply, db) {
   const apiKey = process.env.NREFER_APIKEY || 'api-key';
   const secretKey = process.env.NREFER_SECRETKEY || 'secret-key';
 
-  sentContent = `${global.appDetail.name} v.${global.appDetail.version}-${global.appDetail.subVersion} `+
-      moment().format('YYYY-MM-DD HH:mm:ss') + ' data:' + dateNow + "\r\n";
+  sentContent = `${global.appDetail.name} v.${global.appDetail.version}-${global.appDetail.subVersion} ` +
+    moment().format('YYYY-MM-DD HH:mm:ss') + ' data:' + dateNow + "\r\n";
 
   const resultToken: any = await getNReferToken(apiKey, secretKey);
   if (resultToken && resultToken.statusCode == 200 && resultToken.token) {
@@ -129,8 +130,8 @@ async function sendMoph(req, reply, db) {
     }
   }
 
-  console.log(moment().format('HH:mm:ss'),'='.repeat(60));
-  var [ referOut, referResult ] = await Promise.all([
+  console.log(moment().format('HH:mm:ss'), '='.repeat(60));
+  var [referOut, referResult] = await Promise.all([
     getRefer_out(db, dateNow),
     getReferResult(db, dateNow)
   ]);
@@ -248,7 +249,7 @@ async function getReferResult(db, date) {
         console.log(moment().format('HH:mm:ss.SSS'), 'finished...');
       }
     }
-    console.log(moment().format('HH:mm:ss.SSS'),'sent >> refer result (refer in)', sentResultResult);
+    console.log(moment().format('HH:mm:ss.SSS'), 'sent >> refer result (refer in)', sentResultResult);
     await getReferInIPDByDateDisc(db, sentResultResult);
     return referResult;
   } catch (error) {
@@ -261,11 +262,11 @@ async function getReferResult(db, date) {
 async function getReferInIPDByDateDisc(db: any, sentResultResult: any) {
   try {
     let backward = 2;
-    if ([2,12].indexOf(moment().get('hour'))>0 && moment().get('minute') >= (60-crontabConfig.minute)){
-      backward = moment().get('hour') == 2? 14:7;  //02:00 = 14 days
+    if ([2, 12].indexOf(moment().get('hour')) > 0 && moment().get('minute') >= (60 - crontabConfig.minute)) {
+      backward = moment().get('hour') == 2 ? 14 : 7;  //02:00 = 14 days
     }
     let datedisc = moment().subtract(backward, 'days').format('YYYY-MM-DD');
-    for (let i=0; i<=backward; i++) {
+    for (let i = 0; i <= backward; i++) {
       await getReferInIPD(db, datedisc, sentResultResult);
       datedisc = moment(datedisc).add(1, 'day').format('YYYY-MM-DD');
     }
@@ -276,7 +277,7 @@ async function getReferInIPDByDateDisc(db: any, sentResultResult: any) {
     return false;
   }
 }
-async function getReferInIPD(db, dateDisc, sentResultResult){
+async function getReferInIPD(db, dateDisc, sentResultResult) {
   let ipdData: any = await hisModel.getAdmission(db, 'datedisc', dateDisc);
   console.log(moment().format('HH:mm:ss'), process.env.HOSPCODE, `Get refer result from IPD discharge date ${dateDisc} = ${ipdData.length} case`)
   for (let row of ipdData) {
@@ -284,7 +285,7 @@ async function getReferInIPD(db, dateDisc, sentResultResult){
   }
 }
 
-async function sendReferInIPD(db, row, sentResultResult){
+async function sendReferInIPD(db, row, sentResultResult) {
   const hn = row.PID || row.pid || row.HN || row.hn;
   const an = row.AN || row.an;
   const seq = row.SEQ || row.seq || row.VN || row.vn;
@@ -706,10 +707,10 @@ async function getLabResult(db, row, sentResult) {
   return rowsLabResult;
 }
 
-async function getAdmission(db, type='VN', searchValue: string) {
+async function getAdmission(db, type = 'VN', searchValue: string) {
   const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
   let rows: any;
-  if (type == 'datedisc'){
+  if (type == 'datedisc') {
     rows = await hisModel.getAdmission(db, 'datedisc', searchValue, hcode);
   } else {
     rows = await hisModel.getAdmission(db, 'visitNo', searchValue, hcode);
@@ -843,66 +844,68 @@ async function getDrugAllergy(db, hn, sentResult) {
 }
 
 async function referSending(path, dataArray) {
-  // const fixedUrl = fastify.mophService.nRefer || process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api';
+	const qs = require('qs');
   const fixedUrl = process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api';
-  const mophUrl = fixedUrl.split('/');
-  let urlPath = '/' + mophUrl[3];
-  urlPath += mophUrl[4] ? ('/' + mophUrl[4]) : '';
-  urlPath += mophUrl[5] ? ('/' + mophUrl[5]) : '';
-  const hostDetail: any = mophUrl[2].split(':');
-  hostDetail[1] = hostDetail[1] ? hostDetail[1] : 80;
-
-  const dataSending = querystring.stringify({
+  const data = {
     ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
     hospcode: hcode, data: JSON.stringify(dataArray),
     processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
     sourceApiName: 'HIS-connect', apiVersion, subVersion,
     hisProvider: process.env.HIS_PROVIDER
-  });
+  };
 
-  const options = {
-    // hostname: process.env.NREFER_URL,
-    // port: process.env.NREFER_PORT,
-    // path: process.env.NREFER_PATH + path,
-    hostname: hostDetail[0],
-    port: hostDetail[1],
-    path: urlPath + path,
-    method: 'POST',
+  const option = {
+    method: 'post',
+    url: fixedUrl+path,
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Authorization': 'Bearer ' + nReferToken,
-      'Content-Length': Buffer.byteLength(dataSending)
-    }
+      'Content-Length': Buffer.byteLength(qs.stringify(data))
+    },
+    data: qs.stringify(data)
   };
 
-  let ret = '';
-  return new Promise((resolve, reject) => {
-    const req = http.request(options, (res) => {
-      res.setEncoding('utf8');
-      res.on('data', (chunk: string) => {
-        ret += chunk;
-      });
-      res.on('end', () => {
-        // console.log(ret);
-        const data = JSON.parse(ret);
-        // console.log('ret', data);
-        resolve(data);
-      });
-    });
-
-    req.on('error', (e: any) => {
-      reject(e);
-    });
-
-    req.write(dataSending);
-    req.end();
-  });
-
+  try {
+    const response = await axios(option);
+    return response.data;
+  } catch (error) {
+    return error;
+  }
 }
 
-async function getNReferToken(apiKey, secretKey) {
+async function getNReferToken(apiKey: string, secretKey: string) {
+  const fixedUrl = fastify.mophService.nRefer || process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api/nrefer';
+  const postData = querystring.stringify({
+    ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
+    apiKey, secretKey, hospcode: hcode,
+    processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
+    sourceApiName: 'HIS-connect', apiVersion, subVersion,
+    hisProvider: process.env.HIS_PROVIDER
+  });
+
+  const option = {
+    method: 'post',
+    url: fixedUrl+ '/login/api-key',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': Buffer.byteLength(postData)
+    },
+    data: postData
+  };
+
+  try {
+    const response = await axios(option);
+    return response.data;
+  } catch (error) {
+    return error;
+  }
+}
+
+async function getNReferToken__(apiKey, secretKey) {
   const fixedUrl = fastify.mophService.nRefer || process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api/nrefer';
   const mophUrl = fixedUrl.split('/');
+
+  // เฉพาะ Path ไม่รวม url
   let urlPath = '/' + mophUrl[3] + '/';
   urlPath += mophUrl[4] ? (mophUrl[4] + '/') : '';
   urlPath += mophUrl[5] ? (mophUrl[5] + '/') : '';
@@ -923,6 +926,7 @@ async function getNReferToken(apiKey, secretKey) {
     hostname: mophUrl[2],
     path: urlPath + 'login/api-key',
     method: 'POST',
+    port: mophUrl[0] == 'https' ? 443 : 80,
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Content-Length': Buffer.byteLength(postData)
@@ -1013,12 +1017,6 @@ async function expireToken(token) {
   });
 }
 
-// async function getHttpHeaders(token) {
-//   const httpHeaders: HttpHeaders = new HttpHeaders()
-//     .set('authorization', `Bearer ${token}`);
-//   return httpHeaders;
-// }
-
 async function writeResult(file, content) {
   fs.writeFile(file, content, async function (err) {
     if (err) {
@@ -1041,7 +1039,7 @@ const router = (request, reply, dbConn: any, config = {}) => {
   crontabConfig['client_ip'] = '127.0.0.1';
   if (request) {
     if (request.headers) {
-      crontabConfig['client_ip'] = request.headers['x-real-ip'] || request.headers['x-forwarded-for'] || request.ip || request.raw['ip'] || crontabConfig['client_ip'];
+      crontabConfig['client_ip'] = request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || request.ip || request.raw['ip'] || crontabConfig['client_ip'];
     } else {
       crontabConfig['client_ip'] = request.ip || crontabConfig['client_ip'];
     }

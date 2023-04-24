@@ -33,7 +33,7 @@ async function cronjob(fastify) {
             (process.env.HIS_DATACENTER_SEND_EVERY_HOUR ? +process.env.HIS_DATACENTER_SEND_EVERY_HOUR : 2) * 60;
     timingSchedule['cupDataCenter'].minute = timingSchedule['cupDataCenter'].minute < 20 ? 20 : timingSchedule['cupDataCenter'].minute;
     const minuteSinceLastNight = (+moment().get('hour')) * 60 + (+moment().get('minute'));
-    console.log("Hospcode", process.env.HOSPCODE);
+    console.log(moment().format('HH:mm:ss'), " Start API for Hospcode", process.env.HOSPCODE);
     console.log('crontab start: ', timingSch, 'minuteSinceLastNight', minuteSinceLastNight);
     if (timingSchedule['nrefer'].autosend) {
         console.log('crontab nRefer start every', timingSchedule['nrefer'].minute, ' (minute) from midnight.');
