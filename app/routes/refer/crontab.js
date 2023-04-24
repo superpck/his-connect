@@ -817,7 +817,7 @@ async function referSending(path, dataArray) {
     };
     const option = {
         method: 'post',
-        url: fixedUrl + path,
+        url: fixedUrl + '/nrefer' + path,
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Authorization': 'Bearer ' + nReferToken,

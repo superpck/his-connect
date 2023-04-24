@@ -52,7 +52,7 @@ IS_MOPH_USER=??
 IS_MOPH_PASSWORD=??
 
 [nRefer]
-NREFER_URL1=https://nrefer.moph.go.th/apis/nrefer
+NREFER_URL1=https://nrefer.moph.go.th/apis
 NREFER_URL=203.157.103.33
 NREFER_PORT=8080
 NREFER_PATH=/nrefer
