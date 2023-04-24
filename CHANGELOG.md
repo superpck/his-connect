@@ -1,8 +1,14 @@
-# 3.3.4 - 2023.02.09-01
+# 3.3.5
+## Feature
+  - เปลี่ยนคำสั่งการส่งส่วนกลางจาก http ไปใช้ axios เพื่อให้ง่ายต่อการเชื่อมโยง
+  - เปลี่ยน url ที่รับข้อมูลจาก http://203.157.103.33:8080/nrefer เป็น https://nrefer.moph.go.th/apis/nrefer เพื่อเพิ่มความปลอดภัย
+  - ยกเลิกตัวแปรที่ไม่จำเป็นใน file config
+
+# 3.3.4
 ## Feature
   - เพิ่มการ Connect Oracle, MSSql
 
-# 3.3.3 - 2023.02.06-01
+# 3.3.3
 ## Feature
   - แก้ไข charSet เป็น charset
   - set charset เฉพาะ MySQL

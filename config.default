@@ -1,7 +1,6 @@
 [Hospital]
 API_LEVEL=hospital
 HOSPCODE=00000
-HN_LENGTH=0
 
 [API]
 HTTPS=0
@@ -13,10 +12,11 @@ PM2_NAME=his-connect
 PM2_INSTANCE=2
 AUTO_RESTART=1
 
-[DB]
+[HIS DB]
 // valid db client type: mysql, pg, mssql, oracledb
-// valid HIS provider name: ezhosp, hosxpv3, hosxpv4, hosxppcu, infod, homc, ssb, hospitalos
-//      jhcis, kpstat, md, hospitalos, kpstat, md, mkhospital, thiades, himpro, nemo, mypcu other
+// valid HIS provider name: 
+//    ezhosp, hosxpv3, hosxpv4, hosxppcu, infod, homc, ssb
+//    hospitalos, jhcis, kpstat, md, mkhospital, thiades, himpro, nemo, mypcu other
 HIS_PROVIDER=hosxpv3
 HIS_DB_HOST=localhost
 HIS_DB_PORT=3306
@@ -32,7 +32,7 @@ HIS_DATACENTER_SEND_EVERY_HOUR=12
 HIS_DATACENTER_SEND_EVERY_MINUTE=0
 MAX_CONNECTION_PER_MINUTE=100
 
-[ISDB - ISONLINE only]
+[ISDB - for ISONLINE only]
 IS_DB_HOST=localhost
 IS_DB_PORT=3306
 IS_DB_CLIENT=mysql
@@ -52,27 +52,23 @@ IS_MOPH_USER=??
 IS_MOPH_PASSWORD=??
 
 [nRefer]
-NREFER_URL1=http://203.157.103.33:8080/nrefer
+NREFER_URL1=https://nrefer.moph.go.th/apis/nrefer
 NREFER_URL=203.157.103.33
 NREFER_PORT=8080
 NREFER_PATH=/nrefer
+
+#Key from http://refer.moph.go.th/#/login
 NREFER_APIKEY=??_please_fill_this_value
 NREFER_SECRETKEY=??_please_fill_this_value
 NREFER_AUTO_SEND=1
 NREFER_AUTO_SEND_EVERY_MINUTE=15
 NREFER_AUTO_SEND_EVERY_HOUR=0
 
-[MOPH]
-MOPH_URL1=http://203.157.103.176/moph-api
-MOPH_URL2=http://connnect.moph.go.th/api
-
-[Notify]
-NOTIFY_URL=http://203.157.103.33:8080/nrefer/message
+[Chat Config]
+NOTIFY_URL=https://nrefer.moph.go.th/apis/message
 NOTIFY_TOKEN=$nRefer@MoPH$
-NOTIFY_CHANNEL=nRefer@????_please_fill_this_value
+NOTIFY_CHANNEL=nRefer@<ระบุ hcode>
 
 [JWT]
-// REQUEST_KEY <10-32 char>
-// SECRET_KEY <16-128 char>
-REQUEST_KEY=reqKey@<hcode>
-SECRET_KEY=[Hospital]_please_fill_this_value
+REQUEST_KEY=<ใส่อะไรก็ได้ที่จำได้_10_ถึง_16_ตัว>
+SECRET_KEY=<ใส่อะไรก็ได้_16_ถึง_64_ตัว_dsjfkKK3@oOse889@wd9dlixXdrTC2LQQqoi*345>
