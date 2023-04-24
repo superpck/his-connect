@@ -31,7 +31,25 @@
 
 # 3.3.0 - 2023.01.20-01
 ## Feature
-  - เพิ่มการรับ Request จากระบบ PHER+
+  - ปรับให้รองรับการรับ Request จากระบบ PHER+
+
+3.2.2 2022-08-08
+  - ISOnline เพิ่ม save-lib-hosp สำหรับบันทึกข้อมูล Lib เฉพาะสถานพยาบาล
+  - JHCIS: Get DrugAllergy จากตาราง personalergic
+
+3.2.2 2022-08-06
+  - เพิ่มการ select ข้อมูล IPD กรณีรับ Refer จากวันที่จำหน่าย
+  - เปลี่ยนการ select admission จาก p.person_id เป็น i.hn ใน HOSxP
+  - admission เพิ่ม local ward name ทั้ง WARDADMITNAME และ WARDDISCHNAME
+  - เปลี่ยนการ select รหัสสิทธิ์ จาก ipd.pttype_std1 เป็น ipd.pttype_std2 ใน iHospital
+
+3.2.1 2022-07-31
+  - Get Drug allergy
+  - แก้ไขการ select ข้อมูล Refer result (Refer In)
+
+3.2.0 2022-06-25
+  - update package
+  - แก้ไขการ select ผล Lab
 
 # 3.1.8 - 2020.12.05-01
 ## Feature
