@@ -13,7 +13,7 @@
 1.4 ติดตั้ง git โดย download จาก website https://git-scm.com/
 ```
 
-### 2.Source code
+### 2.Source code & config
 ```
 2.1.สร้าง Folder ที่จะใช้เก็บ API เช่น mkdir c:\API
 2.2 cd api
