@@ -23,6 +23,8 @@
 2.6 กรณีพบ vulnerabilities ให้ทำการ fix ด้วยคำสั่ง npm audit fix --force
 2.7 copy file config.example แล้วตั้งชื่อ file ใหม่เป็น config
 2.8 แก้ไขค่าต่างๆ ใน file config ให้ถูกต้อง
+2.9 หากต้องการใช้ protocol https ให้ระบุ SSL_ENABLE=1
+2.10 สามารถเปลี่ยน key และ cert ให้เป็นของหน่วยงานได้โดย copy file ไปวางใน folder public/ssl
 ```
 ## 3.Running ใช้งานจริง
 ```
