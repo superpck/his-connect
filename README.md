@@ -1,4 +1,4 @@
-# HIS Connect 3.3.3
+# HIS Connect 3.4.0
 # HIS Connection API สำหรับ nRefer, ISOnline, และ PHER Plus
 
 ## การติดตั้ง
@@ -21,7 +21,7 @@
 2.4 cd his_connect
 2.5 npm install
 2.6 กรณีพบ vulnerabilities ให้ทำการ fix ด้วยคำสั่ง npm audit fix --force
-2.7 copy file config.default แล้วตั้งชื่อ file ใหม่เป็น config
+2.7 copy file config.example แล้วตั้งชื่อ file ใหม่เป็น config
 2.8 แก้ไขค่าต่างๆ ใน file config ให้ถูกต้อง
 ```
 ## 3.Running ใช้งานจริง
@@ -33,9 +33,9 @@
 3.3 start การใช้งาน API ด้วยคำสั่ง pm2 start app/app.js -i 2 --name "his-connect"
 ## ชื่อ --name จะต้องตรงกับค่า PM2_NAME ใน config file
 3.4 ใช้คำสั่ง pm2 save เพื่อบันทึกค่าที่ใช้งานในปัจจุบัน
-3.5 เปิด http://localhost:<port ที่กำหนดตาม config> ใน browser เพื่อแสดงผล
-3.6 ทดสอบการเชื่อมต่อฐานข้อมูล HIS http://localhost:<port>/his/alive
-3.7 ทดสอบการเชื่อมต่อฐานข้อมูล IS http://localhost:<port>/isonline/alive
+3.5 เปิด http<s>://localhost:<port ที่กำหนดตาม config> ใน browser เพื่อแสดงผล
+3.6 ทดสอบการเชื่อมต่อฐานข้อมูล HIS http<s>://localhost:<port>/his/alive
+3.7 ทดสอบการเชื่อมต่อฐานข้อมูล IS http<s>://localhost:<port>/isonline/alive
 ```
 
 # 4.การ Update Source code
