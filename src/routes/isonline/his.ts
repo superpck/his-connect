@@ -14,37 +14,37 @@ import { HisSpdcModel } from './../../models/isonline/his_spdc.model';
 import { HisMdModel } from './../../models/isonline/his_md.model';
 import { HisPmkModel } from './../../models/isonline/his_pmk.model';
 import { HisJhosModel } from './../../models/isonline/his_jhos.model';
-import { IsLoginModel } from './../../models/isonline/login';
+// import { IsLoginModel } from './../../models/isonline/login';
 import { HisMedical2020Model } from '../../models/isonline/his_medical2020.model';
 import { HisKpstatModel } from '../../models/refer/his_kpstat';
 
 import { Jwt } from './../../plugins/jwt';
 var jwt = new Jwt();
 
-const loginModel = new IsLoginModel();
-const hisModels = {
-  ezhosp: new HisEzhospModel(),
-  ihospital: new HisEzhospModel(),
-  hosxpv3: new HisHosxpv3Model(),
-  hosxpv4: new HisHosxpv4Model(),
-  hosxppcu: new HisHosxppcuModel(),
-  hospos: new HisHospitalOsModel(),
-  jhosp: new HisJhosModel(),
-  jhcis: new HisJhcisModel(),
-  ssb: new HisSsbModel(),
-  homc: new HisInfodModel(),
-  hi: new HisHiModel(),
-  himpro: new HisHimproModel(),
-  pmk: new HisPmkModel(),
-  spdc: new HisSpdcModel(),
-  meedee: new HisMdModel(),
-  other: new HisModel()
-};
+// const loginModel = new IsLoginModel();
+// const hisModels = {
+//   ezhosp: new HisEzhospModel(),
+//   ihospital: new HisEzhospModel(),
+//   hosxpv3: new HisHosxpv3Model(),
+//   hosxpv4: new HisHosxpv4Model(),
+//   hosxppcu: new HisHosxppcuModel(),
+//   hospos: new HisHospitalOsModel(),
+//   jhosp: new HisJhosModel(),
+//   jhcis: new HisJhcisModel(),
+//   ssb: new HisSsbModel(),
+//   homc: new HisInfodModel(),
+//   hi: new HisHiModel(),
+//   himpro: new HisHimproModel(),
+//   pmk: new HisPmkModel(),
+//   spdc: new HisSpdcModel(),
+//   meedee: new HisMdModel(),
+//   other: new HisModel()
+// };
 
 const provider = process.env.HIS_PROVIDER;
 let hisModel: any;
-let errorRespond = {};
-let currentRoutePath = '';
+// let errorRespond = {};
+// let currentRoutePath = '';
 
 switch (provider) {
   case 'ezhosp':
@@ -102,10 +102,10 @@ switch (provider) {
     hisModel = new HisModel();
 }
 
-const dbName = process.env.HIS_DB_NAME;
-const allowTableNames = [
-  'patient', 'view_opd_visit', 'opd_dx', 'opd_op', 'opd_vs', 'ipd_ipd', 'view_pharmacy_opd_drug_item',
-];
+// const dbName = process.env.HIS_DB_NAME;
+// const allowTableNames = [
+//   'patient', 'view_opd_visit', 'opd_dx', 'opd_op', 'opd_vs', 'ipd_ipd', 'view_pharmacy_opd_drug_item',
+// ];
 
 const router = (fastify, { }, next) => {
 

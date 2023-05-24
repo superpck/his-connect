@@ -16,6 +16,55 @@ export class HisEzhospModel {
             .where(whereDB, dbname);
     }
 
+    // รหัสห้องตรวจ
+    getDepartment(db: Knex, depCode: string = '', depName: string = '') {
+        let sql = db('lib_clinic');
+        if (depCode) {
+            sql.where('code', depCode);
+        } else if (depName) {
+            sql.whereLike('clinic', `%${depName}%`)
+        } else {
+            sql.where('isactive', 1)
+        }
+        return sql
+            .select('code as department_code', 'clinic as department_name',
+                'standard as moph_code')
+            .select(db.raw(`if(type='ER',1,0) as emergency`))
+            .orderBy('clinic')
+            .limit(maxLimit);
+    }
+
+    // รหัส Ward
+    getWard(db: Knex, wardCode: string = '', wardName: string = '') {
+        let sql = db('lib_ward');
+        if (wardCode) {
+            sql.where('code', wardCode);
+        } else if (wardName) {
+            sql.whereLike('ward', `%${wardName}%`)
+        } else {
+            sql.where('isactive', 1)
+        }
+        return sql
+            .select('code as ward_code', 'ward as ward_name',
+            'standard as moph_code')
+            .limit(maxLimit);
+    }
+
+    // รายละเอียดแพทย์
+    getDr(db: Knex, drCode: string = '', drName: string = '') {
+        let sql = db('lib_dr');
+        if (drCode) {
+            sql.where('code', drCode);
+        } else if (drName) {
+            sql.whereLike('fname', `%${drName}%`)
+        }
+        return sql
+            .select('code as dr_code', 'code as dr_license_code')
+            .select(db.raw('concat(title,fname," ",lname) as dr_name'))
+            .select('expire as expire_date')
+            .limit(maxLimit);
+    }
+
     async getPerson1(db: Knex, columnName, searchText) {
         // columnName => cid, hn
         const sql = `
@@ -170,7 +219,7 @@ export class HisEzhospModel {
                 , 'result.date_result as DATETIME_REPORT')
             .select(db.raw('CONCAT(result.date," ",result.time) as D_UPDATE'))
             .where(columnName, "=", searchNo)
-            .whereNotIn('result.lab_code', ['03098','02066','03155'])
+            .whereNotIn('result.lab_code', ['03098', '02066', '03155'])
             .whereRaw('result.lab_code NOT LIKE "03037%" AND result.lab_name NOT LIKE "HIV%"  AND result.result NOT LIKE "%ส่งตรวจภายนอก%" ')
             .limit(maxLimit);
 
@@ -195,7 +244,7 @@ export class HisEzhospModel {
                 , 'result.date_result as DATETIME_REPORT')
             .select(db.raw('CONCAT(result.date," ",result.time) as D_UPDATE'))
             .where(columnName, "=", searchNo)
-            .whereNotIn('result.lab_code', ['03098','02066','03155'])
+            .whereNotIn('result.lab_code', ['03098', '02066', '03155'])
             .whereRaw('result.lab_code NOT LIKE "03037%" AND result.lab_code NOT LIKE "HIV%"')
             .limit(maxLimit);
 
@@ -231,18 +280,19 @@ export class HisEzhospModel {
         return db('view_ipd_ipd as ipd')
             .select(db.raw('"' + hcode + '" as HOSPCODE'))
             .select('ipd.hn as PID', 'ipd.vn as SEQ',
-                'ipd.AN', 'ipd.hn')
+                'ipd.an AS AN', 'ipd.hn')
             .select(db.raw('concat(ipd.admite, " " , ipd.time) as DATETIME_ADMIT'))
-            .select('ipd.ward_std as WARDADMIT', 
+            .select('ipd.ward_std as WARDADMIT',
                 'ipd.ward_name as WARDADMITNAME',
+                'ipd.ward as WARD_LOCAL',
                 'ipd.pttype_std2 as INSTYPE')
             .select(db.raw('case when ipd.refer="" then 1 else 3 end as TYPEIN '))
             .select('ipd.refer as REFERINHOSP')
             .select(db.raw('1 as CAUSEIN'))
             .select('ipd.weight as ADMITWEIGHT', 'ipd.height as ADMITHEIGHT')
             .select(db.raw('concat(ipd.disc, " " , ipd.timedisc) as DATETIME_DISCH'))
-            .select('ipd.ward_std as WARDDISCH', 'ipd.dischstatus as DISCHSTATUS', 
-                'ipd.dischtype as DISCHTYPE','ipd.price', 'ipd.paid as PAYPRICE')
+            .select('ipd.ward_std as WARDDISCH', 'ipd.dischstatus as DISCHSTATUS',
+                'ipd.dischtype as DISCHTYPE', 'ipd.price', 'ipd.paid as PAYPRICE')
             .select(db.raw('case when ipd.disc then ipd.ward_name else "" end as WARDDISCHNAME'))
             .select(db.raw('0 as ACTUALPAY'))
             .select('ipd.dr_disc as PROVIDER')
@@ -394,15 +444,15 @@ export class HisEzhospModel {
         visitDate = moment(visitDate).format('YYYY-MM-DD');
 
         return db('view_opd_visit as visit')
-            .leftJoin('refer_in','visit.vn','refer_in.vn')
+            .leftJoin('refer_in', 'visit.vn', 'refer_in.vn')
             .select(db.raw(`(select hcode from sys_hospital) as HOSPCODE`))
             .select('visit.refer as HOSP_SOURCE', 'visit.refer_no as REFERID_SOURCE')
             .select(db.raw('concat(visit.refer,visit.refer_no) as REFERID_PROVINCE'))
             .select('visit.date as DATETIME_IN'
                 , 'visit.hn as PID_IN', 'visit.vn as SEQ_IN'
                 , 'visit.ipd_an as AN_IN', 'visit.no_card as CID_IN'
-                , 'refer_in.refer_in as REFERID','visit.dx1 as detail'
-                , 'visit.dr_note as reply_diagnostic','visit.lastupdate as reply_date')
+                , 'refer_in.refer_in as REFERID', 'visit.dx1 as detail'
+                , 'visit.dr_note as reply_diagnostic', 'visit.lastupdate as reply_date')
             .select(db.raw('1 as REFER_RESULT'))
             .select(db.raw(`concat(visit.date,' ',visit.time) as D_UPDATE`))
             .where('visit.date', visitDate)
