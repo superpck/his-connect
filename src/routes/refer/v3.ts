@@ -1,9 +1,6 @@
 // ห้ามแก้ไข file นี้ // 
-import { Knex } from 'knex';
-import * as fastify from 'fastify';
-import * as HttpStatus from 'http-status-codes';
+import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import * as moment from 'moment';
-const request = require('request')
 var crypto = require('crypto');
 
 import { HisEzhospModel } from '../../models/refer/his_ezhosp';
@@ -106,18 +103,18 @@ const router = (fastify, { }, next) => {
     try {
       const result = await hisModel.getTableName(global.dbHIS);
       if (result && result.length) {
-        reply.status(HttpStatus.OK).send({
-          statusCode: HttpStatus.OK,
+        reply.status(StatusCodes.OK).send({
+          statusCode: StatusCodes.OK,
           hisProvider: hisProvider, connection: true,
           RequestKey: requestKeyVerified,
         });
       } else {
-        reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.SERVICE_UNAVAILABLE, message: HttpStatus.getStatusText(HttpStatus.SERVICE_UNAVAILABLE), RequestKey: requestKeyVerified })
+        reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.SERVICE_UNAVAILABLE, message: getReasonPhrase(StatusCodes.SERVICE_UNAVAILABLE), RequestKey: requestKeyVerified })
       }
 
     } catch (error) {
       console.log('alive', error.message);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message, RequestKey: requestKeyVerified })
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message, RequestKey: requestKeyVerified })
     }
   });
 
@@ -126,20 +123,20 @@ const router = (fastify, { }, next) => {
     const requestKey = req.params.requestKey;
     var hashRequestKey = crypto.createHash('md5').update(process.env.REQUEST_KEY).digest('hex');
     if (requestKey !== hashRequestKey) {
-      reply.status(HttpStatus.UNAUTHORIZED).send({ statusCode: HttpStatus.UNAUTHORIZED, message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED) })
+      reply.status(StatusCodes.UNAUTHORIZED).send({ statusCode: StatusCodes.UNAUTHORIZED, message: getReasonPhrase(StatusCodes.UNAUTHORIZED) })
       return false;
     }
 
     try {
       const result = await hisModel.getTableName(global.dbHIS);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, tblCount: result.length });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, tblCount: result.length });
     } catch (error) {
       console.log('tbl', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: HttpStatus.getStatusText(HttpStatus.INTERNAL_SERVER_ERROR) })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR) })
     }
   });
 
-  // =============================================================
+  // 43 แฟ้ม =============================================================
   fastify.post('/referout', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const now = moment().locale('th').format('YYYY-MM-DD');
@@ -148,10 +145,10 @@ const router = (fastify, { }, next) => {
 
     try {
       const result = await hisModel.getReferOut(global.dbHIS, date, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows: result });
     } catch (error) {
       console.log('referout', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
 
@@ -162,7 +159,7 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!hn && !cid) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
@@ -176,11 +173,11 @@ const router = (fastify, { }, next) => {
       }
 
       const result = await hisModel.getPerson(global.dbHIS, typeSearch, textSearch, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows: result });
 
     } catch (error) {
       console.log('person', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: HttpStatus.getStatusText(HttpStatus.INTERNAL_SERVER_ERROR) })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR) })
     }
   })
 
@@ -190,7 +187,7 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!hn) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
@@ -199,11 +196,11 @@ const router = (fastify, { }, next) => {
       let textSearch = hn;
 
       const result = await hisModel.getAddress(global.dbHIS, typeSearch, textSearch, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows: result });
 
     } catch (error) {
       console.log('address', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: HttpStatus.getStatusText(HttpStatus.INTERNAL_SERVER_ERROR) })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR) })
     }
   })
 
@@ -213,16 +210,16 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!hn) {
-      reply.send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
     try {
       const result = await hisModel.getDrugAllergy(global.dbHIS, hn, hospcode);
-      reply.send({ statusCode: HttpStatus.OK, rows: result });
+      reply.send({ statusCode: StatusCodes.OK, rows: result });
     } catch (error) {
       console.log('drug allergy', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: HttpStatus.getStatusText(HttpStatus.INTERNAL_SERVER_ERROR) })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR) })
     }
   })
 
@@ -233,7 +230,7 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!hn && !visitNo) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
@@ -246,11 +243,11 @@ const router = (fastify, { }, next) => {
       }
 
       const result = await hisModel.getService(global.dbHIS, typeSearch, textSearch, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows: result });
 
     } catch (error) {
       console.log('service', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
 
@@ -261,16 +258,16 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!typeSearch && !textSearch) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     } else {
       try {
         const result = await hisModel.getAdmission(global.dbHIS, typeSearch, textSearch, hospcode);
-        reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
+        reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows: result });
 
       } catch (error) {
         console.log('admission', error.message);
-        reply.send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message })
+        reply.send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
       }
     }
   });
@@ -281,16 +278,16 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!visitNo) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
     try {
       const result = await hisModel.getDiagnosisOpd(global.dbHIS, visitNo, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows: result });
     } catch (error) {
       console.log('diagnosis_opd', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
 
@@ -300,16 +297,16 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!an) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: 'not found AN ' })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: 'not found AN ' })
       return;
     } else {
       try {
         const result = await hisModel.getDiagnosisIpd(global.dbHIS, 'an', an, hospcode);
-        reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
+        reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows: result });
 
       } catch (error) {
         console.log('diagnosis_ipd', error.message);
-        reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: HttpStatus.getStatusText(HttpStatus.INTERNAL_SERVER_ERROR) })
+        reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR) })
       }
     }
   })
@@ -320,17 +317,17 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!visitNo) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
     try {
       const rows = await hisModel.getProcedureOpd(global.dbHIS, visitNo, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
 
     } catch (error) {
       console.log('procudure_opd', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
 
@@ -341,16 +338,16 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!an) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
     try {
       const rows = await hisModel.getProcedureIpd(global.dbHIS, an, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
     } catch (error) {
       console.log('procudure_opd', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
 
@@ -361,16 +358,16 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!visitNo) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
     try {
       const rows = await hisModel.getDrugOpd(global.dbHIS, visitNo, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
     } catch (error) {
       console.log('drug_opd', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
 
@@ -381,16 +378,16 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!an) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
     try {
       const rows = await hisModel.getDrugIpd(global.dbHIS, an, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
     } catch (error) {
       console.log('drug_ipd', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
 
@@ -401,16 +398,16 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!visitNo) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
     try {
       const rows = await hisModel.getChargeOpd(global.dbHIS, visitNo, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
     } catch (error) {
       console.log('charge_opd', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
 
@@ -421,16 +418,16 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!an) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
     try {
       const rows = await hisModel.getChargeIpd(global.dbHIS, an, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
     } catch (error) {
       console.log('charge_ipd', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
 
@@ -441,16 +438,16 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!visitNo) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
     try {
       const rows = await hisModel.getAccident(global.dbHIS, visitNo, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
     } catch (error) {
       console.log('accident', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
 
@@ -461,17 +458,17 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!visitNo) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
     try {
       const rows = await hisModel.getAppointment(global.dbHIS, visitNo, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
 
     } catch (error) {
       console.log('appointment', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
 
@@ -483,7 +480,7 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!visitNo && !referNo) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
@@ -495,11 +492,11 @@ const router = (fastify, { }, next) => {
         textSearch = visitNo;
       }
       const rows = await hisModel.getReferHistory(global.dbHIS, typeSearch, textSearch, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
 
     } catch (error) {
       console.log('refer_history', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
 
@@ -510,17 +507,17 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!referNo) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
     try {
       const rows = await hisModel.getClinicalRefer(global.dbHIS, referNo, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
 
     } catch (error) {
       console.log('clinical_refer', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
 
@@ -531,16 +528,16 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!referNo) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
     try {
       const rows = await hisModel.getInvestigationRefer(global.dbHIS, referNo, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
     } catch (error) {
       console.log('investigation_refer', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
 
@@ -551,16 +548,16 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!referNo) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
     try {
       const rows = await hisModel.getCareRefer(global.dbHIS, referNo, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
     } catch (error) {
       console.log('care_refer', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
 
@@ -572,16 +569,16 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!referNo && !hospDestination) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
     try {
       const rows = await hisModel.getReferResult(global.dbHIS, hospDestination, referNo, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
     } catch (error) {
       console.log('refer_result', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
 
@@ -593,7 +590,7 @@ const router = (fastify, { }, next) => {
     const hospcode = req.body.hospcode || process.env.HOSPCODE;
 
     if (!licenseNo && !cid) {
-      reply.status(HttpStatus.BAD_REQUEST).send({ statusCode: HttpStatus.BAD_REQUEST, message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST) })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
@@ -605,14 +602,47 @@ const router = (fastify, { }, next) => {
     }
     try {
       const rows = await hisModel.getProvider(global.dbHIS, typeSearch, textSearch, hospcode);
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
     } catch (error) {
       console.log('provider', error.message);
-      reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: error.message })
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
 
-  // =============================================================
+  // Lookup =============================================================
+  fastify.post('/department', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
+    const depCode = req.body.depCode;
+    const depName = req.body.depName;
+    try {
+      const rows = await hisModel.getDepartment(global.dbHIS, depCode, depName);
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
+    } catch (error) {
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
+    }
+  })
+
+  fastify.post('/ward', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
+    const wardCode = req.body.wardCode;
+    const wardName = req.body.wardName;
+    try {
+      const rows = await hisModel.getWard(global.dbHIS, wardCode, wardName);
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
+    } catch (error) {
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
+    }
+  })
+
+  fastify.post('/doctor', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
+    const drCode = req.body.drCode;
+    const drName = req.body.drName;
+    try {
+      const rows = await hisModel.getDepartment(global.dbHIS, drCode, drName);
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
+    } catch (error) {
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
+    }
+  })
+
   next();
 }
 

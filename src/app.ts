@@ -3,6 +3,7 @@ import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import fastify from 'fastify';
 import * as moment from 'moment';
 import cronjob from './nodecron';
+const fs = require('node:fs');
 
 const serveStatic = require('serve-static');
 var crypto = require('crypto');
@@ -17,12 +18,28 @@ const { name, version, subVersion } = require('./../package.json');
 // var cron = require('node-cron');
 // var shell = require("shelljs");
 
-const app = fastify({
-  logger: {
-    level: 'error',
-  },
-  bodyLimit: 5 * 1048576,
-});
+var serverOption = {}
+if (process.env.SSL_ENABLE && process.env.SSL_ENABLE == '1' && process.env.SSL_KEY) {
+  serverOption = {
+    logger: {
+      level: 'error',
+    },
+    bodyLimit: 5 * 1048576,
+    http2: true,
+    https: {
+      key: fs.readFileSync(process.env.SSL_KEY),
+      cert: fs.readFileSync(process.env.SSL_CRT)
+    }
+    }
+} else {
+  serverOption = {
+    logger: {
+      level: 'error',
+    },
+    bodyLimit: 5 * 1048576
+  }
+}
+const app = fastify(serverOption);
 
 global.appDetail = { name, subVersion, version };
 
@@ -76,19 +93,17 @@ global.dbIs = dbConnection('ISONLINE');
 global.dbISOnline = global.dbIs;
 
 // check token ===========================================================
-app.decorate("authenticate", async (request, reply) => {
-  let token: string = null;
-
+app.decorate("authenticate", async (request: any, reply: any) => {
   if (request.body && request.body.token) {
-    token = await request.body.token;
-  } else if (request.headers.authorization && request.headers.authorization.split(' ')[0] === 'Bearer') {
-    token = await request.headers.authorization.split(' ')[1];
+    let token = await request.body.token;
+    request.headers.authorization = 'Bearer ' + token;
   }
 
   try {
     await request.jwtVerify();
   } catch (err) {
-    console.log(moment().format('HH:mm:ss.SSS'), 'error:'+StatusCodes.UNAUTHORIZED, err.message);
+    let ipAddr: any = request.headers["x-real-ip"] || request.headers["x-forwarded-for"] || request.ip;
+    console.log(moment().format('HH:mm:ss.SSS'), ipAddr, 'error:' + StatusCodes.UNAUTHORIZED, err.message);
     reply.send({
       statusCode: StatusCodes.UNAUTHORIZED,
       message: getReasonPhrase(StatusCodes.UNAUTHORIZED)
@@ -121,12 +136,12 @@ app.addHook('preHandler', async (request, reply) => {
     Pragma: "no-cache",
   };
   reply.headers(headers);
-  
-  let ipAddr: any = request.headers["x-forwarded-for"] || request.headers["x-real-ip"] || request.ip;
-  ipAddr = ipAddr? ipAddr.split(','):[''];
+
+  let ipAddr: any = request.headers["x-real-ip"] || request.headers["x-forwarded-for"] || request.ip;
+  ipAddr = ipAddr ? ipAddr.split(',') : [''];
   const ip = ipAddr[0].trim();
   var geo = geoip.lookup(ip);
-  if (geo && geo.country && geo.country != 'TH'){
+  if (geo && geo.country && geo.country != 'TH') {
     console.log(`Unacceptable country: ${geo.country}`);
     reply.status(StatusCodes.NOT_ACCEPTABLE).send(StatusCodes.NOT_ACCEPTABLE);
   }

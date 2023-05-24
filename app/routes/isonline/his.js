@@ -16,34 +16,12 @@ const his_spdc_model_1 = require("./../../models/isonline/his_spdc.model");
 const his_md_model_1 = require("./../../models/isonline/his_md.model");
 const his_pmk_model_1 = require("./../../models/isonline/his_pmk.model");
 const his_jhos_model_1 = require("./../../models/isonline/his_jhos.model");
-const login_1 = require("./../../models/isonline/login");
 const his_medical2020_model_1 = require("../../models/isonline/his_medical2020.model");
 const his_kpstat_1 = require("../../models/refer/his_kpstat");
 const jwt_1 = require("./../../plugins/jwt");
 var jwt = new jwt_1.Jwt();
-const loginModel = new login_1.IsLoginModel();
-const hisModels = {
-    ezhosp: new his_ezhosp_model_1.HisEzhospModel(),
-    ihospital: new his_ezhosp_model_1.HisEzhospModel(),
-    hosxpv3: new his_hosxpv3_model_1.HisHosxpv3Model(),
-    hosxpv4: new his_hosxpv4_model_1.HisHosxpv4Model(),
-    hosxppcu: new his_hosxppcu_model_1.HisHosxppcuModel(),
-    hospos: new his_hospitalos_model_1.HisHospitalOsModel(),
-    jhosp: new his_jhos_model_1.HisJhosModel(),
-    jhcis: new his_jhcis_model_1.HisJhcisModel(),
-    ssb: new his_ssb_model_1.HisSsbModel(),
-    homc: new his_infod_model_1.HisInfodModel(),
-    hi: new his_hi_model_1.HisHiModel(),
-    himpro: new his_himpro_model_1.HisHimproModel(),
-    pmk: new his_pmk_model_1.HisPmkModel(),
-    spdc: new his_spdc_model_1.HisSpdcModel(),
-    meedee: new his_md_model_1.HisMdModel(),
-    other: new his_model_1.HisModel()
-};
 const provider = process.env.HIS_PROVIDER;
 let hisModel;
-let errorRespond = {};
-let currentRoutePath = '';
 switch (provider) {
     case 'ezhosp':
     case 'ihospital':
@@ -98,10 +76,6 @@ switch (provider) {
     default:
         hisModel = new his_model_1.HisModel();
 }
-const dbName = process.env.HIS_DB_NAME;
-const allowTableNames = [
-    'patient', 'view_opd_visit', 'opd_dx', 'opd_op', 'opd_vs', 'ipd_ipd', 'view_pharmacy_opd_drug_item',
-];
 const router = (fastify, {}, next) => {
     fastify.get('/alive', async (req, res) => {
         try {

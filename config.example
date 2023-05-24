@@ -12,10 +12,15 @@ PM2_NAME=his-connect
 PM2_INSTANCE=2
 AUTO_RESTART=1
 
+[HTTPS]
+SSL_ENABLE=0
+SSL_KEY=public/ssl/localhost.key
+SSL_CRT=public/ssl/localhost.crt
+
 [HIS DB]
 // valid db client type: mysql, pg, mssql, oracledb
 // valid HIS provider name: 
-//    ezhosp, hosxpv3, hosxpv4, hosxppcu, infod, homc, ssb
+//    ihospital, hosxpv3, hosxpv4, hosxppcu, infod, homc, ssb
 //    hospitalos, jhcis, kpstat, md, mkhospital, thiades, himpro, nemo, mypcu other
 HIS_PROVIDER=hosxpv3
 HIS_DB_HOST=localhost
@@ -57,9 +62,9 @@ NREFER_URL=203.157.103.33
 NREFER_PORT=8080
 NREFER_PATH=/nrefer
 
-#Key from http://refer.moph.go.th/#/login
-NREFER_APIKEY=??_please_fill_this_value
-NREFER_SECRETKEY=??_please_fill_this_value
+#Key from https://nrefer.moph.go.th
+NREFER_APIKEY=<กรุณาระบุ API Key>
+NREFER_SECRETKEY=<กรุณาระบุ API Secret Key>
 NREFER_AUTO_SEND=1
 NREFER_AUTO_SEND_EVERY_MINUTE=15
 NREFER_AUTO_SEND_EVERY_HOUR=0
@@ -67,7 +72,7 @@ NREFER_AUTO_SEND_EVERY_HOUR=0
 [Chat Config]
 NOTIFY_URL=https://nrefer.moph.go.th/apis/message
 NOTIFY_TOKEN=$nRefer@MoPH$
-NOTIFY_CHANNEL=nRefer@<ระบุ hcode>
+NOTIFY_CHANNEL=nRefer@<กรุณาระบุ hcode>
 
 [JWT]
 REQUEST_KEY=<ใส่อะไรก็ได้ที่จำได้_10_ถึง_16_ตัว>

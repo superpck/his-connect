@@ -15,6 +15,52 @@ class HisEzhospModel {
         return db('information_schema.tables')
             .where(whereDB, dbname);
     }
+    getDepartment(db, depCode = '', depName = '') {
+        let sql = db('lib_clinic');
+        if (depCode) {
+            sql.where('code', depCode);
+        }
+        else if (depName) {
+            sql.whereLike('clinic', `%${depName}%`);
+        }
+        else {
+            sql.where('isactive', 1);
+        }
+        return sql
+            .select('code as department_code', 'clinic as department_name', 'standard as moph_code')
+            .select(db.raw(`if(type='ER',1,0) as emergency`))
+            .orderBy('clinic')
+            .limit(maxLimit);
+    }
+    getWard(db, wardCode = '', wardName = '') {
+        let sql = db('lib_ward');
+        if (wardCode) {
+            sql.where('code', wardCode);
+        }
+        else if (wardName) {
+            sql.whereLike('ward', `%${wardName}%`);
+        }
+        else {
+            sql.where('isactive', 1);
+        }
+        return sql
+            .select('code as ward_code', 'ward as ward_name', 'standard as moph_code')
+            .limit(maxLimit);
+    }
+    getDr(db, drCode = '', drName = '') {
+        let sql = db('lib_dr');
+        if (drCode) {
+            sql.where('code', drCode);
+        }
+        else if (drName) {
+            sql.whereLike('fname', `%${drName}%`);
+        }
+        return sql
+            .select('code as dr_code', 'code as dr_license_code')
+            .select(db.raw('concat(title,fname," ",lname) as dr_name'))
+            .select('expire as expire_date')
+            .limit(maxLimit);
+    }
     async getPerson1(db, columnName, searchText) {
         const sql = `
             select xxx from xxx
@@ -163,9 +209,9 @@ class HisEzhospModel {
         columnName = columnName === 'datedisc' ? 'ipd.disc' : columnName;
         return db('view_ipd_ipd as ipd')
             .select(db.raw('"' + hcode + '" as HOSPCODE'))
-            .select('ipd.hn as PID', 'ipd.vn as SEQ', 'ipd.AN', 'ipd.hn')
+            .select('ipd.hn as PID', 'ipd.vn as SEQ', 'ipd.an AS AN', 'ipd.hn')
             .select(db.raw('concat(ipd.admite, " " , ipd.time) as DATETIME_ADMIT'))
-            .select('ipd.ward_std as WARDADMIT', 'ipd.ward_name as WARDADMITNAME', 'ipd.pttype_std2 as INSTYPE')
+            .select('ipd.ward_std as WARDADMIT', 'ipd.ward_name as WARDADMITNAME', 'ipd.ward as WARD_LOCAL', 'ipd.pttype_std2 as INSTYPE')
             .select(db.raw('case when ipd.refer="" then 1 else 3 end as TYPEIN '))
             .select('ipd.refer as REFERINHOSP')
             .select(db.raw('1 as CAUSEIN'))

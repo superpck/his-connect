@@ -13,6 +13,46 @@ class HisHosxpPcuModel {
             .select('TABLE_NAME')
             .where('TABLE_SCHEMA', '=', dbName);
     }
+    getDepartment(db, depCode = '', depName = '') {
+        let sql = db('clinic');
+        if (depCode) {
+            sql.where('clinic', depCode);
+        }
+        else if (depName) {
+            sql.whereLike('name', `%${depName}%`);
+        }
+        return sql
+            .select('clinic as department_code', 'name as department_name', `'-' as moph_code`)
+            .select(db.raw(`LOCATE('ฉุกเฉิน',name)>0,1,0) as emergency`))
+            .orderBy('name')
+            .limit(maxLimit);
+    }
+    getWard(db, wardCode = '', wardName = '') {
+        let sql = db('ward');
+        if (wardCode) {
+            sql.where('ward', wardCode);
+        }
+        else if (wardName) {
+            sql.whereLike('name', `%${wardName}%`);
+        }
+        return sql
+            .select('ward as ward_code', 'name as ward_name', `'-' as moph_code`)
+            .orderBy('name')
+            .limit(maxLimit);
+    }
+    getDr(db, drCode = '', drName = '') {
+        let sql = db('doctor');
+        if (drCode) {
+            sql.where('code', drCode);
+        }
+        else if (drName) {
+            sql.whereLike('name', `%${drName}%`);
+        }
+        return sql
+            .select('code as dr_code', 'licenseno as dr_license_code', 'name as dr_name', 'expire as expire_date')
+            .whereRaw(`LEFT(licenseno,1) IN ('ว','ท')`)
+            .limit(maxLimit);
+    }
     async getReferOut(db, date, hospCode = hcode) {
         const sql = `
             SELECT (SELECT hospitalcode FROM opdconfig ) AS hospcode,
