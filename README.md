@@ -1,9 +1,7 @@
 # HIS Connection API สำหรับ nRefer, ISOnline, และ PHER Plus
 
 ## 1.การติดตั้ง
-``
 [เอกสารการติดตั้ง](https://connect.moph.go.th/pher-plus/#/main/link)
-``
 
 # 2.push to git กรณีเป็นทีมพัฒนา (Develop@MOPH)
 ```
