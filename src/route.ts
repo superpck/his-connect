@@ -4,7 +4,7 @@ rootPrefix = rootPrefix ? ('/' + rootPrefix) : '';
 
 export default async function router(fastify: FastifyInstance) {
   fastify.register(require('./routes/index'), { prefix: "/" });
-  fastify.register(require('./routes/setup'), { prefix: `${rootPrefix}/setup-api` });
+  // fastify.register(require('./routes/setup'), { prefix: `${rootPrefix}/setup-api` });
   fastify.register(require('./routes/refer/v3'), { prefix: `${rootPrefix}/refer` });
   fastify.register(require('./routes/refer/v3'), { prefix: `${rootPrefix}/refer/his` });
   fastify.register(require('./routes/refer/local'), { prefix: `${rootPrefix}/refer/local` });
