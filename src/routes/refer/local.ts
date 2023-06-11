@@ -9,11 +9,11 @@ const referModel = new ReferModel();
 
 const router = (fastify, { }, next) => {
   // =============================================================
-  fastify.get('/', async (req: any, reply: any) => {
-    reply.send({
-      api: 'nRefer@Hospital'
-    });
-  });
+  // fastify.get('/', async (req: any, reply: any) => {
+  //   reply.send({
+  //     api: 'nRefer@Hospital'
+  //   });
+  // });
 
   // =============================================================
   fastify.get('/tbl', async (req: any, reply: any) => {
