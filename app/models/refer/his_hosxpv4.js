@@ -78,10 +78,10 @@ class HisHosxpv4Model {
                 left join an_stat on r.vn=an_stat.vn
                 left join opdscreen on r.vn=opdscreen.vn
             WHERE
-                r.refer_date = '${date}' and r.vn is not null and r.refer_hospcode!='' and !isnull(r.refer_hospcode)
+                r.refer_date =? and r.vn is not null and r.refer_hospcode!='' and !isnull(r.refer_hospcode)
             ORDER BY
                 r.refer_date`;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [date]);
         return result[0];
     }
     async getPerson(db, columnName, searchText, hospCode = hcode) {
@@ -90,7 +90,7 @@ class HisHosxpv4Model {
         columnName = columnName == 'name' ? 'p.fname' : columnName;
         columnName = columnName == 'hid' ? 'h.house_id' : columnName;
         const sql = `
-        SELECT  (select hospitalcode from opdconfig) as HOSPCODE
+            SELECT  (select hospitalcode from opdconfig) as HOSPCODE
             ,h.house_id HID
             ,p.cid as CID
             ,p.pname as PRENAME
@@ -145,9 +145,9 @@ class HisHosxpv4Model {
             left join provis_religion r on r.code=p.religion
             left join education e on e.education=p.educate
             left join person_labor_type pl on person.person_labor_type_id=pl.person_labor_type_id
-            where ${columnName}="${searchText}"
+            where ${columnName}=?
         `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [searchText]);
         return result[0];
     }
     async getAddress(db, columnName, searchText, hospCode = hcode) {
@@ -179,9 +179,9 @@ class HisHosxpv4Model {
                 LEFT JOIN thaiaddress t ON t.addressid=v.address_id
                 LEFT JOIN person_address pa ON pa.person_id = p.person_id
 
-            where ${columnName}="${searchText}"
+            where ${columnName}=?
         `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [searchText]);
         return result[0];
     }
     async getService(db, columnName, searchText, hospCode = hcode) {
@@ -260,9 +260,9 @@ class HisHosxpv4Model {
                 left join patient pt on pt.hn = o.hn
                 left join ovst_seq os on os.vn = o.vn 
             
-            where ${columnName}="${searchText}"
+            where ${columnName}=?
             `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [searchText]);
         return result[0];
     }
     async getDiagnosisOpd(db, visitNo, hospCode = hcode) {
@@ -293,10 +293,10 @@ class HisHosxpv4Model {
             LEFT JOIN spclty s ON s.spclty = o.spclty
             LEFT JOIN doctor d ON d. CODE = o.doctor
             WHERE
-                q.vn = "${visitNo}"
+                q.vn =?
                 AND odx.icd10 REGEXP '[A-Z]'               
             `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [visitNo]);
         return result[0];
     }
     async getProcedureOpd(db, visitNo, hospCode = hcode) {
@@ -333,7 +333,7 @@ class HisHosxpv4Model {
                 h3.icd10tm  is not null  
                 and v.cid is not null 
                 and v.cid <>''
-                and os.vn = "${visitNo}"
+                and os.vn=?
                 
             union all
                 
@@ -366,7 +366,7 @@ class HisHosxpv4Model {
                 e.icd9cm <>'' 
                 and v.cid is not null 
                 and v.cid <>''
-                and os.vn = "${visitNo}"
+                and os.vn=?
                 
             union all
                 
@@ -399,9 +399,9 @@ class HisHosxpv4Model {
                 v.cid is not null 
                 and v.cid <>'' 
                 and e.icd10tm_operation_code is not null
-                and os.vn = "${visitNo}"
+                and os.vn=?
             `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [visitNo, visitNo, visitNo]);
         return result[0];
     }
     async getChargeOpd(db, visitNo, hospCode = hcode) {
@@ -444,9 +444,9 @@ class HisHosxpv4Model {
                 left join drugitems_charge_list d on d.icode = o.icode
                 
             where 
-                os.vn = "${visitNo}"
+                os.vn=?
             `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [visitNo]);
         return result[0];
     }
     getLabRequest(db, columnName, searchNo, hospCode = hcode) {
@@ -524,9 +524,9 @@ class HisHosxpv4Model {
                 (opi.an is null or opi.an ='') 
                 and opi.vn not in (select i.vn from ipt i where i.vn=opi.vn) 
                 and opi.icode in (select d.icode from drugitems d) 
-                and os.vn = '${visitNo}'
+                and os.vn=?
         `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [visitNo]);
         return result[0];
     }
     async getAdmission(db, columnName, searchValue, hospCode = hcode) {
@@ -905,14 +905,14 @@ class HisHosxpv4Model {
                 left join drugitems d on d.icode=o.icode
                 left join medplan_ipd m on m.an=o.an and m.icode=o.icode                    
             where                 
-                i.an="${an}"       
+                i.an=?       
                 and d.icode is not null
                 and o.qty<>0
                 and o.sum_price>0
             group by i.an,o.icode,typedrug
             order by i.an,typedrug,o.icode      
             `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [an]);
         return result[0];
     }
     async getAccident(db, visitNo, hospCode = hcode) {
@@ -952,9 +952,9 @@ class HisHosxpv4Model {
             LEFT JOIN er_nursing_visit_type vt ON vt.visit_type = d.visit_type
             LEFT JOIN accident_transport_type tt ON tt.accident_transport_type_id = d.accident_transport_type_id                   
             where                 
-                q.vn = "${visitNo}"
+                q.vn =?
             `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [visitNo]);
         return result[0];
     }
     async getDrugAllergy(db, hn, hospCode = hcode) {

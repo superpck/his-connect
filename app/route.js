@@ -4,11 +4,9 @@ let rootPrefix = process.env.ROUTE_PREFIX || '';
 rootPrefix = rootPrefix ? ('/' + rootPrefix) : '';
 async function router(fastify) {
     fastify.register(require('./routes/index'), { prefix: "/" });
-    fastify.register(require('./routes/setup'), { prefix: `${rootPrefix}/setup-api` });
     fastify.register(require('./routes/refer/v3'), { prefix: `${rootPrefix}/refer` });
     fastify.register(require('./routes/refer/v3'), { prefix: `${rootPrefix}/refer/his` });
     fastify.register(require('./routes/refer/local'), { prefix: `${rootPrefix}/refer/local` });
-    fastify.register(require('./routes/hdc/index'), { prefix: `${rootPrefix}/hdc`, logger: true });
     fastify.register(require('./routes/isonline/index'), { prefix: `${rootPrefix}/isonline`, logger: true });
     fastify.register(require('./routes/isonline/login'), { prefix: `${rootPrefix}/isonline/login`, logger: true });
     fastify.register(require('./routes/isonline/login'), { prefix: `${rootPrefix}/login`, logger: true });

@@ -6,11 +6,6 @@ const request = require('request');
 var crypto = require('crypto');
 const referModel = new refer_1.ReferModel();
 const router = (fastify, {}, next) => {
-    fastify.get('/', async (req, reply) => {
-        reply.send({
-            api: 'nRefer@Hospital'
-        });
-    });
     fastify.get('/tbl', async (req, reply) => {
         try {
             const result = await referModel.getTableName(fastify.dbRefer);
