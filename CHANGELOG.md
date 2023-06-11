@@ -3,6 +3,7 @@
   - สามารถกำหนดให้ API run โดยใช้ protocol https ได้
   - เพิ่มการใช้รหัสห้องตรวจ, ตึกผู้ป่วย และรหัสแพทย์ ตาม local code
   - เปลี่ยนจาก config.default เป็น config.example
+  - Remove used route
 
 # 3.3.5
 ## Feature
