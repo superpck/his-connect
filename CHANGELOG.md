@@ -1,3 +1,7 @@
+# 3.4.1
+## Feature
+  - ปรับตัวแปร TABLE_SCHEMA -> table_schema
+
 # 3.4.0
 ## Feature
   - สามารถกำหนดให้ API run โดยใช้ protocol https ได้
