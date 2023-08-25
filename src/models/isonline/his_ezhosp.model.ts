@@ -11,15 +11,15 @@ export class HisEzhospModel {
     }
 
     getTableName(db: Knex, dbname = dbName) {
-        const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'TABLE_SCHEMA';
+        const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'table_schema';
         return db('information_schema.tables')
             .where(whereDB, dbname);
     }
 
     getTableName1(knex: Knex, dbname = dbName) {
         return knex('information_schema.tables')
-            .select('TABLE_NAME')
-            .where('TABLE_SCHEMA', '=', dbname);
+            .select('table_name')
+            .where('table_schema', '=', dbname);
     }
 
     testConnect(db: Knex) {

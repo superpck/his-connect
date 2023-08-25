@@ -115,6 +115,14 @@ var options = {
     port: process.env.PORT || 3001,
     host: process.env.HOST || '0.0.0.0'
 };
+if (typeof process.env.NREFER_DATA_BACKWARD_MONTH == 'undefined') {
+    if (['10670', '11000', '11001', '11002', '11003', '11004', '11005'].indexOf(process.env.HOSPCODE) >= 0) {
+        process.env.NREFER_DATA_BACKWARD_MONTH = '1';
+    }
+    else {
+        process.env.NREFER_DATA_BACKWARD_MONTH = '0';
+    }
+}
 app.listen(options, (err) => {
     if (err)
         throw err;

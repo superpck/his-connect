@@ -11,7 +11,7 @@ class HisEzhospModel {
         return true;
     }
     getTableName(db, dbname = dbName) {
-        const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'TABLE_SCHEMA';
+        const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'table_schema';
         return db('information_schema.tables')
             .where(whereDB, dbname);
     }
@@ -204,10 +204,15 @@ class HisEzhospModel {
         return result[0];
     }
     getAdmission(db, columnName, searchValue, hospCode = hcode) {
-        columnName = columnName === 'visitNo' ? 'ipd.vn' : columnName;
-        columnName = columnName === 'dateadmit' ? 'ipd.admite' : columnName;
-        columnName = columnName === 'datedisc' ? 'ipd.disc' : columnName;
-        return db('view_ipd_ipd as ipd')
+        columnName = columnName === 'cid' ? 'no_card' : columnName;
+        columnName = columnName === 'visitNo' ? 'vn' : columnName;
+        columnName = columnName === 'dateadmit' ? 'admite' : columnName;
+        columnName = columnName === 'datedisc' ? 'disc' : columnName;
+        let sql = db('view_ipd_ipd as ipd');
+        if (['no_card', 'vn', 'hn', 'an'].indexOf(columnName) < 0) {
+            sql.whereRaw('LENGTH(ipd.refer)=5');
+        }
+        return sql
             .select(db.raw('"' + hcode + '" as HOSPCODE'))
             .select('ipd.hn as PID', 'ipd.vn as SEQ', 'ipd.an AS AN', 'ipd.hn')
             .select(db.raw('concat(ipd.admite, " " , ipd.time) as DATETIME_ADMIT'))
@@ -223,8 +228,7 @@ class HisEzhospModel {
             .select('ipd.dr_disc as PROVIDER')
             .select(db.raw('concat(ipd.disc, " " , ipd.timedisc) as D_UPDATE'))
             .select('ipd.drg as DRG', 'ipd.rw as RW', 'ipd.adjrw as ADJRW', 'ipd.drg_error as ERROR', 'ipd.drg_warning as WARNING', 'ipd.los as ACTLOS', 'ipd.grouper_version as GROUPER_VERSION', 'ipd.no_card as CID')
-            .where(columnName, "=", searchValue)
-            .whereRaw('LENGTH(ipd.refer)=5')
+            .where(columnName, searchValue)
             .limit(maxLimit);
     }
     getDiagnosisIpd(db, columnName, searchNo, hospCode = hcode) {

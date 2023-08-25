@@ -9,8 +9,8 @@ class HisKpstatModel {
     }
     getTableName(db, dbName = process.env.HIS_DB_NAME) {
         return db('information_schema.tables')
-            .select('TABLE_NAME')
-            .where('TABLE_SCHEMA', '=', dbName);
+            .select('table_name')
+            .where('table_schema', '=', dbName);
     }
     getPerson(db, columnName, searchText, hospCode = hcode) {
         columnName = columnName === 'cid' ? 'idpop' : columnName;

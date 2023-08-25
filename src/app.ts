@@ -156,6 +156,15 @@ var options: any = {
   host: process.env.HOST || '0.0.0.0'
 }
 
+// Fix การอ่านข้อมูลย้อนหลัง มติที่ประชุม จ.ขอนแก่น ให้อ่านย้อนหลัง 1 เดือน
+if (typeof process.env.NREFER_DATA_BACKWARD_MONTH == 'undefined'){ // กรณีไม่ได้ set
+  if (['10670','11000','11001','11002','11003','11004','11005'].indexOf(process.env.HOSPCODE)>=0){
+    process.env.NREFER_DATA_BACKWARD_MONTH = '1';
+  } else {
+    process.env.NREFER_DATA_BACKWARD_MONTH = '0';  // Set ให้เป็น 0=ไม่อ่านย้อนหลัง
+  }
+}
+
 app.listen(options, (err) => {
   if (err) throw err;
   console.log('>>> ', `HIS Connection API (${global.appDetail.version}) started on`, app.addresses(), 'PID', process.pid);

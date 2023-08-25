@@ -10,14 +10,14 @@ class HisEzhospModel {
         return true;
     }
     getTableName(db, dbname = dbName) {
-        const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'TABLE_SCHEMA';
+        const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'table_schema';
         return db('information_schema.tables')
             .where(whereDB, dbname);
     }
     getTableName1(knex, dbname = dbName) {
         return knex('information_schema.tables')
-            .select('TABLE_NAME')
-            .where('TABLE_SCHEMA', '=', dbname);
+            .select('table_name')
+            .where('table_schema', '=', dbname);
     }
     testConnect(db) {
         return db('hospdata.patient').select('hn').limit(1);
