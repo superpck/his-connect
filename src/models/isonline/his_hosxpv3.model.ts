@@ -6,8 +6,8 @@ const maxLimit = 100;
 export class HisHosxpv3Model {
     getTableName(knex: Knex) {
         return knex('information_schema.tables')
-            .select('TABLE_NAME')
-            .where('TABLE_SCHEMA', '=', dbName);
+            .select('table_name')
+            .where('table_schema', '=', dbName);
     }
 
     testConnect(db: Knex) {

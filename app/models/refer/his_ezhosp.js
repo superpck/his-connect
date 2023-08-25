@@ -11,7 +11,7 @@ class HisEzhospModel {
         return true;
     }
     getTableName(db, dbname = dbName) {
-        const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'TABLE_SCHEMA';
+        const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'table_schema';
         return db('information_schema.tables')
             .where(whereDB, dbname);
     }
@@ -212,7 +212,6 @@ class HisEzhospModel {
         if (['no_card', 'vn', 'hn', 'an'].indexOf(columnName) < 0) {
             sql.whereRaw('LENGTH(ipd.refer)=5');
         }
-        console.log(columnName, searchValue);
         return sql
             .select(db.raw('"' + hcode + '" as HOSPCODE'))
             .select('ipd.hn as PID', 'ipd.vn as SEQ', 'ipd.an AS AN', 'ipd.hn')

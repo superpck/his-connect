@@ -144,6 +144,7 @@ async function getRefer_out(db, date) {
   try {
     const referout = await hisModel.getReferOut(db, date, hcode);
     console.log('******** >> referout', referout.length, ' case');
+    console.log(process.env.NREFER_DATA_BACKWARD_MONTH);
     sentContent += `\rsave refer_history ${date} \r`;
     sentContent += `\rsave refer service data ${date} \r`;
     let index = 0;
@@ -171,9 +172,9 @@ async function getRefer_out(db, date) {
         getPerson(db, hn, sentResult),
         getAddress(db, hn, sentResult),
         getService(db, seq, sentResult),
-        getDiagnosisOpd(db, seq, sentResult),
-        getProcedureOpd(db, seq, sentResult),
-        getDrugOpd(db, seq, sentResult),
+        // getDiagnosisOpd(db, seq, sentResult),
+        // getProcedureOpd(db, seq, sentResult),
+        // getDrugOpd(db, seq, sentResult),
         getDrugAllergy(db, hn, sentResult),
         getLabResult(db, row, sentResult)
       ]);
@@ -229,9 +230,9 @@ async function getReferResult(db, date) {
         getPerson(db, hn, sentResultResult),
         getAddress(db, hn, sentResultResult),
         getService(db, seq, sentResultResult),
-        getDiagnosisOpd(db, seq, sentResultResult),
-        getProcedureOpd(db, seq, sentResultResult),
-        getDrugOpd(db, seq, sentResultResult),
+        // getDiagnosisOpd(db, seq, sentResultResult),
+        // getProcedureOpd(db, seq, sentResultResult),
+        // getDrugOpd(db, seq, sentResultResult),
         getDrugAllergy(db, hn, sentResultResult)
       ]);
 
@@ -297,9 +298,9 @@ async function sendReferInIPD(db, row, sentResultResult) {
     getPerson(db, hn, sentResultResult),
     getAddress(db, hn, sentResultResult),
     getService(db, seq, sentResultResult),
-    getDiagnosisOpd(db, seq, sentResultResult),
-    getProcedureOpd(db, seq, sentResultResult),
-    getDrugOpd(db, seq, sentResultResult),
+    // getDiagnosisOpd(db, seq, sentResultResult),
+    // getProcedureOpd(db, seq, sentResultResult),
+    // getDrugOpd(db, seq, sentResultResult),
     getDrugAllergy(db, hn, sentResultResult),
     getLabResult(db, row, sentResultResult)
   ]);
@@ -500,7 +501,7 @@ async function getService(db, visitNo, sentResult) {
   const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
   if (rows && rows.length) {
     for (const row of rows) {
-      const data = await {
+      const data = {
         HOSPCODE: row.HOSPCODE || row.hospcode,
         PID: row.PID || row.pid || row.HN || row.hn,
         SEQ: row.SEQ || row.seq || visitNo,
@@ -544,6 +545,13 @@ async function getService(db, visitNo, sentResult) {
         sentResult.service.fail += 1;
         console.log('save-service', data.SEQ, saveResult);
       }
+
+      await Promise.all([
+        getDiagnosisOpd(db, data.SEQ, sentResult),
+        getProcedureOpd(db, data.SEQ, sentResult),
+        getDrugOpd(db, data.SEQ, sentResult)
+        // getLabResult(db, row, sentResult)
+      ]);
     }
   }
   return rows;
@@ -844,7 +852,7 @@ async function getDrugAllergy(db, hn, sentResult) {
 }
 
 async function referSending(path, dataArray) {
-	const qs = require('qs');
+  const qs = require('qs');
   const fixedUrl = process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api';
   const data = {
     ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
@@ -856,7 +864,7 @@ async function referSending(path, dataArray) {
 
   const option = {
     method: 'post',
-    url: fixedUrl+'/nrefer'+path,
+    url: fixedUrl + '/nrefer' + path,
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Authorization': 'Bearer ' + nReferToken,
@@ -885,7 +893,7 @@ async function getNReferToken(apiKey: string, secretKey: string) {
 
   const option = {
     method: 'post',
-    url: fixedUrl+ '/login/api-key',
+    url: fixedUrl + '/login/api-key',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Content-Length': Buffer.byteLength(postData)

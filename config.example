@@ -57,6 +57,7 @@ NREFER_URL1=https://nrefer.moph.go.th/apis
 NREFER_URL=203.157.103.33
 NREFER_PORT=8080
 NREFER_PATH=/nrefer
+NREFER_DATA_BACKWARD_MONTH=0
 
 #Key from https://nrefer.moph.go.th
 NREFER_APIKEY=<กรุณาระบุ API Key>

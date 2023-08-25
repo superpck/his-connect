@@ -14,8 +14,8 @@ export class HisPmkModel {
                 .where('OWNER', '=', dbName);
         } else {
             return db('information_schema.tables')
-                .select('TABLE_NAME')
-                .where('TABLE_SCHEMA', '=', dbName);
+                .select('table_name')
+                .where('table_schema', '=', dbName);
         }
     }
 
