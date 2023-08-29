@@ -1,6 +1,7 @@
 # 3.4.1
 ## Feature
   - ปรับตัวแปร TABLE_SCHEMA -> table_schema
+  - เพิ่มการใส่ " ใน config
 
 # 3.4.0
 ## Feature
