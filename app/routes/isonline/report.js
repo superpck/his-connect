@@ -21,8 +21,8 @@ const router = (fastify, {}, next) => {
         let Where = req.body.Where;
         if (reportID) {
             try {
-                await reportModel.getReport(global.dbISOnline, reportID)
-                    .then((results) => {
+                const results = await reportModel.getReport(global.dbISOnline, reportID);
+                if (results && results.length) {
                     console.log("\nreport id:" + reportID);
                     const row = results[0];
                     let rawSql = row.sql;
@@ -52,17 +52,25 @@ const router = (fastify, {}, next) => {
                         console.log("\r\n SQL: \r\n ");
                         console.log(rawSql);
                         console.log("\r\n");
-                        reportModel.getData(global.dbISOnline, rawSql)
-                            .then((results) => {
-                            console.log("\nreport id:" + reportID + ' result = ' + results[0].length);
-                            reply.send({ ok: true, rows: results[0] });
-                        })
-                            .catch(error => {
-                            reply.send({ ok: false, error: error });
-                        });
+                        const result = await reportModel.getData(global.dbISOnline, rawSql);
+                        if (result.length) {
+                            console.log("\nreport id:" + reportID + ' result = ' + result[0].length);
+                            reply.send({ ok: true, rows: result[0] });
+                        }
+                        else {
+                            reply.send({ ok: false, error: HttpStatus.BAD_REQUEST });
+                        }
                     }
-                    ;
-                });
+                    else {
+                        reply.send({ ok: false, error: HttpStatus.BAD_REQUEST });
+                    }
+                }
+                else {
+                    reply.send({
+                        statusCode: HttpStatus.NO_CONTENT,
+                        ok: false,
+                    });
+                }
             }
             catch (error) {
                 console.log(error);
