@@ -289,7 +289,7 @@ class HisHosxpv4Model {
             pid: 'pt.hn',
             seq: 'os.vn',
             vn: 'os.vn',
-            date_serv: db.raw(`case when o.vstdate is null or trim(o.vstdate)='' or o.vstdate like '0000-00-00%' then '' else TO_CHAR(o.vstdate, 'YYYY-MM-DD') end`),
+            date_serv: db.raw(`case when o.vstdate is null or trim(o.vstdate)='' or o.vstdate::TEXT like '0000-00-00%' then '' else TO_CHAR(o.vstdate, 'YYYY-MM-DD') end`),
             clinic: 'sp.provis_code',
             procedcode: 'h3.icd10tm',
             serviceprice: db.raw(`case when h2.service_price is not null and trim(h2.service_price )<>'' then to_char(replace(h2.service_price,',',''),'FM990.009') else to_char(0,'FM990.009') end`),
@@ -320,7 +320,7 @@ class HisHosxpv4Model {
             pid: 'pt.hn',
             seq: 'os.vn',
             vn: 'os.vn',
-            date_serv: db.raw(`case when r.vstdate is null or trim(r.vstdate)='' or r.vstdate like '0000-00-00%' then '' else TO_CHAR(r.vstdate, 'YYYY-MM-DD') end`),
+            date_serv: db.raw(`case when r.vstdate is null or trim(r.vstdate)='' or r.vstdate::TEXT like '0000-00-00%' then '' else TO_CHAR(r.vstdate, 'YYYY-MM-DD') end`),
             clinic: 'sp.provis_code',
             procedcode: db.raw(`case when e.icd10tm is null or e.icd10tm = '' then e.icd9cm else e.icd10tm end`),
             serviceprice: db.raw(`case when e.price is not null and trim(e.price )<>'' then to_char(replace(e.price,',',''),'FM990.009') else to_char(0,'FM990.009') end`),
@@ -347,7 +347,7 @@ class HisHosxpv4Model {
             pid: 'pt.hn',
             seq: 'os.vn',
             vn: 'os.vn',
-            date_serv: db.raw(`case when d.vstdate is null or trim(d.vstdate)='' or d.vstdate like '0000-00-00%' then '' else date_format(d.vstdate, '%Y-%m-%d') end`),
+            date_serv: db.raw(`case when d.vstdate is null or trim(d.vstdate)='' or d.vstdate::TEXT like '0000-00-00%' then '' else date_format(d.vstdate, '%Y-%m-%d') end`),
             clinic: 'sp.provis_code',
             procedcode: db.raw(`case when e.icd10tm_operation_code is null or e.icd10tm_operation_code = '' then e.icd9cm else e.icd10tm_operation_code end`),
             serviceprice: db.raw(`case when d.fee  is not null and trim(d.fee) <> '' then to_char(replace(d.fee,',', ''),'FM990.009') else to_char(0,'FM990.009') end`),
@@ -378,7 +378,7 @@ class HisHosxpv4Model {
             seq: 'os.vn',
             date_serv: db.raw(`case when concat(ovst.vstdate) is null 
                         or trim(concat(ovst.vstdate)) = '' 
-                        or concat(ovst.vstdate) like '0000-00-00%' then
+                        or ovst.vstdate::TEXT like '0000-00-00%' then
                     '' else 
                     date_format(concat(ovst.vstdate),'%Y-%m-%d') end `),
             clinic: db.raw(`case  when sp.provis_code is null or sp.provis_code ='' then '00100' else sp.provis_code end`),
@@ -426,7 +426,7 @@ class HisHosxpv4Model {
             .innerJoin('patient', 'ovst.hn', 'patient.hn')
             .select(db.raw(`'${hcode}' as HOSPCODE,'LAB' as INVESTTYPE`))
             .select('lab_head.vn', 'lab_head.vn as visitno', 'lab_head.vn as SEQ', 'lab_head.hn as PID', 'patient.cid as CID', 'lab_head.lab_order_number as request_id', 'lab_order.lab_items_code as LOCALCODE', 'lab_items.tmlt_code as tmlt', 'lab_head.form_name as lab_group', 'lab_order.lab_items_name_ref as INVESTNAME', 'lab_order.lab_order_result as INVESTVALUE', 'lab_items.icode as ICDCM')
-            .select(db.raw(`case when lab_order.lab_items_normal_value_ref then concat(lab_items.lab_items_unit,' (', lab_order.lab_items_normal_value_ref,')') else lab_items.lab_items_unit end  as UNIT`))
+            .select(db.raw(`case when lab_order.lab_items_normal_value_ref is not null then concat(lab_items.lab_items_unit,' (', lab_order.lab_items_normal_value_ref,')') else lab_items.lab_items_unit end  as UNIT`))
             .select(db.raw(`concat(lab_head.order_date, ' ', lab_head.order_time) as DATETIME_INVEST`))
             .select(db.raw(`concat(lab_head.report_date, ' ', lab_head.report_time) as DATETIME_REPORT`))
             .where(columnName, searchNo)
@@ -797,7 +797,7 @@ class HisHosxpv4Model {
             .select('patient.hn as PID', 'patient.cid as CID', 'di.std_code as DRUGALLERGY', 'oe.agent as DNAME', 'oe.seriousness_id as ALEVE', 'oe.symptom as DETAIL', 'oe.opd_allergy_source_id as INFORMANT')
             .select(db.raw(`if(oe.report_date is null 
                     or trim(oe.report_date)=' ' 
-                    or oe.report_date like '0000-00-00%',
+                    or oe.report_date::TEXT like '0000-00-00%',
                     '', to_char(oe.report_date,'YYYY-MM-DD HH24:MI:SS')) as DATERECORD`))
             .select(db.raw('(select distinct opdconfig.hospitalcode from opdconfig) as INFORMHOSP'))
             .select(db.raw(`(select case when 
@@ -806,7 +806,7 @@ class HisHosxpv4Model {
                 else  '1'  end) as TYPEDX`))
             .select(db.raw(`'' as SYMPTOM`))
             .select(db.raw(`if(oe.update_datetime is null or trim(oe.update_datetime) = '' 
-                or oe.update_datetime like '0000-00-00%', '', 
+                or oe.update_datetime::TEXT like '0000-00-00%', '', 
                 to_char(oe.update_datetime,'YYYY-MM-DD HH24:MI:SS')) as D_UPDATE`))
             .where('oe.hn', hn);
     }
@@ -936,16 +936,16 @@ class HisHosxpv4Model {
         columnName = columnName === 'cid' ? 'd.cid' : columnName;
         const result = db({ d: 'doctor' })
             .select(db.raw('(select hospitalcode from opdconfig) as hospcode'), 'd.code as provider', 'd.licenseno as registerno', 'd.council_code as council', 'd.cid as cid', db.raw('COALESCE(p2.provis_pname_long_name, d.pname) as prename'), db.raw('COALESCE(p.fname, d.fname) as name'), db.raw('COALESCE(p.lname, d.lname) as lname'), 'd.sex as sex', db.raw(`CASE 
-                                    WHEN p.birthday IS NULL OR trim(p.birthday) = '' OR p.birthday LIKE '0000-00-00%' THEN ''
+                                    WHEN p.birthday IS NULL OR trim(p.birthday) = '' OR p.birthday::TEXT LIKE '0000-00-00%' THEN ''
                                     ELSE to_char(p.birthday, 'YYYY-MM-DD')
                                 END AS birth`), 'd.provider_type_code as providertype', db.raw(`CASE 
-                                    WHEN d.start_date IS NULL OR trim(d.start_date) = '' OR d.start_date LIKE '0000-00-00%' THEN ''
+                                    WHEN d.start_date IS NULL OR trim(d.start_date) = '' OR d.start_date::TEXT LIKE '0000-00-00%' THEN ''
                                     ELSE to_char(d.start_date, 'YYYY-MM-DD')
                                 END AS startdate`), db.raw(`CASE 
-                                    WHEN d.finish_date IS NULL OR trim(d.finish_date) = '' OR d.finish_date LIKE '0000-00-00%' THEN ''
+                                    WHEN d.finish_date IS NULL OR trim(d.finish_date) = '' OR d.finish_date::TEXT LIKE '0000-00-00%' THEN ''
                                     ELSE to_char(d.finish_date, 'YYYY-MM-DD')
                                 END AS outdate`), 'd.move_from_hospcode as movefrom', 'd.move_to_hospcode as moveto', db.raw(`CASE 
-                                    WHEN d.update_datetime IS NULL OR trim(d.update_datetime) = '' OR d.update_datetime LIKE '0000-00-00%' THEN ''
+                                    WHEN d.update_datetime IS NULL OR trim(d.update_datetime) = '' OR d.update_datetime::TEXT LIKE '0000-00-00%' THEN ''
                                     ELSE to_char(d.update_datetime::timestamp, 'YYYY-MM-DD HH24:MI:SS')
                                 END AS d_update`))
             .leftJoin('patient as p', 'd.cid', '=', 'p.cid')
