@@ -11,7 +11,7 @@ export class ReferModel {
     }
 
     getTableName(db: Knex, dbname = dbName) {
-        const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'TABLE_SCHEMA';
+        const whereDB = dbClient === 'mssql' || dbClient === 'pg'? 'TABLE_CATALOG' : 'TABLE_SCHEMA';
         return db('information_schema.tables')
             .where(whereDB, '=', dbname);
     }
