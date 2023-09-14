@@ -60,7 +60,7 @@ class HisHosxpv3Model {
             concat(r.refer_date, ' ', r.refer_time) AS refer_date,
             r.refer_number AS referid,
             case when r.refer_hospcode then r.refer_hospcode else r.hospcode end AS hosp_destination,
-            r.hn AS PID, r.hn AS hn, pt.cid AS CID, r.vn, r.vn as SEQ,
+            r.hn AS PID, r.hn AS hn, pt.cid AS CID, r.vn, r.vn as seq,
             an_stat.an as AN, pt.pname AS prename,
             pt.fname AS fname,
             pt.lname AS lname,
