@@ -1,3 +1,7 @@
+# 3.4.2
+## Feature
+  - เพิ่ม HIS emrsoft
+
 # 3.4.1
 ## Feature
   - ปรับตัวแปร TABLE_SCHEMA -> table_schema
