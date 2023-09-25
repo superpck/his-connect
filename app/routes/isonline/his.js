@@ -17,6 +17,7 @@ const his_md_model_1 = require("./../../models/isonline/his_md.model");
 const his_pmk_model_1 = require("./../../models/isonline/his_pmk.model");
 const his_jhos_model_1 = require("./../../models/isonline/his_jhos.model");
 const his_medical2020_model_1 = require("../../models/isonline/his_medical2020.model");
+const his_emrsoft_model_1 = require("../../models/isonline/his_emrsoft.model");
 const his_kpstat_1 = require("../../models/refer/his_kpstat");
 const jwt_1 = require("./../../plugins/jwt");
 var jwt = new jwt_1.Jwt();
@@ -54,6 +55,9 @@ switch (provider) {
         break;
     case 'hospitalos':
         hisModel = new his_hospitalos_model_1.HisHospitalOsModel();
+        break;
+    case 'emrsoft':
+        hisModel = new his_emrsoft_model_1.HisEmrSoftModel();
         break;
     case 'jhos':
         hisModel = new his_jhos_model_1.HisJhosModel();
