@@ -19,6 +19,7 @@ const his_nemo_1 = require("../../models/refer/his_nemo");
 const his_pmk_1 = require("../../models/refer/his_pmk");
 const his_mypcu_1 = require("../../models/refer/his_mypcu");
 const his_hosxppcu_1 = require("../../models/refer/his_hosxppcu");
+const his_emrsoft_1 = require("../../models/refer/his_emrsoft");
 const hisProvider = process.env.HIS_PROVIDER;
 let hisModel;
 switch (hisProvider) {
@@ -66,6 +67,9 @@ switch (hisProvider) {
         break;
     case 'md':
         hisModel = new his_md_1.HisMdModel();
+        break;
+    case 'emrsoft':
+        hisModel = new his_emrsoft_1.HisEmrSoftModel();
         break;
     case 'spdc':
     case 'kpstat':

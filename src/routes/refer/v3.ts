@@ -16,6 +16,7 @@ import { HisNemoModel } from '../../models/refer/his_nemo';
 import { HisPmkModel } from '../../models/refer/his_pmk';
 import { HisHosxppcuModel } from '../../models/isonline/his_hosxppcu.model';
 import { HisMyPcuModel } from '../../models/refer/his_mypcu';
+import { HisEmrSoftModel } from '../../models/refer/his_emrsoft';
 
 const hisProvider = process.env.HIS_PROVIDER;
 let hisModel: any;
@@ -48,7 +49,7 @@ switch (hisProvider) {
     break;
   case 'infod':
   case 'homc':
-      // hisModel = new HisInfodModel();
+    // hisModel = new HisInfodModel();
     break;
   case 'hi':
     // hisModel = new HisHiModel();
@@ -73,6 +74,9 @@ switch (hisProvider) {
     break;
   case 'md':
     hisModel = new HisMdModel();
+    break;
+  case 'emrsoft':
+    hisModel = new HisEmrSoftModel();
     break;
   case 'spdc':
   case 'kpstat':
