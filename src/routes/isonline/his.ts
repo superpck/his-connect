@@ -16,6 +16,7 @@ import { HisPmkModel } from './../../models/isonline/his_pmk.model';
 import { HisJhosModel } from './../../models/isonline/his_jhos.model';
 // import { IsLoginModel } from './../../models/isonline/login';
 import { HisMedical2020Model } from '../../models/isonline/his_medical2020.model';
+import { HisEmrSoftModel } from '../../models/isonline/his_emrsoft.model';
 import { HisKpstatModel } from '../../models/refer/his_kpstat';
 
 import { Jwt } from './../../plugins/jwt';
@@ -78,6 +79,9 @@ switch (provider) {
     break;
   case 'hospitalos':
     hisModel = new HisHospitalOsModel();
+    break;
+  case 'emrsoft':
+    hisModel = new HisEmrSoftModel();
     break;
   case 'jhos':
     hisModel = new HisJhosModel();
