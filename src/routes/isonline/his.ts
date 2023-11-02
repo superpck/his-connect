@@ -18,6 +18,7 @@ import { HisJhosModel } from './../../models/isonline/his_jhos.model';
 import { HisMedical2020Model } from '../../models/isonline/his_medical2020.model';
 import { HisEmrSoftModel } from '../../models/isonline/his_emrsoft.model';
 import { HisKpstatModel } from '../../models/refer/his_kpstat';
+import { HisMkhospitalModel } from '../../models/isonline/his_mkhospital.model';
 
 import { Jwt } from './../../plugins/jwt';
 var jwt = new Jwt();
@@ -98,10 +99,12 @@ switch (provider) {
   case 'spdc':
     hisModel = new HisSpdcModel();
     break;
+  case 'mkhospital':
+    hisModel = new HisMkhospitalModel();
+    break;
   case 'medical2020':
     hisModel = new HisMedical2020Model();
     break;
-
   default:
     hisModel = new HisModel();
 }
