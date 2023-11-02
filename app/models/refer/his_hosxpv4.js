@@ -547,6 +547,7 @@ class HisHosxpv4Model {
                         concat(i.regdate, ' ', i.regtime),'%Y-%m-%d %H:%i:%s'
                     ),''
                 ) datetime_admit,
+                i.ward as WARD_LOCAL,
                 ifnull(s.provis_code,'') wardadmit, ward.name as WARDADMITNAME,
                 ifnull(ps.pttype_std_code,'') instype,
                 ifnull(
