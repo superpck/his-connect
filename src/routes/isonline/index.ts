@@ -1,4 +1,3 @@
-import * as fastify from 'fastify';
 import * as HttpStatus from 'http-status-codes';
 
 import { IswinModel } from '../../models/isonline/iswin';
