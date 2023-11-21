@@ -144,7 +144,6 @@ async function getRefer_out(db, date) {
   try {
     const referout = await hisModel.getReferOut(db, date, hcode);
     console.log('******** >> referout', referout.length, ' case');
-    console.log(process.env.NREFER_DATA_BACKWARD_MONTH);
     sentContent += `\rsave refer_history ${date} \r`;
     sentContent += `\rsave refer service data ${date} \r`;
     let index = 0;
@@ -861,6 +860,7 @@ async function referSending(path, dataArray) {
     sourceApiName: 'HIS-connect', apiVersion, subVersion,
     hisProvider: process.env.HIS_PROVIDER
   };
+
 
   const option = {
     method: 'post',
