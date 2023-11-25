@@ -5,6 +5,9 @@ const HttpStatus = require("http-status-codes");
 let shell = require("shelljs");
 var crypto = require('crypto');
 var fs = require('fs');
+const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb',
+    'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades',
+    'himpro', 'nemo', 'mypcu', 'emrsoft other'];
 const hisProvider = process.env.HIS_PROVIDER;
 const resultText = './sent_result.txt';
 const router = (fastify, {}, next) => {
@@ -17,15 +20,22 @@ const router = (fastify, {}, next) => {
         const cookieValue = req.cookies;
         reply.send({
             ok: true,
-            apiCode: 'HISCONNECT',
-            apiName: fastify.apiName,
-            apiDesc: 'API for IS-Online, nRefer, PCC, CMI',
+            apiName: global.appDetail.name,
             version: global.appDetail.version,
             subVersion: global.appDetail.subVersion,
-            serviceName: "isonline",
-            his_provider: process.env.HIS_PROVIDER,
+            his_provider: hisProviderList.indexOf(process.env.HIS_PROVIDER) >= 0,
             hospcode: process.env.HOSPCODE,
             timer: (+moment().get('hour')) * 60 + (+moment().get('minute'))
+        });
+    });
+    fastify.post('/', { preHandler: [fastify.authenticate] }, async (req, reply) => {
+        reply.send({
+            date: moment().format('YYYY-MM-DD HH:mm:ss'),
+            apiName: global.appDetail.name,
+            version: global.appDetail.version,
+            subVersion: global.appDetail.subVersion,
+            hospcode: process.env.HOSPCODE,
+            his_provider: process.env.HIS_PROVIDER
         });
     });
     fastify.get('/get-token/:key', async (req, reply) => {
