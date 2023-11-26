@@ -1,6 +1,6 @@
 {
   "name": "HIS-Connect",
-  "version": "3.5.0-beta",
+  "version": "3.5.0-alpha",
   "subVersion": "2023.11.25-1",
   "private": true,
   "scripts": {

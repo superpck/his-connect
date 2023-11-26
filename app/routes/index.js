@@ -17,15 +17,14 @@ const router = (fastify, {}, next) => {
         parseOptions: {}
     });
     fastify.get('/', async (req, reply) => {
-        const cookieValue = req.cookies;
         reply.send({
+            date: moment().format('YYYY-MM-DD HH:mm:ss'),
             ok: true,
             apiName: global.appDetail.name,
             version: global.appDetail.version,
             subVersion: global.appDetail.subVersion,
             his_provider: hisProviderList.indexOf(process.env.HIS_PROVIDER) >= 0,
             hospcode: process.env.HOSPCODE,
-            timer: (+moment().get('hour')) * 60 + (+moment().get('minute'))
         });
     });
     fastify.post('/', { preHandler: [fastify.authenticate] }, async (req, reply) => {

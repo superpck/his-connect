@@ -3,86 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var fastify = require('fastify');
 const moment = require("moment");
 const axios_1 = require("axios");
+const his_1 = require("./his");
 var fs = require('fs');
 var http = require('http');
 var querystring = require('querystring');
-const his_ezhosp_1 = require("../../models/refer/his_ezhosp");
-const his_thiades_1 = require("../../models/refer/his_thiades");
-const his_hosxpv3_1 = require("../../models/refer/his_hosxpv3");
-const his_hosxpv4_1 = require("../../models/refer/his_hosxpv4");
-const his_jhcis_1 = require("../../models/refer/his_jhcis");
-const his_md_1 = require("../../models/refer/his_md");
-const his_kpstat_1 = require("../../models/refer/his_kpstat");
-const his_mkhospital_1 = require("../../models/refer/his_mkhospital");
-const his_1 = require("../../models/refer/his");
-const his_nemo_1 = require("../../models/refer/his_nemo");
-const his_pmk_1 = require("../../models/refer/his_pmk");
-const his_mypcu_1 = require("../../models/refer/his_mypcu");
-const his_hosxppcu_1 = require("../../models/refer/his_hosxppcu");
-const his_emrsoft_1 = require("../../models/refer/his_emrsoft");
-const hisProvider = process.env.HIS_PROVIDER;
-let hisModel;
-switch (hisProvider) {
-    case 'ihospital':
-    case 'ezhosp':
-        hisModel = new his_ezhosp_1.HisEzhospModel();
-        break;
-    case 'thiades':
-        hisModel = new his_thiades_1.HisThiadesModel();
-        break;
-    case 'hosxpv3':
-        hisModel = new his_hosxpv3_1.HisHosxpv3Model();
-        break;
-    case 'hosxpv4':
-        hisModel = new his_hosxpv4_1.HisHosxpv4Model();
-        break;
-    case 'hosxppcu':
-        hisModel = new his_hosxppcu_1.HisHosxpPcuModel();
-        break;
-    case 'mkhospital':
-        hisModel = new his_mkhospital_1.HisMkhospitalModel();
-        break;
-    case 'nemo':
-    case 'nemo_refer':
-        hisModel = new his_nemo_1.HisNemoModel();
-        break;
-    case 'ssb':
-        break;
-    case 'homc':
-    case 'infod':
-        break;
-    case 'hi':
-        break;
-    case 'himpro':
-        break;
-    case 'jhcis':
-        hisModel = new his_jhcis_1.HisJhcisModel();
-        break;
-    case 'hospitalos':
-        break;
-    case 'jhos':
-        break;
-    case 'pmk':
-        hisModel = new his_pmk_1.HisPmkModel();
-        break;
-    case 'md':
-        hisModel = new his_md_1.HisMdModel();
-        break;
-    case 'emrsoft':
-        hisModel = new his_emrsoft_1.HisEmrSoftModel();
-        break;
-    case 'spdc':
-    case 'kpstat':
-        hisModel = new his_kpstat_1.HisKpstatModel();
-        break;
-    case 'mypcu':
-        hisModel = new his_mypcu_1.HisMyPcuModel();
-        break;
-    default:
-        hisModel = new his_1.HisModel();
-}
 const hcode = process.env.HOSPCODE;
-const his = process.env.HIS_PROVIDER;
+const hisProvider = process.env.HIS_PROVIDER;
 const resultText = 'sent_result.txt';
 let sentContent = '';
 let nReferToken = '';
@@ -101,7 +27,7 @@ async function sendMoph(req, reply, db) {
         sentContent += `token ${nReferToken}\r`;
     }
     else {
-        console.log('refer get token error', resultToken.message);
+        console.log('Get nRefer token error', resultToken.message);
         sentContent += `get token Error:` + JSON.stringify(resultToken) + `\r`;
         writeResult(resultText, sentContent);
         return false;
@@ -129,7 +55,7 @@ async function sendMoph(req, reply, db) {
 }
 async function getRefer_out(db, date) {
     try {
-        const referout = await hisModel.getReferOut(db, date, hcode);
+        const referout = await his_1.default.getReferOut(db, date, hcode);
         console.log('******** >> referout', referout.length, ' case');
         console.log(process.env.NREFER_DATA_BACKWARD_MONTH);
         sentContent += `\rsave refer_history ${date} \r`;
@@ -195,7 +121,7 @@ async function getReferResult(db, date) {
         investigationRefer: { success: 0, fail: 0 }
     };
     try {
-        const referResult = await hisModel.getReferResult(db, date, hcode);
+        const referResult = await his_1.default.getReferResult(db, date, hcode);
         sentContent += `\rsave refer_result ${date} \r`;
         sentContent += `\rsave refer service data ${date} \r`;
         console.log(moment().format('HH:mm:ss'), process.env.HOSPCODE, 'refer result (refer in)=', referResult.length, 'row');
@@ -252,7 +178,7 @@ async function getReferInIPDByDateDisc(db, sentResultResult) {
     }
 }
 async function getReferInIPD(db, dateDisc, sentResultResult) {
-    let ipdData = await hisModel.getAdmission(db, 'datedisc', dateDisc);
+    let ipdData = await his_1.default.getAdmission(db, 'datedisc', dateDisc);
     console.log(moment().format('HH:mm:ss'), process.env.HOSPCODE, `Get refer result from IPD discharge date ${dateDisc} = ${ipdData.length} case`);
     for (let row of ipdData) {
         await sendReferInIPD(db, row, sentResultResult);
@@ -377,7 +303,7 @@ async function sendReferResult(row, sentResult) {
 }
 async function getPerson(db, pid, sentResult) {
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
-    const rows = await hisModel.getPerson(db, 'hn', pid, hcode);
+    const rows = await his_1.default.getPerson(db, 'hn', pid, hcode);
     sentContent += '  - person = ' + rows.length + '\r';
     if (rows && rows.length) {
         for (const row of rows) {
@@ -419,7 +345,7 @@ async function getPerson(db, pid, sentResult) {
 async function getAddress(db, pid, sentResult) {
     if (pid) {
         const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
-        const rows = await hisModel.getAddress(db, 'hn', pid, hcode);
+        const rows = await his_1.default.getAddress(db, 'hn', pid, hcode);
         sentContent += '  - address = ' + (rows ? rows.length : 0) + '\r';
         if (rows && rows.length) {
             for (const row of rows) {
@@ -460,7 +386,7 @@ async function getAddress(db, pid, sentResult) {
     }
 }
 async function getService(db, visitNo, sentResult) {
-    const rows = await hisModel.getService(db, 'visitNo', visitNo, hcode);
+    const rows = await his_1.default.getService(db, 'visitNo', visitNo, hcode);
     sentContent += '  - service = ' + rows.length + '\r';
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
     if (rows && rows.length) {
@@ -519,7 +445,7 @@ async function getService(db, visitNo, sentResult) {
     return rows;
 }
 async function getDiagnosisOpd(db, visitNo, sentResult) {
-    const rows = await hisModel.getDiagnosisOpd(db, visitNo, hcode);
+    const rows = await his_1.default.getDiagnosisOpd(db, visitNo, hcode);
     sentContent += '  - diagnosis_opd = ' + rows.length + '\r';
     if (rows && rows.length) {
         let r = [];
@@ -555,7 +481,7 @@ async function getDiagnosisOpd(db, visitNo, sentResult) {
 }
 async function getProcedureOpd(db, visitNo, sentResult) {
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
-    const rows = await hisModel.getProcedureOpd(db, visitNo, hcode);
+    const rows = await his_1.default.getProcedureOpd(db, visitNo, hcode);
     sentContent += '  - procedure_opd = ' + rows.length + '\r';
     let rowSave = [];
     if (rows && rows.length) {
@@ -588,7 +514,7 @@ async function getProcedureOpd(db, visitNo, sentResult) {
 }
 async function getDrugOpd(db, visitNo, sentResult) {
     let opdDrug = [];
-    const rows = await hisModel.getDrugOpd(db, visitNo, hcode);
+    const rows = await his_1.default.getDrugOpd(db, visitNo, hcode);
     sentContent += '  - drug_opd = ' + rows.length + '\r';
     if (rows && rows.length) {
         for (let r of rows) {
@@ -631,7 +557,7 @@ async function getLabResult(db, row, sentResult) {
     const referID = row.REFERID || row.referid || row.REFERID_SOURCE;
     let rowsSave = [];
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
-    const rowsLabResult = await hisModel.getLabResult(db, 'visitNo', visitNo);
+    const rowsLabResult = await his_1.default.getLabResult(db, 'visitNo', visitNo);
     sentContent += '  - lab result = ' + rowsLabResult.length + '\r';
     if (rowsLabResult && rowsLabResult.length) {
         for (const r of rowsLabResult) {
@@ -678,10 +604,10 @@ async function getAdmission(db, type = 'VN', searchValue) {
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
     let rows;
     if (type == 'datedisc') {
-        rows = await hisModel.getAdmission(db, 'datedisc', searchValue, hcode);
+        rows = await his_1.default.getAdmission(db, 'datedisc', searchValue, hcode);
     }
     else {
-        rows = await hisModel.getAdmission(db, 'visitNo', searchValue, hcode);
+        rows = await his_1.default.getAdmission(db, 'visitNo', searchValue, hcode);
     }
     sentContent += '  - admission = ' + rows.length + '\r';
     if (rows && rows.length) {
@@ -740,7 +666,7 @@ async function getProcedureIpd(db, an) {
         return [];
     }
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
-    const rows = await hisModel.getProcedureIpd(db, an, hcode);
+    const rows = await his_1.default.getProcedureIpd(db, an, hcode);
     sentContent += '  - procedure_ipd = ' + rows.length + '\r';
     let rowSave = [];
     if (rows && rows.length) {
@@ -773,7 +699,7 @@ async function getDrugAllergy(db, hn, sentResult) {
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
     try {
         let rowSave = [];
-        const rows = await hisModel.getDrugAllergy(db, hn, hcode);
+        const rows = await his_1.default.getDrugAllergy(db, hn, hcode);
         sentResult += '  - drugallergy = ' + rows.length + '\r';
         if (rows && rows.length) {
             for (const row of rows) {
@@ -836,24 +762,26 @@ async function referSending(path, dataArray) {
 }
 async function getNReferToken(apiKey, secretKey) {
     const fixedUrl = process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api';
-    const postData = querystring.stringify({
+    const url = fixedUrl + '/login/api-key';
+    const data = {
         ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
         apiKey, secretKey, hospcode: hcode,
         processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
         sourceApiName: 'HIS-connect', apiVersion, subVersion,
         hisProvider: process.env.HIS_PROVIDER
-    });
+    };
+    const headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': Buffer.byteLength(querystring.stringify(data))
+    };
     const option = {
         method: 'post',
-        url: fixedUrl + '/login/api-key',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Content-Length': Buffer.byteLength(postData)
-        },
-        data: postData
+        url,
+        headers,
+        data: querystring.stringify(data)
     };
     try {
-        const response = await (0, axios_1.default)(option);
+        const response = await axios_1.default.post(url, data);
         return response.data;
     }
     catch (error) {
