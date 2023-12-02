@@ -48,7 +48,7 @@ app.register(require('@fastify/cors'), {});
 app.register(require('fastify-no-icon'));
 app.register(helmet, {});
 app.register(require('@fastify/rate-limit'), {
-  max: +process.env.MAX_CONNECTION_PER_MINUTE || 100,
+  max: +process.env.MAX_CONNECTION_PER_MINUTE || 10000,
   // skipOnError: true,
   // cache: 10000,
   timeWindow: '1 minute'
