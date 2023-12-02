@@ -18,14 +18,16 @@ SSL_CRT=public/ssl/localhost.crt
 
 [HIS DB]
 // valid db client type: mysql, pg, mssql, oracledb
+HIS_DB_CLIENT=mysql
+
 // valid HIS provider name: 
 //    ihospital, hosxpv3, hosxpv4, hosxppcu, infod, homc, ssb
 //    hospitalos, jhcis, kpstat, md, mkhospital, thiades, 
 //    himpro, nemo, mypcu, emrsoft other
 HIS_PROVIDER=hosxpv3
+
 HIS_DB_HOST=localhost
 HIS_DB_PORT=3306
-HIS_DB_CLIENT=mysql
 HIS_DB_SCHEMA=public
 HIS_DB_NAME=db
 HIS_DB_USER="user"

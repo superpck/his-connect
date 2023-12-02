@@ -130,6 +130,7 @@ export class HisEzhospModel {
                 `TAMBON`, `AMPUR`, `CHANGWAT`, `TELEPHONE`,
                 `MOBILE`, `D_UPDATE`)
             .where(columnName, "=", searchNo)
+            .orderBy('ADDRESSTYPE')
             .limit(maxLimit);
     }
 

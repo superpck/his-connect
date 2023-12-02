@@ -1,7 +1,7 @@
 var fastify = require('fastify');
 import * as moment from 'moment';
 import axios from 'axios';
-import hisModel from './his';
+import hisModel from './../his/his';
 var fs = require('fs');
 var http = require('http');
 var querystring = require('querystring');

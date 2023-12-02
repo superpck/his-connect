@@ -39,10 +39,10 @@ const router = (fastify, { }, next) => {
 
   // 43 แฟ้ม =============================================================
   fastify.post('/referout', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
-
     const now = moment().locale('th').format('YYYY-MM-DD');
-    const date = req.body.date || now;
-    const hospcode = req.body.hospcode || process.env.HOSPCODE;
+    const body = req.body || {};
+    const date = body.date || now;
+    const hospcode = body.hospcode || process.env.HOSPCODE;
 
     try {
       const rows: any = await hisModel.getReferOut(global.dbHIS, date, hospcode);
@@ -83,9 +83,9 @@ const router = (fastify, { }, next) => {
   })
 
   fastify.post('/address', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
-
-    const hn = req.body.hn || '';
-    const hospcode = req.body.hospcode || process.env.HOSPCODE;
+    const body = req.body || {};
+    const hn = body.hn || '';
+    const hospcode = body.hospcode || process.env.HOSPCODE;
 
     if (!hn) {
       reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
@@ -163,7 +163,7 @@ const router = (fastify, { }, next) => {
   })
 
   fastify.post('/admission', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
-    const body: any = req.body;
+    const body = req.body || {};
     if (!body || (!body.an && !body.hn && !body.visitNo)) {
       reply.send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
@@ -181,7 +181,7 @@ const router = (fastify, { }, next) => {
       typeSearch = 'hn';
       textSearch = body.hn;
     }
-    const hospcode = req.body.hospcode || process.env.HOSPCODE;
+    const hospcode = body.hospcode || process.env.HOSPCODE;
     try {
       const result = await hisModel.getAdmission(global.dbHIS, typeSearch, textSearch, hospcode);
       reply.send({ statusCode: StatusCodes.OK, rows: result });
@@ -193,8 +193,9 @@ const router = (fastify, { }, next) => {
   });
 
   fastify.post('/diagnosis-opd', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
-    const visitNo = req.body.visitNo;
-    const hospcode = req.body.hospcode || process.env.HOSPCODE;
+    const body = req.body || {};
+    const visitNo = body.visitNo;
+    const hospcode = body.hospcode || process.env.HOSPCODE;
 
     if (!visitNo) {
       return reply.send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
@@ -210,8 +211,9 @@ const router = (fastify, { }, next) => {
   })
 
   fastify.post('/diagnosis-ipd', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
-    const an = req.body.an;
-    const hospcode = req.body.hospcode || process.env.HOSPCODE;
+    const body = req.body || {};
+    const an = body.an;
+    const hospcode = body.hospcode || process.env.HOSPCODE;
 
     if (!an) {
       reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: 'not found AN ' })
@@ -229,8 +231,9 @@ const router = (fastify, { }, next) => {
   })
 
   fastify.post('/procedure-opd', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
-    const visitNo = req.body.visitNo;
-    const hospcode = req.body.hospcode || process.env.HOSPCODE;
+    const body = req.body || {};
+    const visitNo = body.visitNo;
+    const hospcode = body.hospcode || process.env.HOSPCODE;
 
     if (!visitNo) {
       reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
@@ -249,8 +252,9 @@ const router = (fastify, { }, next) => {
 
   // =============================================================
   fastify.post('/procedure-ipd', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
-    const an = req.body.an;
-    const hospcode = req.body.hospcode || process.env.HOSPCODE;
+    const body = req.body || {};
+    const an = body.an;
+    const hospcode = body.hospcode || process.env.HOSPCODE;
 
     if (!an) {
       reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
@@ -268,9 +272,9 @@ const router = (fastify, { }, next) => {
 
   // =============================================================
   fastify.post('/drug-opd', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
-
-    const visitNo = req.body.visitNo;
-    const hospcode = req.body.hospcode || process.env.HOSPCODE;
+    const body = req.body || {};
+    const visitNo = body.visitNo;
+    const hospcode = body.hospcode || process.env.HOSPCODE;
 
     if (!visitNo) {
       reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
@@ -288,8 +292,9 @@ const router = (fastify, { }, next) => {
 
   // =============================================================
   fastify.post('/drug-ipd', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
-    const an = req.body.an;
-    const hospcode = req.body.hospcode || process.env.HOSPCODE;
+    const body = req.body || {};
+    const an = body.an;
+    const hospcode = body.hospcode || process.env.HOSPCODE;
 
     if (!an) {
       reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })

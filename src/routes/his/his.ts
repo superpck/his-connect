@@ -3,6 +3,7 @@ import { HisEzhospModel } from '../../models/his/his_ezhosp';
 import { HisThiadesModel } from '../../models/his/his_thiades';
 import { HisHosxpv3Model } from '../../models/his/his_hosxpv3';
 import { HisHosxpv4Model } from '../../models/his/his_hosxpv4';
+import { HisHosxpPcuModel } from '../../models/his/his_hosxppcu';
 import { HisJhcisModel } from '../../models/his/his_jhcis';
 import { HisMdModel } from '../../models/his/his_md';
 import { HisKpstatModel } from '../../models/his/his_kpstat';
@@ -10,9 +11,9 @@ import { HisMkhospitalModel } from '../../models/his/his_mkhospital';
 import { HisModel } from '../../models/his/his';
 import { HisNemoModel } from '../../models/his/his_nemo';
 import { HisPmkModel } from '../../models/his/his_pmk';
-import { HisHosxppcuModel } from '../../models/isonline/his_hosxppcu.model';
 import { HisMyPcuModel } from '../../models/his/his_mypcu';
 import { HisEmrSoftModel } from '../../models/his/his_emrsoft';
+
 const hisProvider = process.env.HIS_PROVIDER;
 
 let hisModel: any;
@@ -31,7 +32,7 @@ switch (hisProvider) {
     hisModel = new HisHosxpv4Model();
     break;
   case 'hosxppcu':
-    hisModel = new HisHosxppcuModel();
+    hisModel = new HisHosxpPcuModel();
     break;
   case 'mkhospital':
     hisModel = new HisMkhospitalModel();
