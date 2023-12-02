@@ -235,17 +235,6 @@ const router = (fastify, { }, next) => {
         IS_MOPH_USER: '<from IS>',
         IS_MOPH_PASSWORD: '<from IS>'
       },
-      CANNABIS: {
-        CANNABIS_DB_HOST: '192.168.0.1',
-        CANNABIS_DB_PORT: 3306,
-        CANNABIS_DB_CLIENT: 'mysql',
-        CANNABIS_DB_SCHEMA: 'public',
-        CANNABIS_DB_NAME: 'cannabis',
-        CANNABIS_DB_USER: 'sa',
-        CANNABIS_DB_PASSWORD: 'password',
-        CANNABIS_DB_CHARSET: 'utf8',
-        CANNABIS_DB_ENCRYPT: true
-      },
       NOTIFY: {
         NOTIFY_URL: 'http://203.157.103.33:8080/nrefer/message',
         NOTIFY_TOKEN: '$nRefer@MoPH$',

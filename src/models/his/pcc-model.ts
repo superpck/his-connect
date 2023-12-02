@@ -1,8 +1,8 @@
 import { Knex } from 'knex';
 const maxLimit = 2500;
-const dbName = process.env.CANNABIS_DB_NAME;
+const dbName = process.env.HIS_DB_NAME;
 
-export class CannabisModel {
+export class PccModel {
   async testConnection(db: Knex) {
     return await db(dbName + '.ccd_person')
       .select('hospcode', 'hn')
