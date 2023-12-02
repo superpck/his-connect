@@ -12,8 +12,8 @@ const resultText = 'sent_result.txt';
 let sentContent = '';
 let nReferToken: any = '';
 let crontabConfig: any = { client_ip: '' };
-let apiVersion: string = '-';
-let subVersion: string = '-';
+let apiVersion: string = global.appDetail.version;
+let subVersion: string = global.appDetail.subVersion;
 
 async function sendMoph(req, reply, db) {
   const dateNow = moment().format('YYYY-MM-DD');
@@ -775,7 +775,7 @@ async function getDrugAllergy(db, hn, sentResult) {
 
 async function referSending(path, dataArray) {
   const qs = require('qs');
-  const fixedUrl = process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api';
+  const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/apis';
   const data = {
     ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
     hospcode: hcode, data: JSON.stringify(dataArray),
@@ -804,7 +804,7 @@ async function referSending(path, dataArray) {
 }
 
 async function getNReferToken(apiKey: string, secretKey: string) {
-  const fixedUrl = process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api';
+  const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/apis';
   const url = fixedUrl + '/login/api-key';
   const data = {
     ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
@@ -834,7 +834,7 @@ async function getNReferToken(apiKey: string, secretKey: string) {
 }
 
 async function getNReferToken__(apiKey, secretKey) {
-  const fixedUrl = fastify.mophService.nRefer || process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api/nrefer';
+  const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/apis';
   const mophUrl = fixedUrl.split('/');
 
   // เฉพาะ Path ไม่รวม url
@@ -895,12 +895,12 @@ async function getNReferToken__(apiKey, secretKey) {
 }
 
 async function expireToken(token) {
-  const fixedUrl = fastify.mophService.nRefer || process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api';
+  const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/apis';
   const mophUrl = fixedUrl.split('/');
   let urlPath = '/' + mophUrl[3] + '/';
   urlPath += mophUrl[4] ? (mophUrl[4] + '/') : '';
   urlPath += mophUrl[5] ? (mophUrl[5] + '/') : '';
-  // let url = process.env.NREFER_URL1;
+  // let url = process.env.NREFER_API_URL;
   // url += url.substr(-1, 1) === '/' ? '' : '/';
 
   const postData = querystring.stringify({

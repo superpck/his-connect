@@ -196,14 +196,11 @@ const router = (fastify, { }, next) => {
         HIS_DB_ENCRYPT: true
       },
       NRRFER: {
-        NREFER_URL1: 'http://203.157.103.33:8080/nrefer',
-        NREFER_URL: '203.157.103.33',
-        NREFER_PORT: 8080,
-        NREFER_PATH: '/nrefer',
+        NREFER_API_URL: 'https://nrefer.moph.go.th/apis',
         NREFER_APIKEY: 'xxxxxxx',
         NREFER_SECRETKEY: 'xxxxxxxx',
         NREFER_AUTO_SEND: 1,
-        NREFER_AUTO_SEND_EVERY_MINUTE: 2,
+        NREFER_AUTO_SEND_EVERY_MINUTE: 14,
         NREFER_AUTO_SEND_EVERY_HOUR: 0,
       },
       NREFERLOCAL: {

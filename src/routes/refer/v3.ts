@@ -75,10 +75,10 @@ const router = (fastify, { }, next) => {
   })
 
   fastify.post('/person', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
-
-    const hn = req.body.hn || '';
-    const cid = req.body.cid || '';
-    const hospcode = req.body.hospcode || process.env.HOSPCODE;
+    const body = req.body || {};
+    const hn = body.hn || '';
+    const cid = body.cid || '';
+    const hospcode = body.hospcode || process.env.HOSPCODE;
 
     if (!hn && !cid) {
       reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
@@ -214,12 +214,12 @@ const router = (fastify, { }, next) => {
   })
 
   fastify.post('/diagnosis-ipd', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
-
-    const an = req.body.an;
-    const hospcode = req.body.hospcode || process.env.HOSPCODE;
+    const body = req.body || {};
+    const an = body.an;
+    const hospcode = body.hospcode || process.env.HOSPCODE;
 
     if (!an) {
-      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: 'not found AN ' })
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: 'Invalid parameter' })
       return;
     } else {
       try {
