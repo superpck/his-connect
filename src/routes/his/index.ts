@@ -1,30 +1,48 @@
 // ห้ามแก้ไข file นี้ //
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import * as moment from 'moment';
+
 import hisModel from './his';
 const hisProvider = process.env.HIS_PROVIDER;
+
+import { Jwt } from './../../plugins/jwt';
+var jwt = new Jwt();
+
+const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb'
+  , 'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades'
+  , 'himpro', 'nemo', 'mypcu', 'emrsoft other'];
 
 const router = (fastify, { }, next) => {
   // =============================================================
   fastify.get('/', async (req: any, reply: any) => {
-    reply.send({
+    const decode: any = await decodeToken(req);
+    const loggedIn = decode && decode.api;
+    let returnValue: any = {
       apiCode: global.appDetail.name,
       version: global.appDetail.version,
       subVersion: global.appDetail.subVersion
-    });
+    };
+    if (loggedIn) {
+      returnValue.his = hisProvider;
+    }
+    reply.send(returnValue);
   });
 
   // =============================================================
   // ตรวจสอบฐานข้อมูล
   fastify.get('/alive', async (req: any, res: any) => {
+    const decode: any = await decodeToken(req);
+    const loggedIn = decode && decode.api;
     try {
       const result = await hisModel.testConnect(global.dbHIS);
       const connection = result && result.length ? true : false;
       global.dbHIS.destroy;
       res.send({
         statusCode: connection ? StatusCodes.OK : StatusCodes.NO_CONTENT,
-        hisProvider: process.env.HIS_PROVIDER,
-        connection, message: connection ? 'Success' : ('Fail:' + result)
+        his: loggedIn ? hisProvider : undefined,
+        hisProvider: hisProviderList.indexOf(process.env.HIS_PROVIDER) >= 0,
+        connection: connection,
+        message: connection ? 'Success' : ('Fail:' + result)
       });
     } catch (error) {
       console.log('alive fail', error.message);
@@ -33,7 +51,7 @@ const router = (fastify, { }, next) => {
         hisProvider,
         connection: false,
         message: error.message
-      })
+      });
     }
   })
 
@@ -558,6 +576,21 @@ const router = (fastify, { }, next) => {
       reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
+
+  async function decodeToken(req: any) {
+    let token: string = null;
+    if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+      token = req.headers.authorization.split(' ')[1];
+    } else if (req.body && req.body.token) {
+      token = req.body.token;
+    }
+    try {
+      const ret = await jwt.verify(token);
+      return ret;
+    } catch (error) {
+      return null;
+    }
+  }
 
   next();
 }
