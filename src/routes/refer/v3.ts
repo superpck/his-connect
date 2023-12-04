@@ -2,7 +2,7 @@
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import * as moment from 'moment';
 var crypto = require('crypto');
-import hisModel from './../his/his';
+import hisModel from './../his/hismodel';
 const hisProvider = process.env.HIS_PROVIDER;
 
 const router = (fastify, { }, next) => {

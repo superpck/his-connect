@@ -2,7 +2,7 @@
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import * as moment from 'moment';
 
-import hisModel from './his';
+import hisModel from './hismodel';
 const hisProvider = process.env.HIS_PROVIDER;
 
 import { Jwt } from './../../plugins/jwt';

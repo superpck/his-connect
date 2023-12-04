@@ -22,12 +22,9 @@ const router = (fastify, { }, next) => {
   fastify.get('/', async (req, reply: any) => {
     reply.send({
       date: moment().format('YYYY-MM-DD HH:mm:ss'),
-      ok: true,
       apiName: global.appDetail.name,
       version: global.appDetail.version,
       subVersion: global.appDetail.subVersion,
-      his_provider: hisProviderList.indexOf(process.env.HIS_PROVIDER)>=0,
-      hospcode: process.env.HOSPCODE,
     });
   })
 
@@ -38,7 +35,7 @@ const router = (fastify, { }, next) => {
       version: global.appDetail.version,
       subVersion: global.appDetail.subVersion,
       hospcode: process.env.HOSPCODE,
-      his_provider: process.env.HIS_PROVIDER
+      his: process.env.HIS_PROVIDER
     });
   })
 

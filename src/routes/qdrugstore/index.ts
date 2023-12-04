@@ -4,7 +4,7 @@ import * as moment from 'moment';
 var crypto = require('crypto');
 
 const hisProvider = process.env.HIS_PROVIDER;
-import hisModel from './../his/his';
+import hisModel from './../his/hismodel';
 import { PccModel } from '../../models/his/pcc-model';
 
 

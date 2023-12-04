@@ -1,7 +1,7 @@
 import * as HttpStatus from 'http-status-codes';
 var crypto = require('crypto');
 
-import pccHisModel from './../his/his';
+import pccHisModel from './../his/hismodel';
 
 const router = (fastify, { }, next) => {
 
