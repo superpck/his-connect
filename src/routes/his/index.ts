@@ -1,6 +1,7 @@
 // ห้ามแก้ไข file นี้ //
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import * as moment from 'moment';
+import * as _ from 'lodash';
 
 import hisModel from './hismodel';
 const hisProvider = process.env.HIS_PROVIDER;
@@ -52,6 +53,77 @@ const router = (fastify, { }, next) => {
         connection: false,
         message: error.message
       });
+    }
+  })
+
+
+  // HIS data ===========================================================
+  fastify.post('/visit-detail', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
+    const body = req.body || {};
+    const visitNo = body.visitNo;
+
+    try {
+      const rows: any = await hisModel.getService(global.dbHIS, 'visitNo', visitNo);
+      let visit: any = {};
+      if (rows && rows.length > 0) {
+        let row = rows[0];
+        let hn = row.hn || row.HN;
+        
+        const referOut: any = await hisModel.getReferHistory(global.dbHIS, 'visitNo', visitNo, process.env.HOSPCODE);
+        if (referOut && referOut.length > 0) {
+          let refer_out = referOut;
+          visit.refer_history = refer_out;
+
+          const person: any = await hisModel.getPerson(global.dbHIS, 'hn', hn);
+          if (person && person.length > 0) {
+            visit.person = person[0];
+            const addr: any = await hisModel.getAddress(global.dbHIS, 'hn', hn);
+            visit.address = addr;
+            visit.service = row;
+
+            const opdDx: any = await hisModel.getDiagnosisOpd(global.dbHIS, visitNo);
+            visit.diagnosis_opd = opdDx && opdDx.length > 0 ? opdDx : [];
+
+            const opdOp: any = await hisModel.getProcedureOpd(global.dbHIS, visitNo);
+            if (opdOp && opdOp.length > 0) {
+              visit.proced_opd = opdOp;
+            }
+
+            const opdDrug: any = await hisModel.getDrugOpd(global.dbHIS, visitNo);
+            if (opdDrug && opdDrug.length > 0) {
+              visit.drug_opd = opdDrug;
+            }
+
+            const admission: any = await hisModel.getAdmission(global.dbHIS, 'visitNo', visitNo);
+            if (admission && admission.length > 0) {
+              let ipd = admission[0];
+              const an = ipd.an || ipd.AN;
+              visit.admission = ipd;
+
+              const ipdDx: any = await hisModel.getDiagnosisIpd(global.dbHIS, 'an', an);
+              visit.diagnosis_ipd = ipdDx;
+
+              const ipdOp: any = await hisModel.getProcedureIpd(global.dbHIS, 'an', an);
+              if (ipdOp && ipdOp.length > 0) {
+                visit.proced_ipd = ipdOp;
+              }
+
+              const ipdDrug: any = await hisModel.getDrugIpd(global.dbHIS, 'an', an);
+              if (ipdDrug && ipdDrug.length > 0) {
+                visit.drug_ipd = ipdDrug;
+              }
+            }
+
+            const investigation: any = await hisModel.getInvestigation(global.dbHIS, 'visitNo', visitNo);
+            visit.investigation = investigation && investigation.length > 0 ? investigation : [];
+
+          }
+        }
+      }
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, data: visit });
+    } catch (error) {
+      console.log('referout', error.message);
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
 
@@ -182,20 +254,20 @@ const router = (fastify, { }, next) => {
 
   fastify.post('/admission', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const body = req.body || {};
-    if (!body || (!body.an && !body.hn && !body.visitNo)) {
+    if (!body || !body.typeSearch || !body.textSearch) {
       reply.send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
       return;
     }
 
-    let typeSearch: string;
-    let textSearch: string;
+    let typeSearch: string = body.typeSearch;
+    let textSearch: string = body.textSearch;
     if (body.an) {
       typeSearch = 'an';
       textSearch = body.an;
     } else if (body.visitNo) {
       typeSearch = 'visitNo';
       textSearch = body.visitNo;
-    } else {
+    } else if (body.hn) {
       typeSearch = 'hn';
       textSearch = body.hn;
     }
