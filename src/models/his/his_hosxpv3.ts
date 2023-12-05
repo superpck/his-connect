@@ -518,7 +518,11 @@ export class HisHosxpv3Model {
             .limit(maxLimit);
     }
 
-    getLabResult(db: Knex, columnName, searchNo) {
+    getInvestigation(db: Knex, columnName: string, searchNo: string, hospCode = hcode) {
+        return this.getLabResult(db, columnName, searchNo);
+    };
+    
+    getLabResult(db: Knex, columnName: string, searchNo: string) {
         columnName = columnName === 'visitNo' ? 'lab_head.vn' : columnName;
         columnName = columnName === 'hn' ? 'ovst.hn' : columnName;
         columnName = columnName === 'cid' ? 'patient.cid' : columnName;

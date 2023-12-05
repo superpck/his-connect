@@ -461,6 +461,10 @@ class HisHosxpPcuModel {
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
     }
+    getInvestigation(db, columnName, searchNo, hospCode = hcode) {
+        return this.getLabResult(db, columnName, searchNo);
+    }
+    ;
     getLabResult(db, columnName, searchNo) {
         columnName = columnName === 'visitNo' ? 'lab_head.vn' : columnName;
         columnName = columnName === 'hn' ? 'ovst.hn' : columnName;

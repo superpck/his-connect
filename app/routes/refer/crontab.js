@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var fastify = require('fastify');
 const moment = require("moment");
 const axios_1 = require("axios");
-const his_1 = require("./../his/his");
+const hismodel_1 = require("./../his/hismodel");
 var fs = require('fs');
 var http = require('http');
 var querystring = require('querystring');
@@ -55,7 +55,7 @@ async function sendMoph(req, reply, db) {
 }
 async function getRefer_out(db, date) {
     try {
-        const referout = await his_1.default.getReferOut(db, date, hcode);
+        const referout = await hismodel_1.default.getReferOut(db, date, hcode);
         console.log('******** >> referout', referout.length, ' case');
         console.log(process.env.NREFER_DATA_BACKWARD_MONTH);
         sentContent += `\rsave refer_history ${date} \r`;
@@ -121,7 +121,7 @@ async function getReferResult(db, date) {
         investigationRefer: { success: 0, fail: 0 }
     };
     try {
-        const referResult = await his_1.default.getReferResult(db, date, hcode);
+        const referResult = await hismodel_1.default.getReferResult(db, date, hcode);
         sentContent += `\rsave refer_result ${date} \r`;
         sentContent += `\rsave refer service data ${date} \r`;
         console.log(moment().format('HH:mm:ss'), process.env.HOSPCODE, 'refer result (refer in)=', referResult.length, 'row');
@@ -178,7 +178,7 @@ async function getReferInIPDByDateDisc(db, sentResultResult) {
     }
 }
 async function getReferInIPD(db, dateDisc, sentResultResult) {
-    let ipdData = await his_1.default.getAdmission(db, 'datedisc', dateDisc);
+    let ipdData = await hismodel_1.default.getAdmission(db, 'datedisc', dateDisc);
     console.log(moment().format('HH:mm:ss'), process.env.HOSPCODE, `Get refer result from IPD discharge date ${dateDisc} = ${ipdData.length} case`);
     for (let row of ipdData) {
         await sendReferInIPD(db, row, sentResultResult);
@@ -303,7 +303,7 @@ async function sendReferResult(row, sentResult) {
 }
 async function getPerson(db, pid, sentResult) {
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
-    const rows = await his_1.default.getPerson(db, 'hn', pid, hcode);
+    const rows = await hismodel_1.default.getPerson(db, 'hn', pid, hcode);
     sentContent += '  - person = ' + rows.length + '\r';
     if (rows && rows.length) {
         for (const row of rows) {
@@ -345,7 +345,7 @@ async function getPerson(db, pid, sentResult) {
 async function getAddress(db, pid, sentResult) {
     if (pid) {
         const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
-        const rows = await his_1.default.getAddress(db, 'hn', pid, hcode);
+        const rows = await hismodel_1.default.getAddress(db, 'hn', pid, hcode);
         sentContent += '  - address = ' + (rows ? rows.length : 0) + '\r';
         if (rows && rows.length) {
             for (const row of rows) {
@@ -386,7 +386,7 @@ async function getAddress(db, pid, sentResult) {
     }
 }
 async function getService(db, visitNo, sentResult) {
-    const rows = await his_1.default.getService(db, 'visitNo', visitNo, hcode);
+    const rows = await hismodel_1.default.getService(db, 'visitNo', visitNo, hcode);
     sentContent += '  - service = ' + rows.length + '\r';
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
     if (rows && rows.length) {
@@ -445,7 +445,7 @@ async function getService(db, visitNo, sentResult) {
     return rows;
 }
 async function getDiagnosisOpd(db, visitNo, sentResult) {
-    const rows = await his_1.default.getDiagnosisOpd(db, visitNo, hcode);
+    const rows = await hismodel_1.default.getDiagnosisOpd(db, visitNo, hcode);
     sentContent += '  - diagnosis_opd = ' + rows.length + '\r';
     if (rows && rows.length) {
         let r = [];
@@ -481,7 +481,7 @@ async function getDiagnosisOpd(db, visitNo, sentResult) {
 }
 async function getProcedureOpd(db, visitNo, sentResult) {
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
-    const rows = await his_1.default.getProcedureOpd(db, visitNo, hcode);
+    const rows = await hismodel_1.default.getProcedureOpd(db, visitNo, hcode);
     sentContent += '  - procedure_opd = ' + rows.length + '\r';
     let rowSave = [];
     if (rows && rows.length) {
@@ -514,7 +514,7 @@ async function getProcedureOpd(db, visitNo, sentResult) {
 }
 async function getDrugOpd(db, visitNo, sentResult) {
     let opdDrug = [];
-    const rows = await his_1.default.getDrugOpd(db, visitNo, hcode);
+    const rows = await hismodel_1.default.getDrugOpd(db, visitNo, hcode);
     sentContent += '  - drug_opd = ' + rows.length + '\r';
     if (rows && rows.length) {
         for (let r of rows) {
@@ -557,7 +557,7 @@ async function getLabResult(db, row, sentResult) {
     const referID = row.REFERID || row.referid || row.REFERID_SOURCE;
     let rowsSave = [];
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
-    const rowsLabResult = await his_1.default.getLabResult(db, 'visitNo', visitNo);
+    const rowsLabResult = await hismodel_1.default.getLabResult(db, 'visitNo', visitNo);
     sentContent += '  - lab result = ' + rowsLabResult.length + '\r';
     if (rowsLabResult && rowsLabResult.length) {
         for (const r of rowsLabResult) {
@@ -604,10 +604,10 @@ async function getAdmission(db, type = 'VN', searchValue) {
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
     let rows;
     if (type == 'datedisc') {
-        rows = await his_1.default.getAdmission(db, 'datedisc', searchValue, hcode);
+        rows = await hismodel_1.default.getAdmission(db, 'datedisc', searchValue, hcode);
     }
     else {
-        rows = await his_1.default.getAdmission(db, 'visitNo', searchValue, hcode);
+        rows = await hismodel_1.default.getAdmission(db, 'visitNo', searchValue, hcode);
     }
     sentContent += '  - admission = ' + rows.length + '\r';
     if (rows && rows.length) {
@@ -666,7 +666,7 @@ async function getProcedureIpd(db, an) {
         return [];
     }
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
-    const rows = await his_1.default.getProcedureIpd(db, an, hcode);
+    const rows = await hismodel_1.default.getProcedureIpd(db, an, hcode);
     sentContent += '  - procedure_ipd = ' + rows.length + '\r';
     let rowSave = [];
     if (rows && rows.length) {
@@ -699,7 +699,7 @@ async function getDrugAllergy(db, hn, sentResult) {
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
     try {
         let rowSave = [];
-        const rows = await his_1.default.getDrugAllergy(db, hn, hcode);
+        const rows = await hismodel_1.default.getDrugAllergy(db, hn, hcode);
         sentResult += '  - drugallergy = ' + rows.length + '\r';
         if (rows && rows.length) {
             for (const row of rows) {

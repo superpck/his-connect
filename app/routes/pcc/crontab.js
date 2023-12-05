@@ -5,7 +5,7 @@ const moment = require("moment");
 var fs = require('fs');
 var http = require('http');
 var querystring = require('querystring');
-const his_1 = require("./../his/his");
+const hismodel_1 = require("./../his/hismodel");
 const hcode = process.env.HOSPCODE;
 const resultText = 'sent_result.txt';
 let sentContent = '';
@@ -52,7 +52,7 @@ async function getService(db, date) {
         diagnosisOpd: { success: 0, fail: 0 },
         drugOpd: { success: 0, fail: 0 },
     };
-    const rows = await his_1.default.getService(db, 'date_serv', date, hcode);
+    const rows = await hismodel_1.default.getService(db, 'date_serv', date, hcode);
     sentContent += '  - service = ' + rows.length + '\r';
     const d_update = moment().locale('th').format('YYYY-MM-DD HH:mm:ss');
     if (rows && rows.length) {
@@ -69,7 +69,7 @@ async function getService(db, date) {
     return sentResult;
 }
 async function person(db, pid, sentResult) {
-    const rows = await his_1.default.getPerson(db, 'hn', pid, hcode);
+    const rows = await hismodel_1.default.getPerson(db, 'hn', pid, hcode);
     sentContent += '  - person = ' + rows.length + '\r';
     if (rows && rows.length) {
         rows[0]['FNAME'] = rows[0].NAME || rows[0].name;
@@ -87,7 +87,7 @@ async function person(db, pid, sentResult) {
 }
 async function getAddress(db, pid, sentResult) {
     if (pid) {
-        const rows = await his_1.default.getAddress(db, 'hn', pid, hcode);
+        const rows = await hismodel_1.default.getAddress(db, 'hn', pid, hcode);
         sentContent += '  - address = ' + (rows ? rows.length : 0) + '\r';
         if (rows && rows.length) {
             for (const row of rows) {
@@ -111,7 +111,7 @@ async function getAddress(db, pid, sentResult) {
     }
 }
 async function getDiagnosisOpd(db, visitNo, sentResult) {
-    const rows = await his_1.default.getDiagnosisOpd(db, visitNo, hcode);
+    const rows = await hismodel_1.default.getDiagnosisOpd(db, visitNo, hcode);
     if (rows && rows.length) {
         sentContent += '  - diagnosis_opd = ' + rows.length + '\r';
         const saveResult = await sendToApi('save-diagnosis-opd', rows);
@@ -131,7 +131,7 @@ async function getDiagnosisOpd(db, visitNo, sentResult) {
 }
 async function getDrugOpd(db, visitNo, sentResult) {
     let opdDrug = [];
-    const rows = await his_1.default.getDrugOpd(db, visitNo, hcode);
+    const rows = await hismodel_1.default.getDrugOpd(db, visitNo, hcode);
     if (rows && rows.length) {
         sentContent += '  - drug_opd = ' + rows.length + '\r';
         opdDrug = rows;

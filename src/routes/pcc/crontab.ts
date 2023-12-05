@@ -4,7 +4,7 @@ var fs = require('fs');
 var http = require('http');
 var querystring = require('querystring');
 
-import hisModel from './../his/his';
+import hisModel from './../his/hismodel';
 
 const hcode = process.env.HOSPCODE;
 const resultText = 'sent_result.txt';

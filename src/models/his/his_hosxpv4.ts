@@ -471,7 +471,7 @@ export class HisHosxpv4Model {
         return result[0];
     }
 
-    getLabRequest(db, columnName, searchNo, hospCode = hcode) {
+    getLabRequest(db: Knex, columnName: string, searchNo: string, hospCode = hcode) {
         columnName = columnName === 'visitNo' ? 'vn' : columnName;
         return db('lab_order as o')
             .leftJoin('lab_order_service as s', 'o.lab_order_number', 's.lab_order_number')
@@ -490,7 +490,10 @@ export class HisHosxpv4Model {
             .limit(maxLimit);
     }
 
-    getLabResult(db: Knex, columnName, searchNo) {
+    getInvestigation(db: Knex, columnName: string, searchNo: string, hospCode = hcode) {
+        return this.getLabResult(db, columnName, searchNo);
+    };
+    getLabResult(db: Knex, columnName: string, searchNo: string) {
         columnName = columnName === 'visitNo' ? 'lab_head.vn' : columnName;
         columnName = columnName === 'hn' ? 'ovst.hn' : columnName;
         columnName = columnName === 'cid' ? 'patient.cid' : columnName;
