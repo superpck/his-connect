@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const http_status_codes_1 = require("http-status-codes");
 const moment = require("moment");
 var crypto = require('crypto');
-const his_1 = require("./../his/his");
+const hismodel_1 = require("./../his/hismodel");
 const hisProvider = process.env.HIS_PROVIDER;
 const router = (fastify, {}, next) => {
     fastify.get('/', async (req, reply) => {
@@ -18,7 +18,7 @@ const router = (fastify, {}, next) => {
         var hashRequestKey = crypto.createHash('md5').update(process.env.REQUEST_KEY).digest('hex');
         const requestKeyVerified = requestKey === hashRequestKey;
         try {
-            const result = await his_1.default.getTableName(global.dbHIS);
+            const result = await hismodel_1.default.getTableName(global.dbHIS);
             if (result && result.length) {
                 reply.status(http_status_codes_1.StatusCodes.OK).send({
                     statusCode: http_status_codes_1.StatusCodes.OK,
@@ -43,7 +43,7 @@ const router = (fastify, {}, next) => {
             return false;
         }
         try {
-            const result = await his_1.default.getTableName(global.dbHIS);
+            const result = await hismodel_1.default.getTableName(global.dbHIS);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, tblCount: result.length });
         }
         catch (error) {
@@ -56,7 +56,7 @@ const router = (fastify, {}, next) => {
         const date = req.body.date || now;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         try {
-            const result = await his_1.default.getReferOut(global.dbHIS, date, hospcode);
+            const result = await hismodel_1.default.getReferOut(global.dbHIS, date, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows: result });
         }
         catch (error) {
@@ -81,7 +81,7 @@ const router = (fastify, {}, next) => {
                 typeSearch = 'cid';
                 textSearch = cid;
             }
-            const result = await his_1.default.getPerson(global.dbHIS, typeSearch, textSearch, hospcode);
+            const result = await hismodel_1.default.getPerson(global.dbHIS, typeSearch, textSearch, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows: result });
         }
         catch (error) {
@@ -99,7 +99,7 @@ const router = (fastify, {}, next) => {
         try {
             let typeSearch = 'hn';
             let textSearch = hn;
-            const result = await his_1.default.getAddress(global.dbHIS, typeSearch, textSearch, hospcode);
+            const result = await hismodel_1.default.getAddress(global.dbHIS, typeSearch, textSearch, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows: result });
         }
         catch (error) {
@@ -115,7 +115,7 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const result = await his_1.default.getDrugAllergy(global.dbHIS, hn, hospcode);
+            const result = await hismodel_1.default.getDrugAllergy(global.dbHIS, hn, hospcode);
             reply.send({ statusCode: http_status_codes_1.StatusCodes.OK, rows: result });
         }
         catch (error) {
@@ -138,7 +138,7 @@ const router = (fastify, {}, next) => {
                 typeSearch = 'visitNo';
                 textSearch = visitNo;
             }
-            const result = await his_1.default.getService(global.dbHIS, typeSearch, textSearch, hospcode);
+            const result = await hismodel_1.default.getService(global.dbHIS, typeSearch, textSearch, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows: result });
         }
         catch (error) {
@@ -156,7 +156,7 @@ const router = (fastify, {}, next) => {
         }
         else {
             try {
-                const result = await his_1.default.getAdmission(global.dbHIS, typeSearch, textSearch, hospcode);
+                const result = await hismodel_1.default.getAdmission(global.dbHIS, typeSearch, textSearch, hospcode);
                 reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows: result });
             }
             catch (error) {
@@ -173,7 +173,7 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const result = await his_1.default.getDiagnosisOpd(global.dbHIS, visitNo, hospcode);
+            const result = await hismodel_1.default.getDiagnosisOpd(global.dbHIS, visitNo, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows: result });
         }
         catch (error) {
@@ -191,7 +191,7 @@ const router = (fastify, {}, next) => {
         }
         else {
             try {
-                const result = await his_1.default.getDiagnosisIpd(global.dbHIS, 'an', an, hospcode);
+                const result = await hismodel_1.default.getDiagnosisIpd(global.dbHIS, 'an', an, hospcode);
                 reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows: result });
             }
             catch (error) {
@@ -208,7 +208,7 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const rows = await his_1.default.getProcedureOpd(global.dbHIS, visitNo, hospcode);
+            const rows = await hismodel_1.default.getProcedureOpd(global.dbHIS, visitNo, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {
@@ -224,7 +224,7 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const rows = await his_1.default.getProcedureIpd(global.dbHIS, an, hospcode);
+            const rows = await hismodel_1.default.getProcedureIpd(global.dbHIS, an, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {
@@ -240,7 +240,7 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const rows = await his_1.default.getDrugOpd(global.dbHIS, visitNo, hospcode);
+            const rows = await hismodel_1.default.getDrugOpd(global.dbHIS, visitNo, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {
@@ -256,7 +256,7 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const rows = await his_1.default.getDrugIpd(global.dbHIS, an, hospcode);
+            const rows = await hismodel_1.default.getDrugIpd(global.dbHIS, an, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {
@@ -272,7 +272,7 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const rows = await his_1.default.getChargeOpd(global.dbHIS, visitNo, hospcode);
+            const rows = await hismodel_1.default.getChargeOpd(global.dbHIS, visitNo, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {
@@ -288,7 +288,7 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const rows = await his_1.default.getChargeIpd(global.dbHIS, an, hospcode);
+            const rows = await hismodel_1.default.getChargeIpd(global.dbHIS, an, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {
@@ -304,7 +304,7 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const rows = await his_1.default.getAccident(global.dbHIS, visitNo, hospcode);
+            const rows = await hismodel_1.default.getAccident(global.dbHIS, visitNo, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {
@@ -320,7 +320,7 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const rows = await his_1.default.getAppointment(global.dbHIS, visitNo, hospcode);
+            const rows = await hismodel_1.default.getAppointment(global.dbHIS, visitNo, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {
@@ -343,7 +343,7 @@ const router = (fastify, {}, next) => {
                 typeSearch = 'visitNo';
                 textSearch = visitNo;
             }
-            const rows = await his_1.default.getReferHistory(global.dbHIS, typeSearch, textSearch, hospcode);
+            const rows = await hismodel_1.default.getReferHistory(global.dbHIS, typeSearch, textSearch, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {
@@ -359,7 +359,7 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const rows = await his_1.default.getClinicalRefer(global.dbHIS, referNo, hospcode);
+            const rows = await hismodel_1.default.getClinicalRefer(global.dbHIS, referNo, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {
@@ -375,7 +375,7 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const rows = await his_1.default.getInvestigationRefer(global.dbHIS, referNo, hospcode);
+            const rows = await hismodel_1.default.getInvestigationRefer(global.dbHIS, referNo, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {
@@ -391,7 +391,7 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const rows = await his_1.default.getCareRefer(global.dbHIS, referNo, hospcode);
+            const rows = await hismodel_1.default.getCareRefer(global.dbHIS, referNo, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {
@@ -408,7 +408,7 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const rows = await his_1.default.getReferResult(global.dbHIS, hospDestination, referNo, hospcode);
+            const rows = await hismodel_1.default.getReferResult(global.dbHIS, hospDestination, referNo, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {
@@ -431,7 +431,7 @@ const router = (fastify, {}, next) => {
             textSearch = licenseNo;
         }
         try {
-            const rows = await his_1.default.getProvider(global.dbHIS, typeSearch, textSearch, hospcode);
+            const rows = await hismodel_1.default.getProvider(global.dbHIS, typeSearch, textSearch, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {
@@ -443,7 +443,7 @@ const router = (fastify, {}, next) => {
         const depCode = req.body.depCode;
         const depName = req.body.depName;
         try {
-            const rows = await his_1.default.getDepartment(global.dbHIS, depCode, depName);
+            const rows = await hismodel_1.default.getDepartment(global.dbHIS, depCode, depName);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {
@@ -454,7 +454,7 @@ const router = (fastify, {}, next) => {
         const wardCode = req.body.wardCode;
         const wardName = req.body.wardName;
         try {
-            const rows = await his_1.default.getWard(global.dbHIS, wardCode, wardName);
+            const rows = await hismodel_1.default.getWard(global.dbHIS, wardCode, wardName);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {
@@ -465,7 +465,7 @@ const router = (fastify, {}, next) => {
         const drCode = req.body.drCode;
         const drName = req.body.drName;
         try {
-            const rows = await his_1.default.getDepartment(global.dbHIS, drCode, drName);
+            const rows = await hismodel_1.default.getDepartment(global.dbHIS, drCode, drName);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {

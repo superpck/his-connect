@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const HttpStatus = require("http-status-codes");
 var crypto = require('crypto');
-const his_1 = require("./../his/his");
+const hismodel_1 = require("./../his/hismodel");
 const router = (fastify, {}, next) => {
     fastify.post('/check-requestkey', async (req, reply) => {
         let requestKey = req.body.requestKey || '??';
@@ -29,7 +29,7 @@ const router = (fastify, {}, next) => {
         const searchValue = req.body.searchValue;
         if (searchType && searchValue) {
             try {
-                const result = await his_1.default.getPerson(global.dbHIS, searchType, searchValue);
+                const result = await hismodel_1.default.getPerson(global.dbHIS, searchType, searchValue);
                 reply.status(HttpStatus.OK).send({
                     statusCode: HttpStatus.OK,
                     rows: result
@@ -56,7 +56,7 @@ const router = (fastify, {}, next) => {
         const lname = req.body.lname;
         if (fname + lname) {
             try {
-                const result = await his_1.default.getPersonByName(global.dbHIS, fname, lname);
+                const result = await hismodel_1.default.getPersonByName(global.dbHIS, fname, lname);
                 reply.status(HttpStatus.OK).send({
                     statusCode: HttpStatus.OK,
                     rows: result
@@ -83,7 +83,7 @@ const router = (fastify, {}, next) => {
         const pid = req.body.pid;
         if (cid || pid) {
             try {
-                const result = await his_1.default.getChronic(global.dbHIS, pid, cid);
+                const result = await hismodel_1.default.getChronic(global.dbHIS, pid, cid);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -118,7 +118,7 @@ const router = (fastify, {}, next) => {
         const cid = req.body.cid;
         if (pid || cid) {
             try {
-                const result = await his_1.default.getDrugAllergy(global.dbHIS, pid, cid);
+                const result = await hismodel_1.default.getDrugAllergy(global.dbHIS, pid, cid);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -155,7 +155,7 @@ const router = (fastify, {}, next) => {
         const date = req.body.date;
         if (hn + cid) {
             try {
-                const rows = await his_1.default.getServiceByHn(global.dbHIS, hn, cid, date, visitNo);
+                const rows = await hismodel_1.default.getServiceByHn(global.dbHIS, hn, cid, date, visitNo);
                 reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
             }
             catch (error) {
@@ -177,7 +177,7 @@ const router = (fastify, {}, next) => {
         const visitNo = req.body.visitNo;
         if (visitNo) {
             try {
-                const result = await his_1.default.getDiagnosis(global.dbHIS, visitNo);
+                const result = await hismodel_1.default.getDiagnosis(global.dbHIS, visitNo);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -210,7 +210,7 @@ const router = (fastify, {}, next) => {
         const hn = req.body.hn;
         if (hn) {
             try {
-                const result = await his_1.default.getDiagnosisByHn(global.dbHIS, hn);
+                const result = await hismodel_1.default.getDiagnosisByHn(global.dbHIS, hn);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -243,7 +243,7 @@ const router = (fastify, {}, next) => {
         const visitNo = req.body.visitNo;
         if (visitNo) {
             try {
-                const result = await his_1.default.getDrug(global.dbHIS, visitNo);
+                const result = await hismodel_1.default.getDrug(global.dbHIS, visitNo);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -276,7 +276,7 @@ const router = (fastify, {}, next) => {
         const hn = req.body.hn;
         if (hn) {
             try {
-                const result = await his_1.default.getDrugByHn(global.dbHIS, hn);
+                const result = await hismodel_1.default.getDrugByHn(global.dbHIS, hn);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -309,7 +309,7 @@ const router = (fastify, {}, next) => {
         const visitNo = req.body.visitNo;
         if (visitNo) {
             try {
-                const result = await his_1.default.getAnc(global.dbHIS, visitNo);
+                const result = await hismodel_1.default.getAnc(global.dbHIS, visitNo);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -342,7 +342,7 @@ const router = (fastify, {}, next) => {
         const hn = req.body.hn;
         if (hn) {
             try {
-                const result = await his_1.default.getAncByHn(global.dbHIS, hn);
+                const result = await hismodel_1.default.getAncByHn(global.dbHIS, hn);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -375,7 +375,7 @@ const router = (fastify, {}, next) => {
         const visitNo = req.body.visitNo;
         if (visitNo) {
             try {
-                const result = await his_1.default.getEpi(global.dbHIS, visitNo);
+                const result = await hismodel_1.default.getEpi(global.dbHIS, visitNo);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -408,7 +408,7 @@ const router = (fastify, {}, next) => {
         const hn = req.body.hn;
         if (hn) {
             try {
-                const result = await his_1.default.getEpiByHn(global.dbHIS, hn);
+                const result = await hismodel_1.default.getEpiByHn(global.dbHIS, hn);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -441,7 +441,7 @@ const router = (fastify, {}, next) => {
         const visitNo = req.body.visitNo;
         if (visitNo) {
             try {
-                const result = await his_1.default.getFp(global.dbHIS, visitNo);
+                const result = await hismodel_1.default.getFp(global.dbHIS, visitNo);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -474,7 +474,7 @@ const router = (fastify, {}, next) => {
         const hn = req.body.hn;
         if (hn) {
             try {
-                const result = await his_1.default.getFpByHn(global.dbHIS, hn);
+                const result = await hismodel_1.default.getFpByHn(global.dbHIS, hn);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -507,7 +507,7 @@ const router = (fastify, {}, next) => {
         const visitNo = req.body.visitNo;
         if (visitNo) {
             try {
-                const result = await his_1.default.getNutrition(global.dbHIS, visitNo);
+                const result = await hismodel_1.default.getNutrition(global.dbHIS, visitNo);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -540,7 +540,7 @@ const router = (fastify, {}, next) => {
         const hn = req.body.hn;
         if (hn) {
             try {
-                const result = await his_1.default.getNutritionByHn(global.dbHIS, hn);
+                const result = await hismodel_1.default.getNutritionByHn(global.dbHIS, hn);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -574,7 +574,7 @@ const router = (fastify, {}, next) => {
         const searchValue = req.body.searchValue;
         if (searchType && searchValue) {
             try {
-                const result = await his_1.default.getLabResult(global.dbHIS, searchType, searchValue);
+                const result = await hismodel_1.default.getLabResult(global.dbHIS, searchType, searchValue);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,
@@ -608,7 +608,7 @@ const router = (fastify, {}, next) => {
         const searchValue = req.body.searchValue;
         if (searchType && searchValue) {
             try {
-                const result = await his_1.default.libDrug(global.dbHIS, searchType, searchValue);
+                const result = await hismodel_1.default.libDrug(global.dbHIS, searchType, searchValue);
                 if (result) {
                     reply.status(HttpStatus.OK).send({
                         statusCode: HttpStatus.OK,

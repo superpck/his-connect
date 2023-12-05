@@ -74,8 +74,8 @@ class HisEzhospModel {
         const result = await db.raw(sql);
         return result[0];
     }
-    getReferOut(db, date, hospCode = hcode) {
-        return db('hospdata.refer_out as refer')
+    getReferOut(db, date, hospCode = hcode, visitNo = null) {
+        let sql = db('hospdata.refer_out as refer')
             .leftJoin('hospdata.opd_visit as visit', 'refer.vn', 'visit.vn')
             .leftJoin('hospdata.patient as pt', 'visit.hn', 'pt.hn')
             .leftJoin('hospdata.opd_vs as vs', 'refer.vn', 'vs.vn')
@@ -85,8 +85,16 @@ class HisEzhospModel {
             .select(db.raw('case when isnull(refer.history_ill) OR refer.history_ill="" then vs.nurse_ph else refer.history_ill end as PH'))
             .select(db.raw('case when isnull(refer.history_exam) or refer.history_exam="" then vs.pe else refer.history_exam end as PE'))
             .select(db.raw('case when isnull(refer.current_ill)or refer.current_ill="" then vs.cc else refer.current_ill end as CHIEFCOMP'))
-            .where('refer.hcode', hospCode)
-            .whereRaw(`(refer.refer_date="${date}" OR refer.lastupdate BETWEEN "${date} 00:00:00" and "${date} 23:59:59")`)
+            .where('refer.hcode', hospCode);
+        if (visitNo) {
+            sql.where(`refer.vn`, visitNo);
+        }
+        else {
+            let dateStart = `${date} ? 00:00:00`;
+            let dateEnd = `${date} ? 23:59:59`;
+            sql.whereRaw(`(refer.refer_date=? OR refer.lastupdate BETWEEN ? and ?)`, [visitNo, dateStart, dateEnd]);
+        }
+        return sql
             .orderBy('refer.refer_date')
             .limit(maxLimit);
     }
@@ -102,8 +110,7 @@ class HisEzhospModel {
     getAddress(db, columnName, searchNo, hospCode = hcode) {
         columnName = columnName === 'cid' ? 'CID' : columnName;
         return db('view_address_hdc')
-            .select(db.raw('"' + hcode + '" as hospcode'))
-            .select(`PID`, `ADDRESSTYPE`, `HOUSE_ID`, `HOUSETYPE`, `ROOMNO`, `CONDO`, `HOUSENO`, `SOISUB`, `SOIMAIN`, `ROAD`, `VILLANAME`, `VILLAGE`, `TAMBON`, `AMPUR`, `CHANGWAT`, `TELEPHONE`, `MOBILE`, `D_UPDATE`)
+            .select('HOSPCODE', `PID`, `ADDRESSTYPE`, `HOUSE_ID`, `HOUSETYPE`, `ROOMNO`, `CONDO`, `HOUSENO`, `SOISUB`, `SOIMAIN`, `ROAD`, `VILLANAME`, `VILLAGE`, `TAMBON`, `AMPUR`, `CHANGWAT`, `TELEPHONE`, `MOBILE`, `D_UPDATE`)
             .where(columnName, "=", searchNo)
             .orderBy('ADDRESSTYPE')
             .limit(maxLimit);
@@ -125,7 +132,6 @@ class HisEzhospModel {
     getDiagnosisOpd(db, visitno, hospCode = hcode) {
         return db('view_opd_dx_hdc as dx')
             .select('dx.*')
-            .select(db.raw('"' + hcode + '" as HOSPCODE'))
             .select(db.raw(' "IT" as codeset'))
             .select(db.raw(`case when substr(dx.DIAGCODE,1,1) in ('V','W','X','Y') then 4 else dx.DIAGTYPE end as dxtype`))
             .where('SEQ', visitno)
@@ -242,9 +248,10 @@ class HisEzhospModel {
         columnName = columnName === 'an' ? 'dx.AN' : columnName;
         columnName = columnName === 'pid' ? 'dx.PID' : columnName;
         columnName = columnName === 'cid' ? 'dx.CID' : columnName;
+        console.log(columnName, searchNo);
         return db('view_ipd_dx_hdc as dx')
             .select('dx.*', db.raw(' "IT" as codeset'))
-            .where(columnName, "=", searchNo)
+            .where(columnName, searchNo)
             .orderBy('AN')
             .orderBy('DIAGTYPE')
             .orderBy('D_UPDATE')
@@ -300,8 +307,8 @@ class HisEzhospModel {
         columnName = columnName === 'visitNo' ? 'refer.vn' : ('refer.' + columnName);
         columnName = columnName === 'refer.referNo' ? 'refer.refer_no' : columnName;
         const sql = `
-            SELECT ${hospCode} as hospcode, refer.refer_no as referid
-                , concat('${hospCode}',refer.refer_no) as referid_province
+            SELECT ? as hospcode, refer.refer_no as referid
+                , concat(?,refer.refer_no) as referid_province
                 , refer.hn as pid, refer.vn as seq, refer.an
                 , concat(refer.date_service,' ',refer.refer_time) as datetime_serv
                 , concat(ipd.admite,' ',ipd.time) as datetime_admit
@@ -323,10 +330,10 @@ class HisEzhospModel {
             LEFT JOIN opd_visit as visit on refer.vn=visit.vn
             LEFT JOIN opd_vs as vs on refer.vn=vs.vn
             LEFT JOIN ipd_ipd as ipd on refer.an=ipd.an
-            WHERE refer.hcode='${hospCode}' and ${columnName}='${searchNo}'
-            limit ${maxLimit};
+            WHERE refer.hcode=? and ${columnName}=?
+            limit ?;
         `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [hospCode, hospCode, hospCode, searchNo, maxLimit]);
         return result[0];
     }
     getClinicalRefer(db, referNo, hospCode = hcode) {
