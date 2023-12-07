@@ -40,6 +40,9 @@ const router = (fastify, { }, next) => {
       global.dbHIS.destroy;
       res.send({
         statusCode: connection ? StatusCodes.OK : StatusCodes.NO_CONTENT,
+        apiCode: global.appDetail.name,
+        version: global.appDetail.version,
+        subVersion: global.appDetail.subVersion,
         his: loggedIn ? hisProvider : undefined,
         hisProvider: hisProviderList.indexOf(process.env.HIS_PROVIDER) >= 0,
         connection: connection,
@@ -49,6 +52,9 @@ const router = (fastify, { }, next) => {
       console.log('alive fail', error.message);
       res.send({
         statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+        apiCode: global.appDetail.name,
+        version: global.appDetail.version,
+        subVersion: global.appDetail.subVersion,
         hisProvider,
         connection: false,
         message: error.message
