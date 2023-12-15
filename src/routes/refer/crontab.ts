@@ -1,101 +1,19 @@
 var fastify = require('fastify');
 import * as moment from 'moment';
 import axios from 'axios';
+import hisModel from './../his/hismodel';
 var fs = require('fs');
 var http = require('http');
 var querystring = require('querystring');
 
-import { HisEzhospModel } from '../../models/refer/his_ezhosp';
-import { HisThiadesModel } from '../../models/refer/his_thiades';
-import { HisHosxpv3Model } from '../../models/refer/his_hosxpv3';
-import { HisHosxpv4Model } from '../../models/refer/his_hosxpv4';
-import { HisJhcisModel } from '../../models/refer/his_jhcis';
-import { HisMdModel } from '../../models/refer/his_md';
-import { HisKpstatModel } from '../../models/refer/his_kpstat';
-import { HisMkhospitalModel } from '../../models/refer/his_mkhospital';
-import { HisModel } from '../../models/refer/his';
-import { HisNemoModel } from '../../models/refer/his_nemo';
-import { HisPmkModel } from '../../models/refer/his_pmk';
-import { HisMyPcuModel } from '../../models/refer/his_mypcu';
-import { HisHosxpPcuModel } from '../../models/refer/his_hosxppcu';
-import { HisEmrSoftModel } from '../../models/refer/his_emrsoft';
-
-const hisProvider = process.env.HIS_PROVIDER;
-let hisModel: any;
-switch (hisProvider) {
-  case 'ihospital':
-  case 'ezhosp':
-    hisModel = new HisEzhospModel();
-    break;
-  case 'thiades':
-    hisModel = new HisThiadesModel();
-    break;
-  case 'hosxpv3':
-    hisModel = new HisHosxpv3Model();
-    break;
-  case 'hosxpv4':
-    hisModel = new HisHosxpv4Model();
-    break;
-  case 'hosxppcu':
-    hisModel = new HisHosxpPcuModel();
-    break;
-  case 'mkhospital':
-    hisModel = new HisMkhospitalModel();
-    break;
-  case 'nemo':
-  case 'nemo_refer':
-    hisModel = new HisNemoModel();
-    break;
-  case 'ssb':
-    // hisModel = new HisSsbModel();
-    break;
-  case 'homc':
-  case 'infod':
-    // hisModel = new HisInfodModel();
-    break;
-  case 'hi':
-    // hisModel = new HisHiModel();
-    break;
-  case 'himpro':
-    // hisModel = new HisHimproModel();
-    break;
-  case 'jhcis':
-    hisModel = new HisJhcisModel();
-    break;
-  case 'hospitalos':
-    // hisModel = new HisHospitalOsModel();
-    break;
-  case 'jhos':
-    // hisModel = new HisJhosModel();
-    break;
-  case 'pmk':
-    hisModel = new HisPmkModel();
-    break;
-  case 'md':
-    hisModel = new HisMdModel();
-    break;
-  case 'emrsoft':
-    hisModel = new HisEmrSoftModel();
-    break;
-  case 'spdc':
-  case 'kpstat':
-    hisModel = new HisKpstatModel();
-    break;
-  case 'mypcu':
-    hisModel = new HisMyPcuModel();
-    break;
-  default:
-    hisModel = new HisModel();
-}
-
 const hcode = process.env.HOSPCODE;
-const his = process.env.HIS_PROVIDER;
+const hisProvider = process.env.HIS_PROVIDER;
 const resultText = 'sent_result.txt';
 let sentContent = '';
 let nReferToken: any = '';
 let crontabConfig: any = { client_ip: '' };
-let apiVersion: string = '-';
-let subVersion: string = '-';
+let apiVersion: string = global.appDetail.version;
+let subVersion: string = global.appDetail.subVersion;
 
 async function sendMoph(req, reply, db) {
   const dateNow = moment().format('YYYY-MM-DD');
@@ -111,7 +29,7 @@ async function sendMoph(req, reply, db) {
     nReferToken = resultToken.token;
     sentContent += `token ${nReferToken}\r`;
   } else {
-    console.log('refer get token error', resultToken.message);
+    console.log('Get nRefer token error', resultToken.message);
     sentContent += `get token Error:` + JSON.stringify(resultToken) + `\r`;
     writeResult(resultText, sentContent);
     return false;
@@ -857,7 +775,7 @@ async function getDrugAllergy(db, hn, sentResult) {
 
 async function referSending(path, dataArray) {
   const qs = require('qs');
-  const fixedUrl = process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api';
+  const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/apis';
   const data = {
     ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
     hospcode: hcode, data: JSON.stringify(dataArray),
@@ -886,27 +804,29 @@ async function referSending(path, dataArray) {
 }
 
 async function getNReferToken(apiKey: string, secretKey: string) {
-  const fixedUrl = process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api';
-  const postData = querystring.stringify({
+  const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/apis';
+  const url = fixedUrl + '/login/api-key';
+  const data = {
     ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
     apiKey, secretKey, hospcode: hcode,
     processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
     sourceApiName: 'HIS-connect', apiVersion, subVersion,
     hisProvider: process.env.HIS_PROVIDER
-  });
+  };
+  const headers = {
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'Content-Length': Buffer.byteLength(querystring.stringify(data))
+  };
 
   const option = {
     method: 'post',
-    url: fixedUrl + '/login/api-key',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Content-Length': Buffer.byteLength(postData)
-    },
-    data: postData
+    url,
+    headers,
+    data: querystring.stringify(data)
   };
-
   try {
-    const response = await axios(option);
+    // const response = await axios(option);
+    const response = await axios.post(url, data);
     return response.data;
   } catch (error) {
     return error;
@@ -914,7 +834,7 @@ async function getNReferToken(apiKey: string, secretKey: string) {
 }
 
 async function getNReferToken__(apiKey, secretKey) {
-  const fixedUrl = fastify.mophService.nRefer || process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api/nrefer';
+  const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/apis';
   const mophUrl = fixedUrl.split('/');
 
   // เฉพาะ Path ไม่รวม url
@@ -975,12 +895,12 @@ async function getNReferToken__(apiKey, secretKey) {
 }
 
 async function expireToken(token) {
-  const fixedUrl = fastify.mophService.nRefer || process.env.NREFER_URL1 || 'https://connect.moph.go.th/refer-api';
+  const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/apis';
   const mophUrl = fixedUrl.split('/');
   let urlPath = '/' + mophUrl[3] + '/';
   urlPath += mophUrl[4] ? (mophUrl[4] + '/') : '';
   urlPath += mophUrl[5] ? (mophUrl[5] + '/') : '';
-  // let url = process.env.NREFER_URL1;
+  // let url = process.env.NREFER_API_URL;
   // url += url.substr(-1, 1) === '/' ? '' : '/';
 
   const postData = querystring.stringify({

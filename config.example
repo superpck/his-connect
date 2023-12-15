@@ -16,23 +16,24 @@ SSL_ENABLE=0
 SSL_KEY=public/ssl/localhost.key
 SSL_CRT=public/ssl/localhost.crt
 
+# valid db client type: mysql, pg, mssql, oracledb
+# valid HIS provider name: 
+#    ihospital, hosxpv3, hosxpv4, hosxppcu, infod, homc, ssb
+#    hospitalos, jhcis, kpstat, md, mkhospital, thiades, 
+#    himpro, nemo, mypcu, emrsoft other
+
 [HIS DB]
-// valid db client type: mysql, pg, mssql, oracledb
-// valid HIS provider name: 
-//    ihospital, hosxpv3, hosxpv4, hosxppcu, infod, homc, ssb
-//    hospitalos, jhcis, kpstat, md, mkhospital, thiades, 
-//    himpro, nemo, mypcu, emrsoft other
 HIS_PROVIDER=hosxpv3
+HIS_DB_CLIENT=mysql
 HIS_DB_HOST=localhost
 HIS_DB_PORT=3306
-HIS_DB_CLIENT=mysql
 HIS_DB_SCHEMA=public
 HIS_DB_NAME=db
 HIS_DB_USER="user"
 HIS_DB_PASSWORD="password"
 HIS_DB_CHARSET=utf8
 HIS_DB_ENCRYPT=true
-MAX_CONNECTION_PER_MINUTE=100
+MAX_CONNECTION_PER_MINUTE=10000
 
 [ISDB - for ISONLINE only]
 IS_DB_HOST=localhost
@@ -54,10 +55,7 @@ IS_MOPH_USER="??"
 IS_MOPH_PASSWORD="??"
 
 [nRefer]
-NREFER_URL1=https://nrefer.moph.go.th/apis
-NREFER_URL=203.157.103.33
-NREFER_PORT=8080
-NREFER_PATH=/nrefer
+NREFER_API_URL="https://nrefer.moph.go.th/apis"
 NREFER_DATA_BACKWARD_MONTH=0
 
 #Key from https://nrefer.moph.go.th

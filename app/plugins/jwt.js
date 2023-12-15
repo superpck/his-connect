@@ -10,6 +10,15 @@ class Jwt {
         return token;
     }
     verify(token) {
+        try {
+            const result = jwt.verify(token, process.env.SECRET_KEY);
+            return result;
+        }
+        catch (error) {
+            return null;
+        }
+    }
+    verify_(token) {
         return new Promise((resolve, reject) => {
             jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
                 if (err) {

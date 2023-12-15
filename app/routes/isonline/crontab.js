@@ -193,7 +193,7 @@ async function getIsToken() {
     });
 }
 async function getNReferToken(apiKey, secretKey) {
-    let url = process.env.NREFER_URL1;
+    let url = process.env.NREFER_API_URL;
     url += url.substr(-1, 1) === '/' ? '' : '/';
     const postData = querystring.stringify({
         ip, apiKey: apiKey, secretKey: secretKey

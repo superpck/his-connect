@@ -84,7 +84,7 @@ async function getLocalToken() {
     });
 }
 async function getToken(apiKey, secretKey) {
-    let url = process.env.NREFER_URL1;
+    let url = process.env.NREFER_API_URL;
     url += url.substr(-1, 1) === '/' ? '' : '/';
     const postData = querystring.stringify({
         apiKey: apiKey, secretKey: secretKey
@@ -119,7 +119,7 @@ async function getToken(apiKey, secretKey) {
     });
 }
 async function getNReferToken(apiKey, secretKey) {
-    let url = process.env.NREFER_URL1;
+    let url = process.env.NREFER_API_URL;
     url += url.substring(url.length - 1) === '/' ? '' : '/';
     const postData = querystring.stringify({
         apiKey: apiKey, secretKey: secretKey
@@ -154,7 +154,7 @@ async function getNReferToken(apiKey, secretKey) {
     });
 }
 async function expireToken(token) {
-    let url = process.env.NREFER_URL1;
+    let url = process.env.NREFER_API_URL;
     url += url.substring(url.length - 1) === '/' ? '' : '/';
     const postData = querystring.stringify({
         token: token
@@ -246,7 +246,7 @@ async function getData(routeName, tokenLocal, postData) {
     });
 }
 async function sendPerson(tableName, tokenNRefer, data) {
-    let url = process.env.NREFER_URL1;
+    let url = process.env.NREFER_API_URL;
     url += url.substring(url.length - 1) === '/' ? '' : '/';
     url += 'ws/save-person';
     const formData = { token: tokenNRefer, tableName: tableName, data: JSON.stringify(data) };

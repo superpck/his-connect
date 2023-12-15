@@ -5,78 +5,8 @@ const moment = require("moment");
 var fs = require('fs');
 var http = require('http');
 var querystring = require('querystring');
-const his_ezhosp_1 = require("../../models/refer/his_ezhosp");
-const his_thiades_1 = require("../../models/refer/his_thiades");
-const his_hosxpv3_1 = require("../../models/refer/his_hosxpv3");
-const his_hosxpv4_1 = require("../../models/refer/his_hosxpv4");
-const his_jhcis_1 = require("../../models/refer/his_jhcis");
-const his_md_1 = require("../../models/refer/his_md");
-const his_kpstat_1 = require("../../models/refer/his_kpstat");
-const his_mkhospital_1 = require("../../models/refer/his_mkhospital");
-const his_1 = require("../../models/refer/his");
-const his_nemo_1 = require("../../models/refer/his_nemo");
-const his_pmk_1 = require("../../models/refer/his_pmk");
-const his_mypcu_1 = require("../../models/refer/his_mypcu");
-const his_hosxppcu_1 = require("../../models/refer/his_hosxppcu");
-const hisProvider = process.env.HIS_PROVIDER;
-let hisModel;
-switch (hisProvider) {
-    case 'ihospital':
-    case 'ezhosp':
-        hisModel = new his_ezhosp_1.HisEzhospModel();
-        break;
-    case 'thiades':
-        hisModel = new his_thiades_1.HisThiadesModel();
-        break;
-    case 'hosxpv3':
-        hisModel = new his_hosxpv3_1.HisHosxpv3Model();
-        break;
-    case 'hosxpv4':
-        hisModel = new his_hosxpv4_1.HisHosxpv4Model();
-        break;
-    case 'hosxppcu':
-        hisModel = new his_hosxppcu_1.HisHosxpPcuModel();
-        break;
-    case 'mkhospital':
-        hisModel = new his_mkhospital_1.HisMkhospitalModel();
-        break;
-    case 'nemo':
-    case 'nemo_refer':
-        hisModel = new his_nemo_1.HisNemoModel();
-        break;
-    case 'ssb':
-        break;
-    case 'infod':
-        break;
-    case 'hi':
-        break;
-    case 'himpro':
-        break;
-    case 'jhcis':
-        hisModel = new his_jhcis_1.HisJhcisModel();
-        break;
-    case 'hospitalos':
-        break;
-    case 'jhos':
-        break;
-    case 'pmk':
-        hisModel = new his_pmk_1.HisPmkModel();
-        break;
-    case 'md':
-        hisModel = new his_md_1.HisMdModel();
-        break;
-    case 'spdc':
-    case 'kpstat':
-        hisModel = new his_kpstat_1.HisKpstatModel();
-        break;
-    case 'mypcu':
-        hisModel = new his_mypcu_1.HisMyPcuModel();
-        break;
-    default:
-        hisModel = new his_1.HisModel();
-}
+const hismodel_1 = require("./../his/hismodel");
 const hcode = process.env.HOSPCODE;
-const his = process.env.HIS_PROVIDER;
 const resultText = 'sent_result.txt';
 let sentContent = '';
 let dcToken = '';
@@ -122,7 +52,7 @@ async function getService(db, date) {
         diagnosisOpd: { success: 0, fail: 0 },
         drugOpd: { success: 0, fail: 0 },
     };
-    const rows = await hisModel.getService(db, 'date_serv', date, hcode);
+    const rows = await hismodel_1.default.getService(db, 'date_serv', date, hcode);
     sentContent += '  - service = ' + rows.length + '\r';
     const d_update = moment().locale('th').format('YYYY-MM-DD HH:mm:ss');
     if (rows && rows.length) {
@@ -139,7 +69,7 @@ async function getService(db, date) {
     return sentResult;
 }
 async function person(db, pid, sentResult) {
-    const rows = await hisModel.getPerson(db, 'hn', pid, hcode);
+    const rows = await hismodel_1.default.getPerson(db, 'hn', pid, hcode);
     sentContent += '  - person = ' + rows.length + '\r';
     if (rows && rows.length) {
         rows[0]['FNAME'] = rows[0].NAME || rows[0].name;
@@ -157,7 +87,7 @@ async function person(db, pid, sentResult) {
 }
 async function getAddress(db, pid, sentResult) {
     if (pid) {
-        const rows = await hisModel.getAddress(db, 'hn', pid, hcode);
+        const rows = await hismodel_1.default.getAddress(db, 'hn', pid, hcode);
         sentContent += '  - address = ' + (rows ? rows.length : 0) + '\r';
         if (rows && rows.length) {
             for (const row of rows) {
@@ -181,7 +111,7 @@ async function getAddress(db, pid, sentResult) {
     }
 }
 async function getDiagnosisOpd(db, visitNo, sentResult) {
-    const rows = await hisModel.getDiagnosisOpd(db, visitNo, hcode);
+    const rows = await hismodel_1.default.getDiagnosisOpd(db, visitNo, hcode);
     if (rows && rows.length) {
         sentContent += '  - diagnosis_opd = ' + rows.length + '\r';
         const saveResult = await sendToApi('save-diagnosis-opd', rows);
@@ -201,7 +131,7 @@ async function getDiagnosisOpd(db, visitNo, sentResult) {
 }
 async function getDrugOpd(db, visitNo, sentResult) {
     let opdDrug = [];
-    const rows = await hisModel.getDrugOpd(db, visitNo, hcode);
+    const rows = await hismodel_1.default.getDrugOpd(db, visitNo, hcode);
     if (rows && rows.length) {
         sentContent += '  - drug_opd = ' + rows.length + '\r';
         opdDrug = rows;

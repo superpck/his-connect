@@ -1,88 +1,14 @@
-
-
 // ห้ามแก้ไข file นี้ // 
-import { Knex } from 'knex';
-import * as fastify from 'fastify';
 import * as HttpStatus from 'http-status-codes';
 import * as moment from 'moment';
-const request = require('request')
 var crypto = require('crypto');
 
-import { HisEzhospModel } from '../../models/refer/his_ezhosp';
-import { HisThiadesModel } from '../../models/refer/his_thiades';
-import { HisHosxpv3Model } from '../../models/refer/his_hosxpv3';
-import { HisHosxpv4Model } from '../../models/refer/his_hosxpv4';
-import { HisJhcisModel } from '../../models/refer/his_jhcis';
-import { HisMdModel } from '../../models/refer/his_md';
-import { HisKpstatModel } from '../../models/refer/his_kpstat';
-import { HisMkhospitalModel } from '../../models/refer/his_mkhospital';
-import { HisModel } from '../../models/refer/his';
-import { HisNemoModel } from '../../models/refer/his_nemo';
-import { HisPmkModel } from '../../models/refer/his_pmk';
-
 const hisProvider = process.env.HIS_PROVIDER;
-let hisModel: any;
-switch (hisProvider) {
-  case 'ihospital':
-  case 'ezhosp':
-    hisModel = new HisEzhospModel();
-    break;
-  case 'thiades':
-    hisModel = new HisThiadesModel();
-    break;
-  case 'hosxpv3':
-    hisModel = new HisHosxpv3Model();
-    break;
-  case 'hosxpv4':
-    hisModel = new HisHosxpv4Model();
-    break;
-  case 'mkhospital':
-    hisModel = new HisMkhospitalModel();
-    break;
-  case 'nemo':
-  case 'nemo_refer':
-    hisModel = new HisNemoModel();
-    break;
-  case 'ssb':
-    // hisModel = new HisSsbModel();
-    break;
-  case 'infod':
-    // hisModel = new HisInfodModel();
-    break;
-  case 'hi':
-    // hisModel = new HisHiModel();
-    break;
-  case 'himpro':
-    // hisModel = new HisHimproModel();
-    break;
-  case 'jhcis':
-    hisModel = new HisJhcisModel();
-    break;
-  case 'hosxppcu':
-    // hisModel = new HisHosxppcuModel();
-    break;
-  case 'hospitalos':
-    // hisModel = new HisHospitalOsModel();
-    break;
-  case 'jhos':
-    // hisModel = new HisJhosModel();
-    break;
-  case 'pmk':
-    hisModel = new HisPmkModel();
-    break;
-  case 'md':
-    hisModel = new HisMdModel();
-    break;
-  case 'spdc':
-  case 'kpstat':
-    hisModel = new HisKpstatModel();
-    break;
-  default:
-    hisModel = new HisModel();
-}
+import hisModel from './../his/hismodel';
+import { PccModel } from '../../models/his/pcc-model';
 
-import { CannabisModel } from '../../models/cannabis/cannabis';
-const cannabisModel = new CannabisModel();
+
+const pccModel = new PccModel();
 
 const router = (fastify, { }, next) => {
   // =============================================================
@@ -155,7 +81,7 @@ const router = (fastify, { }, next) => {
         textSearch = visitNo;
       }
 
-      const result = await cannabisModel.searchVisit(global.dbHIS, textSearch);
+      const result = await pccModel.searchVisit(global.dbHIS, textSearch);
       // const result = await hisModel.getService(global.dbHIS, typeSearch, textSearch, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
 
@@ -169,7 +95,7 @@ const router = (fastify, { }, next) => {
     const hn = req.body.hn || '';
     if (hn) {
       try {
-        const result: any = await cannabisModel.searchVisit(global.dbHIS, hn);
+        const result: any = await pccModel.searchVisit(global.dbHIS, hn);
         reply.send({
           statusCode: HttpStatus.OK,
           rows: result
@@ -194,7 +120,7 @@ const router = (fastify, { }, next) => {
 
     if (hn) {
       try {
-        const result: any = await cannabisModel.patientInfo(global.dbHIS, hn);
+        const result: any = await pccModel.patientInfo(global.dbHIS, hn);
         reply.send({
           statusCode: HttpStatus.OK,
           rows: result
@@ -220,7 +146,7 @@ const router = (fastify, { }, next) => {
 
     if (hn && vn) {
       try {
-        const result: any = await cannabisModel.getVisitLab(global.dbHIS, hn, vn);
+        const result: any = await pccModel.getVisitLab(global.dbHIS, hn, vn);
         reply.send({
           statusCode: HttpStatus.OK,
           rows: result
@@ -246,7 +172,7 @@ const router = (fastify, { }, next) => {
 
     if (hn && vn) {
       try {
-        const result: any = await cannabisModel.getVisitDrug(global.dbHIS, hn, vn);
+        const result: any = await pccModel.getVisitDrug(global.dbHIS, hn, vn);
         reply.send({
           statusCode: HttpStatus.OK,
           rows: result
@@ -272,7 +198,7 @@ const router = (fastify, { }, next) => {
 
     if (hn && vn) {
       try {
-        const result: any = await cannabisModel.getVisitAppointment(global.dbHIS, hn, vn);
+        const result: any = await pccModel.getVisitAppointment(global.dbHIS, hn, vn);
         reply.send({
           statusCode: HttpStatus.OK,
           rows: result
@@ -298,7 +224,7 @@ const router = (fastify, { }, next) => {
 
     if (hn && vn) {
       try {
-        const result: any = await cannabisModel.getVisitDiagText(global.dbHIS, hn, vn);
+        const result: any = await pccModel.getVisitDiagText(global.dbHIS, hn, vn);
         reply.send({
           statusCode: HttpStatus.OK,
           rows: result
@@ -324,7 +250,7 @@ const router = (fastify, { }, next) => {
 
     if (hn && vn) {
       try {
-        const result: any = await cannabisModel.getVisitDiagnosis(global.dbHIS, hn, vn);
+        const result: any = await pccModel.getVisitDiagnosis(global.dbHIS, hn, vn);
         reply.send({
           statusCode: HttpStatus.OK,
           rows: result
@@ -350,7 +276,7 @@ const router = (fastify, { }, next) => {
 
     if (hn && vn) {
       try {
-        const result: any = await cannabisModel.getVisitProcedure(global.dbHIS, hn, vn);
+        const result: any = await pccModel.getVisitProcedure(global.dbHIS, hn, vn);
         reply.send({
           statusCode: HttpStatus.OK,
           rows: result
@@ -376,7 +302,7 @@ const router = (fastify, { }, next) => {
 
     if (hn && vn) {
       try {
-        const result: any = await cannabisModel.getVisitScreening(global.dbHIS, hn, vn);
+        const result: any = await pccModel.getVisitScreening(global.dbHIS, hn, vn);
         reply.send({
           statusCode: HttpStatus.OK,
           rows: result

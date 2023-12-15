@@ -18,7 +18,7 @@ const his_pmk_model_1 = require("./../../models/isonline/his_pmk.model");
 const his_jhos_model_1 = require("./../../models/isonline/his_jhos.model");
 const his_medical2020_model_1 = require("../../models/isonline/his_medical2020.model");
 const his_emrsoft_model_1 = require("../../models/isonline/his_emrsoft.model");
-const his_kpstat_1 = require("../../models/refer/his_kpstat");
+const his_kpstat_1 = require("../../models/his/his_kpstat");
 const his_mkhospital_model_1 = require("../../models/isonline/his_mkhospital.model");
 const jwt_1 = require("./../../plugins/jwt");
 var jwt = new jwt_1.Jwt();
@@ -84,41 +84,28 @@ switch (provider) {
     default:
         hisModel = new his_model_1.HisModel();
 }
+const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb',
+    'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades',
+    'himpro', 'nemo', 'mypcu', 'emrsoft other'];
 const router = (fastify, {}, next) => {
     fastify.get('/alive', async (req, res) => {
         try {
             const result = await hisModel.testConnect(global.dbHIS);
             global.dbHIS.destroy;
-            if (result && result.length) {
-                res.send({
-                    statusCode: http_status_codes_1.StatusCodes.OK,
-                    ok: true,
-                    startServerTime: fastify.startServerTime,
-                    hisProvider: process.env.HIS_PROVIDER,
-                    version: global.appDetail.version,
-                    subVersion: global.appDetail.subVersion,
-                    connection: true
-                });
-            }
-            else {
-                res.send({
-                    statusCode: http_status_codes_1.StatusCodes.NO_CONTENT,
-                    ok: true, startServerTime: fastify.startServerTime,
-                    hisProvider: process.env.HIS_PROVIDER,
-                    version: global.appDetail.version,
-                    subVersion: global.appDetail.subVersion,
-                    connection: false,
-                    message: result
-                });
-            }
+            res.send({
+                statusCode: (result && result.length > 0) ? http_status_codes_1.StatusCodes.OK : http_status_codes_1.StatusCodes.NO_CONTENT,
+                version: global.appDetail.version,
+                subVersion: global.appDetail.subVersion,
+                hisProvider: hisProviderList.indexOf(process.env.HIS_PROVIDER) >= 0,
+                connection: result && result.length > 0,
+                message: result && result.length > 0 ? undefined : (result.message || result)
+            });
         }
         catch (error) {
             console.log('alive fail', error.message);
             res.send({
                 statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR,
-                status: 500,
-                ok: false,
-                hisProvider: provider,
+                hisProvider: hisProviderList.indexOf(process.env.HIS_PROVIDER) >= 0,
                 connection: false,
                 message: error.message
             });

@@ -9,6 +9,15 @@ export class Jwt {
   }
 
   verify(token: string) {
+    try {
+      const result = jwt.verify(token, process.env.SECRET_KEY);
+      return result;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  verify_(token: string) {
     return new Promise((resolve, reject) => {
       jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
         if (err) {

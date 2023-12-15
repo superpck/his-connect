@@ -171,14 +171,11 @@ const router = (fastify, {}, next) => {
                 HIS_DB_ENCRYPT: true
             },
             NRRFER: {
-                NREFER_URL1: 'http://203.157.103.33:8080/nrefer',
-                NREFER_URL: '203.157.103.33',
-                NREFER_PORT: 8080,
-                NREFER_PATH: '/nrefer',
+                NREFER_API_URL: 'https://nrefer.moph.go.th/apis',
                 NREFER_APIKEY: 'xxxxxxx',
                 NREFER_SECRETKEY: 'xxxxxxxx',
                 NREFER_AUTO_SEND: 1,
-                NREFER_AUTO_SEND_EVERY_MINUTE: 2,
+                NREFER_AUTO_SEND_EVERY_MINUTE: 14,
                 NREFER_AUTO_SEND_EVERY_HOUR: 0,
             },
             NREFERLOCAL: {
@@ -209,17 +206,6 @@ const router = (fastify, {}, next) => {
                 IS_URL: 'http://ae.moph.go.th:3006',
                 IS_MOPH_USER: '<from IS>',
                 IS_MOPH_PASSWORD: '<from IS>'
-            },
-            CANNABIS: {
-                CANNABIS_DB_HOST: '192.168.0.1',
-                CANNABIS_DB_PORT: 3306,
-                CANNABIS_DB_CLIENT: 'mysql',
-                CANNABIS_DB_SCHEMA: 'public',
-                CANNABIS_DB_NAME: 'cannabis',
-                CANNABIS_DB_USER: 'sa',
-                CANNABIS_DB_PASSWORD: 'password',
-                CANNABIS_DB_CHARSET: 'utf8',
-                CANNABIS_DB_ENCRYPT: true
             },
             NOTIFY: {
                 NOTIFY_URL: 'http://203.157.103.33:8080/nrefer/message',
