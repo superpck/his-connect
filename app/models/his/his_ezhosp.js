@@ -139,6 +139,17 @@ class HisEzhospModel {
             .orderBy('dx.D_UPDATE')
             .limit(maxLimit);
     }
+    getDiagnosisOpdAccident(db, dateStart, dateEnd, hospCode = hcode) {
+        if (dateStart & dateEnd) {
+            return db('view_opd_dx as dx')
+                .whereBetween('date', [dateStart, dateEnd])
+                .whereRaw(`LEFT(diag,1) IN ('V','W','X','Y')`)
+                .limit(maxLimit);
+        }
+        else {
+            throw new Error('Invalid parameters');
+        }
+    }
     getProcedureOpd(db, visitno, hospCode = hcode) {
         return db('view_opd_op')
             .select(db.raw('"' + hcode + '" as hospcode'))
@@ -256,6 +267,18 @@ class HisEzhospModel {
             .orderBy('DIAGTYPE')
             .orderBy('D_UPDATE')
             .limit(maxLimit);
+    }
+    getDiagnosisIpdAccident(db, dateStart, dateEnd, hospCode = hcode) {
+        if (dateStart & dateEnd) {
+            return db('view_ipd_dx as dx')
+                .whereBetween('admite', [dateStart, dateEnd])
+                .whereRaw(`LEFT(dx,1) IN ('V','W','X','Y')`)
+                .orderBy(['disc', 'timedisc'])
+                .limit(maxLimit);
+        }
+        else {
+            throw new Error('Invalid parameters');
+        }
     }
     getProcedureIpd(db, an, hospCode = hcode) {
         return db('view_ipd_op as op')

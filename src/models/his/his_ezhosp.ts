@@ -172,6 +172,16 @@ export class HisEzhospModel {
             .orderBy('dx.D_UPDATE')
             .limit(maxLimit);
     }
+    getDiagnosisOpdAccident(db: Knex, dateStart: any, dateEnd: any, hospCode = hcode) {
+        if (dateStart & dateEnd){
+            return db('view_opd_dx as dx')
+                .whereBetween('date',[dateStart, dateEnd])
+                .whereRaw(`LEFT(diag,1) IN ('V','W','X','Y')`)
+                .limit(maxLimit);
+        } else {
+            throw new Error('Invalid parameters');
+        }
+    }
 
     getProcedureOpd(db: Knex, visitno: string, hospCode = hcode) {
         return db('view_opd_op')
@@ -334,6 +344,17 @@ export class HisEzhospModel {
             .orderBy('DIAGTYPE')
             .orderBy('D_UPDATE')
             .limit(maxLimit);
+    }
+    getDiagnosisIpdAccident(db: Knex, dateStart: any, dateEnd: any, hospCode = hcode) {
+        if (dateStart & dateEnd){
+            return db('view_ipd_dx as dx')
+                .whereBetween('admite',[dateStart, dateEnd])
+                .whereRaw(`LEFT(dx,1) IN ('V','W','X','Y')`)
+                .orderBy(['disc','timedisc'])
+                .limit(maxLimit);
+        } else {
+            throw new Error('Invalid parameters');
+        }
     }
 
     getProcedureIpd(db: Knex, an, hospCode = hcode) {

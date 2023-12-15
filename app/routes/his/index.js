@@ -264,6 +264,22 @@ const router = (fastify, {}, next) => {
             reply.status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, message: error.message });
         }
     });
+    fastify.post('/diagnosis-opd-accident', { preHandler: [fastify.authenticate] }, async (req, reply) => {
+        const body = req.body || {};
+        const dateStart = body.dateStart;
+        const dateEnd = body.dateEnd || dateStart;
+        if (!dateStart || !dateEnd) {
+            return reply.send({ statusCode: http_status_codes_1.StatusCodes.BAD_REQUEST, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.BAD_REQUEST) });
+        }
+        try {
+            const result = await hismodel_1.default.getDiagnosisOpdAccident(global.dbHIS, dateStart, dateEnd);
+            reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows: result });
+        }
+        catch (error) {
+            console.log('diagnosis_opd_accident', error.message);
+            reply.status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, message: error.message });
+        }
+    });
     fastify.post('/diagnosis-ipd', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const body = req.body || {};
         const an = body.an;
@@ -281,6 +297,22 @@ const router = (fastify, {}, next) => {
                 console.log('diagnosis_ipd', error.message);
                 reply.status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR) });
             }
+        }
+    });
+    fastify.post('/diagnosis-ipd-accident', { preHandler: [fastify.authenticate] }, async (req, reply) => {
+        const body = req.body || {};
+        const dateStart = body.dateStart;
+        const dateEnd = body.dateEnd || dateStart;
+        if (!dateStart || !dateEnd) {
+            return reply.send({ statusCode: http_status_codes_1.StatusCodes.BAD_REQUEST, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.BAD_REQUEST) });
+        }
+        try {
+            const result = await hismodel_1.default.getDiagnosisIpdAccident(global.dbHIS, dateStart, dateEnd);
+            reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows: result });
+        }
+        catch (error) {
+            console.log('diagnosis_ipd_accident', error.message);
+            reply.status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, message: error.message });
         }
     });
     fastify.post('/procedure-opd', { preHandler: [fastify.authenticate] }, async (req, reply) => {

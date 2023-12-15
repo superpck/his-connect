@@ -317,6 +317,16 @@ export class HisHosxpPcuModel {
         const result = await db.raw(sql);
         return result[0];
     }
+    async getDiagnosisOpdAccident(db: Knex, dateStart: any, dateEnd: any, hospCode = hcode) {
+        if (dateStart & dateEnd){
+            return db('ovstdiag as dx')
+                .whereBetween('vstdate',[dateStart, dateEnd])
+                .whereRaw(`left(icd10,1) in ('V','W','X','Y')`)
+                .limit(maxLimit);
+        } else {
+            throw new Error('Invalid parameters');
+        }
+    }
 
     async getProcedureOpd(db: Knex, visitNo, hospCode = hcode) {
         const sql = `
@@ -864,6 +874,17 @@ export class HisHosxpPcuModel {
             order by an, diagtype`;
         const result = await db.raw(sql);
         return result[0];
+    }
+    async getDiagnosisIpdAccident(db: Knex, dateStart: any, dateEnd: any, hospCode = hcode) {
+        if (dateStart & dateEnd){
+            return db('iptdiag as dx')
+                .innerJoin('ipt as ipd','dx.an','ipd.an')
+                .whereBetween('ipd.dchdate',[dateStart, dateEnd])
+                .whereRaw(`LEFT(dx.icd10,1) IN ('V','W','X','Y')`)
+                .limit(maxLimit);
+        } else {
+            throw new Error('Invalid parameters');
+        }
     }
 
     async getProcedureIpd(db: Knex, an, hospCode = hcode) {
