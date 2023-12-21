@@ -21,6 +21,7 @@ const router = (fastify, { }, next) => {
 
   fastify.get('/', async (req, reply: any) => {
     reply.send({
+      status: 200,
       date: moment().format('YYYY-MM-DD HH:mm:ss'),
       apiName: global.appDetail.name,
       version: global.appDetail.version,

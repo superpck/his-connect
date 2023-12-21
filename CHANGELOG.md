@@ -1,6 +1,7 @@
 # 3.5.0
 ## Feature
   - เปลี่ยน Route ไปใช้เป็น HIS แทน refer, isonline
+  - เพิ่มการ return status ใน index เพื่อรองรับ isonline
 
 # 3.4.3
 ## Feature
