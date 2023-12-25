@@ -20,7 +20,8 @@ const router = (fastify, {}, next) => {
                 subVersion: global.appDetail.subVersion,
                 startServerTime: fastify.startServerTime,
                 idDb: process.env.IS_DB_NAME,
-                connnection: true
+                connnection: true,
+                ok: true,
             });
         }
         catch (error) {

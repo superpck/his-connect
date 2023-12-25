@@ -32,6 +32,7 @@ const router = (fastify, {}, next) => {
             global.dbHIS.destroy;
             res.send({
                 statusCode: connection ? http_status_codes_1.StatusCodes.OK : http_status_codes_1.StatusCodes.NO_CONTENT,
+                ok: connection,
                 apiCode: global.appDetail.name,
                 version: global.appDetail.version,
                 subVersion: global.appDetail.subVersion,
