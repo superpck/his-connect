@@ -125,6 +125,7 @@ const router = (fastify, { }, next) => {
       global.dbHIS.destroy;
       res.send({
         statusCode: (result && result.length > 0) ? StatusCodes.OK : StatusCodes.NO_CONTENT,
+        ok: result && result.length > 0,
         version: global.appDetail.version,
         subVersion: global.appDetail.subVersion,
         hisProvider: hisProviderList.indexOf(process.env.HIS_PROVIDER) >= 0,
