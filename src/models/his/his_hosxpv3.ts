@@ -66,7 +66,10 @@ export class HisHosxpv3Model {
     }
 
     //select รายชื่อเพื่อแสดงทะเบียน refer
-    async getReferOut(db: Knex, date, hospCode = hcode) {
+    async getReferOut(db: Knex, date: any, hospCode = hcode, visitNo: string = null) {
+        const filter = visitNo ? visitNo : date;
+        const filterText = visitNo ? 'r.vn =?' : 'r.refer_date =?';
+
         const sql = `
         SELECT (SELECT hospitalcode FROM opdconfig ) AS hospcode,
             concat(r.refer_date, ' ', r.refer_time) AS refer_date,
@@ -91,38 +94,11 @@ export class HisHosxpv3Model {
             left join an_stat on r.vn=an_stat.vn
             left join opdscreen on r.vn=opdscreen.vn
         WHERE
-            r.refer_date = '${date}' and (r.refer_hospcode!='' or r.hospcode!='') and (!isnull(r.refer_hospcode) or !isnull(r.hospcode))
+            ${filterText} and r.vn is not null and r.refer_hospcode!='' and r.refer_hospcode is not null
+            and hcode!=r.refer_hospcode
         ORDER BY
             r.refer_date`;
-
-        // const sql2 = `
-        //     select 
-        //         (select hospitalcode from opdconfig) as hospcode,
-        //         concat(refer.refer_date,' ',refer.refer_time) as refer_date,
-        //         refer.refer_number as referid,
-        //         refer.refer_hospcode as hosp_destination,
-        //         refer.hn as hn,
-        //         pt.cid as cid,
-        //         os.seq_id as seq,
-        //         o.an as an,
-        //         pt.pname as prename,
-        //         pt.fname as fname,
-        //         pt.lname as lname,
-        //         pt.birthday as dob,
-        //         pt.sex as sex,
-        //         refer.pdx as dx,o.vn
-        //     from
-        //         referout as refer
-        //         left join patient pt on refer.hn = pt.hn
-        //         left join ovst o ON o.vn=refer.vn or o.an=refer.vn
-        //         left join ovst_seq os on os.vn = o.vn
-        //     where                 
-        //         refer.refer_date="${date}" and os.seq_id  is not null
-
-        //     order by 
-        //         refer_date            
-        // `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql,[filter]);
         return result[0];
     }
 

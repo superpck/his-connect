@@ -64,9 +64,15 @@ export class HisJhcisModel {
     }
 
     // select รายชื่อเพื่อแสดงทะเบียน
-    getReferOut(db: Knex, date: any, hospCode = hcode) {
-        return db('visit')
-            .leftJoin('person', 'visit.pid', 'person.pid')
+    getReferOut(db: Knex, date: any, hospCode = hcode, visitNo: string = null) {
+        let sql = db('visit').leftJoin('person', 'visit.pid', 'person.pid');
+        if (visitNo) {
+            sql.where(`visit.visitno`, visitNo);
+        } else {
+            sql.where('visit.visitdate', date);
+        }
+
+        return sql
             .select('visit.pcucode as HOSPCODE'
                 , 'visit.refertohos as HOSP_DESTINATION', 'visit.numberrefer as REFERID')
             .select(db.raw(`concat(visit.pcucode,'-',visit.numberrefer) as REFERID_PROVINCE`))
@@ -86,27 +92,10 @@ export class HisJhcisModel {
             .select(db.raw(`'99' as PTYPEDIS`))
             .select(db.raw(`'1' as referout_type`))
             .select(db.raw(`concat(visit.visitdate,' ', visit.timeend) as D_UPDATE`))
-            .where('visit.visitdate', date)
             .whereRaw('!isnull(visit.numberrefer)')
             .whereRaw('!isnull(refertohos)')
             .orderBy('visit.visitdate')
             .limit(maxLimit);
-        /*
-        `AN` varchar(9) DEFAULT NULL,
-        `REFERID_ORIGIN` varchar(10) DEFAULT NULL,
-        `DATETIME_ADMIT` datetime DEFAULT NULL,
-        `CLINIC_REFER` varchar(5) DEFAULT NULL,
-        `FH` text COMMENT 'Famiry history',
-        `DIAGFIRST` varchar(255) DEFAULT NULL,
-        `PSTATUS` varchar(255) DEFAULT NULL,
-        `REQUEST` varchar(255) DEFAULT NULL,
-        `PROVIDER` varchar(15) DEFAULT NULL,
-        `ID` varchar(21) DEFAULT NULL,
-        `MAKEDATETIME` datetime DEFAULT NULL,
-        `RECORDSTATUS` varchar(10) DEFAULT NULL,
-        `destination_req` varchar(6) DEFAULT NULL,
-        `destination_seq` varchar(15) DEFAULT NULL,
-        */
     }
 
     getReferHistory(db, columnName, searchNo, hospCode = hcode) {

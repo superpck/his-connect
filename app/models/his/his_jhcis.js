@@ -58,9 +58,15 @@ class HisJhcisModel {
             .select('expire as expire_date')
             .limit(maxLimit);
     }
-    getReferOut(db, date, hospCode = hcode) {
-        return db('visit')
-            .leftJoin('person', 'visit.pid', 'person.pid')
+    getReferOut(db, date, hospCode = hcode, visitNo = null) {
+        let sql = db('visit').leftJoin('person', 'visit.pid', 'person.pid');
+        if (visitNo) {
+            sql.where(`visit.visitno`, visitNo);
+        }
+        else {
+            sql.where('visit.visitdate', date);
+        }
+        return sql
             .select('visit.pcucode as HOSPCODE', 'visit.refertohos as HOSP_DESTINATION', 'visit.numberrefer as REFERID')
             .select(db.raw(`concat(visit.pcucode,'-',visit.numberrefer) as REFERID_PROVINCE`))
             .select('visit.pid as PID', 'person.idcard as CID', 'visit.visitno as SEQ', 'person.prename', 'person.fname', 'person.lname', 'person.birth as dob', 'person.sex', 'visit.symptoms as CHIEFCOMP', 'visit.vitalcheck as PI', 'visit.symptomsco as PH', 'visit.healthsuggest1 as PHYSICALEXAM', 'visit.diagnote as DIAGLAST', 'visit.receivefromhos as HOSPCODE_ORIGIN')
@@ -72,7 +78,6 @@ class HisJhcisModel {
             .select(db.raw(`'99' as PTYPEDIS`))
             .select(db.raw(`'1' as referout_type`))
             .select(db.raw(`concat(visit.visitdate,' ', visit.timeend) as D_UPDATE`))
-            .where('visit.visitdate', date)
             .whereRaw('!isnull(visit.numberrefer)')
             .whereRaw('!isnull(refertohos)')
             .orderBy('visit.visitdate')

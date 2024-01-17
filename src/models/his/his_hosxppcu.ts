@@ -12,7 +12,7 @@ export class HisHosxpPcuModel {
     testConnect(db: Knex) {
         return db('patient').select('hn').limit(1)
     }
-    
+
     getTableName(db: Knex, dbName = process.env.HIS_DB_NAME) {
         return db('information_schema.tables')
             .select('table_name')
@@ -45,7 +45,7 @@ export class HisHosxpPcuModel {
         }
         return sql
             .select('ward as ward_code', 'name as ward_name',
-            `'-' as moph_code`)
+                `'-' as moph_code`)
             .orderBy('name')
             .limit(maxLimit);
     }
@@ -66,7 +66,9 @@ export class HisHosxpPcuModel {
     }
 
     //select รายชื่อเพื่อแสดงทะเบียน refer
-    async getReferOut(db: Knex, date, hospCode = hcode) {
+    async getReferOut(db: Knex, date: any, hospCode = hcode, visitNo: string = null) {
+        const filter = visitNo ? visitNo : date;
+        const filterText = visitNo ? 'r.vn =?' : 'r.refer_date =?';
         const sql = `
             SELECT (SELECT hospitalcode FROM opdconfig ) AS hospcode,
                 concat(r.refer_date, ' ', r.refer_time) AS refer_date,
@@ -91,10 +93,11 @@ export class HisHosxpPcuModel {
                 left join an_stat on r.vn=an_stat.vn
                 left join opdscreen on r.vn=opdscreen.vn
             WHERE
-                r.refer_date = '${date}' and (r.refer_hospcode!='' or r.hospcode!='') and (!isnull(r.refer_hospcode) or !isnull(r.hospcode))
+                ${filterText} and r.vn is not null and r.refer_hospcode!='' and r.refer_hospcode is not null
+                and hcode!=r.refer_hospcode
             ORDER BY
                 r.refer_date`;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [filter]);
         return result[0];
     }
 
@@ -318,9 +321,9 @@ export class HisHosxpPcuModel {
         return result[0];
     }
     async getDiagnosisOpdAccident(db: Knex, dateStart: any, dateEnd: any, hospCode = hcode) {
-        if (dateStart & dateEnd){
+        if (dateStart & dateEnd) {
             return db('ovstdiag as dx')
-                .whereBetween('vstdate',[dateStart, dateEnd])
+                .whereBetween('vstdate', [dateStart, dateEnd])
                 .whereRaw(`left(icd10,1) in ('V','W','X','Y')`)
                 .limit(maxLimit);
         } else {
@@ -509,15 +512,15 @@ export class HisHosxpPcuModel {
         columnName = columnName === 'cid' ? 'patient.cid' : columnName;
 
         return db('lab_head')
-            .leftJoin('lab_order','lab_head.lab_order_number','lab_order.lab_order_number')
-            .leftJoin('lab_items','lab_order.lab_items_code','lab_items.lab_items_code')
-            .innerJoin('ovst','lab_head.vn','ovst.vn')
-            .innerJoin('patient','ovst.hn','patient.hn')
+            .leftJoin('lab_order', 'lab_head.lab_order_number', 'lab_order.lab_order_number')
+            .leftJoin('lab_items', 'lab_order.lab_items_code', 'lab_items.lab_items_code')
+            .innerJoin('ovst', 'lab_head.vn', 'ovst.vn')
+            .innerJoin('patient', 'ovst.hn', 'patient.hn')
             .select(db.raw(`'${hcode}' as HOSPCODE,'LAB' as INVESTTYPE`))
-            .select('lab_head.vn','lab_head.vn as visitno','lab_head.vn as SEQ',
-                'lab_head.hn as PID','patient.cid as CID',
+            .select('lab_head.vn', 'lab_head.vn as visitno', 'lab_head.vn as SEQ',
+                'lab_head.hn as PID', 'patient.cid as CID',
                 'lab_head.lab_order_number as request_id',
-                'lab_order.lab_items_code as LOCALCODE','lab_items.tmlt_code as tmlt',
+                'lab_order.lab_items_code as LOCALCODE', 'lab_items.tmlt_code as tmlt',
                 'lab_head.form_name as lab_group',
                 'lab_order.lab_items_name_ref as INVESTNAME',
                 'lab_order.lab_order_result as INVESTVALUE',
@@ -876,10 +879,10 @@ export class HisHosxpPcuModel {
         return result[0];
     }
     async getDiagnosisIpdAccident(db: Knex, dateStart: any, dateEnd: any, hospCode = hcode) {
-        if (dateStart & dateEnd){
+        if (dateStart & dateEnd) {
             return db('iptdiag as dx')
-                .innerJoin('ipt as ipd','dx.an','ipd.an')
-                .whereBetween('ipd.dchdate',[dateStart, dateEnd])
+                .innerJoin('ipt as ipd', 'dx.an', 'ipd.an')
+                .whereBetween('ipd.dchdate', [dateStart, dateEnd])
                 .whereRaw(`LEFT(dx.icd10,1) IN ('V','W','X','Y')`)
                 .limit(maxLimit);
         } else {
@@ -1123,13 +1126,13 @@ export class HisHosxpPcuModel {
 
     async getDrugAllergy(db: Knex, hn, hospCode = hcode) {
         return db('opd_allergy as oe')
-            .leftJoin('drugitems_register as di', 'oe.agent','di.drugname')
-            .leftJoin('patient', 'oe.hn','patient.hn')
-            .leftJoin('person', 'oe.hn','person.patient_hn')
+            .leftJoin('drugitems_register as di', 'oe.agent', 'di.drugname')
+            .leftJoin('patient', 'oe.hn', 'patient.hn')
+            .leftJoin('person', 'oe.hn', 'person.patient_hn')
             .select(db.raw('(select distinct opdconfig.hospitalcode from opdconfig) as HOSPCODE'))
-            .select('patient.hn as PID', 'patient.cid as CID','di.std_code as DRUGALLERGY',
-                'oe.agent as DNAME','oe.seriousness_id as ALEVE',
-                'oe.symptom as DETAIL','oe.opd_allergy_source_id as INFORMANT')
+            .select('patient.hn as PID', 'patient.cid as CID', 'di.std_code as DRUGALLERGY',
+                'oe.agent as DNAME', 'oe.seriousness_id as ALEVE',
+                'oe.symptom as DETAIL', 'oe.opd_allergy_source_id as INFORMANT')
             .select(db.raw(`if(oe.report_date is null 
                     or trim(oe.report_date)=' ' 
                     or oe.report_date like '0000-00-00%',
@@ -1143,7 +1146,7 @@ export class HisHosxpPcuModel {
             .select(db.raw(`if(oe.update_datetime is null or trim(oe.update_datetime) = '' 
                 or oe.update_datetime like '0000-00-00%', '', 
                 date_format(oe.update_datetime,'%Y-%m-%d %H:%i:%s')) as D_UPDATE`))
-            .where('oe.hn',hn)
+            .where('oe.hn', hn)
     }
 
     getAppointment(db, visitNo, hospCode = hcode) {
@@ -1290,14 +1293,14 @@ export class HisHosxpPcuModel {
     getReferResult(db: Knex, visitDate: string, hospCode = hcode) {
         visitDate = moment(visitDate).format('YYYY-MM-DD');
         return db('referin')
-            .leftJoin('patient','referin.hn','patient.hn')
-            .leftJoin('ovst','referin.vn','ovst.vn')
-            .leftJoin('refer_reply','referin.vn','refer_reply.vn')
+            .leftJoin('patient', 'referin.hn', 'patient.hn')
+            .leftJoin('ovst', 'referin.vn', 'ovst.vn')
+            .leftJoin('refer_reply', 'referin.vn', 'refer_reply.vn')
             .select(db.raw(`'${hcode}' as HOSPCODE`))
             .select('referin.refer_hospcode as HOSP_SOURCE',
                 'patient.cid as CID_IN',
-                'referin.hn as PID_IN','referin.vn as SEQ_IN','referin.docno as REFERID',
-                'referin.refer_date as DATETIME_REFER','referin.icd10 as detail',
+                'referin.hn as PID_IN', 'referin.vn as SEQ_IN', 'referin.docno as REFERID',
+                'referin.refer_date as DATETIME_REFER', 'referin.icd10 as detail',
                 'refer_reply.diagnosis_text as reply_diagnostic',
                 'refer_reply.advice_text as reply_recommend')
             .select(db.raw(`case when referin.referin_number then referin.referin_number else concat('${hcode}-',referin.docno) end as REFERID_SOURCE`))

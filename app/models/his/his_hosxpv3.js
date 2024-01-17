@@ -57,7 +57,9 @@ class HisHosxpv3Model {
             .whereRaw(`LEFT(licenseno,1) IN ('ว','ท')`)
             .limit(maxLimit);
     }
-    async getReferOut(db, date, hospCode = hcode) {
+    async getReferOut(db, date, hospCode = hcode, visitNo = null) {
+        const filter = visitNo ? visitNo : date;
+        const filterText = visitNo ? 'r.vn =?' : 'r.refer_date =?';
         const sql = `
         SELECT (SELECT hospitalcode FROM opdconfig ) AS hospcode,
             concat(r.refer_date, ' ', r.refer_time) AS refer_date,
@@ -82,10 +84,11 @@ class HisHosxpv3Model {
             left join an_stat on r.vn=an_stat.vn
             left join opdscreen on r.vn=opdscreen.vn
         WHERE
-            r.refer_date = '${date}' and (r.refer_hospcode!='' or r.hospcode!='') and (!isnull(r.refer_hospcode) or !isnull(r.hospcode))
+            ${filterText} and r.vn is not null and r.refer_hospcode!='' and r.refer_hospcode is not null
+            and hcode!=r.refer_hospcode
         ORDER BY
             r.refer_date`;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [filter]);
         return result[0];
     }
     async getPerson(db, columnName, searchText, hospCode = hcode) {

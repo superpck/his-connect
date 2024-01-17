@@ -80,7 +80,8 @@ export class HisEzhospModel {
     }
 
     // select รายชื่อเพื่อแสดงทะเบียน
-    getReferOut(db: Knex, date, hospCode = hcode, visitNo = null) {
+    //getReferOut(db: Knex, date, hospCode = hcode, visitNo = null) {
+    getReferOut(db: Knex, date: any, hospCode = hcode, visitNo: string = null) {
         let sql = db('hospdata.refer_out as refer')
             .leftJoin('hospdata.opd_visit as visit', 'refer.vn', 'visit.vn')
             .leftJoin('hospdata.patient as pt', 'visit.hn', 'pt.hn')
@@ -97,15 +98,11 @@ export class HisEzhospModel {
             .select(db.raw('case when isnull(refer.history_ill) OR refer.history_ill="" then vs.nurse_ph else refer.history_ill end as PH'))
             .select(db.raw('case when isnull(refer.history_exam) or refer.history_exam="" then vs.pe else refer.history_exam end as PE'))
             .select(db.raw('case when isnull(refer.current_ill)or refer.current_ill="" then vs.cc else refer.current_ill end as CHIEFCOMP'))
-            .where('refer.hcode', hospCode)
-            ;
+            .where('refer.hcode', hospCode);
         if (visitNo) {
             sql.where(`refer.vn`, visitNo);
         } else {
-            // sql.where(`refer.refer_date`, date);
-            let dateStart = `${date} ? 00:00:00`;
-            let dateEnd = `${date} ? 23:59:59`;
-            sql.whereRaw(`(refer.refer_date=? OR refer.lastupdate BETWEEN ? and ?)`,[visitNo,dateStart,dateEnd]);
+            sql.where('refer.refer_date', date);
         }
         return sql
             .orderBy('refer.refer_date')
@@ -132,7 +129,7 @@ export class HisEzhospModel {
     getAddress(db: Knex, columnName, searchNo, hospCode = hcode) {
         columnName = columnName === 'cid' ? 'CID' : columnName;
         return db('view_address_hdc')
-            .select('HOSPCODE',`PID`, `ADDRESSTYPE`, `HOUSE_ID`, `HOUSETYPE`,
+            .select('HOSPCODE', `PID`, `ADDRESSTYPE`, `HOUSE_ID`, `HOUSETYPE`,
                 `ROOMNO`, `CONDO`, `HOUSENO`, `SOISUB`,
                 `SOIMAIN`, `ROAD`, `VILLANAME`, `VILLAGE`,
                 `TAMBON`, `AMPUR`, `CHANGWAT`, `TELEPHONE`,
@@ -173,9 +170,9 @@ export class HisEzhospModel {
             .limit(maxLimit);
     }
     getDiagnosisOpdAccident(db: Knex, dateStart: any, dateEnd: any, hospCode = hcode) {
-        if (dateStart & dateEnd){
+        if (dateStart & dateEnd) {
             return db('view_opd_dx as dx')
-                .whereBetween('date',[dateStart, dateEnd])
+                .whereBetween('date', [dateStart, dateEnd])
                 .whereRaw(`LEFT(diag,1) IN ('V','W','X','Y')`)
                 .limit(maxLimit);
         } else {
@@ -346,11 +343,11 @@ export class HisEzhospModel {
             .limit(maxLimit);
     }
     getDiagnosisIpdAccident(db: Knex, dateStart: any, dateEnd: any, hospCode = hcode) {
-        if (dateStart & dateEnd){
+        if (dateStart & dateEnd) {
             return db('view_ipd_dx as dx')
-                .whereBetween('admite',[dateStart, dateEnd])
+                .whereBetween('admite', [dateStart, dateEnd])
                 .whereRaw(`LEFT(dx,1) IN ('V','W','X','Y')`)
-                .orderBy(['disc','timedisc'])
+                .orderBy(['disc', 'timedisc'])
                 .limit(maxLimit);
         } else {
             throw new Error('Invalid parameters');
@@ -448,7 +445,7 @@ export class HisEzhospModel {
             WHERE refer.hcode=? and ${columnName}=?
             limit ?;
         `;
-        const result = await db.raw(sql,[hospCode,hospCode,hospCode,searchNo, maxLimit]);
+        const result = await db.raw(sql, [hospCode, hospCode, hospCode, searchNo, maxLimit]);
         return result[0];
     }
 

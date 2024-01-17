@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const moment = require("moment");
-const HttpStatus = require("http-status-codes");
+const http_status_codes_1 = require("http-status-codes");
 let shell = require("shelljs");
 var crypto = require('crypto');
 var fs = require('fs');
@@ -35,27 +35,47 @@ const router = (fastify, {}, next) => {
             his: process.env.HIS_PROVIDER
         });
     });
+    fastify.get('/create-token/:source/:key', async (req, reply) => {
+        const ip = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;
+        const source = req.params.source || '';
+        const key = req.params.key || '';
+        const trust = req.headers.host.search('localhost|127.0.0.1|192.168.0.89') > -1 || ip === '203.157.103.176';
+        if (trust) {
+            const token = fastify.jwt.sign({
+                uid: 0,
+                api: 'his-connect', source
+            }, { expiresIn: '4h' });
+            reply.send({
+                statusCode: 200,
+                token, key
+            });
+        }
+        else {
+            reply.send({ ok: false, message: `request unreliable.` });
+        }
+    });
     fastify.get('/get-token/:key', async (req, reply) => {
+        const ip = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;
+        const source = req.params.source || '';
         const key = req.params.key;
-        const trust = req.headers.host.search('localhost|127.0.0.1|192.168.0.89') > -1;
+        const trust = req.headers.host.search('localhost|127.0.0.1|192.168.0.89') > -1 || ip === '203.157.103.176';
         if (trust) {
             const now = moment().locale('th').format('YYYYMMDDTHHmmss');
             var appkey = crypto.createHash('sha256').update(now + process.env.REQUEST_KEY).digest('hex');
             var skey = crypto.createHash('md5').update(now + key).digest('hex');
             const token = fastify.jwt.sign({
                 uid: 0,
-                api: 'his-connect'
-            }, { expiresIn: '3h' });
+                api: 'his-connect', source
+            }, { expiresIn: '4h' });
             reply.send({
                 statusCode: 200,
-                message: 'test generation',
-                token: token,
+                token,
                 key: now + appkey,
                 secret_key: skey.substr(1, 10)
             });
         }
         else {
-            reply.send({ ok: false, message: 'request unreliable.' });
+            reply.send({ ok: false, message: `request unreliable.` });
         }
     });
     fastify.get('/sign-token/:requestKey', async (req, reply) => {
@@ -65,15 +85,15 @@ const router = (fastify, {}, next) => {
             const token = fastify.jwt.sign({
                 api: 'his-connect'
             }, { expiresIn: '3h' });
-            reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, token: token });
+            reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, token: token });
         }
         else {
-            reply.status(HttpStatus.UNAUTHORIZED).send({ statusCode: HttpStatus.UNAUTHORIZED, message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED) });
+            reply.status(http_status_codes_1.StatusCodes.UNAUTHORIZED).send({ statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED) });
         }
     });
     fastify.get('/env', { preHandler: [fastify.authenticate] }, async (req, reply) => {
-        reply.status(HttpStatus.OK).send({
-            statusCode: HttpStatus.OK,
+        reply.status(http_status_codes_1.StatusCodes.OK).send({
+            statusCode: http_status_codes_1.StatusCodes.OK,
             env: {
                 hospcode: process.env.HOSPCODE,
                 apiPort: process.env.PORT,
@@ -109,10 +129,10 @@ const router = (fastify, {}, next) => {
             && requestKey === hashRequestKey
             && ((+status === 15 && +province === 0)
                 || ((+status === 25 || +status === 35) && +province === 1))) {
-            reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, config: process.env });
+            reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, config: process.env });
         }
         else {
-            reply.status(HttpStatus.UNAUTHORIZED).send({ statusCode: HttpStatus.UNAUTHORIZED, message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED) });
+            reply.status(http_status_codes_1.StatusCodes.UNAUTHORIZED).send({ statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED) });
         }
     });
     fastify.post('/save-config/:requestKey', { preHandler: [fastify.authenticate] }, async (req, reply) => {
@@ -135,19 +155,19 @@ const router = (fastify, {}, next) => {
                 reloadPM2(body.api)
                     .then(resultRestartPm2 => {
                     console.log('====> resultRestartPM2', resultRestartPm2, moment().locale('th').format('HH:mm:ss.SS'));
-                    reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, message: resultRestartPm2 });
+                    reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, message: resultRestartPm2 });
                 })
                     .catch(err => {
                     console.log('====> resultRestartPM2', err, moment().locale('th').format('HH:mm:ss.SS'));
-                    reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, message: err });
+                    reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, message: err });
                 });
             }
             else {
-                reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK });
+                reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK });
             }
         }
         else {
-            reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.UNAUTHORIZED, message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED) });
+            reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED) });
         }
     });
     fastify.get('/status', async (req, reply) => {
@@ -235,16 +255,16 @@ const router = (fastify, {}, next) => {
     fastify.get('/autosent-result', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         try {
             var contents = fs.readFileSync(resultText);
-            reply.status(HttpStatus.OK).send({
-                statusCode: HttpStatus.OK,
+            reply.status(http_status_codes_1.StatusCodes.OK).send({
+                statusCode: http_status_codes_1.StatusCodes.OK,
                 is_set: process.env.NREFER_AUTO_SEND,
                 time: process.env.NREFER_CRON_SEND,
                 message: contents.toString()
             });
         }
         catch (error) {
-            reply.status(HttpStatus.NO_CONTENT).send({
-                statusCode: HttpStatus.NO_CONTENT,
+            reply.status(http_status_codes_1.StatusCodes.NO_CONTENT).send({
+                statusCode: http_status_codes_1.StatusCodes.NO_CONTENT,
                 message: error.message
             });
         }
