@@ -8,7 +8,7 @@ const jwt_1 = require("./../../plugins/jwt");
 var jwt = new jwt_1.Jwt();
 const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb',
     'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades',
-    'himpro', 'nemo', 'mypcu', 'emrsoft other'];
+    'himpro', 'nemo', 'mypcu', 'emrsoft', 'other'];
 const router = (fastify, {}, next) => {
     fastify.get('/', async (req, reply) => {
         const decode = await decodeToken(req);

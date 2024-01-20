@@ -86,7 +86,7 @@ switch (provider) {
 }
 const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb',
     'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades',
-    'himpro', 'nemo', 'mypcu', 'emrsoft other'];
+    'himpro', 'nemo', 'mypcu', 'emrsoft', 'other'];
 const router = (fastify, {}, next) => {
     fastify.get('/alive', async (req, res) => {
         try {
