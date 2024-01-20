@@ -55,8 +55,9 @@ const router = (fastify, {}, next) => {
         const now = moment().locale('th').format('YYYY-MM-DD');
         const date = req.body.date || now;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
+        const visitNo = req.body.visitNo || null;
         try {
-            const result = await hismodel_1.default.getReferOut(global.dbHIS, date, hospcode);
+            const result = await hismodel_1.default.getReferOut(global.dbHIS, date, hospcode, visitNo);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows: result });
         }
         catch (error) {

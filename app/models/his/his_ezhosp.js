@@ -90,9 +90,7 @@ class HisEzhospModel {
             sql.where(`refer.vn`, visitNo);
         }
         else {
-            let dateStart = `${date} ? 00:00:00`;
-            let dateEnd = `${date} ? 23:59:59`;
-            sql.whereRaw(`(refer.refer_date=? OR refer.lastupdate BETWEEN ? and ?)`, [visitNo, dateStart, dateEnd]);
+            sql.where('refer.refer_date', date);
         }
         return sql
             .orderBy('refer.refer_date')

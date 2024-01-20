@@ -66,7 +66,10 @@ export class HisHosxpv4Model {
     }
 
     //select รายชื่อเพื่อแสดงทะเบียน refer
-    async getReferOut(db: Knex, date, hospCode = hcode) {
+    async getReferOut(db: Knex, date: any, hospCode = hcode, visitNo: string = null) {
+        const filter = visitNo ? visitNo : date;
+        const filterText = visitNo ? 'r.vn =?' : 'r.refer_date =?';
+
         const sql = `
             SELECT (SELECT hospitalcode FROM opdconfig ) AS hospcode,
                 concat(r.refer_date, ' ', r.refer_time) AS refer_date,
@@ -91,10 +94,11 @@ export class HisHosxpv4Model {
                 left join an_stat on r.vn=an_stat.vn
                 left join opdscreen on r.vn=opdscreen.vn
             WHERE
-                r.refer_date =? and r.vn is not null and r.refer_hospcode!='' and !isnull(r.refer_hospcode)
+                ${filterText} and r.vn is not null and r.refer_hospcode!='' and r.refer_hospcode is not null
+                and hcode!=r.refer_hospcode
             ORDER BY
                 r.refer_date`;
-        const result = await db.raw(sql,[date]);
+        const result = await db.raw(sql,[filter]);
         return result[0];
     }
 
