@@ -25,7 +25,7 @@ export class HisJhcisModel {
         return knex('person')
             .leftJoin('ctitle', 'person.prename', 'ctitle.titlecode')
             .select('pid as hn', 'idcard as cid', 'prename', 'ctitle.titlename',
-                'fname', 'lname',
+                'fname', 'lname', 'person.nation',
                 'birth as dob', 'sex', 'hnomoi as address', 'mumoi as moo',
                 'roadmoi as road', 'provcodemoi as province',
                 'distcodemoi as district', 'subdistcodemoi as subdistrict',
