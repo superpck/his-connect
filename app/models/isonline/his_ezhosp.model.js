@@ -24,8 +24,8 @@ class HisEzhospModel {
     }
     getPerson(knex, columnName, searchText) {
         columnName = columnName === 'cid' ? 'no_card' : columnName;
-        return knex('hospdata.patient')
-            .select('hn', 'no_card as cid', 'title as prename', 'name as fname', 'middlename as mname', 'surname as lname', 'birth as dob', 'sex', 'address', 'moo', 'road', 'soi', 'add as addcode', 'tel', 'zip', 'occupa as occupation')
+        return knex('hospdata.view_patient')
+            .select('no_card as cid', 'hn as pid', 'title as prename', 'name', 'name as fname', 'surname as lname', 'hn', 'birth', 'birth as dob', 'sex', 'marry_std as mstatus', 'blood as abogroup', 'address', 'moo', 'road', 'soi', 'add as addcode', 'tel', 'zip', 'occ_std as occupation', 'religion_std as religion', 'nation_std as nation', 'religion_std as religion', 'edu_std as education', 'tel as telephone', 'lastupdate as d_update')
             .where(columnName, "=", searchText);
     }
     getOpdService(db, hn, date, columnName = '', searchText = '') {
