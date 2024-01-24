@@ -17,10 +17,12 @@ export class HisHosxpv4Model {
 
     getPerson(db: Knex, columnName, searchText) {
         return db('patient')
+            .leftJoin('nationality as nt1','patient.nationality','nt1.nationality')
             .select('patient.hn', 'patient.cid', 'patient.pname as prename',
-                'patient.fname', 'patient.lname', 'patient.occupation as occupa',
+                'patient.fname', 'patient.lname', 'patient.occupation as occupa','patient.nationality',
                 'patient.birthday as dob', 'patient.sex', 'patient.moopart as moo', 'patient.road',
                 'patient.addrpart as address', 'patient.hometel as tel', 'patient.po_code as zip',
+                db.raw('ifnull(nt1.nhso_code,"099") as NATION'),
                 'occupation.nhso_code as occupation')
             .select(db.raw('CONCAT(chwpart,amppart,tmbpart) as addcode'))
             .leftJoin(`occupation`, 'occupation.occupation', 'patient.occupation')
