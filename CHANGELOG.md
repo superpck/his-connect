@@ -1,8 +1,11 @@
+# 3.5.2
+## Feature
+  - IS: เพิ่ม Nation ใน getPerson จาก iHospital, JHCIS และ HOSxP
+
 # 3.5.1
 ## Feature
   - Get refer out ด้วย VisitNo
   - เพิ่ม emrsoft ใน index.ts และ his.ts
-  - IS: เพิ่ม Nation ใน getPerson จาก iHospital, JHCIS และ HOSxP
 
 # 3.5.0
 ## Feature
