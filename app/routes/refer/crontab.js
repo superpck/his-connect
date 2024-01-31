@@ -748,7 +748,7 @@ async function referSending(path, dataArray) {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Authorization': 'Bearer ' + nReferToken,
-            'Source-Agent': 'HISConnect-' + apiVersion + '-' + subVersion + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+            'Source-Agent': 'HISConnect-' + (apiVersion || 'x') + '-' + (subVersion || 'x') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
             'Content-Length': Buffer.byteLength(qs.stringify(data))
         },
         data: qs.stringify(data)
