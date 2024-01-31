@@ -8,6 +8,8 @@ var querystring = require('querystring');
 var iswin = new iswin_1.IswinModel();
 let crontabConfig;
 let ip = fastify.ipAddr || '127.0.0.1';
+let apiVersion = global.appDetail.version;
+let subVersion = global.appDetail.subVersion;
 async function sendMoph(req, reply, db) {
     let token = null;
     let result = await getIsToken();
@@ -205,6 +207,7 @@ async function getNReferToken(apiKey, secretKey) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
+            'Source-Agent': 'HISConnect-' + apiVersion + '-' + subVersion + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
             'Content-Length': Buffer.byteLength(postData)
         }
     };

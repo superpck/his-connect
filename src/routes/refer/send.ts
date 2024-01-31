@@ -5,6 +5,8 @@ import * as moment from 'moment';
 var http = require('http');
 var querystring = require('querystring');
 const request = require('request');
+let apiVersion: string = global.appDetail.version;
+let subVersion: string = global.appDetail.subVersion;
 
 const router = (fastify, { }, next) => {
   fastify.get('/sending-process/:?date', async (req: any, reply: any) => {
@@ -188,6 +190,7 @@ async function getToken(apiKey, secretKey) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
+      'Source-Agent': 'HISConnect-'+apiVersion+'-'+subVersion+'-'+moment().format('x')+'-'+Math.random().toString(36).substring(2,10),
       'Content-Length': Buffer.byteLength(postData)
     }
   };
