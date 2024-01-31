@@ -32,7 +32,6 @@
   - เพิ่มการใช้รหัสห้องตรวจ, ตึกผู้ป่วย และรหัสแพทย์ ตาม local code
   - เปลี่ยนจาก config.default เป็น config.example
   - Remove used route
-  - HOSxP, iHospital: Get nation, occupation
 
 # 3.3.5
 ## Feature
