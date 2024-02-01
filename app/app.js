@@ -10,7 +10,6 @@ const serveStatic = require('serve-static');
 var crypto = require('crypto');
 require('dotenv').config({ path: path.join(__dirname, '../config') });
 const helmet = require("@fastify/helmet");
-const { name, version, subVersion } = require('./../package.json');
 var serverOption = {};
 if (process.env.SSL_ENABLE && process.env.SSL_ENABLE == '1' && process.env.SSL_KEY) {
     serverOption = {
@@ -34,6 +33,7 @@ else {
     };
 }
 const app = (0, fastify_1.default)(serverOption);
+const { name, version, subVersion } = require('./../package.json');
 global.appDetail = { name, subVersion, version };
 app.register(require('@fastify/formbody'));
 app.register(require('@fastify/cors'), {});

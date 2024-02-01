@@ -1,3 +1,7 @@
+# 3.6.0
+## Feature
+  - เพิ่มความปลอดภัยโดยการส่งค่า HIS Name และ API version
+
 # 3.5.2
 ## Feature
   - IS: เพิ่ม Nation ใน getPerson จาก iHospital, JHCIS และ HOSxP
