@@ -11,7 +11,6 @@ var crypto = require('crypto');
 require('dotenv').config({ path: path.join(__dirname, '../config') });
 
 import helmet = require('@fastify/helmet');
-const { name, version, subVersion } = require('./../package.json');
 
 // const fastifySession = require('fastify-session');
 // const fastifyCookie = require('@fastify/cookie');
@@ -41,6 +40,7 @@ if (process.env.SSL_ENABLE && process.env.SSL_ENABLE == '1' && process.env.SSL_K
 }
 const app = fastify(serverOption);
 
+const { name, version, subVersion } = require('./../package.json');
 global.appDetail = { name, subVersion, version };
 
 app.register(require('@fastify/formbody'));

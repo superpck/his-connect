@@ -207,7 +207,7 @@ async function getNReferToken(apiKey, secretKey) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            'Source-Agent': 'HISConnect-' + apiVersion + '-' + subVersion + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+            'Source-Agent': 'HISConnect-' + apiVersion + '-' + subVersion + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
             'Content-Length': Buffer.byteLength(postData)
         }
     };

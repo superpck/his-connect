@@ -790,7 +790,7 @@ async function referSending(path, dataArray) {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Authorization': 'Bearer ' + nReferToken,
-      'Source-Agent': 'HISConnect-'+(apiVersion || 'x')+'-'+(subVersion || 'x')+'-'+moment().format('x')+'-'+Math.random().toString(36).substring(2,10),
+      'Source-Agent': 'HISConnect-'+(apiVersion || 'x')+'-'+(subVersion || 'x')+'-'+(process.env.HOSPCODE || 'hosp')+'-'+moment().format('x')+'-'+Math.random().toString(36).substring(2,10),
       'Content-Length': Buffer.byteLength(qs.stringify(data))
     },
     data: qs.stringify(data)
@@ -816,7 +816,7 @@ async function getNReferToken(apiKey: string, secretKey: string) {
   };
   const headers = {
     'Content-Type': 'application/x-www-form-urlencoded',
-    'Source-Agent': 'HISConnect-'+apiVersion+'-'+subVersion+'-'+moment().format('x')+'-'+Math.random().toString(36).substring(2,10),
+    'Source-Agent': 'HISConnect-'+apiVersion+'-'+subVersion+'-'+(process.env.HOSPCODE || 'hosp')+'-'+moment().format('x')+'-'+Math.random().toString(36).substring(2,10),
     'Content-Length': Buffer.byteLength(querystring.stringify(data))
   };
 
@@ -863,7 +863,7 @@ async function getNReferToken__(apiKey, secretKey) {
     port: mophUrl[0] == 'https' ? 443 : 80,
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'Source-Agent': 'HISConnect-'+apiVersion+'-'+subVersion+'-'+moment().format('x')+'-'+Math.random().toString(36).substring(2,10),
+      'Source-Agent': 'HISConnect-'+apiVersion+'-'+subVersion+'-'+(process.env.HOSPCODE || 'hosp')+'-'+moment().format('x')+'-'+Math.random().toString(36).substring(2,10),
       'Content-Length': Buffer.byteLength(postData)
     }
   };
