@@ -43,7 +43,7 @@ export default async function cronjob(fastify: FastifyInstance) {
 
     // ตรวจสอบการ start ด้วยเวลาที่กำหนด (ทุกๆ 1 นาที)
     const minuteSinceLastNight = (+moment().get('hour')) * 60 + (+moment().get('minute'));
-    console.log(moment().format('HH:mm:ss')," Start API for Hospcode", process.env.HOSPCODE);
+    console.log(moment().format('HH:mm:ss'), " Start API for Hospcode", process.env.HOSPCODE);
     console.log('crontab start: ', timingSch, 'minuteSinceLastNight', minuteSinceLastNight);
     if (timingSchedule['nrefer'].autosend) {
         console.log('crontab nRefer start every', timingSchedule['nrefer'].minute, ' (minute) from midnight.');
@@ -102,13 +102,13 @@ export default async function cronjob(fastify: FastifyInstance) {
     }
 
     async function getFirstProcessPid() {
-        var jlist: any = await shell.exec('pm2 jlist');
+        var jlist: any = await shell.exec('pm2 jlist', { silent: true });
         let pm2Process = jlist && jlist !== '' ? JSON.parse(jlist) : [];
 
         let processList = [];
         for (let p of pm2Process) {
             if (p.name == process.env.PM2_NAME) {
-                await processList.push(p);
+                processList.push(p);
             }
         }
 

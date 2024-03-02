@@ -105,7 +105,7 @@ app.addHook('preHandler', async (request, reply) => {
     var geo = geoip.lookup(ip);
     if (geo && geo.country && geo.country != 'TH') {
         console.log(`Unacceptable country: ${geo.country}`);
-        reply.status(http_status_codes_1.StatusCodes.NOT_ACCEPTABLE).send(http_status_codes_1.StatusCodes.NOT_ACCEPTABLE);
+        reply.send({ status: http_status_codes_1.StatusCodes.NOT_ACCEPTABLE, ok: false, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.NOT_ACCEPTABLE) });
     }
     console.log(moment().format('HH:mm:ss'), geo ? geo.country : 'unk', ip, request.url);
 });
