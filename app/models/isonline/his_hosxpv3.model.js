@@ -16,7 +16,7 @@ class HisHosxpv3Model {
         return db('patient')
             .leftJoin('nationality as nt1', 'patient.nationality', 'nt1.nationality')
             .leftJoin(`occupation`, 'occupation.occupation', 'patient.occupation')
-            .select('patient.hn', 'patient.cid', 'patient.pname as prename', 'patient.fname', 'patient.lname', 'patient.occupation as occupa', db.raw(`ifnull(occupation.nhso_code,'9999') as occupation`), 'patient.nationality', 'patient.birthday as dob', 'patient.sex', 'patient.moopart as moo', 'patient.road', 'patient.addrpart as address', 'patient.hometel as tel', 'patient.po_code as zip', db.raw('ifnull(nt1.nhso_code,"099") as nation'))
+            .select('patient.hn', 'patient.cid', 'patient.pname as prename', 'patient.fname', 'patient.lname', 'patient.occupation as occupa', db.raw(`ifnull(occupation.nhso_code,"9999") as occupation`), 'patient.nationality', 'patient.birthday as dob', 'patient.sex', 'patient.moopart as moo', 'patient.road', 'patient.addrpart as address', 'patient.hometel as tel', 'patient.po_code as zip', db.raw('ifnull(nt1.nhso_code,"099") as nation'))
             .select(db.raw('CONCAT(chwpart,amppart,tmbpart) as addcode'))
             .where(columnName, "=", searchText);
     }

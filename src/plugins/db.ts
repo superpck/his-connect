@@ -51,9 +51,19 @@ const dbConnection = (type = 'HIS') => {
   // let option: any = options[type];
 
   const config: any = options[type];
-  const connection = config.connection;
+  const connection: any = config.connection;
   let opt: any = {};
   if (['mssql'].includes(config.client)) {
+    let options = {
+      encrypt: connection.encrypt,
+      trustServerCertificate: false
+    }
+    if (connection.port){
+      options['port'] = +connection.port;
+    }
+    if (connection.schema){
+      options['schema'] = +connection.schema;
+    }
     opt = {
       client: config.client,
       connection: {
@@ -61,11 +71,7 @@ const dbConnection = (type = 'HIS') => {
         user: connection.user,
         password: connection.password,
         database: connection.database,
-        encrypt: connection.encrypt,
-        options: {
-          port: +connection.port,
-          schema: connection.schema
-        }
+        options
       }
     };
   } if (config.client == 'oracledb') {
