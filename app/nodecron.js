@@ -83,12 +83,12 @@ async function cronjob(fastify) {
         }
     }
     async function getFirstProcessPid() {
-        var jlist = await shell.exec('pm2 jlist');
+        var jlist = await shell.exec('pm2 jlist', { silent: true });
         let pm2Process = jlist && jlist !== '' ? JSON.parse(jlist) : [];
         let processList = [];
         for (let p of pm2Process) {
             if (p.name == process.env.PM2_NAME) {
-                await processList.push(p);
+                processList.push(p);
             }
         }
         if (processList.length) {
