@@ -11,7 +11,7 @@ var options = {
       database: process.env.HIS_DB_NAME,
       port: process.env.HIS_DB_PORT || null,
       charset: process.env.HIS_DB_CHARSET || 'utf8',
-      schema: process.env.HIS_DB_SCHEMA || 'public',
+      schema: process.env.HIS_DB_SCHEMA || null,
       encrypt: process.env.HIS_DB_ENCRYPT || true,
       timezone
     }
@@ -56,6 +56,7 @@ const dbConnection = (type = 'HIS') => {
   if (['mssql'].includes(config.client)) {
     let options = {
       encrypt: connection.encrypt,
+      trustedConnection: true,
       trustServerCertificate: false
     }
     if (connection.port){
