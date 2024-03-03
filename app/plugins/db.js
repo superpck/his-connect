@@ -10,7 +10,7 @@ var options = {
             user: process.env.HIS_DB_USER,
             password: process.env.HIS_DB_PASSWORD,
             database: process.env.HIS_DB_NAME,
-            port: +process.env.HIS_DB_PORT || 3306,
+            port: process.env.HIS_DB_PORT || null,
             charset: process.env.HIS_DB_CHARSET || 'utf8',
             schema: process.env.HIS_DB_SCHEMA || 'public',
             encrypt: process.env.HIS_DB_ENCRYPT || true,
