@@ -10,7 +10,7 @@ var options = {
             user: process.env.HIS_DB_USER,
             password: process.env.HIS_DB_PASSWORD,
             database: process.env.HIS_DB_NAME,
-            port: process.env.HIS_DB_PORT || null,
+            port: +process.env.HIS_DB_PORT || 3306,
             charset: process.env.HIS_DB_CHARSET || 'utf8',
             schema: process.env.HIS_DB_SCHEMA || 'public',
             encrypt: process.env.HIS_DB_ENCRYPT || true,
@@ -52,16 +52,6 @@ const dbConnection = (type = 'HIS') => {
     const connection = config.connection;
     let opt = {};
     if (['mssql'].includes(config.client)) {
-        let options = {
-            encrypt: connection.encrypt,
-            trustServerCertificate: false
-        };
-        if (connection.port) {
-            options['port'] = +connection.port;
-        }
-        if (connection.schema) {
-            options['schema'] = +connection.schema;
-        }
         opt = {
             client: config.client,
             connection: {
@@ -69,7 +59,11 @@ const dbConnection = (type = 'HIS') => {
                 user: connection.user,
                 password: connection.password,
                 database: connection.database,
-                options
+                encrypt: connection.encrypt,
+                options: {
+                    port: +connection.port,
+                    schema: connection.schema
+                }
             }
         };
     }
