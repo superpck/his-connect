@@ -120,11 +120,11 @@ export class HisHosxpv3Model {
             ,p.birthday as BIRTH
             ,if(p.marrystatus in (1,2,3,4,5,6),p.marrystatus,'9') as MSTATUS
             ,if(person.person_house_position_id=1,'1','2') FSTATUS
-            ,ifnull(o.occupation,'000') as OCCUPATION_OLD
-            ,ifnull(o.nhso_code,'9999') as OCCUPATION_NEW
-            ,ifnull(nt0.nhso_code,'099') as RACE
-            ,ifnull(nt1.nhso_code,'099') as NATION
-            ,ifnull(p.religion,'01') as RELIGION
+            ,CASE WHEN o.occupation IS NULL THEN '000' ELSE o.occupation END AS OCCUPATION_OLD
+            ,CASE WHEN o.nhso_code IS NULL THEN '9999' ELSE o.nhso_code END AS OCCUPATION_NEW
+            ,CASE WHEN nt0.nhso_code IS NULL THEN '099' ELSE nt0.nhso_code END AS RACE
+            ,CASE WHEN nt1.nhso_code IS NULL THEN '099' ELSE nt1.nhso_code END AS NATION
+            ,CASE WHEN p.religion IS NULL THEN '01' ELSE p.religion END AS RELIGION
             ,if(e.provis_code is null,'9',e.provis_code) as EDUCATION
             ,p.father_cid as FATHER
             ,p.mother_cid as MOTHER
@@ -138,7 +138,7 @@ export class HisHosxpv3Model {
                 else '5' 
             end) VSTATUS
             ,person.movein_date MOVEIN
-            ,ifnull(person.person_discharge_id,'9') DISCHARGE
+            ,CASE WHEN person.person_discharge_id IS NULL THEN '9' ELSE person.person_discharge_id END AS DISCHARGE
             ,person.discharge_date DDISCHARGE
             ,case 
                 when @blood='A' then '1'
@@ -177,7 +177,7 @@ export class HisHosxpv3Model {
                 pt.cid,
                 pt.hn, pt.hn as pid,
                 IF (p.house_regist_type_id IN (1, 2),'1','2') addresstype,
-                ifnull(h.census_id,'') house_id,
+                CASE WHEN h.census_id IS NULL THEN '' ELSE h.census_id END AS house_id,
                 IF(p.house_regist_type_id IN (4),'9',h.house_type_id) housetype,
                 h.house_condo_roomno roomno,
                 h.house_condo_name condo,
@@ -241,8 +241,8 @@ export class HisHosxpv3Model {
                     when '9' then '3' 
                     when '10' then '4'
                 else '1' end) as TYPEIN,
-                ifnull(o.rfrilct,i.rfrilct) as REFERINHOSP,
-                ifnull(o.rfrics,i.rfrics) as CAUSEIN,
+                CASE WHEN o.rfrilct IS NULL THEN i.rfrilct ELSE o.rfrilct END AS REFERINHOSP,
+                CASE WHEN o.rfrics IS NULL THEN i.rfrics ELSE o.rfrics END AS CAUSEIN,
                 concat('CC:',s.cc,' HPI:',s.hpi,' PMH:',s.pmh) as CHIEFCOMP,
                 if(o.pt_subtype in('0','1'),'1','2') as SERVPLACE,
                 if(s.temperature, replace(format(s.temperature,1),',',''), format(0,1))as BTEMP,
@@ -255,8 +255,8 @@ export class HisHosxpv3Model {
                     when o.ovstost in ('98','99','61','62','63','00') then '1' 
                     when o.ovstost = '54' then '3' when o.ovstost = '52' then '4'
                 else '7' end) as TYPEOUT,
-                ifnull(o.rfrolct,i.rfrolct) as REFEROUTHOSP,
-                ifnull(o.rfrocs,i.rfrocs) as CAUSEOUT,
+                CASE WHEN o.rfrolct IS NULL THEN i.rfrolct ELSE o.rfrolct END as REFEROUTHOSP,
+                CASE WHEN o.rfrocs IS NULL THEN i.rfrocs ELSE o.rfrocs END as CAUSEOUT,
                 if(vn.inc01 + vn.inc12 , replace(format(vn.inc01 + vn.inc12,2),',',''), format(0,2))as COST,
                 if(vn.item_money , replace(format(vn.item_money,2),',',''), format(0,2))as PRICE,
                 if(vn.paid_money , replace(format(vn.paid_money,2),',',''), format(0,2))as PAYPRICE,
@@ -301,9 +301,9 @@ export class HisHosxpv3Model {
                 o.hn,
                 q.seq_id, q.vn SEQ, q.vn as VN,
                 o.vstdate DATE_SERV,
-                ifnull(odx.diagtype, '') DIAGTYPE,
+                CASE WHEN odx.diagtype IS NULL THEN '' ELSE odx.diagtype END AS DIAGTYPE,
                 odx.icd10 DIAGCODE,
-                ifnull(s.provis_code, '') CLINIC,
+                CASE WHEN s.provis_code IS NULL THEN '' ELSE s.provis_code END AS CLINIC,
                 d.CODE PROVIDER,
                 q.update_datetime D_UPDATE
             FROM
@@ -694,30 +694,15 @@ export class HisHosxpv3Model {
                 (select hospitalcode from opdconfig) as HOSPCODE,
                 i.hn as PID,
                 q.seq_id, o.vn SEQ,
-                ifnull(i.an,'') AN,
-                ifnull(
-                    date_format(
-                        concat(i.regdate, ' ', i.regtime),'%Y-%m-%d %H:%i:%s'
-                    ),''
-                ) datetime_admit,
+                an AS AN,
+                date_format(concat(i.regdate, ' ', i.regtime),'%Y-%m-%d %H:%i:%s') as datetime_admit,
                 i.ward as WARD_LOCAL,
-                ifnull(s.provis_code,'') wardadmit, ward.name as WARDADMITNAME,
-                ifnull(ps.pttype_std_code,'') instype,
-                ifnull(
-                    RIGHT (
-                        (
-                            SELECT export_code FROM ovstist WHERE ovstist = i.ivstist
-                        ),1
-                    ),'1'
-                ) typein,
-                ifnull(
-                    i.rfrilct,
-                    ''
-                ) referinhosp,
-                ifnull(
-                    i.rfrics,
-                    ''
-                ) causein,
+                CASE WHEN s.provis_code IS NULL THEN '' ELSE s.provis_code END AS wardadmit,
+                ward.name as WARDADMITNAME,
+                CASE WHEN ps.pttype_std_code THEN '' ELSE ps.pttype_std_code END AS instype,
+                RIGHT ((SELECT export_code FROM ovstist WHERE ovstist = i.ivstist),1),'1' AS typein,
+                i.rfrilct as referinhosp,
+                i.rfrics as causein,
                 cast(
                     IF (
                         i.bw = 0,'',
@@ -726,21 +711,12 @@ export class HisHosxpv3Model {
                                 cast(i.bw / 1000 AS DECIMAL(5, 1)),
                                 IF (
                                     os.bw = 0,'',
-                                    ifnull(
-                                        cast(os.bw AS DECIMAL(5, 1)),''
-                                    )
+                                    cast(os.bw AS DECIMAL(5, 1))
                                 )
                             )
                     ) AS CHAR (5)
                 ) ddmitweight,
-                IF (
-                    os.height = 0,
-                    '',
-                    ifnull(
-                        os.height,
-                        ''
-                    )
-                ) admitheight,
+                IF (os.height = 0,'',os.height) admitheight,
                 ifnull(
                     date_format(
                         concat(i.dchdate, ' ', i.dchtime),
