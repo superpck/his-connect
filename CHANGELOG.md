@@ -1,3 +1,7 @@
+# 3.6.1
+## Feature
+  - ปรับ Query ของ IS จาก IFNULL เป็น CASE WHEN
+
 # 3.6.0
 ## Feature
   - เพิ่มความปลอดภัยโดยการส่งค่า HIS Name และ API version

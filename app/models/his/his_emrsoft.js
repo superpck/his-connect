@@ -105,11 +105,11 @@ class HisEmrSoftModel {
             ,p.birthday as BIRTH
             ,if(p.marrystatus in (1,2,3,4,5,6),p.marrystatus,'9') as MSTATUS
             ,if(person.person_house_position_id=1,'1','2') FSTATUS
-            ,ifnull(o.occupation,'000') as OCCUPATION_OLD
-            ,ifnull(o.nhso_code,'9999') as OCCUPATION_NEW
-            ,ifnull(nt0.nhso_code,'099') as RACE
-            ,ifnull(nt1.nhso_code,'099') as NATION
-            ,ifnull(p.religion,'01') as RELIGION
+            ,CASE WHEN o.occupation IS NULL THEN '000' ELSE o.occupation END as OCCUPATION_OLD
+            ,CASE WHEN o.nhso_code IS NULL THEN '9999' ELSE o.nhso_code END as OCCUPATION_NEW
+            ,CASE WHEN nt0.nhso_code IS NULL THEN '099' ELSE nt0.nhso_code END as RACE
+            ,CASE WHEN nt1.nhso_code IS NULL THEN '099' ELSE nt1.nhso_code END as NATION
+            ,CASE WHEN p.religion IS NULL THEN '01' ELSE p.religion END as RELIGION
             ,if(e.provis_code is null,'9',e.provis_code) as EDUCATION
             ,p.father_cid as FATHER
             ,p.mother_cid as MOTHER
@@ -123,7 +123,7 @@ class HisEmrSoftModel {
                 else '5' 
             end) VSTATUS
             ,person.movein_date MOVEIN
-            ,ifnull(person.person_discharge_id,'9') DISCHARGE
+            ,CASE WHEN person.person_discharge_id IS NULL THEN '9' ELSE person.person_discharge_id END DISCHARGE
             ,person.discharge_date DDISCHARGE
             ,case 
                 when @blood='A' then '1'
