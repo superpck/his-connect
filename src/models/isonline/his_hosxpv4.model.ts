@@ -24,7 +24,7 @@ export class HisHosxpv4Model {
                 'occupation.nhso_code as occupation', 'patient.nationality',
                 'patient.birthday as dob', 'patient.sex', 'patient.moopart as moo', 'patient.road',
                 'patient.addrpart as address', 'patient.hometel as tel', 'patient.po_code as zip',
-                'nt1.nhso_code END as nation',
+                'nt1.nhso_code as nation',
                 db.raw('CONCAT(chwpart,amppart,tmbpart) as addcode'))
             .where(columnName, "=", searchText);
     }
