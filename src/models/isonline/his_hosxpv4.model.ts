@@ -21,11 +21,11 @@ export class HisHosxpv4Model {
             .leftJoin(`occupation`, 'occupation.occupation', 'patient.occupation')
             .select('patient.hn', 'patient.cid', 'patient.pname as prename',
                 'patient.fname', 'patient.lname', 'patient.occupation as occupa',
-                db.raw(`CASE WHEN occupation.nhso_code is null THEN "9999" ELSE occupation.nhso_code END as occupation`), 'patient.nationality',
+                'occupation.nhso_code as occupation', 'patient.nationality',
                 'patient.birthday as dob', 'patient.sex', 'patient.moopart as moo', 'patient.road',
                 'patient.addrpart as address', 'patient.hometel as tel', 'patient.po_code as zip',
-                db.raw('CASE WHEN nt1.nhso_code is null THEN "099" ELSE nt1.nhso_code END as nation'))
-            .select(db.raw('CONCAT(chwpart,amppart,tmbpart) as addcode'))
+                'nt1.nhso_code as nation',
+                db.raw('CONCAT(chwpart,amppart,tmbpart) as addcode'))
             .where(columnName, "=", searchText);
     }
     getOpdService(db: Knex, hn, date, columnName = '', searchText = '') {
