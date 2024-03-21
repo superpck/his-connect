@@ -581,7 +581,7 @@ class HisHosxpv3Model {
                 (select hospitalcode from opdconfig) as HOSPCODE,
                 i.hn as PID,
                 q.seq_id, o.vn SEQ,
-                an AS AN,
+                i.an AS AN,
                 date_format(concat(i.regdate, ' ', i.regtime),'%Y-%m-%d %H:%i:%s') as datetime_admit,
                 i.ward as WARD_LOCAL,
                 CASE WHEN s.provis_code IS NULL THEN '' ELSE s.provis_code END AS wardadmit,

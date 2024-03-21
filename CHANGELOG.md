@@ -1,3 +1,8 @@
+# 3.6.2
+## Bug
+  - Query HOSxP เปลี่ยน Query ให้รองรับ PgSQL
+  - Query HOSxP เปลี่ยน an AS AN -> i.an AS AN
+
 # 3.6.1
 ## Feature
   - ปรับ Query ของ IS จาก IFNULL เป็น CASE WHEN
