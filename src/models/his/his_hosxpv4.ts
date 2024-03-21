@@ -686,8 +686,8 @@ export class HisHosxpv4Model {
                     ),
                     ''
                 ) causeout,
-                ROUND(CASE WHEN sum(c.qty * c.cost) IS NULL THEN 0 ELSE sum(c.qty * c.cost)) END AS cost,
-                ROUND(CASE WHEN a.uc_money IS NULL THEN 0 ELSE a.uc_money) AS price,
+                ROUND(CASE WHEN sum(c.qty * c.cost) IS NULL THEN 0 ELSE sum(c.qty * c.cost) END) AS cost,
+                ROUND(CASE WHEN a.uc_money IS NULL THEN 0 ELSE a.uc_money END) AS price,
                 ROUND(
                     sum(
                         IF (
