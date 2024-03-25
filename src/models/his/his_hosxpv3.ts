@@ -826,6 +826,7 @@ export class HisHosxpv3Model {
                 LEFT JOIN ward ON i.ward = ward.ward           
             WHERE ${columnName}='${searchValue}' ${validRefer}
             GROUP BY i.an `;
+
         const result = await db.raw(sql);
         return result[0];
     }

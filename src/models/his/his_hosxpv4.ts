@@ -731,7 +731,7 @@ export class HisHosxpv4Model {
                 ifnull(i.grouper_version, '5.1.3') grouper_version,
                 ifnull(pt.cid,'') cid
             FROM
-                ipt i
+                ipt as i
                 LEFT JOIN an_stat a ON i.an = a.an
                 LEFT JOIN iptdiag idx ON i.an = idx.an
                 LEFT JOIN patient pt ON i.hn = pt.hn
@@ -746,9 +746,9 @@ export class HisHosxpv4Model {
                 LEFT JOIN dchstts ds ON i.dchstts = ds.dchstts
                 LEFT JOIN opitemrece c ON c.an = i.an  
                 LEFT JOIN ward ON i.ward = ward.ward           
-            WHERE ${columnName}='${searchValue}' ${validRefer}
+            WHERE ${columnName}=? ${validRefer}
             GROUP BY i.an `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [searchValue]);
         return result[0];
     }
 
