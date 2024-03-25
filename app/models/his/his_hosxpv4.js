@@ -562,7 +562,7 @@ class HisHosxpv4Model {
                 (select hospitalcode from opdconfig) as HOSPCODE,
                 i.hn as PID,
                 q.seq_id, o.vn SEQ,
-                an AS AN,
+                i.an AS AN,
                 date_format(concat(i.regdate, ' ', i.regtime),'%Y-%m-%d %H:%i:%s') as datetime_admit,
                 i.ward as WARD_LOCAL,
                 CASE WHEN s.provis_code IS NULL THEN '' ELSE s.provis_code END AS wardadmit,
@@ -602,8 +602,8 @@ class HisHosxpv4Model {
                     ),
                     ''
                 ) causeout,
-                ROUND(CASE WHEN sum(c.qty * c.cost) IS NULL THEN 0 ELSE sum(c.qty * c.cost)) END AS cost,
-                ROUND(CASE WHEN a.uc_money IS NULL THEN 0 ELSE a.uc_money) AS price,
+                ROUND(CASE WHEN sum(c.qty * c.cost) IS NULL THEN 0 ELSE sum(c.qty * c.cost) END) AS cost,
+                ROUND(CASE WHEN a.uc_money IS NULL THEN 0 ELSE a.uc_money END) AS price,
                 ROUND(
                     sum(
                         IF (
@@ -647,7 +647,7 @@ class HisHosxpv4Model {
                 ifnull(i.grouper_version, '5.1.3') grouper_version,
                 ifnull(pt.cid,'') cid
             FROM
-                ipt i
+                ipt as i
                 LEFT JOIN an_stat a ON i.an = a.an
                 LEFT JOIN iptdiag idx ON i.an = idx.an
                 LEFT JOIN patient pt ON i.hn = pt.hn
@@ -662,9 +662,9 @@ class HisHosxpv4Model {
                 LEFT JOIN dchstts ds ON i.dchstts = ds.dchstts
                 LEFT JOIN opitemrece c ON c.an = i.an  
                 LEFT JOIN ward ON i.ward = ward.ward           
-            WHERE ${columnName}='${searchValue}' ${validRefer}
+            WHERE ${columnName}=? ${validRefer}
             GROUP BY i.an `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [searchValue]);
         return result[0];
     }
     async getDiagnosisIpd(db, columnName, searchNo, hospCode = hcode) {
