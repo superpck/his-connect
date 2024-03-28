@@ -755,6 +755,7 @@ async function referSending(path, dataArray) {
         return response.data;
     }
     catch (error) {
+        console.log('referSending error ', path, error.message);
         return error;
     }
 }
@@ -775,7 +776,6 @@ async function getNReferToken(apiKey, secretKey) {
     console.log(url);
     try {
         const { status, data } = await axios_1.default.post(url, bodyData, { headers });
-        console.log('getNReferToken', data);
         return data;
     }
     catch (error) {
