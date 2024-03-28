@@ -1,3 +1,10 @@
+# 3.7.0
+## Feature
+  - Auto detect ชื่อ PM2 แทนการใช้ PM2-NAME ใน file config
+  - ใช้ axios แทน http, request
+  - ส่งค่า version, subVersion และ app name ไปยัง API server กลาง
+  - ปรับระบบไปเรียกใช้ https
+
 # 3.6.2
 ## Bug
   - Query HOSxP เปลี่ยน Query ให้รองรับ PgSQL

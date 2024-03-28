@@ -5,16 +5,12 @@ const moment = require("moment");
 const axios_1 = require("axios");
 const hismodel_1 = require("./../his/hismodel");
 var fs = require('fs');
-var http = require('http');
-var querystring = require('querystring');
 const hcode = process.env.HOSPCODE;
 const hisProvider = process.env.HIS_PROVIDER;
 const resultText = 'sent_result.txt';
 let sentContent = '';
 let nReferToken = '';
-let crontabConfig = { client_ip: '' };
-let apiVersion = global.appDetail.version;
-let subVersion = global.appDetail.subVersion;
+let crontabConfig = { client_ip: '', version: global.appDetail.version, subVersion: global.appDetail.subVersion };
 async function sendMoph(req, reply, db) {
     const dateNow = moment().format('YYYY-MM-DD');
     const apiKey = process.env.NREFER_APIKEY || 'api-key';
@@ -739,22 +735,23 @@ async function referSending(path, dataArray) {
         ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
         hospcode: hcode, data: JSON.stringify(dataArray),
         processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
-        sourceApiName: 'HIS-connect', apiVersion, subVersion,
+        sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version, subVersion: crontabConfig.subVersion,
         hisProvider: process.env.HIS_PROVIDER
+    };
+    const url = fixedUrl + '/nrefer' + path;
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + nReferToken,
+        'Source-Agent': 'HISConnect-' + (crontabConfig.version || 'x') + '-' + (crontabConfig.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
     };
     const option = {
         method: 'post',
-        url: fixedUrl + '/nrefer' + path,
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': 'Bearer ' + nReferToken,
-            'Source-Agent': 'HISConnect-' + (apiVersion || 'x') + '-' + (subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
-            'Content-Length': Buffer.byteLength(qs.stringify(data))
-        },
+        url,
+        headers,
         data: qs.stringify(data)
     };
     try {
-        const response = await (0, axios_1.default)(option);
+        const response = await axios_1.default.post(url, data, { headers });
         return response.data;
     }
     catch (error) {
@@ -764,125 +761,27 @@ async function referSending(path, dataArray) {
 async function getNReferToken(apiKey, secretKey) {
     const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/apis';
     const url = fixedUrl + '/login/api-key';
-    const data = {
+    const bodyData = {
         ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
         apiKey, secretKey, hospcode: hcode,
         processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
-        sourceApiName: 'HIS-connect', apiVersion, subVersion,
+        sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version, subVersion: crontabConfig.subVersion,
         hisProvider: process.env.HIS_PROVIDER
     };
     const headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Source-Agent': 'HISConnect-' + apiVersion + '-' + subVersion + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
-        'Content-Length': Buffer.byteLength(querystring.stringify(data))
+        'Content-Type': 'application/json',
+        'Source-Agent': 'HISConnect-' + crontabConfig.version + '-' + crontabConfig.subVersion + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
     };
-    const option = {
-        method: 'post',
-        url,
-        headers,
-        data: querystring.stringify(data)
-    };
+    console.log(url);
     try {
-        const response = await axios_1.default.post(url, data);
-        return response.data;
+        const { status, data } = await axios_1.default.post(url, bodyData, { headers });
+        console.log('getNReferToken', data);
+        return data;
     }
     catch (error) {
+        console.log('getNReferToken', error.message);
         return error;
     }
-}
-async function getNReferToken__(apiKey, secretKey) {
-    const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/apis';
-    const mophUrl = fixedUrl.split('/');
-    let urlPath = '/' + mophUrl[3] + '/';
-    urlPath += mophUrl[4] ? (mophUrl[4] + '/') : '';
-    urlPath += mophUrl[5] ? (mophUrl[5] + '/') : '';
-    const postData = querystring.stringify({
-        ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
-        apiKey: apiKey, secretKey: secretKey,
-        hospcode: hcode,
-        processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
-        sourceApiName: 'HIS-connect', apiVersion, subVersion,
-        hisProvider: process.env.HIS_PROVIDER
-    });
-    const options = {
-        hostname: mophUrl[2],
-        path: urlPath + 'login/api-key',
-        method: 'POST',
-        port: mophUrl[0] == 'https' ? 443 : 80,
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Source-Agent': 'HISConnect-' + apiVersion + '-' + subVersion + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
-            'Content-Length': Buffer.byteLength(postData)
-        }
-    };
-    let ret = '';
-    return new Promise((resolve, reject) => {
-        const req = http.request(options, (res) => {
-            res.setEncoding('utf8');
-            res.on('data', (chunk) => {
-                ret += chunk;
-            });
-            res.on('end', (error) => {
-                if (error || !ret) {
-                    reject(error);
-                }
-                else {
-                    const data = JSON.parse(ret);
-                    resolve(data);
-                }
-            });
-        });
-        req.on('error', (e) => {
-            reject(e);
-        });
-        req.write(postData);
-        req.end();
-    });
-}
-async function expireToken(token) {
-    const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/apis';
-    const mophUrl = fixedUrl.split('/');
-    let urlPath = '/' + mophUrl[3] + '/';
-    urlPath += mophUrl[4] ? (mophUrl[4] + '/') : '';
-    urlPath += mophUrl[5] ? (mophUrl[5] + '/') : '';
-    const postData = querystring.stringify({
-        ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
-        token: token
-    });
-    const options = {
-        hostname: mophUrl[2],
-        path: urlPath + 'login/login/expire-token',
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': `Bearer ${token}`,
-            'Source-Agent': 'HISConnect-' + apiVersion + '-' + subVersion + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
-            'Content-Length': Buffer.byteLength(postData)
-        }
-    };
-    let ret = '';
-    return new Promise((resolve, reject) => {
-        const req = http.request(options, (res) => {
-            res.setEncoding('utf8');
-            res.on('data', (chunk) => {
-                ret += chunk;
-            });
-            res.on('end', (error) => {
-                if (error || !ret) {
-                    reject(error);
-                }
-                else {
-                    const data = JSON.parse(ret);
-                    resolve(data);
-                }
-            });
-        });
-        req.on('error', (e) => {
-            reject(e);
-        });
-        req.write(postData);
-        req.end();
-    });
 }
 async function writeResult(file, content) {
     fs.writeFile(file, content, async function (err) {
@@ -913,8 +812,6 @@ const router = (request, reply, dbConn, config = {}) => {
             crontabConfig['client_ip'] = request.ip || crontabConfig['client_ip'];
         }
     }
-    apiVersion = crontabConfig.version ? crontabConfig.version : '-';
-    subVersion = crontabConfig.subVersion ? crontabConfig.subVersion : '-';
     return sendMoph(request, reply, dbConn);
 };
 module.exports = router;

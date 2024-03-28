@@ -126,5 +126,5 @@ if (typeof process.env.NREFER_DATA_BACKWARD_MONTH == 'undefined') {
 app.listen(options, (err) => {
     if (err)
         throw err;
-    console.log('>>> ', `HIS Connection API (${global.appDetail.version}-${global.appDetail.subVersion}) started on`, app.addresses(), 'PID', process.pid);
+    console.log(`HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid}`);
 });
