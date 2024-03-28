@@ -423,8 +423,7 @@ class HisHosxpv3Model {
         return result[0];
     }
     async getChargeOpd(db, visitNo, hospCode = hcode) {
-        const sql = `
-            select
+        const sql = `select
                 (select hospitalcode from opdconfig) as hospcode,
                 pt.hn as pid,
                 os.seq_id, os.vn as seq, os.vn,
@@ -460,11 +459,8 @@ class HisHosxpv3Model {
                 left join patient pt on pt.hn = o.hn
                 left join ovst_seq os on os.vn = o.vn 
                 left join drugitems_charge_list d on d.icode = o.icode
-                
-            where 
-                os.vn = "${visitNo}"
-            `;
-        const result = await db.raw(sql);
+            where os.vn = ?`;
+        const result = await db.raw(sql, [visitNo]);
         return result[0];
     }
     getLabRequest(db, columnName, searchNo, hospCode = hcode) {
@@ -581,7 +577,7 @@ class HisHosxpv3Model {
                 (select hospitalcode from opdconfig) as HOSPCODE,
                 i.hn as PID,
                 q.seq_id, o.vn SEQ,
-                i.an AS AN,
+                i.an AS AN, pt.cid
                 date_format(concat(i.regdate, ' ', i.regtime),'%Y-%m-%d %H:%i:%s') as datetime_admit,
                 i.ward as WARD_LOCAL,
                 CASE WHEN s.provis_code IS NULL THEN '' ELSE s.provis_code END AS wardadmit,
@@ -604,29 +600,12 @@ class HisHosxpv3Model {
                     ) AS CHAR (5)
                 ) ddmitweight,
                 IF (os.height = 0,'',os.height) admitheight,
-                ifnull(
-                    date_format(
-                        concat(i.dchdate, ' ', i.dchtime),
-                        '%Y-%m-%d %H:%i:%s'
-                    ),''
-                ) datetime_disch,
-                ifnull(
-                    s.provis_code,
-                    ''
-                ) warddisch, ward.name as WARDDISCHNAME,
-                ifnull(
-                    ds.nhso_dchstts,
-                    ''
-                ) dischstatus,
-                ifnull(
-                    dt.nhso_dchtype,
-                    ''
-                ) dischtype,            
-                IF (
-                    i.dchtype = 04,
-                    ifnull(i.rfrolct, ''),
-                    ''
-                ) referouthosp,            
+                CASE WHEN i.dchdate IS NULL THEN '' ELSE date_format(concat(i.dchdate, ' ', i.dchtime),'%Y-%m-%d %H:%i:%s') END AS datetime_disch,
+                CASE WHEN s.provis_code IS NULL THEN '' ELSE s.provis_code END AS warddisch,
+                , ward.name as WARDDISCHNAME,
+                CASE WHEN ds.nhso_dchstts IS NULL THEN '' ELSE ds.nhso_dchstts END AS dischstatus,
+                CASE WHEN dt.nhso_dchtype IS NULL THEN '' ELSE dt.nhso_dchtype END AS dischtype,
+                IF(i.dchtype = '04',i.rfrolct,'') AS referouthosp,
                 IF (
                     i.dchtype = 04,            
                     IF (
@@ -640,19 +619,8 @@ class HisHosxpv3Model {
                     ),
                     ''
                 ) causeout,
-                ROUND(
-                    ifnull(                    
-                        sum(c.qty * c.cost),2
-                    ),
-                    0
-                ) cost,
-                ROUND(
-                    ifnull(		
-                        a.uc_money,
-                        2
-                    ),
-                    2
-                ) price,
+                CASE WHEN sum(c.qty * c.cost) IS NULL THEN 0 ELSE ROUND(sum(c.qty * c.cost),0) END AS cost,
+                CASE WHEN a.uc_money IS NULL THEN 0.00 ELSE ROUND(a.uc_money,2) END AS price,
                 ROUND(
                     sum(
                         IF (
@@ -663,38 +631,15 @@ class HisHosxpv3Model {
                     ),
                     2
                 ) payprice,
-                ROUND(
-                    IFNULL(		
-                        a.paid_money,
-                        0
-                    ),
-                    2
-                ) actualpay,	
+                CASE WHEN a.paid_money IS NULL THEN 0.00 ELSE ROUND(a.paid_money,2) END AS actualpay,
                 a.dx_doctor provider,
-                ifnull(
-                    date_format(
-                    idx.modify_datetime,
-                    '%Y-%m-%d %H:%i:%s'
-                    ),
-                    ''
-                ) d_update,
-                ifnull(
-                    i.drg,
-                    0                
-                ) drg,
-                ifnull(
-                    a.rw,
-                    0
-                ) rw,                
-                ifnull(
-                    i.adjrw,
-                    0
-                ) adjrw,               
-                ifnull(i.grouper_err, 1) error,
-                ifnull(i.grouper_warn, 64) warning,
-                ifnull(i.grouper_actlos, 0) actlos,
-                ifnull(i.grouper_version, '5.1.3') grouper_version,
-                ifnull(pt.cid,'') cid
+                CASE WHEN idx.modify_datetime IS NULL THEN '' ELSE date_format(idx.modify_datetime,'%Y-%m-%d %H:%i:%s') END AS d_update,
+                i.drg, a.rw, i.adjrw,
+                CASE WHEN i.grouper_err IS NULL THEN 1 ELSE i.grouper_err END AS error,
+                CASE WHEN i.grouper_warn IS NULL THEN 64 ELSE i.grouper_warn END AS warning,
+                CASE WHEN i.grouper_actlos IS NULL THEN 0 ELSE i.grouper_actlos END AS actlos,
+                CASE WHEN i.grouper_version IS NULL THEN '5.1.3' ELSE i.grouper_version END AS grouper_version,
+                CASE WHEN i.grouper_version IS NULL THEN '5.1.3' ELSE i.grouper_version END AS grouper_version
             FROM
                 ipt i
                 LEFT JOIN an_stat a ON i.an = a.an
@@ -713,7 +658,6 @@ class HisHosxpv3Model {
                 LEFT JOIN ward ON i.ward = ward.ward           
             WHERE ${columnName}='${searchValue}' ${validRefer}
             GROUP BY i.an `;
-        console.log(sql);
         const result = await db.raw(sql);
         return result[0];
     }
@@ -725,14 +669,13 @@ class HisHosxpv3Model {
                 (select hospitalcode from opdconfig) as hospcode,
                 pt.hn as pid,
                 ipt.an as an,
-                ifnull(date_format(concat(ipt.regdate,' ',ipt.regtime),'%Y-%m-%d %H:%i:%s'),'') as datetime_admit,
+                CASE WHEN ipt.regdate IS NULL THEN '' ELSE date_format(concat(ipt.regdate,' ',ipt.regtime),'%Y-%m-%d %H:%i:%s') END AS datetime_admit,
                 concat('0',right(spclty.provis_code,4)) as warddiag,
                 iptdiag.diagtype as diagtype,
                 iptdiag.icd10 as diagcode,
                 iptdiag.doctor as provider,
-                ifnull(date_format(iptdiag.modify_datetime,'%Y-%m-%d %H:%i:%s'),date_format(NOW(),'%Y-%m-%d %H:%i:%s')) d_update,
+                CASE WHEN ptdiag.modify_datetime IS NULL THEN date_format(NOW(),'%Y-%m-%d %H:%i:%s') ELSE date_format(iptdiag.modify_datetime,'%Y-%m-%d %H:%i:%s') END AS d_update,
                 pt.cid as CID
-                
             from 
                 iptdiag
                 left join ipt on ipt.an=iptdiag.an
@@ -909,22 +852,22 @@ class HisHosxpv3Model {
         const sql = `
             select 
                 (select hospitalcode from opdconfig) as HOSPCODE
-                ,ifnull(p.person_id,'') PID
-                ,ifnull(i.an,'') AN
-                ,ifnull(date_format(concat(i.regdate,' ',i.regtime),'%Y-%m-%d %H:%i:%s'),'') DATETIME_ADMIT
-                ,ifnull(s.provis_code,'') WARDSTAY
+                ,p.person_id AS PID
+                ,i.an AS AN
+                ,CASE WHEN i.regdate IS NULL THEN '' ELSE date_format(concat(i.regdate,' ',i.regtime),'%Y-%m-%d %H:%i:%s') END AS DATETIME_ADMIT
+                ,s.provis_code AS WARDSTAY
                 ,if(o.item_type='H','2','1') TYPEDRUG
-                ,ifnull(d.did,'') DIDSTD
-                ,ifnull(concat(d.name,' ',d.strength),'') DNAME
-                ,ifnull(date_format(m.orderdate,'%Y-%m-%d'),'') DATESTART
-                ,ifnull(date_format(m.offdate,'%Y-%m-%d'),'') DATEFINISH
-                ,cast(sum(ifnull(o.qty,0)) as decimal(12,0)) AMOUNT
-                ,ifnull(d.provis_medication_unit_code,'') UNIT
-                ,ifnull(d.packqty,'') UNIT_PACKING
-                ,cast(ifnull(d.unitprice,0) as decimal(11,2)) DRUGPRICE
-                ,cast(if(d.unitcost is null or d.unitcost=0,ifnull(d.unitprice,0),d.unitcost) as decimal(11,2)) DRUGCOST
+                ,d.did AS DIDSTD
+                ,CASE WHEN d.strength IS NULL THEN d.name ELSE concat(d.name,' ',d.strength) END AS DNAME
+                ,m.orderdate AS DATESTART
+                ,m.offdate AS DATEFINISH
+                ,SUM(IF(o.qty IS NULL,0,o.qty)) as AMOUNT
+                ,d.provis_medication_unit_code AS UNIT
+                ,d.packqty AS UNIT_PACKING
+                ,SUM(IF(d.unitprice IS NULL,0,d.unitprice)) as DRUGPRICE
+                ,IF(d.unitcost is null or d.unitcost=0, d.unitprice, d.unitcost) as DRUGCOST
                 ,provider(o.doctor,'doctor') PROVIDER
-                ,ifnull(date_format(concat(o.rxdate,' ',o.rxtime),'%Y-%m-%d %H:%i:%s'),'') D_UPDATE
+                ,CASE WHEN o.rxdate IS NULL THEN '' ELSE date_format(concat(o.rxdate,' ',o.rxtime),'%Y-%m-%d %H:%i:%s') END AS D_UPDATE
                 ,pt.cid as CID
             from ipt i
                 left join an_stat a on a.an=i.an
@@ -953,20 +896,19 @@ class HisHosxpv3Model {
                 q.seq_id, q.vn as seq,
                 date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_serv,
                 date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_ae,
-                ifnull(lpad(d.er_accident_type_id,2,'0'),'') aetype,
-                ifnull(lpad(d.accident_place_type_id,2,'0'),'99') aeplace,
-                ifnull(vt.export_code, '1') typein_ae,
-                ifnull(d.accident_person_type_id,'9') traffic,
-                ifnull(tt.export_code, '99') vehicle,
-                ifnull(d.accident_alcohol_type_id,'9') alcohol,
-                ifnull(d.accident_drug_type_id,'9') nacrotic_drug,
-                ifnull(d.accident_belt_type_id,'9') belt,
-                ifnull(d.accident_helmet_type_id,'9') helmet,
-                ifnull(d.accident_airway_type_id,'3') airway,
-                ifnull(d.accident_bleed_type_id,'3') stopbleed,
-                ifnull(d.accident_splint_type_id,'3') splint,
-                ifnull(d.accident_fluid_type_id,'3') fluid,
-                ifnull(d.er_emergency_type, '6') urgency,
+                CASE WHEN d.er_accident_type_id IS NULL THEN '' ELSE d.er_accident_type_id,2,'0') END AS aetype,
+                CASE WHEN vt.export_code IS NULL THEN '1' ELSE vt.export_code END AS typein_ae,
+                CASE WHEN d.accident_person_type_id IS NULL THEN '9' ELSE d.accident_person_type_id END AS traffic,
+                CASE WHEN tt.export_code IS NULL THEN '99' ELSE tt.export_code END AS vehicle,
+                CASE WHEN d.accident_alcohol_type_id IS NULL THEN '9' ELSE d.accident_alcohol_type_id END AS alcohol,
+                CASE WHEN d.accident_drug_type_id IS NULL THEN '9' ELSE d.accident_drug_type_id END AS nacrotic_drug,
+                CASE WHEN d.accident_belt_type_id IS NULL THEN '9' ELSE d.accident_belt_type_id END AS belt,
+                CASE WHEN d.accident_helmet_type_id IS NULL THEN '9' ELSE d.accident_helmet_type_id END AS helmet,
+                CASE WHEN d.accident_airway_type_id IS NULL THEN '3' ELSE d.accident_airway_type_id END AS airway,
+                CASE WHEN d.accident_bleed_type_id IS NULL THEN '3' ELSE d.accident_bleed_type_id END AS stopbleed,
+                CASE WHEN d.accident_splint_type_id IS NULL THEN '3' ELSE d.accident_splint_type_id END AS splint,
+                CASE WHEN d.accident_fluid_type_id IS NULL THEN '3' ELSE d.accident_fluid_type_id END AS fluid,
+                CASE WHEN d.er_emergency_type IS NULL THEN '6' ELSE d.er_emergency_type END AS urgency,
                 IF (d.gcs_e IN (1, 2, 3, 4),d.gcs_e,'4') coma_eye,
                 IF (d.gcs_v IN (1, 2, 3, 4, 5),d.gcs_v,'5') coma_speak,
                 IF (d.gcs_m IN (1, 2, 3, 4, 5, 6),d.gcs_m,'6') coma_movement,
@@ -1108,9 +1050,9 @@ class HisHosxpv3Model {
                 ro.refer_hospcode as HOSP_DESTINATION,
                 concat('CC:',s.cc,' HPI:',s.hpi,' PMH:',s.pmh) as CHIEFCOMP,
                 '' as PHYSICALEXAM,
-                ifnull(ro.pre_diagnosis,'ไม่ระบุ') as DIAGFIRST,
-                ifnull(ro.pre_diagnosis,'ไม่ระบุ') as DIAGLAST,
-                ifnull(ro.ptstatus_text,'ไม่ระบุ') as PSTATUS,
+                ro.pre_diagnosis as DIAGFIRST,
+                ro.pre_diagnosis as DIAGLAST,
+                ro.ptstatus_text as PSTATUS,
                 (select case e.er_pt_type 
                     when '2' then '2' 
                     when '1' then '3' 
@@ -1118,7 +1060,7 @@ class HisHosxpv3Model {
                     '1' 
                 end
                 ) as PTYPE,
-                ifnull(e.er_emergency_level_id,'5') as EMERGENCY,
+                CASE WHEN e.er_emergency_level_id IS NULL THEN '5' ELSE e.er_emergency_level_id END as EMERGENCY,
                 '99' as PTYPEDIS,
                 if(
                     ro.refer_cause = '1' 
@@ -1220,18 +1162,17 @@ class HisHosxpv3Model {
                 d.licenseno as registerno,
                 d.council_code as council,
                 d.cid as cid,
-                ifnull(p2.provis_pname_long_name,d.pname) as prename,
-                ifnull(p.fname,d.fname) as name,
-                ifnull(p.lname,d.lname) as lname,
+                CASE WHEN p2.provis_pname_long_name IS NULL THEN d.pname ELSE p2.provis_pname_long_name END as prename,
+                CASE WHEN p.fname IS NULL THEN d.fname ELSE p.fname END as name,
+                CASE WHEN p.lname IS NULL THEN d.lname ELSE p.lname END as lname,
                 d.sex as sex,	
-                if(p.birthday   is null or trim(p.birthday )='' or p.birthday   like '0000-00-00%','',date_format(p.birthday,'%Y-%m-%d')) as  birth,
+                if(p.birthday is null or trim(p.birthday )='' or p.birthday   like '0000-00-00%','',date_format(p.birthday,'%Y-%m-%d')) as  birth,
                 d.provider_type_code as providertype,
                 if( d.start_date is null or trim(d.start_date)='' or d.start_date like '0000-00-00%','',date_format(d.start_date,'%Y-%m-%d')) as startdate,
                 if( d.finish_date is null or trim(d.finish_date)='' or d.finish_date like '0000-00-00%','',date_format(d.finish_date,'%Y-%m-%d')) as outdate,
                 d.move_from_hospcode as movefrom,
                 d.move_to_hospcode as  moveto,
                 if(d.update_datetime is null or trim(d.update_datetime)='' or d.update_datetime like '0000-00-00%','',date_format(d.update_datetime,'%Y-%m-%d %H:%i:%s') ) as d_update
-                
             from 
                 doctor d 
                 left join patient p on d.cid = p.cid
