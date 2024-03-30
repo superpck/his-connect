@@ -4,6 +4,9 @@ let shell = require("shelljs");
 var crypto = require('crypto');
 var fs = require('fs');
 
+import { Jwt } from './../plugins/jwt';
+var jwt = new Jwt();
+
 const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb'
   , 'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades'
   , 'himpro', 'nemo', 'mypcu', 'emrsoft other'];
@@ -13,12 +16,12 @@ const resultText = './sent_result.txt';
 const router = (fastify, { }, next) => {
   var startServer = fastify.startServerTime;
 
-  fastify.register(require('@fastify/cookie'), {
-    secret: process.env.SECRET_KEY,
-    parseOptions: {}
-  })
+  // fastify.register(require('@fastify/cookie'), {
+  //   secret: process.env.SECRET_KEY,
+  //   parseOptions: {}
+  // })
 
-  fastify.get('/', async (req, reply: any) => {
+  fastify.get('/', async (req: any, reply: any) => {
     reply.send({
       status: 200, statusCode: 200, ok: true,
       date: moment().format('YYYY-MM-DD HH:mm:ss'),
@@ -28,15 +31,22 @@ const router = (fastify, { }, next) => {
     });
   })
 
-  fastify.post('/', { preHandler: [fastify.authenticate] }, async (req, reply: any) => {
-    reply.send({
+  fastify.post('/', async (req: any, reply: any) => {
+    console.log('post userInfo body', req.body);
+    const userInfo = await decodeToken(req);
+    console.log('post userInfo', userInfo);
+    let res: any = {
+      statusCode: 200,
       date: moment().format('YYYY-MM-DD HH:mm:ss'),
       apiName: global.appDetail.name,
       version: global.appDetail.version,
       subVersion: global.appDetail.subVersion,
-      hospcode: process.env.HOSPCODE,
-      his: process.env.HIS_PROVIDER
-    });
+    };
+    if (userInfo && userInfo.hcode){
+      res.hospcode = process.env.HOSPCODE;
+      res.his = process.env.HIS_PROVIDER;
+    }
+    reply.send(res);
   })
 
   fastify.get('/create-token/:source/:key', async (req: any, reply: any) => {
@@ -415,6 +425,25 @@ const router = (fastify, { }, next) => {
           }
         });
     });
+  }
+
+  async function decodeToken(req: any) {
+    let token: string = null;
+    console.log('body',req.body);
+    if (req.body && req.body.token) {
+      token = req.body.token;
+    } else  if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+      token = req.headers.authorization.split(' ')[1];
+    }
+    console.log('token', token);
+    try {
+      req.authenDecoded = await jwt.verify(token);
+      console.log(req.authenDecoded );
+      return req.authenDecoded;
+    } catch (error) {
+      console.log('jwtVerify', error);
+      return null;
+    }
   }
 
   next();

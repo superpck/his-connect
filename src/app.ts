@@ -94,13 +94,14 @@ global.dbISOnline = global.dbIs;
 
 // check token ===========================================================
 app.decorate("authenticate", async (request: any, reply: any) => {
+  request.authenDecoded = null;
   if (request.body && request.body.token) {
     let token = await request.body.token;
     request.headers.authorization = 'Bearer ' + token;
   }
 
   try {
-    await request.jwtVerify();
+    request.authenDecoded = await request.jwtVerify();
   } catch (err) {
     let ipAddr: any = request.headers["x-real-ip"] || request.headers["x-forwarded-for"] || request.ip;
     console.log(moment().format('HH:mm:ss.SSS'), ipAddr, 'error:' + StatusCodes.UNAUTHORIZED, err.message);
