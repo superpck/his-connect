@@ -62,12 +62,13 @@ global.dbRefer = dbConnection('REFER');
 global.dbIs = dbConnection('ISONLINE');
 global.dbISOnline = global.dbIs;
 app.decorate("authenticate", async (request, reply) => {
+    request.authenDecoded = null;
     if (request.body && request.body.token) {
         let token = await request.body.token;
         request.headers.authorization = 'Bearer ' + token;
     }
     try {
-        await request.jwtVerify();
+        request.authenDecoded = await request.jwtVerify();
     }
     catch (err) {
         let ipAddr = request.headers["x-real-ip"] || request.headers["x-forwarded-for"] || request.ip;

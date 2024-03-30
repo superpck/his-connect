@@ -9,7 +9,10 @@ const hisProvider = process.env.HIS_PROVIDER;
 const resultText = 'sent_result.txt';
 let sentContent = '';
 let nReferToken: any = '';
-let crontabConfig: any = { client_ip: '', version: global.appDetail.version, subVersion: global.appDetail.subVersion };
+let crontabConfig: any = {
+  client_ip: '', version: global.appDetail.version,
+  subVersion: global.appDetail.subVersion
+};
 
 async function sendMoph(req, reply, db) {
   const dateNow = moment().format('YYYY-MM-DD');
@@ -109,7 +112,7 @@ async function getRefer_out(db, date) {
         console.log(moment().format('HH:mm:ss.SSS'), 'finished...');
       }
     }
-    console.log(' nrefer sent ', process.env.HOSPCODE, sentResult);
+    console.log(' nrefer sent ', process.env.HOSPCODE, sentResult.message || sentResult);
     return referout;
   } catch (error) {
     console.log('crontab error:', error.message)
@@ -278,7 +281,7 @@ async function sendReferOut(row, sentResult) {
     } else {
       sentResult.referout.fail += 1;
       sentResult.referout.vnFail.push(SEQ);
-      console.log('save-refer-history', data.REFERID, saveResult);
+      console.log('save-refer-history', data.REFERID, saveResult.message);
     }
     sentContent += '  - refer_history ' + data.REFERID + ' ' + (saveResult.result || saveResult.message) + '\r';
     return saveResult;
@@ -319,7 +322,7 @@ async function sendReferResult(row, sentResult) {
     } else {
       sentResult.referresult.fail += 1;
       sentResult.referresult.vnFail.push(row.SEQ_IN);
-      console.log('save-refer-result', data.REFERID_SOURCE, saveResult);
+      console.log('save-refer-result', data.REFERID_SOURCE, saveResult.message || saveResult);
     }
     sentContent += '  - refer_result ' + data.REFERID_SOURCE + ' ' + (saveResult.result || saveResult.message) + '\r';
     return saveResult;
@@ -362,7 +365,7 @@ async function getPerson(db, pid, sentResult) {
         sentResult.person.success += 1;
       } else {
         sentResult.person.fail += 1;
-        console.log('save-person', person.HN, saveResult);
+        console.log('save-person', person.HN, saveResult.message || saveResult);
       }
       sentContent += '    -- PID ' + person.HN + ' ' + (saveResult.result || saveResult.message) + '\r';
     }
@@ -401,7 +404,7 @@ async function getAddress(db, pid, sentResult) {
           sentResult.address.success += 1;
         } else {
           sentResult.address.fail += 1;
-          console.log('save address fail', address.PID, saveResult);
+          console.log('save address fail', address.PID, saveResult.message || saveResult);
         }
         sentContent += '    -- PID ' + address.PID + ' ' + (saveResult.result || saveResult.message) + '\r';
       }
@@ -461,7 +464,7 @@ async function getService(db, visitNo, sentResult) {
         sentResult.service.success += 1;
       } else {
         sentResult.service.fail += 1;
-        console.log('save-service', data.SEQ, saveResult);
+        console.log('save-service', data.SEQ, saveResult.message || saveResult);
       }
 
       await Promise.all([
@@ -505,7 +508,7 @@ async function getDiagnosisOpd(db, visitNo, sentResult) {
       sentResult.diagnosisOpd.success += 1;
     } else {
       sentResult.diagnosisOpd.fail += 1;
-      console.log('save-diagnosis-opd', visitNo, saveResult);
+      console.log('save-diagnosis-opd', visitNo, saveResult.message || saveResult);
     }
   }
   return rows;
@@ -538,7 +541,7 @@ async function getProcedureOpd(db, visitNo, sentResult) {
       sentResult.procedureOpd.success += 1;
     } else {
       sentResult.procedureOpd.fail += 1;
-      console.log('save-procedure-opd', visitNo, saveResult);
+      console.log('save-procedure-opd', visitNo, saveResult.message || saveResult);
     }
   }
   return rowSave;
@@ -577,7 +580,7 @@ async function getDrugOpd(db, visitNo, sentResult) {
     if (saveResult.statusCode == 200) {
       sentResult.drugOpd.success += 1;
     } else {
-      console.log('drug opd error: vn ', visitNo, saveResult);
+      console.log('drug opd error: vn ', visitNo, saveResult.message || saveResult);
       sentResult.drugOpd.fail += 1;
     }
   }
@@ -625,7 +628,7 @@ async function getLabResult(db, row, sentResult) {
     if (saveResult.statusCode === 200) {
       sentResult.investigationRefer.success += rowsSave.length;
     } else {
-      console.log('investigation-refer error:', saveResult);
+      console.log('investigation-refer error:', saveResult.message || saveResult);
       sentResult.investigationRefer.fail += rowsSave.length;
     }
     sentContent += '    -- SEQ ' + visitNo + ' ' + JSON.stringify(saveResult.result || saveResult.message) + '\r';
@@ -770,9 +773,8 @@ async function getDrugAllergy(db, hn, sentResult) {
 }
 
 async function referSending(path, dataArray) {
-  const qs = require('qs');
   const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/apis';
-  const data = {
+  const bodyData = {
     ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
     hospcode: hcode, data: JSON.stringify(dataArray),
     processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
@@ -783,21 +785,13 @@ async function referSending(path, dataArray) {
   const url = fixedUrl + '/nrefer' + path;
   const headers = {
     'Content-Type': 'application/json',
-    // 'Content-Type': 'application/x-www-form-urlencoded',
     'Authorization': 'Bearer ' + nReferToken,
     'Source-Agent': 'HISConnect-' + (crontabConfig.version || 'x') + '-' + (crontabConfig.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
-    // 'Content-Length': Buffer.byteLength(qs.stringify(data))
-  };
-  const option = {
-    method: 'post',
-    url,
-    headers,
-    data: qs.stringify(data)
   };
 
   try {
-    const response = await axios.post(url, data, { headers });
-    return response.data;
+    const { status, data } = await axios.post(url, bodyData, { headers });
+    return data;
   } catch (error) {
     console.log('referSending error ', path, error.message);
     return error;
@@ -816,13 +810,10 @@ async function getNReferToken(apiKey: string, secretKey: string) {
   };
   const headers = {
     'Content-Type': 'application/json',
-    // 'Content-Type': 'application/x-www-form-urlencoded',
     'Source-Agent': 'HISConnect-' + crontabConfig.version + '-' + crontabConfig.subVersion + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
-    // 'Content-Length': Buffer.byteLength(querystring.stringify(data))
   };
-  console.log(url);
+
   try {
-    // const response = await axios(option);
     const { status, data } = await axios.post(url, bodyData, { headers });
     return data;
   } catch (error) {
