@@ -4,6 +4,7 @@
   - ใช้ axios แทน http, request
   - ส่งค่า version, subVersion และ app name ไปยัง API server กลาง
   - ปรับระบบไปเรียกใช้ https
+  - เพิ่ม req.authenDecoded ในการตรวจสอบ Authen
 
 # 3.6.2
 ## Bug
