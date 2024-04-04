@@ -1,3 +1,10 @@
+# 3.7.1
+## Feature
+  - เพิ่มการ Get ward name
+  - เพิ่มการค้น Diag ด้วย VWXY
+  - เพิ่มการ get person, visit ด้วย array
+  - เพิ่มการ check authenticate บาง route ที่จำเป็น
+
 # 3.7.0
 ## Feature
   - Auto detect ชื่อ PM2 แทนการใช้ PM2-NAME ใน file config

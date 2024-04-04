@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisEzhospModel = void 0;
-const maxLimit = 250;
+const maxLimit = 500;
 const hcode = process.env.HOSPCODE;
 const dbName = process.env.HIS_DB_NAME;
 const dbClient = process.env.HIS_DB_CLIENT;
@@ -22,11 +22,16 @@ class HisEzhospModel {
     testConnect(db) {
         return db('hospdata.patient').select('hn').limit(1);
     }
-    getPerson(knex, columnName, searchText) {
+    getPerson(db, columnName, searchText) {
         columnName = columnName === 'cid' ? 'no_card' : columnName;
-        return knex('hospdata.view_patient')
-            .select('no_card as cid', 'hn as pid', 'title as prename', 'name', 'name as fname', 'surname as lname', 'hn', 'birth', 'birth as dob', 'sex', 'marry_std as mstatus', 'blood as abogroup', 'address', 'moo', 'road', 'soi', 'add as addcode', 'tel', 'zip', 'occ_std as occupation', 'religion_std as religion', 'nation_std as nation', 'religion_std as religion', 'edu_std as education', 'tel as telephone', 'lastupdate as d_update')
-            .where(columnName, "=", searchText);
+        let sql = db('hospdata.view_patient');
+        if (typeof searchText === 'string') {
+            sql.where(columnName, searchText);
+        }
+        else {
+            sql.whereIn(columnName, searchText);
+        }
+        return sql.select('no_card as cid', 'hn as pid', 'title as prename', 'name', 'name as fname', 'surname as lname', 'hn', 'birth', 'birth as dob', 'sex', 'marry_std as mstatus', 'blood as abogroup', 'address', 'moo', 'road', 'soi', 'add as addcode', 'tel', 'zip', 'occ_std as occupation', 'religion_std as religion', 'nation_std as nation', 'religion_std as religion', 'edu_std as education', 'tel as telephone', 'lastupdate as d_update');
     }
     getOpdService(db, hn, date, columnName = '', searchText = '') {
         columnName = columnName == 'visitNo' ? 'vn' : columnName;
@@ -43,16 +48,35 @@ class HisEzhospModel {
             .orderBy('date', 'desc')
             .limit(maxLimit);
     }
-    getOpdServiceByVN(knex, vn) {
-        return knex('view_opd_visit')
-            .select('hn', 'vn as visitno', 'date', 'time', 'time_drug as time_end', 'pttype_std2 as pttype', 'insclass as payment', 'dep_standard as clinic', 'dr', 'bp as bp_systolic', 'bp1 as bp_diastolic', 'puls as pr', 'rr', 'fu as appoint', 'status as result', 'refer as referin')
-            .where('vn', "=", vn);
+    getOpdServiceByVN(db, vn) {
+        let sql = db('view_opd_visit');
+        if (typeof vn === 'string') {
+            sql.where('vn', vn);
+        }
+        else {
+            sql.whereIn('vn', vn);
+        }
+        ;
+        return sql.select('hn', 'vn as visitno', 'date', 'time', 'time_drug as time_end', 'pttype_std2 as pttype', 'insclass as payment', 'dep_standard as clinic', 'dr', 'bp as bp_systolic', 'bp1 as bp_diastolic', 'puls as pr', 'rr', 'fu as appoint', 'status as result', 'refer as referin')
+            .limit(maxLimit);
     }
     getDiagnosisOpd(knex, visitno) {
         return knex('view_opd_dx as dx')
             .select('vn as visitno', 'diag as diagcode', 'desc as diag_name', 'short_eng as en', 'short_thi as thi', 'type as diag_type', 'dr_dx as dr')
             .select(knex.raw(' "IT" as codeset'))
             .where('vn', "=", visitno);
+    }
+    async getDiagnosisOpdVWXY(db, date) {
+        let sql = `SELECT hn, vn AS visitno, view_opd_dx.date, diag AS diagcode
+                , view_opd_dx.desc AS diag_name, short_eng AS en, short_thi AS thi
+                , view_opd_dx.type AS diag_type, dr_dx AS dr
+                , "IT" as codeset, lastupdate as d_update
+            FROM view_opd_dx WHERE vn IN (
+                SELECT vn FROM view_opd_dx 
+                WHERE date= ? AND LEFT(diag,1) IN ('V','W','X','Y'))
+            ORDER BY vn, type, lastupdate`;
+        const result = await db.raw(sql, [date]);
+        return result[0];
     }
     getProcedureOpd(knex, columnName, searchNo, hospCode) {
         columnName = columnName === 'visitno' ? 'vn' : columnName;

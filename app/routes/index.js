@@ -23,21 +23,16 @@ const router = (fastify, {}, next) => {
             subVersion: global.appDetail.subVersion,
         });
     });
-    fastify.post('/', async (req, reply) => {
-        console.log('post userInfo body', req.body);
-        const userInfo = await decodeToken(req);
-        console.log('post userInfo', userInfo);
+    fastify.post('/', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         let res = {
             statusCode: 200,
             date: moment().format('YYYY-MM-DD HH:mm:ss'),
             apiName: global.appDetail.name,
             version: global.appDetail.version,
             subVersion: global.appDetail.subVersion,
+            hospcode: process.env.HOSPCODE,
+            his: process.env.HIS_PROVIDER
         };
-        if (userInfo && userInfo.hcode) {
-            res.hospcode = process.env.HOSPCODE;
-            res.his = process.env.HIS_PROVIDER;
-        }
         reply.send(res);
     });
     fastify.get('/create-token/:source/:key', async (req, reply) => {
@@ -175,7 +170,7 @@ const router = (fastify, {}, next) => {
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED) });
         }
     });
-    fastify.get('/status', async (req, reply) => {
+    fastify.get('/status', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         var ua = req.headers['user-agent'];
         let browserDevice = 'desktop';
         let mobileType = null;

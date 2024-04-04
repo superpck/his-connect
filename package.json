@@ -1,7 +1,7 @@
 {
   "name": "his-connect",
-  "version": "3.7.0",
-  "subVersion": "2024.03.28-1",
+  "version": "3.7.1",
+  "subVersion": "2024.04.04-1",
   "private": true,
   "scripts": {
     "start": "npx ts-node ./src/app.ts",

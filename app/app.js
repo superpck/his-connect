@@ -64,8 +64,7 @@ global.dbISOnline = global.dbIs;
 app.decorate("authenticate", async (request, reply) => {
     request.authenDecoded = null;
     if (request.body && request.body.token) {
-        let token = await request.body.token;
-        request.headers.authorization = 'Bearer ' + token;
+        request.headers.authorization = 'Bearer ' + request.body.token;
     }
     try {
         request.authenDecoded = await request.jwtVerify();

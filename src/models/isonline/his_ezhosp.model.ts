@@ -1,6 +1,5 @@
 import { Knex } from 'knex';
-import * as moment from 'moment';
-const maxLimit = 250;
+const maxLimit = 500;
 const hcode = process.env.HOSPCODE;
 const dbName = process.env.HIS_DB_NAME;
 const dbClient = process.env.HIS_DB_CLIENT;
@@ -26,10 +25,15 @@ export class HisEzhospModel {
         return db('hospdata.patient').select('hn').limit(1)
     }
 
-    getPerson(knex: Knex, columnName, searchText) {
+    getPerson(db: Knex, columnName: string, searchText: any) {
         columnName = columnName === 'cid' ? 'no_card' : columnName;
-        return knex('hospdata.view_patient')
-            .select('no_card as cid', 'hn as pid', 'title as prename',
+        let sql = db('hospdata.view_patient');
+        if (typeof searchText === 'string'){
+            sql.where(columnName, searchText);
+        } else {
+            sql.whereIn(columnName, searchText);
+        }
+        return sql.select('no_card as cid', 'hn as pid', 'title as prename',
                 'name', 'name as fname', 'surname as lname', 'hn',
                 'birth', 'birth as dob', 'sex', 'marry_std as mstatus',
                 'blood as abogroup','address', 'moo', 'road', 'soi',
@@ -37,14 +41,7 @@ export class HisEzhospModel {
                 'occ_std as occupation', 'religion_std as religion',
                 'nation_std as nation', 'religion_std as religion',
                 'edu_std as education', 'tel as telephone',
-                'lastupdate as d_update')
-
-            // .select('hn', 'no_card as cid', 'title as prename',
-            //     'name as fname', 'middlename as mname', 'surname as lname',
-            //     'nation_std as nation', 'religion_std as religion', 
-            //     'birth as dob', 'sex', 'address', 'moo', 'road', 'soi',
-            //     'add as addcode', 'tel', 'zip', 'occupa as occupation')
-            .where(columnName, "=", searchText);
+                'lastupdate as d_update');
     }
 
     getOpdService(db: Knex, hn, date, columnName = '', searchText = '') {
@@ -67,16 +64,22 @@ export class HisEzhospModel {
             .limit(maxLimit);
     }
 
-    getOpdServiceByVN(knex, vn) {
-        return knex('view_opd_visit')
-            .select('hn', 'vn as visitno', 'date', 'time',
+    getOpdServiceByVN(db: Knex, vn: any) {
+        let sql = db('view_opd_visit');
+        if (typeof vn === 'string') {
+            sql.where('vn', vn);
+        } else {
+            sql.whereIn('vn', vn)
+        };
+
+        return sql.select('hn', 'vn as visitno', 'date', 'time',
                 'time_drug as time_end', 'pttype_std2 as pttype',
                 'insclass as payment',
                 'dep_standard as clinic', 'dr',
                 'bp as bp_systolic', 'bp1 as bp_diastolic',
                 'puls as pr', 'rr', 'fu as appoint',
                 'status as result', 'refer as referin')
-            .where('vn', "=", vn);
+                .limit(maxLimit);
     }
 
     getDiagnosisOpd(knex, visitno) {
@@ -90,6 +93,19 @@ export class HisEzhospModel {
         //     , 'diagtype', 'hn'
         //     , 'update_datetime as d_update')
         // .select(db.raw(`concat(vstdate,' ',vsttime) as date_serv`))
+    }
+    async getDiagnosisOpdVWXY(db: Knex, date: any) {
+        let sql = `SELECT hn, vn AS visitno, view_opd_dx.date, diag AS diagcode
+                , view_opd_dx.desc AS diag_name, short_eng AS en, short_thi AS thi
+                , view_opd_dx.type AS diag_type, dr_dx AS dr
+                , "IT" as codeset, lastupdate as d_update
+            FROM view_opd_dx WHERE vn IN (
+                SELECT vn FROM view_opd_dx 
+                WHERE date= ? AND LEFT(diag,1) IN ('V','W','X','Y'))
+            ORDER BY vn, type, lastupdate`
+
+        const result = await db.raw(sql, [date]);
+        return result[0];
     }
 
     getProcedureOpd(knex, columnName, searchNo, hospCode) {

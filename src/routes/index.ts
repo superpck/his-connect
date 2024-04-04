@@ -31,20 +31,15 @@ const router = (fastify, { }, next) => {
     });
   })
 
-  fastify.post('/', async (req: any, reply: any) => {
-    console.log('post userInfo body', req.body);
-    const userInfo = await decodeToken(req);
-    console.log('post userInfo', userInfo);
+  fastify.post('/', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     let res: any = {
       statusCode: 200,
       date: moment().format('YYYY-MM-DD HH:mm:ss'),
       apiName: global.appDetail.name,
       version: global.appDetail.version,
       subVersion: global.appDetail.subVersion,
-    };
-    if (userInfo && userInfo.hcode){
-      res.hospcode = process.env.HOSPCODE;
-      res.his = process.env.HIS_PROVIDER;
+      hospcode: process.env.HOSPCODE,
+      his: process.env.HIS_PROVIDER
     }
     reply.send(res);
   })
@@ -194,7 +189,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.get('/status', async (req: any, reply: any) => {
+  fastify.get('/status', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     var ua = req.headers['user-agent'];
     let browserDevice = 'desktop';
     let mobileType = null;
