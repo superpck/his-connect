@@ -40,7 +40,7 @@ class HisHosxpv3Model {
             sql.whereLike('name', `%${wardName}%`);
         }
         return sql
-            .select('ward as ward_code', 'name as ward_name', `'-' as moph_code`)
+            .select('ward as ward_code', 'name as ward_name', `sss_code as moph_code`)
             .orderBy('name')
             .limit(maxLimit);
     }

@@ -21,6 +21,7 @@ import { HisKpstatModel } from '../../models/his/his_kpstat';
 import { HisMkhospitalModel } from '../../models/isonline/his_mkhospital.model';
 
 import { Jwt } from './../../plugins/jwt';
+import moment = require('moment');
 var jwt = new Jwt();
 
 // const loginModel = new IsLoginModel();
@@ -115,14 +116,13 @@ switch (provider) {
 // ];
 const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb'
   , 'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades'
-  , 'himpro', 'nemo', 'mypcu', 'emrsoft','other'];
+  , 'himpro', 'nemo', 'mypcu', 'emrsoft', 'other'];
 
 const router = (fastify, { }, next) => {
 
   fastify.get('/alive', async (req: any, res: any) => {
     try {
       const result = await hisModel.testConnect(global.dbHIS);
-      global.dbHIS.destroy;
       res.send({
         statusCode: (result && result.length > 0) ? StatusCodes.OK : StatusCodes.NO_CONTENT,
         ok: result && result.length > 0,
@@ -191,126 +191,112 @@ const router = (fastify, { }, next) => {
         message: error.message
       })
     }
-  })
+  });
 
-  fastify.post('/person', async (req: any, res: any) => {
-    const userInfo: any = await decodeToken(req);
-    if (!userInfo || !userInfo.hcode) {
-      res.send({
-        statusCode: StatusCodes.UNAUTHORIZED,
-        message: getReasonPhrase(StatusCodes.UNAUTHORIZED)
-      });
-    } else {
-      let columnName: string = req.body.columnName;
-      let searchText: string = req.body.searchText;
-      console.log('search person', userInfo.hcode);
-      if (columnName && searchText) {
-        try {
-          const result = await hisModel.getPerson(global.dbHIS, columnName, searchText);
-          global.dbHIS.destroy;
-          res.send({
-            statusCode: StatusCodes.OK,
-            version: global.appDetail.version,
-            subVersion: global.appDetail.subVersion,
-            hisProvider: process.env.HIS_PROVIDER,
-            reccount: result.length,
-            rows: result
-          });
-        } catch (error) {
-          console.log('person', error.message);
-          res.send({
-            statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-            message: error.message
-          })
-        }
-      } else {
+  fastify.post('/person', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
+    let columnName: string = req.body.columnName;
+    let searchText: any = req.body.searchText;
+    if (columnName && searchText) {
+      try {
+        const rows = await hisModel.getPerson(global.dbHIS, columnName, searchText);
+        res.send({statusCode: StatusCodes.OK,rows});
+      } catch (error) {
+        console.log('person', error.message);
         res.send({
-          statusCode: StatusCodes.BAD_REQUEST,
-          message: getReasonPhrase(StatusCodes.BAD_REQUEST)
-        })
-
-      }
-
-    }
-  })
-
-  fastify.post('/opd-service', async (req: any, res: any) => {
-    const userInfo: any = await decodeToken(req);
-    if (!userInfo || !userInfo.hcode) {
-      res.send({
-        statusCode: StatusCodes.UNAUTHORIZED,
-        message: getReasonPhrase(StatusCodes.UNAUTHORIZED)
-      });
-    } else {
-      let hn: string = req.body.hn;
-      let date: string = req.body.date;
-      let visitNo: string = req.body.visitNo || '';
-
-      if (visitNo + hn) {
-        try {
-          const result = await hisModel.getOpdService(global.dbHIS, hn, date, 'vn', visitNo);
-          global.dbHIS.destroy;
-          res.send({
-            statusCode: StatusCodes.OK,
-            version: global.appDetail.version,
-            subVersion: global.appDetail.subVersion,
-            hisProvider: process.env.HIS_PROVIDER,
-            reccount: result.length,
-            rows: result
-          });
-        } catch (error) {
-          console.log('opd-service', error.message);
-          res.send({
-            statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-            message: error.message
-          })
-        }
-      } else {
-        res.send({
-          statusCode: StatusCodes.BAD_REQUEST,
-          message: getReasonPhrase(StatusCodes.BAD_REQUEST)
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+          message: error.message
         })
       }
     }
-  })
+  });
 
-  fastify.post('/opd-diagnosis', async (req: any, res: any) => {
-    const userInfo: any = await decodeToken(req);
-    if (!userInfo || !userInfo.hcode) {
-      res.send({
-        statusCode: StatusCodes.UNAUTHORIZED,
-        message: getReasonPhrase(StatusCodes.UNAUTHORIZED)
-      });
-    } else {
-      let visitNo: string = req.body.visitNo || req.body.vn;
+  fastify.post('/opd-service', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
+    let hn: string = req.body.hn;
+    let date: string = req.body.date;
+    let visitNo: string = req.body.visitNo || '';
 
-      if (visitNo) {
-        try {
-          const result = await hisModel.getDiagnosisOpd(global.dbHIS, visitNo);
-          global.dbHIS.destroy;
-          res.send({
-            statusCode: StatusCodes.OK,
-            version: global.appDetail.version,
-            subVersion: global.appDetail.subVersion,
-            hisProvider: process.env.HIS_PROVIDER,
-            reccount: result.length,
-            rows: result
-          });
-        } catch (error) {
-          console.log('opd-diagnosis', error.message);
-          res.send({
-            statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-            message: error.message
-          })
-        }
-      } else {
+    if (visitNo + hn) {
+      try {
+        const rows = await hisModel.getOpdService(global.dbHIS, hn, date, 'vn', visitNo);
+        res.send({ statusCode: StatusCodes.OK, rows });
+      } catch (error) {
+        console.log('opd-service', error.message);
         res.send({
-          statusCode: StatusCodes.BAD_REQUEST,
-          message: getReasonPhrase(StatusCodes.BAD_REQUEST)
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+          message: error.message
         })
       }
+    } else {
+      res.send({
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
+      })
     }
-  })
+  });
+
+  fastify.post('/opd-service-by-vn', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
+    let visitNo: any = req.body.visitNo;
+    if (visitNo) {
+      try {
+        const rows = await hisModel.getOpdServiceByVN(global.dbHIS, visitNo);
+        res.send({ statusCode: StatusCodes.OK, rows });
+      } catch (error) {
+        console.log('opd-service-by-vn', error.message);
+        res.send({
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+          message: error.message
+        })
+      }
+    } else {
+      res.send({
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
+      })
+    }
+  });
+
+  fastify.post('/opd-diagnosis', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
+    let visitNo: string = req.body.visitNo || req.body.vn;
+
+    if (visitNo) {
+      try {
+        const result = await hisModel.getDiagnosisOpd(global.dbHIS, visitNo);
+        res.send({
+          statusCode: StatusCodes.OK,
+          version: global.appDetail.version,
+          subVersion: global.appDetail.subVersion,
+          hisProvider: process.env.HIS_PROVIDER,
+          reccount: result.length,
+          rows: result
+        });
+      } catch (error) {
+        console.log('opd-diagnosis', error.message);
+        res.send({
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+          message: error.message
+        })
+      }
+    } else {
+      res.send({
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
+      })
+    }
+  });
+
+  fastify.post('/opd-diagnosis-vwxy', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
+    let date: any = req.body.date || moment().format('YYYY-MM-DD');
+    try {
+      const rows = await hisModel.getDiagnosisOpdVWXY(global.dbHIS, date);
+      res.send({ statusCode: StatusCodes.OK, rows });
+    } catch (error) {
+      console.log('opd-diagnosis', error.message);
+      res.send({
+        statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: error.message
+      })
+    }
+  });
 
   async function decodeToken(req) {
     let token: string = null;

@@ -45,7 +45,7 @@ export class HisHosxpv4Model {
         }
         return sql
             .select('ward as ward_code', 'name as ward_name',
-                `'-' as moph_code`)
+                `sss_code as moph_code`)
             .orderBy('name')
             .limit(maxLimit);
     }
