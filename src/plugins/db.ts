@@ -68,7 +68,7 @@ const dbConnection = (type = 'HIS') => {
         }
       }
     };
-  } if (config.client == 'oracledb') {
+  } else if (config.client == 'oracledb') {
     opt = {
       client: config.client,
       caseSensitive: false,
@@ -81,7 +81,7 @@ const dbConnection = (type = 'HIS') => {
         fetchAsString: ['DATE'],
       }
     };
-  } if (config.client == 'pg') {
+  } else if (config.client == 'pg') {
     opt = {
       client: config.client,
       connection: {
