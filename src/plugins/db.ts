@@ -53,7 +53,7 @@ const dbConnection = (type = 'HIS') => {
   const config: any = options[type];
   const connection = config.connection;
   let opt: any = {};
-  if (['mssql'].includes(config.client)) {
+  if (config.client == 'mssql') {
     opt = {
       client: config.client,
       connection: {
