@@ -144,7 +144,7 @@ export class HisHosxpv4Model {
             WHERE vn IN (
                 SELECT vn FROM ovstdiag as dx
                 WHERE dx.vstdate= ? AND LEFT(icd10,1) IN ('V','W','X','Y'))
-            WHERE LEFT(diag,1) IN ('S','T','V','W','X','Y')
+                AND LEFT(icd10,1) IN ('S','T','V','W','X','Y')
             ORDER BY vn, diagtype, update_datetime LIMIT `+maxLimit;
 
         const result = await db.raw(sql, [date]);
