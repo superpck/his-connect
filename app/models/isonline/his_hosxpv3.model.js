@@ -105,7 +105,7 @@ class HisHosxpv3Model {
             .where(columnName, "=", searchNo);
     }
     getAdmission(knex, columnName, searchNo, hospCode) {
-        return knex('admission')
+        return knex('ipt')
             .where(columnName, "=", searchNo);
     }
     getDiagnosisIpd(knex, columnName, searchNo, hospCode) {

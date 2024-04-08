@@ -238,7 +238,7 @@ export class HisHosxpv3Model {
     }
 
     getAdmission(knex, columnName, searchNo, hospCode) {
-        return knex('admission')
+        return knex('ipt')
             .where(columnName, "=", searchNo);
     }
 

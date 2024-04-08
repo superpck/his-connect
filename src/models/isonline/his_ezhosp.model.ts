@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-const maxLimit = 500;
+const maxLimit = 1000;
 const hcode = process.env.HOSPCODE;
 const dbName = process.env.HIS_DB_NAME;
 const dbClient = process.env.HIS_DB_CLIENT;
@@ -102,7 +102,7 @@ export class HisEzhospModel {
             FROM view_opd_dx WHERE vn IN (
                 SELECT vn FROM view_opd_dx 
                 WHERE date= ? AND LEFT(diag,1) IN ('V','W','X','Y'))
-            ORDER BY vn, type, lastupdate`
+            ORDER BY vn, type, lastupdate LIMIT ${maxLimit}`
 
         const result = await db.raw(sql, [date]);
         return result[0];
@@ -176,43 +176,37 @@ export class HisEzhospModel {
 
     getAdmission(knex, columnName, searchNo, hospCode) {
         columnName = columnName === 'visitno' ? 'vn' : columnName;
-        return knex('admission')
-            .select('*')
+        return knex('view_ipd_ipd')
             .where(columnName, "=", searchNo);
     }
 
     getDiagnosisIpd(knex, columnName, searchNo, hospCode) {
         columnName = columnName === 'visitno' ? 'vn' : columnName;
-        return knex('diagnosis_ipd')
-            .select('*')
-            .where(columnName, "=", searchNo);
+        return knex('view_diagnosis_ipd')
+            .where(columnName, searchNo);
     }
 
     getProcedureIpd(knex, columnName, searchNo, hospCode) {
         columnName = columnName === 'visitno' ? 'vn' : columnName;
-        return knex('procedure_ipd')
-            .select('*')
-            .where(columnName, "=", searchNo);
+        return knex('view_procedure_ipd')
+            .where(columnName, searchNo);
     }
 
     getChargeIpd(knex, columnName, searchNo, hospCode) {
         columnName = columnName === 'visitno' ? 'vn' : columnName;
         return knex('charge_ipd')
-            .select('*')
             .where(columnName, "=", searchNo);
     }
 
     getDrugIpd(knex, columnName, searchNo, hospCode) {
         columnName = columnName === 'visitno' ? 'vn' : columnName;
         return knex('drug_ipd')
-            .select('*')
             .where(columnName, "=", searchNo);
     }
 
     getAccident(knex, columnName, searchNo, hospCode) {
         columnName = columnName === 'visitno' ? 'vn' : columnName;
         return knex('accident')
-            .select('*')
             .where(columnName, "=", searchNo);
     }
 
