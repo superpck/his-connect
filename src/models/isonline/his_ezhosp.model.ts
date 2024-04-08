@@ -102,6 +102,7 @@ export class HisEzhospModel {
             FROM view_opd_dx WHERE vn IN (
                 SELECT vn FROM view_opd_dx 
                 WHERE date= ? AND LEFT(diag,1) IN ('V','W','X','Y'))
+            WHERE LEFT(diag,1) IN ('S','T','V','W','X','Y')
             ORDER BY vn, type, lastupdate LIMIT ${maxLimit}`
 
         const result = await db.raw(sql, [date]);
