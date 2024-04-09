@@ -4,6 +4,7 @@
   - เพิ่มการค้น Diag ด้วย VWXY
   - เพิ่มการ get person, visit ด้วย array
   - เพิ่มการ check authenticate บาง route ที่จำเป็น
+  - เพิ่ม group by vn ในตาราง visit เพื่อให้ uniq row
 
 # 3.7.0
 ## Feature
