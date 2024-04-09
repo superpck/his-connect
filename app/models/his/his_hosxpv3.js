@@ -577,7 +577,7 @@ class HisHosxpv3Model {
                 (select hospitalcode from opdconfig) as HOSPCODE,
                 i.hn as PID,
                 q.seq_id, o.vn SEQ,
-                i.an AS AN, pt.cid
+                i.an AS AN, pt.cid,
                 date_format(concat(i.regdate, ' ', i.regtime),'%Y-%m-%d %H:%i:%s') as datetime_admit,
                 i.ward as WARD_LOCAL,
                 CASE WHEN s.provis_code IS NULL THEN '' ELSE s.provis_code END AS wardadmit,
@@ -602,7 +602,7 @@ class HisHosxpv3Model {
                 IF (os.height = 0,'',os.height) admitheight,
                 CASE WHEN i.dchdate IS NULL THEN '' ELSE date_format(concat(i.dchdate, ' ', i.dchtime),'%Y-%m-%d %H:%i:%s') END AS datetime_disch,
                 CASE WHEN s.provis_code IS NULL THEN '' ELSE s.provis_code END AS warddisch,
-                , ward.name as WARDDISCHNAME,
+                ward.name as WARDDISCHNAME,
                 CASE WHEN ds.nhso_dchstts IS NULL THEN '' ELSE ds.nhso_dchstts END AS dischstatus,
                 CASE WHEN dt.nhso_dchtype IS NULL THEN '' ELSE dt.nhso_dchtype END AS dischtype,
                 IF(i.dchtype = '04',i.rfrolct,'') AS referouthosp,
