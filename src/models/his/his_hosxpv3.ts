@@ -769,10 +769,10 @@ export class HisHosxpv3Model {
                 LEFT JOIN dchstts ds ON i.dchstts = ds.dchstts
                 LEFT JOIN opitemrece c ON c.an = i.an  
                 LEFT JOIN ward ON i.ward = ward.ward           
-            WHERE ${columnName}='${searchValue}' ${validRefer}
+            WHERE ${columnName}=? ${validRefer}
             GROUP BY i.an `;
 
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [searchValue]);
         return result[0];
     }
 
