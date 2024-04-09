@@ -236,9 +236,10 @@ const router = (fastify, { }, next) => {
 
   fastify.post('/opd-service-by-vn', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
     let visitNo: any = req.body.visitNo;
+    let where: any = req.body.where;
     if (visitNo) {
       try {
-        const rows = await hisModel.getOpdServiceByVN(global.dbHIS, visitNo);
+        const rows = await hisModel.getOpdServiceByVN(global.dbHIS, visitNo, where);
         res.send({ statusCode: StatusCodes.OK, rows });
       } catch (error) {
         console.log('opd-service-by-vn', error.message);
@@ -290,7 +291,7 @@ const router = (fastify, { }, next) => {
       const rows = await hisModel.getDiagnosisOpdVWXY(global.dbHIS, date);
       res.send({ statusCode: StatusCodes.OK, rows });
     } catch (error) {
-      console.log('opd-diagnosis', error.message);
+      console.log('opd-diagnosis-vwxy', error.message);
       res.send({
         statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
         message: error.message
