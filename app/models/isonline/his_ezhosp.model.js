@@ -43,12 +43,12 @@ class HisEzhospModel {
         if (columnName && searchText)
             where[columnName] = searchText;
         return db('view_opd_visit')
-            .select('hn', 'vn as visitno', 'date', 'time', 'time_drug as time_end', 'pttype_std2 as pttype', 'insclass as payment', 'dep_standard as clinic', 'dr', 'bp as bp_systolic', 'bp1 as bp_diastolic', 'puls as pr', 'rr', 'fu as appoint', 'status as result', 'refer as referin')
+            .select('hn', 'vn as visitno', 'date', 'time', 'time_drug as time_end', 'pttype_std2 as pttype', 'insclass as payment', 'dep as clinic_local_code', 'dep_name as clinic_local_name', 'dep_standard as clinic', 'dr', 'bp as bp_systolic', 'bp1 as bp_diastolic', 'puls as pr', 'rr', 'fu as appoint', 'status as result', 'refer as referin')
             .where(where)
             .orderBy('date', 'desc')
             .limit(maxLimit);
     }
-    getOpdServiceByVN(db, vn) {
+    getOpdServiceByVN(db, vn, where = null) {
         let sql = db('view_opd_visit');
         if (typeof vn === 'string') {
             sql.where('vn', vn);
@@ -57,7 +57,10 @@ class HisEzhospModel {
             sql.whereIn('vn', vn);
         }
         ;
-        return sql.select('hn', 'vn as visitno', 'date', 'time', 'time_drug as time_end', 'pttype_std2 as pttype', 'insclass as payment', 'dep_standard as clinic', 'dr', 'bp as bp_systolic', 'bp1 as bp_diastolic', 'puls as pr', 'rr', 'fu as appoint', 'status as result', 'refer as referin')
+        if (where) {
+            sql.where(where);
+        }
+        return sql.select('hn', 'vn as visitno', 'date', 'time', 'time_drug as time_end', 'pttype_std2 as pttype', 'insclass as payment', 'dep as clinic_local_code', 'dep_name as clinic_local_name', 'dep_standard as clinic', 'dr', 'bp as bp_systolic', 'bp1 as bp_diastolic', 'puls as pr', 'rr', 'fu as appoint', 'status as result', 'refer as referin')
             .limit(maxLimit);
     }
     getDiagnosisOpd(knex, visitno) {

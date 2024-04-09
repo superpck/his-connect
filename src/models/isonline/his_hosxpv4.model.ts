@@ -74,6 +74,7 @@ export class HisHosxpv4Model {
                 'er_emergency_type.export_code as cause_t'
             )
             .where(where)
+            .groupBy('ovst.vn')
             .limit(maxLimit);
 
     }

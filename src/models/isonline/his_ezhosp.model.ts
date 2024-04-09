@@ -28,20 +28,20 @@ export class HisEzhospModel {
     getPerson(db: Knex, columnName: string, searchText: any) {
         columnName = columnName === 'cid' ? 'no_card' : columnName;
         let sql = db('hospdata.view_patient');
-        if (typeof searchText === 'string'){
+        if (typeof searchText === 'string') {
             sql.where(columnName, searchText);
         } else {
             sql.whereIn(columnName, searchText);
         }
         return sql.select('no_card as cid', 'hn as pid', 'title as prename',
-                'name', 'name as fname', 'surname as lname', 'hn',
-                'birth', 'birth as dob', 'sex', 'marry_std as mstatus',
-                'blood as abogroup','address', 'moo', 'road', 'soi',
-                'add as addcode', 'tel', 'zip',
-                'occ_std as occupation', 'religion_std as religion',
-                'nation_std as nation', 'religion_std as religion',
-                'edu_std as education', 'tel as telephone',
-                'lastupdate as d_update');
+            'name', 'name as fname', 'surname as lname', 'hn',
+            'birth', 'birth as dob', 'sex', 'marry_std as mstatus',
+            'blood as abogroup', 'address', 'moo', 'road', 'soi',
+            'add as addcode', 'tel', 'zip',
+            'occ_std as occupation', 'religion_std as religion',
+            'nation_std as nation', 'religion_std as religion',
+            'edu_std as education', 'tel as telephone',
+            'lastupdate as d_update');
     }
 
     getOpdService(db: Knex, hn, date, columnName = '', searchText = '') {
@@ -54,7 +54,8 @@ export class HisEzhospModel {
         return db('view_opd_visit')
             .select('hn', 'vn as visitno', 'date', 'time',
                 'time_drug as time_end', 'pttype_std2 as pttype',
-                'insclass as payment',
+                'insclass as payment', 
+                'dep as clinic_local_code', 'dep_name as clinic_local_name',
                 'dep_standard as clinic', 'dr',
                 'bp as bp_systolic', 'bp1 as bp_diastolic',
                 'puls as pr', 'rr', 'fu as appoint',
@@ -64,22 +65,26 @@ export class HisEzhospModel {
             .limit(maxLimit);
     }
 
-    getOpdServiceByVN(db: Knex, vn: any) {
+    getOpdServiceByVN(db: Knex, vn: any, where: any = null) {
         let sql = db('view_opd_visit');
         if (typeof vn === 'string') {
             sql.where('vn', vn);
         } else {
             sql.whereIn('vn', vn)
         };
+        if (where) {
+            sql.where(where)
+        }
 
         return sql.select('hn', 'vn as visitno', 'date', 'time',
-                'time_drug as time_end', 'pttype_std2 as pttype',
-                'insclass as payment',
-                'dep_standard as clinic', 'dr',
-                'bp as bp_systolic', 'bp1 as bp_diastolic',
-                'puls as pr', 'rr', 'fu as appoint',
-                'status as result', 'refer as referin')
-                .limit(maxLimit);
+            'time_drug as time_end', 'pttype_std2 as pttype',
+            'insclass as payment',
+            'dep as clinic_local_code', 'dep_name as clinic_local_name',
+            'dep_standard as clinic', 'dr',
+            'bp as bp_systolic', 'bp1 as bp_diastolic',
+            'puls as pr', 'rr', 'fu as appoint',
+            'status as result', 'refer as referin')
+            .limit(maxLimit);
     }
 
     getDiagnosisOpd(knex, visitno) {
