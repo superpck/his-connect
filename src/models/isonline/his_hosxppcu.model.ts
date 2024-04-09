@@ -47,7 +47,7 @@ export class HisHosxppcuModel {
             .leftJoin(`ovstdiag`, 'ovstdiag.vn', 'opdscreen.vn')
             .leftJoin(`ipt`, 'ipt.vn', 'opdscreen.vn')
             .leftJoin(`referin`, 'referin.vn', 'opdscreen.vn')
-            .leftJoin(`clinic`, 'ovst.last_dep', 'clinic.clinic')
+            .leftJoin(`clinic`, 'ovst.cur_dep', 'clinic.clinic')
             .select('opdscreen.hn', 'opdscreen.vn as visitno', 'opdscreen.vstdate as date',
                 'opdscreen.vsttime as time',
                 'opdscreen.bps as bp_systolic', 'opdscreen.bpd as bp_diastolic',
@@ -98,10 +98,10 @@ export class HisHosxppcuModel {
             .leftJoin(`ovstdiag`, 'ovstdiag.vn', 'opdscreen.vn')
             .leftJoin(`ipt`, 'ipt.vn', 'opdscreen.vn')
             .leftJoin(`referin`, 'referin.vn', 'opdscreen.vn')
-            .leftJoin(`clinic`, 'ovst.last_dep', 'clinic.clinic')
+            .leftJoin(`clinic`, 'ovst.cur_dep', 'clinic.clinic')
             .select('opdscreen.hn', 'opdscreen.vn as visitno', 'opdscreen.vstdate as date',
                 'opdscreen.vsttime as time',
-                'ovst.last_dep as clinic_local_code', 'clinic.name as clinic_local_name',
+                'ovst.cur_dep as clinic_local_code', 'clinic.name as clinic_local_name',
                 'opdscreen.bps as bp_systolic', 'opdscreen.bpd as bp_diastolic',
                 'opdscreen.pulse as pr', 'opdscreen.rr', 'ovst.vstdate as hdate', 'ovst.vsttime as htime',
                 'er_nursing_detail.gcs_e as eye', 'er_nursing_detail.gcs_v as verbal',
