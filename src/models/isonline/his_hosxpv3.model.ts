@@ -52,10 +52,12 @@ export class HisHosxpv3Model {
             .leftJoin(`accident_place_type`, `accident_place_type.accident_place_type_id`, `er_nursing_detail.accident_place_type_id`)
             .leftJoin(`accident_transport_type`, `accident_transport_type.accident_transport_type_id`, `er_nursing_detail.accident_transport_type_id`)
             .leftJoin(`accident_person_type`, `accident_person_type.accident_person_type_id`, `er_nursing_detail.accident_person_type_id`)
+            .leftJoin(`clinic`, 'ovst.cur_dep', 'clinic.clinic')
             // .leftOuterJoin(db.raw(`select vn,icd10,diagtype from ovstdiag where diagtype = 1 AND hn`, '=', hn) `ovstdiag`,'ovstdiag.vn','er_nursing_detail.vn')
             // .leftOuterJoin(db.raw(`select vn,icd10,diagtype from ovstdiag where diagtype = 2 AND hn`, '=', hn) `ovstdiag`,'ovstdiag.vn','er_nursing_detail.vn')
             .select('opdscreen.hn', 'opdscreen.vn as visitno', 'opdscreen.vstdate as date',
                 'opdscreen.vsttime as time',
+                'ovst.cur_dep as clinic_local_code', 'clinic.name as clinic_local_name',
                 'opdscreen.bps as bp_systolic', 'opdscreen.bpd as bp_diastolic',
                 'opdscreen.pulse as pr', 'opdscreen.rr', 'ovst.vstdate as hdate', 'ovst.vsttime as htime',
                 'er_nursing_detail.gcs_e as eye', 'er_nursing_detail.gcs_v as verbal',
@@ -105,8 +107,10 @@ export class HisHosxpv3Model {
             .leftJoin(`ovstdiag`, 'ovstdiag.vn', 'opdscreen.vn')
             .leftJoin(`ipt`, 'ipt.vn', 'opdscreen.vn')
             .leftJoin(`referin`, 'referin.vn', 'opdscreen.vn')
+            .leftJoin(`clinic`, 'ovst.cur_dep', 'clinic.clinic')
             .select('opdscreen.hn', 'opdscreen.vn as visitno', 'opdscreen.vstdate as date',
                 'opdscreen.vsttime as time',
+                'ovst.cur_dep as clinic_local_code', 'clinic.name as clinic_local_name',
                 'opdscreen.bps as bp_systolic', 'opdscreen.bpd as bp_diastolic',
                 'opdscreen.pulse as pr', 'opdscreen.rr', 'ovst.vstdate as hdate', 'ovst.vsttime as htime',
                 'er_nursing_detail.gcs_e as eye', 'er_nursing_detail.gcs_v as verbal',

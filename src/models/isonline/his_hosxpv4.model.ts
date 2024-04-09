@@ -46,8 +46,10 @@ export class HisHosxpv4Model {
             .leftJoin(`er_nursing_detail`, 'er_nursing_detail.vn', 'opdscreen.vn')
             .leftJoin(`er_emergency_type`, `er_emergency_type.er_emergency_type`, `er_regist.er_emergency_type`)
             .leftJoin(`accident_transport_type`, 'er_nursing_detail.accident_transport_type_id', 'accident_transport_type.accident_transport_type_id')
+            .leftJoin(`clinic`, 'ovst.cur_dep', 'clinic.clinic')
             .select('opdscreen.hn', 'opdscreen.vn as visitno', 'opdscreen.vstdate as date',
                 'opdscreen.vsttime as time',
+                'ovst.cur_dep as clinic_local_code', 'clinic.name as clinic_local_name',
                 'opdscreen.bps as bp_systolic', 'opdscreen.bpd as bp_diastolic',
                 'opdscreen.pulse as pr', 'opdscreen.rr', 'ovst.vstdate as hdate', 'ovst.vsttime as htime',
                 'er_nursing_detail.gcs_e as eye', 'er_nursing_detail.gcs_v as verbal',
@@ -93,8 +95,10 @@ export class HisHosxpv4Model {
             .leftJoin(`ovstdiag`, 'ovstdiag.vn', 'opdscreen.vn')
             .leftJoin(`ipt`, 'ipt.vn', 'opdscreen.vn')
             .leftJoin(`referin`, 'referin.vn', 'opdscreen.vn')
+            .leftJoin(`clinic`, 'ovst.cur_dep', 'clinic.clinic')
             .select('opdscreen.hn', 'opdscreen.vn as visitno', 'opdscreen.vstdate as date',
                 'opdscreen.vsttime as time',
+                'ovst.cur_dep as clinic_local_code', 'clinic.name as clinic_local_name',
                 'opdscreen.bps as bp_systolic', 'opdscreen.bpd as bp_diastolic',
                 'opdscreen.pulse as pr', 'opdscreen.rr', 'ovst.vstdate as hdate', 'ovst.vsttime as htime',
                 'er_nursing_detail.gcs_e as eye', 'er_nursing_detail.gcs_v as verbal',
