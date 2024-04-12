@@ -13,6 +13,7 @@ import { HisNemoModel } from '../../models/his/his_nemo';
 import { HisPmkModel } from '../../models/his/his_pmk';
 import { HisMyPcuModel } from '../../models/his/his_mypcu';
 import { HisEmrSoftModel } from '../../models/his/his_emrsoft';
+import { HisSsbSriHModel } from '../../models/his/his_ssb_srih';
 
 const hisProvider = process.env.HIS_PROVIDER;
 
@@ -42,7 +43,7 @@ switch (hisProvider) {
     hisModel = new HisNemoModel();
     break;
   case 'ssb':
-    // hisModel = new HisSsbModel();
+    hisModel = new HisSsbSriHModel(); // SSB รพ.สระบุรี
     break;
   case 'infod':
   case 'homc':
