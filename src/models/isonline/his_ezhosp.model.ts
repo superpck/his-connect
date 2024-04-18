@@ -54,7 +54,7 @@ export class HisEzhospModel {
         return db('view_opd_visit')
             .select('hn', 'vn as visitno', 'date', 'time',
                 'time_drug as time_end', 'pttype_std2 as pttype',
-                'insclass as payment', 
+                'insclass as payment', 'emg as triage',
                 'dep as clinic_local_code', 'dep_name as clinic_local_name',
                 'dep_standard as clinic', 'dr',
                 'bp as bp_systolic', 'bp1 as bp_diastolic',
@@ -78,7 +78,7 @@ export class HisEzhospModel {
 
         return sql.select('hn', 'vn as visitno', 'date', 'time',
             'time_drug as time_end', 'pttype_std2 as pttype',
-            'insclass as payment',
+            'insclass as payment', 'emg as triage',
             'dep as clinic_local_code', 'dep_name as clinic_local_name',
             'dep_standard as clinic', 'dr',
             'bp as bp_systolic', 'bp1 as bp_diastolic',
