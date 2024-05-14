@@ -148,6 +148,53 @@ class HisEzhospModel {
             throw new Error('Invalid parameters');
         }
     }
+    async getDiagnosisOpdVWXY(db, date) {
+        let sql = `SELECT hn, vn AS visitno, view_opd_dx.date, diag AS diagcode
+                , view_opd_dx.desc AS diag_name, short_eng AS en, short_thi AS thi
+                , view_opd_dx.type AS diag_type, dr_dx AS dr
+                , "IT" as codeset, lastupdate as d_update
+            FROM view_opd_dx WHERE vn IN (
+                SELECT vn FROM view_opd_dx 
+                WHERE date= ? AND LEFT(diag,1) IN ('V','W','X','Y'))
+                AND LEFT(diag,1) IN ('S','T','V','W','X','Y')
+            ORDER BY vn, type, lastupdate LIMIT ${maxLimit}`;
+        const result = await db.raw(sql, [date]);
+        return result[0];
+    }
+    async getDiagnosisSepsisOpd(db, dateStart, dateEnd) {
+        let sql = `SELECT hn, vn AS visitno, view_opd_dx.date, diag AS diagcode
+                , view_opd_dx.desc AS diag_name, short_eng AS en, short_thi AS thi
+                , view_opd_dx.type AS diag_type, dr_dx AS dr
+                , "IT" as codeset, lastupdate as d_update
+            FROM view_opd_dx WHERE vn IN (
+                SELECT vn FROM view_opd_dx 
+                WHERE date BETWEEN ? AND ? AND LEFT(diag,4) IN ('R651','R572') GROUP BY vn)
+            ORDER BY vn, type, lastupdate LIMIT ${maxLimit}`;
+        const result = await db.raw(sql, [dateStart, dateEnd]);
+        return result[0];
+    }
+    async getDiagnosisSepsisIpd(db, dateStart, dateEnd) {
+        let sql = `SELECT ipd.hn, ipd.vn AS visitno, dx.an
+                , dx.admite as date, dx AS diagcode
+                , dx.desc AS diag_name, short_eng AS en, short_thi AS thi
+                , dx.type AS diag_type, dx.dr
+                , patient.title AS patient_prename
+                , patient.name AS patient_fname
+                , patient.surname AS patient_lname
+                , ipd.ward as wardcode, lib_ward.ward as wardname
+                , "IT" as codeset, dx.lastupdate as d_update
+            FROM view_ipd_dx as dx
+                LEFT JOIN patient on dx.hn=patient.hn
+                LEFT JOIN ipd_ipd as ipd on dx.an=ipd.an
+                LEFT JOIN lib_ward on ipd.ward=lib_ward.code
+            WHERE dx.an IN (
+                SELECT an FROM view_ipd_dx 
+                WHERE admite BETWEEN ? AND ? AND LEFT(dx,4) IN ('R651','R572') GROUP BY an)
+                AND dx.type != "5"
+            ORDER BY dx.an, dx.type, dx.lastupdate LIMIT ${maxLimit}`;
+        const result = await db.raw(sql, [dateStart, dateEnd]);
+        return result[0];
+    }
     getProcedureOpd(db, visitno, hospCode = hcode) {
         return db('view_opd_op')
             .select(db.raw('"' + hcode + '" as hospcode'))
@@ -233,9 +280,15 @@ class HisEzhospModel {
         if (['no_card', 'vn', 'hn', 'an'].indexOf(columnName) < 0) {
             sql.whereRaw('LENGTH(ipd.refer)=5');
         }
+        if (Array.isArray(searchValue)) {
+            sql.whereIn(columnName, searchValue);
+        }
+        else {
+            sql.where(columnName, searchValue);
+        }
         return sql
             .select(db.raw('"' + hcode + '" as HOSPCODE'))
-            .select('ipd.hn as PID', 'ipd.vn as SEQ', 'ipd.an AS AN', 'ipd.hn')
+            .select('ipd.hn as PID', 'ipd.vn as SEQ', 'ipd.an AS AN', 'ipd.hn', 'ipd.sex AS SEX')
             .select(db.raw('concat(ipd.admite, " " , ipd.time) as DATETIME_ADMIT'))
             .select('ipd.ward_std as WARDADMIT', 'ipd.ward_name as WARDADMITNAME', 'ipd.ward as WARD_LOCAL', 'ipd.pttype_std2 as INSTYPE')
             .select(db.raw('case when ipd.refer="" then 1 else 3 end as TYPEIN '))
@@ -249,7 +302,6 @@ class HisEzhospModel {
             .select('ipd.dr_disc as PROVIDER')
             .select(db.raw('concat(ipd.disc, " " , ipd.timedisc) as D_UPDATE'))
             .select('ipd.drg as DRG', 'ipd.rw as RW', 'ipd.adjrw as ADJRW', 'ipd.drg_error as ERROR', 'ipd.drg_warning as WARNING', 'ipd.los as ACTLOS', 'ipd.grouper_version as GROUPER_VERSION', 'ipd.no_card as CID')
-            .where(columnName, searchValue)
             .limit(maxLimit);
     }
     getDiagnosisIpd(db, columnName, searchNo, hospCode = hcode) {
@@ -261,6 +313,7 @@ class HisEzhospModel {
         return db('view_ipd_dx_hdc as dx')
             .select('dx.*', db.raw(' "IT" as codeset'))
             .where(columnName, searchNo)
+            .where('type', '!=', '5')
             .orderBy('AN')
             .orderBy('DIAGTYPE')
             .orderBy('D_UPDATE')
@@ -270,6 +323,7 @@ class HisEzhospModel {
         if (dateStart & dateEnd) {
             return db('view_ipd_dx as dx')
                 .whereBetween('admite', [dateStart, dateEnd])
+                .where('type', '!=', '5')
                 .whereRaw(`LEFT(dx,1) IN ('V','W','X','Y')`)
                 .orderBy(['disc', 'timedisc'])
                 .limit(maxLimit);

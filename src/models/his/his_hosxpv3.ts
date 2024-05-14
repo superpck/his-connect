@@ -12,7 +12,7 @@ export class HisHosxpv3Model {
     testConnect(db: Knex) {
         return db('patient').select('hn').limit(1)
     }
-    
+
     getTableName(db: Knex, dbName = process.env.HIS_DB_NAME) {
         return db('information_schema.tables')
             .select('table_name')
@@ -45,7 +45,7 @@ export class HisHosxpv3Model {
         }
         return sql
             .select('ward as ward_code', 'name as ward_name',
-            `sss_code as moph_code`)
+                `sss_code as moph_code`)
             .orderBy('name')
             .limit(maxLimit);
     }
@@ -98,7 +98,7 @@ export class HisHosxpv3Model {
             and hcode!=r.refer_hospcode
         ORDER BY
             r.refer_date`;
-        const result = await db.raw(sql,[filter]);
+        const result = await db.raw(sql, [filter]);
         return result[0];
     }
 
@@ -322,14 +322,64 @@ export class HisHosxpv3Model {
         return result[0];
     }
     async getDiagnosisOpdAccident(db: Knex, dateStart: any, dateEnd: any, hospCode = hcode) {
-        if (dateStart & dateEnd){
+        if (dateStart & dateEnd) {
             return db('ovstdiag as dx')
-                .whereBetween('vstdate',[dateStart, dateEnd])
+                .whereBetween('vstdate', [dateStart, dateEnd])
                 .whereRaw(`left(icd10,1) in ('V','W','X','Y')`)
                 .limit(maxLimit);
         } else {
             throw new Error('Invalid parameters');
         }
+    }
+    async getDiagnosisOpdVWXY(db: Knex, date: any) {
+        let sql = `SELECT hn, vn AS visitno, dx.vstdate as date, icd10 AS diagcode
+                , icd.name AS diag_name
+                , dx.diagtype AS diag_type, doctor AS dr
+                , dx.episode
+                , "IT" as codeset, update_datetime as d_update
+            FROM ovstdiag as dx
+                LEFT JOIN icd10_sss as icd ON dx.icd10 = icd.code
+            WHERE vn IN (
+                SELECT vn FROM ovstdiag as dx
+                WHERE dx.vstdate= ? AND LEFT(icd10,1) IN ('V','W','X','Y'))
+                AND LEFT(icd10,1) IN ('S','T','V','W','X','Y')
+            ORDER BY vn, diagtype, update_datetime LIMIT `+ maxLimit;
+
+        const result = await db.raw(sql, [date]);
+        return result[0];
+    }
+    async getDiagnosisSepsisOpd(db: Knex, dateStart: any, dateEnd: any) {
+        let sql = `SELECT hn, vn AS visitno, dx.vstdate as date, icd10 AS diagcode
+                , icd.name AS diag_name
+                , dx.diagtype AS diag_type, doctor AS dr
+                , dx.episode
+                , "IT" as codeset, update_datetime as d_update
+            FROM ovstdiag as dx
+                LEFT JOIN icd10_sss as icd ON dx.icd10 = icd.code
+            WHERE vn IN (
+                SELECT vn FROM ovstdiag as dx
+                WHERE dx.vstdate BETWEEN ? AND ? AND LEFT(icd10,4) IN ('R651','R572') GROUP BY vn)
+            ORDER BY vn, diagtype, update_datetime LIMIT `+ maxLimit;
+
+        const result = await db.raw(sql, [dateStart, dateEnd]);
+        return result[0];
+    }
+    async getDiagnosisSepsisIpd(db: Knex, dateStart: any, dateEnd: any) {
+        let sql = `SELECT ipt.hn, ipt.vn AS visitno, dx.an, ipt.dchdate as date
+                , dx.icd10 AS diagcode
+                , icd.name AS diag_name
+                , dx.diagtype AS diag_type, dx.doctor AS dr
+                , "IT" as codeset, dx.entry_datetime as d_update
+            FROM iptdiag as dx
+                LEFT JOIN icd10_sss as icd ON dx.icd10 = icd.code
+                LEFT JOIN ipt on dx.an=ipt.an
+            WHERE an IN (
+                SELECT an FROM iptdiag as dx LEFT JOIN ipt on dx.an=ipt.an
+                WHERE ipt.dchdate BETWEEN ? AND ? AND LEFT(icd10,4) IN ('R651','R572') GROUP BY an)
+            ORDER BY an, diagtype, ipt.update_datetime LIMIT `+ maxLimit;
+
+        const result = await db.raw(sql, [dateStart, dateEnd]);
+        return result[0];
     }
 
     async getProcedureOpd(db: Knex, visitNo, hospCode = hcode) {
@@ -503,22 +553,22 @@ export class HisHosxpv3Model {
     getInvestigation(db: Knex, columnName: string, searchNo: string, hospCode = hcode) {
         return this.getLabResult(db, columnName, searchNo);
     };
-    
+
     getLabResult(db: Knex, columnName: string, searchNo: string) {
         columnName = columnName === 'visitNo' ? 'lab_head.vn' : columnName;
         columnName = columnName === 'hn' ? 'ovst.hn' : columnName;
         columnName = columnName === 'cid' ? 'patient.cid' : columnName;
 
         return db('lab_head')
-            .leftJoin('lab_order','lab_head.lab_order_number','lab_order.lab_order_number')
-            .leftJoin('lab_items','lab_order.lab_items_code','lab_items.lab_items_code')
-            .innerJoin('ovst','lab_head.vn','ovst.vn')
-            .innerJoin('patient','ovst.hn','patient.hn')
+            .leftJoin('lab_order', 'lab_head.lab_order_number', 'lab_order.lab_order_number')
+            .leftJoin('lab_items', 'lab_order.lab_items_code', 'lab_items.lab_items_code')
+            .innerJoin('ovst', 'lab_head.vn', 'ovst.vn')
+            .innerJoin('patient', 'ovst.hn', 'patient.hn')
             .select(db.raw(`'${hcode}' as HOSPCODE,'LAB' as INVESTTYPE`))
-            .select('lab_head.vn','lab_head.vn as visitno','lab_head.vn as SEQ',
-                'lab_head.hn as PID','patient.cid as CID',
+            .select('lab_head.vn', 'lab_head.vn as visitno', 'lab_head.vn as SEQ',
+                'lab_head.hn as PID', 'patient.cid as CID',
                 'lab_head.lab_order_number as request_id',
-                'lab_order.lab_items_code as LOCALCODE','lab_items.tmlt_code as tmlt',
+                'lab_order.lab_items_code as LOCALCODE', 'lab_items.tmlt_code as tmlt',
                 'lab_head.form_name as lab_group',
                 'lab_order.lab_items_name_ref as INVESTNAME',
                 'lab_order.lab_order_result as INVESTVALUE',
@@ -678,19 +728,42 @@ export class HisHosxpv3Model {
         return result[0];
     }
 
-    async getAdmission(db: Knex, columnName, searchValue, hospCode = hcode) {
+    async getAdmission(db: Knex, columnName: string, searchValue: any, hospCode = hcode) {
         columnName = columnName === 'an' ? 'i.an' : columnName;
         columnName = columnName === 'hn' ? 'i.hn' : columnName;
         columnName = columnName === 'visitNo' ? 'q.vn' : columnName;
         columnName = columnName === 'dateadmit' ? 'i.regdate' : columnName;
         columnName = columnName === 'datedisc' ? 'i.dchdate' : columnName;
-        let validRefer = columnName === 'datedisc'? ' AND LENGTH(i.rfrilct)=5 ':'';
-        const sql = `
-            SELECT
+
+        let sqlCommand = db('ipt i')
+            .leftJoin('an_stat a', 'i.an', 'a.an')
+            .leftJoin('iptdiag idx', 'i.an', 'idx.an')
+            .leftJoin('patient pt', 'i.hn', 'pt.hn')
+            .leftJoin('person p', 'p.patient_hn', 'pt.hn')
+            .leftJoin('ovst o', 'o.vn', 'i.vn')
+            .leftJoin('ovst_seq q', 'q.vn', 'o.vn')
+            .leftJoin('opdscreen os', 'o.vn', 'os.vn')
+            .leftJoin('spclty s', 'i.spclty', 's.spclty')
+            .leftJoin('pttype p1', 'p1.pttype', 'i.pttype')
+            .leftJoin('provis_instype ps', 'ps.CODE', 'p1.nhso_code')
+            .leftJoin('dchtype dt', 'i.dchtype', 'dt.dchtype')
+            .leftJoin('dchstts ds', 'i.dchstts', 'ds.dchstts')
+            .leftJoin('opitemrece c', 'c.an', 'i.an')
+            .leftJoin('ward', 'i.ward', 'ward.ward');
+        if (Array.isArray(searchValue)) {
+            sqlCommand.whereIn(columnName, searchValue);
+        } else {
+            sqlCommand.where(columnName, searchValue);
+        }
+        if (columnName == 'i.dchdate') {
+            sqlCommand.whereRaw('LENGTH(i.rfrilct)=5'); // get only referin
+        }
+        return sqlCommand
+            .select(db.raw(`
                 (select hospitalcode from opdconfig) as HOSPCODE,
                 i.hn as PID,
                 q.seq_id, o.vn SEQ,
-                i.an AS AN, pt.cid,
+                i.an AS AN, pt.cid, pt.sex as SEX,
                 date_format(concat(i.regdate, ' ', i.regtime),'%Y-%m-%d %H:%i:%s') as datetime_admit,
                 i.ward as WARD_LOCAL,
                 CASE WHEN s.provis_code IS NULL THEN '' ELSE s.provis_code END AS wardadmit,
@@ -753,27 +826,7 @@ export class HisHosxpv3Model {
                 CASE WHEN i.grouper_actlos IS NULL THEN 0 ELSE i.grouper_actlos END AS actlos,
                 CASE WHEN i.grouper_version IS NULL THEN '5.1.3' ELSE i.grouper_version END AS grouper_version,
                 CASE WHEN i.grouper_version IS NULL THEN '5.1.3' ELSE i.grouper_version END AS grouper_version
-            FROM
-                ipt i
-                LEFT JOIN an_stat a ON i.an = a.an
-                LEFT JOIN iptdiag idx ON i.an = idx.an
-                LEFT JOIN patient pt ON i.hn = pt.hn
-                LEFT JOIN person p ON p.patient_hn = pt.hn
-                LEFT JOIN ovst o ON o.vn = i.vn
-                LEFT JOIN ovst_seq q ON q.vn = o.vn
-                LEFT JOIN opdscreen os ON o.vn = os.vn
-                LEFT JOIN spclty s ON i.spclty = s.spclty
-                LEFT JOIN pttype p1 ON p1.pttype = i.pttype
-                LEFT JOIN provis_instype ps ON ps. CODE = p1.nhso_code
-                LEFT JOIN dchtype dt ON i.dchtype = dt.dchtype
-                LEFT JOIN dchstts ds ON i.dchstts = ds.dchstts
-                LEFT JOIN opitemrece c ON c.an = i.an  
-                LEFT JOIN ward ON i.ward = ward.ward           
-            WHERE ${columnName}=? ${validRefer}
-            GROUP BY i.an `;
-
-        const result = await db.raw(sql, [searchValue]);
-        return result[0];
+        `)).groupBy('i.an');
     }
 
     async getDiagnosisIpd(db: Knex, columnName, searchNo, hospCode = hcode) {
@@ -804,10 +857,10 @@ export class HisHosxpv3Model {
         return result[0];
     }
     async getDiagnosisIpdAccident(db: Knex, dateStart: any, dateEnd: any, hospCode = hcode) {
-        if (dateStart & dateEnd){
+        if (dateStart & dateEnd) {
             return db('iptdiag as dx')
-                .innerJoin('ipt as ipd','dx.an','ipd.an')
-                .whereBetween('ipd.dchdate',[dateStart, dateEnd])
+                .innerJoin('ipt as ipd', 'dx.an', 'ipd.an')
+                .whereBetween('ipd.dchdate', [dateStart, dateEnd])
                 .whereRaw(`LEFT(dx.icd10,1) IN ('V','W','X','Y')`)
                 .limit(maxLimit);
         } else {
@@ -1097,13 +1150,13 @@ export class HisHosxpv3Model {
     }
     async getDrugAllergy(db: Knex, hn, hospCode = hcode) {
         return db('opd_allergy as oe')
-            .leftJoin('drugitems_register as di', 'oe.agent','di.drugname')
-            .leftJoin('patient', 'oe.hn','patient.hn')
-            .leftJoin('person', 'oe.hn','person.patient_hn')
+            .leftJoin('drugitems_register as di', 'oe.agent', 'di.drugname')
+            .leftJoin('patient', 'oe.hn', 'patient.hn')
+            .leftJoin('person', 'oe.hn', 'person.patient_hn')
             .select(db.raw('(select distinct opdconfig.hospitalcode from opdconfig) as HOSPCODE'))
-            .select('patient.hn as PID', 'patient.cid as CID','di.std_code as DRUGALLERGY',
-                'oe.agent as DNAME','oe.seriousness_id as ALEVE',
-                'oe.symptom as DETAIL','oe.opd_allergy_source_id as INFORMANT')
+            .select('patient.hn as PID', 'patient.cid as CID', 'di.std_code as DRUGALLERGY',
+                'oe.agent as DNAME', 'oe.seriousness_id as ALEVE',
+                'oe.symptom as DETAIL', 'oe.opd_allergy_source_id as INFORMANT')
             .select(db.raw(`if(oe.report_date is null 
                     or trim(oe.report_date)=' ' 
                     or oe.report_date like '0000-00-00%',
@@ -1117,7 +1170,7 @@ export class HisHosxpv3Model {
             .select(db.raw(`if(oe.update_datetime is null or trim(oe.update_datetime) = '' 
                 or oe.update_datetime like '0000-00-00%', '', 
                 date_format(oe.update_datetime,'%Y-%m-%d %H:%i:%s')) as D_UPDATE`))
-            .where('oe.hn',hn)
+            .where('oe.hn', hn)
     }
 
     getAppointment(db, visitNo, hospCode = hcode) {
@@ -1264,14 +1317,14 @@ export class HisHosxpv3Model {
     getReferResult(db: Knex, visitDate: string, hospCode = hcode) {
         visitDate = moment(visitDate).format('YYYY-MM-DD');
         return db('referin')
-            .leftJoin('patient','referin.hn','patient.hn')
-            .leftJoin('ovst','referin.vn','ovst.vn')
-            .leftJoin('refer_reply','referin.vn','refer_reply.vn')
+            .leftJoin('patient', 'referin.hn', 'patient.hn')
+            .leftJoin('ovst', 'referin.vn', 'ovst.vn')
+            .leftJoin('refer_reply', 'referin.vn', 'refer_reply.vn')
             .select(db.raw(`'${hcode}' as HOSPCODE`))
             .select('referin.refer_hospcode as HOSP_SOURCE',
                 'patient.cid as CID_IN',
-                'referin.hn as PID_IN','referin.vn as SEQ_IN','referin.docno as REFERID',
-                'referin.refer_date as DATETIME_REFER','referin.icd10 as detail',
+                'referin.hn as PID_IN', 'referin.vn as SEQ_IN', 'referin.docno as REFERID',
+                'referin.refer_date as DATETIME_REFER', 'referin.icd10 as detail',
                 'refer_reply.diagnosis_text as reply_diagnostic',
                 'refer_reply.advice_text as reply_recommend')
             .select(db.raw(`case when referin.referin_number then referin.referin_number else concat('${hcode}-',referin.docno) end as REFERID_SOURCE`))

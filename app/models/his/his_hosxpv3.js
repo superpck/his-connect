@@ -317,6 +317,53 @@ class HisHosxpv3Model {
             throw new Error('Invalid parameters');
         }
     }
+    async getDiagnosisOpdVWXY(db, date) {
+        let sql = `SELECT hn, vn AS visitno, dx.vstdate as date, icd10 AS diagcode
+                , icd.name AS diag_name
+                , dx.diagtype AS diag_type, doctor AS dr
+                , dx.episode
+                , "IT" as codeset, update_datetime as d_update
+            FROM ovstdiag as dx
+                LEFT JOIN icd10_sss as icd ON dx.icd10 = icd.code
+            WHERE vn IN (
+                SELECT vn FROM ovstdiag as dx
+                WHERE dx.vstdate= ? AND LEFT(icd10,1) IN ('V','W','X','Y'))
+                AND LEFT(icd10,1) IN ('S','T','V','W','X','Y')
+            ORDER BY vn, diagtype, update_datetime LIMIT ` + maxLimit;
+        const result = await db.raw(sql, [date]);
+        return result[0];
+    }
+    async getDiagnosisSepsisOpd(db, dateStart, dateEnd) {
+        let sql = `SELECT hn, vn AS visitno, dx.vstdate as date, icd10 AS diagcode
+                , icd.name AS diag_name
+                , dx.diagtype AS diag_type, doctor AS dr
+                , dx.episode
+                , "IT" as codeset, update_datetime as d_update
+            FROM ovstdiag as dx
+                LEFT JOIN icd10_sss as icd ON dx.icd10 = icd.code
+            WHERE vn IN (
+                SELECT vn FROM ovstdiag as dx
+                WHERE dx.vstdate BETWEEN ? AND ? AND LEFT(icd10,4) IN ('R651','R572') GROUP BY vn)
+            ORDER BY vn, diagtype, update_datetime LIMIT ` + maxLimit;
+        const result = await db.raw(sql, [dateStart, dateEnd]);
+        return result[0];
+    }
+    async getDiagnosisSepsisIpd(db, dateStart, dateEnd) {
+        let sql = `SELECT ipt.hn, ipt.vn AS visitno, dx.an, ipt.dchdate as date
+                , dx.icd10 AS diagcode
+                , icd.name AS diag_name
+                , dx.diagtype AS diag_type, dx.doctor AS dr
+                , "IT" as codeset, dx.entry_datetime as d_update
+            FROM iptdiag as dx
+                LEFT JOIN icd10_sss as icd ON dx.icd10 = icd.code
+                LEFT JOIN ipt on dx.an=ipt.an
+            WHERE an IN (
+                SELECT an FROM iptdiag as dx LEFT JOIN ipt on dx.an=ipt.an
+                WHERE ipt.dchdate BETWEEN ? AND ? AND LEFT(icd10,4) IN ('R651','R572') GROUP BY an)
+            ORDER BY an, diagtype, ipt.update_datetime LIMIT ` + maxLimit;
+        const result = await db.raw(sql, [dateStart, dateEnd]);
+        return result[0];
+    }
     async getProcedureOpd(db, visitNo, hospCode = hcode) {
         const sql = `
             select 
@@ -571,13 +618,36 @@ class HisHosxpv3Model {
         columnName = columnName === 'visitNo' ? 'q.vn' : columnName;
         columnName = columnName === 'dateadmit' ? 'i.regdate' : columnName;
         columnName = columnName === 'datedisc' ? 'i.dchdate' : columnName;
-        let validRefer = columnName === 'datedisc' ? ' AND LENGTH(i.rfrilct)=5 ' : '';
-        const sql = `
-            SELECT
+        let sqlCommand = db('ipt i')
+            .leftJoin('an_stat a', 'i.an', 'a.an')
+            .leftJoin('iptdiag idx', 'i.an', 'idx.an')
+            .leftJoin('patient pt', 'i.hn', 'pt.hn')
+            .leftJoin('person p', 'p.patient_hn', 'pt.hn')
+            .leftJoin('ovst o', 'o.vn', 'i.vn')
+            .leftJoin('ovst_seq q', 'q.vn', 'o.vn')
+            .leftJoin('opdscreen os', 'o.vn', 'os.vn')
+            .leftJoin('spclty s', 'i.spclty', 's.spclty')
+            .leftJoin('pttype p1', 'p1.pttype', 'i.pttype')
+            .leftJoin('provis_instype ps', 'ps.CODE', 'p1.nhso_code')
+            .leftJoin('dchtype dt', 'i.dchtype', 'dt.dchtype')
+            .leftJoin('dchstts ds', 'i.dchstts', 'ds.dchstts')
+            .leftJoin('opitemrece c', 'c.an', 'i.an')
+            .leftJoin('ward', 'i.ward', 'ward.ward');
+        if (Array.isArray(searchValue)) {
+            sqlCommand.whereIn(columnName, searchValue);
+        }
+        else {
+            sqlCommand.where(columnName, searchValue);
+        }
+        if (columnName == 'i.dchdate') {
+            sqlCommand.whereRaw('LENGTH(i.rfrilct)=5');
+        }
+        return sqlCommand
+            .select(db.raw(`
                 (select hospitalcode from opdconfig) as HOSPCODE,
                 i.hn as PID,
                 q.seq_id, o.vn SEQ,
-                i.an AS AN, pt.cid,
+                i.an AS AN, pt.cid, pt.sex as SEX,
                 date_format(concat(i.regdate, ' ', i.regtime),'%Y-%m-%d %H:%i:%s') as datetime_admit,
                 i.ward as WARD_LOCAL,
                 CASE WHEN s.provis_code IS NULL THEN '' ELSE s.provis_code END AS wardadmit,
@@ -640,26 +710,7 @@ class HisHosxpv3Model {
                 CASE WHEN i.grouper_actlos IS NULL THEN 0 ELSE i.grouper_actlos END AS actlos,
                 CASE WHEN i.grouper_version IS NULL THEN '5.1.3' ELSE i.grouper_version END AS grouper_version,
                 CASE WHEN i.grouper_version IS NULL THEN '5.1.3' ELSE i.grouper_version END AS grouper_version
-            FROM
-                ipt i
-                LEFT JOIN an_stat a ON i.an = a.an
-                LEFT JOIN iptdiag idx ON i.an = idx.an
-                LEFT JOIN patient pt ON i.hn = pt.hn
-                LEFT JOIN person p ON p.patient_hn = pt.hn
-                LEFT JOIN ovst o ON o.vn = i.vn
-                LEFT JOIN ovst_seq q ON q.vn = o.vn
-                LEFT JOIN opdscreen os ON o.vn = os.vn
-                LEFT JOIN spclty s ON i.spclty = s.spclty
-                LEFT JOIN pttype p1 ON p1.pttype = i.pttype
-                LEFT JOIN provis_instype ps ON ps. CODE = p1.nhso_code
-                LEFT JOIN dchtype dt ON i.dchtype = dt.dchtype
-                LEFT JOIN dchstts ds ON i.dchstts = ds.dchstts
-                LEFT JOIN opitemrece c ON c.an = i.an  
-                LEFT JOIN ward ON i.ward = ward.ward           
-            WHERE ${columnName}=? ${validRefer}
-            GROUP BY i.an `;
-        const result = await db.raw(sql, [searchValue]);
-        return result[0];
+        `)).groupBy('i.an');
     }
     async getDiagnosisIpd(db, columnName, searchNo, hospCode = hcode) {
         columnName = columnName === 'visitNo' ? 'q.vn' : columnName;
