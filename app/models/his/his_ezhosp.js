@@ -309,11 +309,10 @@ class HisEzhospModel {
         columnName = columnName === 'an' ? 'dx.AN' : columnName;
         columnName = columnName === 'pid' ? 'dx.PID' : columnName;
         columnName = columnName === 'cid' ? 'dx.CID' : columnName;
-        console.log(columnName, searchNo);
         return db('view_ipd_dx_hdc as dx')
             .select('dx.*', db.raw(' "IT" as codeset'))
             .where(columnName, searchNo)
-            .where('type', '!=', '5')
+            .where('DIAGTYPE', '!=', '5')
             .orderBy('AN')
             .orderBy('DIAGTYPE')
             .orderBy('D_UPDATE')
