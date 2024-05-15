@@ -3,6 +3,14 @@
 ## 1.การติดตั้ง
 [เอกสารขั้นตอนการติดตั้ง API](https://connect.moph.go.th/pher-plus/#/main/link)
 
+## 1.1 SSB (ตัวอย่าง รพ.สระบุรี) สร้าง VIEW สำหรับดึงข้อมูล
+```
+- PERSON
+- OPD_SERVICE
+- DIAGNOSIS
+- ADMISSION
+```
+
 # 2.push to git กรณีเป็นทีมพัฒนา (Develop@MOPH)
 ```
 2.1 > git add .
