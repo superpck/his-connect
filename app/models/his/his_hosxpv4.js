@@ -259,7 +259,7 @@ class HisHosxpv4Model {
                 ovst o 
                 left join person p on o.hn=p.patient_hn  
                 left join vn_stat vn on o.vn=vn.vn and vn.hn=p.patient_hn  
-                left join ipt i on i.vn=o.vn 
+                left join ipt as i on i.vn=o.vn 
                 left join opdscreen s on o.vn = s.vn and o.hn = s.hn 
                 left join pttype p2 on p2.pttype = vn.pttype
                 left join village v on v.village_id = p.village_id
@@ -315,6 +315,59 @@ class HisHosxpv4Model {
         else {
             throw new Error('Invalid parameters');
         }
+    }
+    async getDiagnosisOpdVWXY(db, date) {
+        let sql = `SELECT hn, vn AS visitno, dx.vstdate as date, icd10 AS diagcode
+                , icd.name AS diag_name
+                , dx.diagtype AS diag_type, doctor AS dr
+                , dx.episode
+                , "IT" as codeset, update_datetime as d_update
+            FROM ovstdiag as dx
+                LEFT JOIN icd10_sss as icd ON dx.icd10 = icd.code
+            WHERE vn IN (
+                SELECT vn FROM ovstdiag as dx
+                WHERE dx.vstdate= ? AND LEFT(icd10,1) IN ('V','W','X','Y'))
+                AND LEFT(icd10,1) IN ('S','T','V','W','X','Y')
+            ORDER BY dx.vn, diagtype, update_datetime LIMIT ` + maxLimit;
+        const result = await db.raw(sql, [date]);
+        return result[0];
+    }
+    async getDiagnosisSepsisOpd(db, date) {
+        let sql = `SELECT hn, vn AS visitno, dx.vstdate as date, icd10 AS diagcode
+                , icd.name AS diag_name
+                , dx.diagtype AS diag_type, doctor AS dr
+                , dx.episode
+                , "IT" as codeset, update_datetime as d_update
+            FROM ovstdiag as dx
+                LEFT JOIN icd10_sss as icd ON dx.icd10 = icd.code
+            WHERE vn IN (
+                SELECT vn FROM ovstdiag as dx
+                WHERE dx.vstdate= ? AND LEFT(icd10,4) IN ('R651','R572') GROUP BY dx.vn)
+            ORDER BY dx.vn, diagtype, update_datetime LIMIT ` + maxLimit;
+        const result = await db.raw(sql, [date]);
+        return result[0];
+    }
+    async getDiagnosisSepsisIpd(db, dateStart, dateEnd) {
+        let sql = `SELECT ipt.hn, ipt.vn AS visitno, dx.an, ipt.dchdate as date
+                , dx.icd10 AS diagcode
+                , icd.name AS diag_name
+                , dx.diagtype AS diag_type, dx.doctor AS dr
+                , patient.pname AS patient_prename
+                , patient.fname AS patient_fname
+                , patient.lname AS patient_lname
+                , ipt.ward as wardcode, ward.name as wardname
+                , "IT" as codeset, dx.entry_datetime as d_update
+            FROM iptdiag as dx
+                LEFT JOIN icd10_sss as icd ON dx.icd10 = icd.code
+                LEFT JOIN ipt on dx.an=ipt.an
+                LEFT JOIN patient on ipt.hn=patient.hn
+                LEFT JOIN ward on ipt.ward=ward.ward
+                WHERE dx.an IN (
+                SELECT dx.an FROM iptdiag as dx LEFT JOIN ipt on dx.an=ipt.an
+                WHERE ipt.dchdate BETWEEN ? AND ? AND LEFT(icd10,4) IN ('R651','R572') GROUP BY dx.an)
+            ORDER BY dx.an, diagtype, ipt.update_datetime LIMIT ` + maxLimit;
+        const result = await db.raw(sql, [dateStart, dateEnd]);
+        return result[0];
     }
     async getProcedureOpd(db, visitNo, hospCode = hcode) {
         const sql = `
@@ -543,7 +596,7 @@ class HisHosxpv4Model {
                 
             WHERE 
                 (opi.an is null or opi.an ='') 
-                and opi.vn not in (select i.vn from ipt i where i.vn=opi.vn) 
+                and opi.vn not in (select i.vn from ipt as i where i.vn=opi.vn) 
                 and opi.icode in (select d.icode from drugitems d) 
                 and os.vn=?
         `;
@@ -556,13 +609,112 @@ class HisHosxpv4Model {
         columnName = columnName === 'visitNo' ? 'q.vn' : columnName;
         columnName = columnName === 'dateadmit' ? 'i.regdate' : columnName;
         columnName = columnName === 'datedisc' ? 'i.dchdate' : columnName;
+        let sqlCommand = db('ipt as i')
+            .leftJoin('an_stat as a', 'i.an', 'a.an')
+            .leftJoin('iptdiag as idx', 'i.an', 'idx.an')
+            .leftJoin('patient as pt', 'i.hn', 'pt.hn')
+            .leftJoin('person as p', 'p.patient_hn', 'pt.hn')
+            .leftJoin('ovst as o', 'o.vn', 'i.vn')
+            .leftJoin('ovst_seq as q', 'q.vn', 'o.vn')
+            .leftJoin('opdscreen as os', 'o.vn', 'os.vn')
+            .leftJoin('spclty as s', 'i.spclty', 's.spclty')
+            .leftJoin('pttype as p1', 'p1.pttype', 'i.pttype')
+            .leftJoin('provis_instype as ps', 'ps.CODE', 'p1.nhso_code')
+            .leftJoin('dchtype as dt', 'i.dchtype', 'dt.dchtype')
+            .leftJoin('dchstts as ds', 'i.dchstts', 'ds.dchstts')
+            .leftJoin('opitemrece as c', 'c.an', 'i.an')
+            .leftJoin('ward', 'i.ward', 'ward.ward');
+        if (Array.isArray(searchValue)) {
+            sqlCommand.whereIn(columnName, searchValue);
+        }
+        else {
+            sqlCommand.where(columnName, searchValue);
+        }
+        if (columnName == 'i.dchdate') {
+            sqlCommand.whereRaw('LENGTH(i.rfrilct)=5');
+        }
+        return sqlCommand
+            .select(db.raw(`
+                (select hospitalcode from opdconfig) as HOSPCODE,
+                i.hn as PID,
+                q.seq_id, o.vn SEQ,
+                i.an AS AN, pt.cid, pt.sex as SEX,
+                date_format(concat(i.regdate, ' ', i.regtime),'%Y-%m-%d %H:%i:%s') as datetime_admit,
+                i.ward as WARD_LOCAL,
+                CASE WHEN s.provis_code IS NULL THEN '' ELSE s.provis_code END AS wardadmit,
+                ward.name as WARDADMITNAME,
+                CASE WHEN ps.pttype_std_code THEN '' ELSE ps.pttype_std_code END AS instype,
+                RIGHT ((SELECT export_code FROM ovstist WHERE ovstist = i.ivstist),1),'1' AS typein,
+                i.rfrilct as referinhosp,
+                i.rfrics as causein,
+                cast(
+                    IF (
+                        i.bw = 0,'',
+                            IF (
+                                i.bw IS NOT NULL,
+                                cast(i.bw / 1000 AS DECIMAL(5, 1)),
+                                IF (
+                                    os.bw = 0,'',
+                                    cast(os.bw AS DECIMAL(5, 1))
+                                )
+                            )
+                    ) AS CHAR (5)
+                ) ddmitweight,
+                IF (os.height = 0,'',os.height) admitheight,
+                CASE WHEN i.dchdate IS NULL THEN '' ELSE date_format(concat(i.dchdate, ' ', i.dchtime),'%Y-%m-%d %H:%i:%s') END AS datetime_disch,
+                CASE WHEN s.provis_code IS NULL THEN '' ELSE s.provis_code END AS warddisch,
+                ward.name as WARDDISCHNAME,
+                CASE WHEN ds.nhso_dchstts IS NULL THEN '' ELSE ds.nhso_dchstts END AS dischstatus,
+                CASE WHEN dt.nhso_dchtype IS NULL THEN '' ELSE dt.nhso_dchtype END AS dischtype,
+                IF(i.dchtype = '04',i.rfrolct,'') AS referouthosp,
+                IF (
+                    i.dchtype = 04,            
+                    IF (
+                        i.rfrocs = 7,
+                        '5',            
+                        IF (
+                            i.rfrocs IS NOT NULL,
+                            '1',
+                            ''
+                        )
+                    ),
+                    ''
+                ) causeout,
+                CASE WHEN sum(c.qty * c.cost) IS NULL THEN 0 ELSE ROUND(sum(c.qty * c.cost),0) END AS cost,
+                CASE WHEN a.uc_money IS NULL THEN 0.00 ELSE ROUND(a.uc_money,2) END AS price,
+                ROUND(
+                    sum(
+                        IF (
+                            c.paidst IN (01, 03),
+                            c.sum_price,
+                            0
+                            )
+                    ),
+                    2
+                ) payprice,
+                CASE WHEN a.paid_money IS NULL THEN 0.00 ELSE ROUND(a.paid_money,2) END AS actualpay,
+                a.dx_doctor provider,
+                CASE WHEN idx.modify_datetime IS NULL THEN '' ELSE date_format(idx.modify_datetime,'%Y-%m-%d %H:%i:%s') END AS d_update,
+                i.drg, a.rw, i.adjrw,
+                CASE WHEN i.grouper_err IS NULL THEN 1 ELSE i.grouper_err END AS error,
+                CASE WHEN i.grouper_warn IS NULL THEN 64 ELSE i.grouper_warn END AS warning,
+                CASE WHEN i.grouper_actlos IS NULL THEN 0 ELSE i.grouper_actlos END AS actlos,
+                CASE WHEN i.grouper_version IS NULL THEN '5.1.3' ELSE i.grouper_version END AS grouper_version,
+                CASE WHEN i.grouper_version IS NULL THEN '5.1.3' ELSE i.grouper_version END AS grouper_version
+        `)).groupBy('i.an');
+    }
+    async getAdmission_(db, columnName, searchValue, hospCode = hcode) {
+        columnName = columnName === 'an' ? 'i.an' : columnName;
+        columnName = columnName === 'hn' ? 'i.hn' : columnName;
+        columnName = columnName === 'visitNo' ? 'q.vn' : columnName;
+        columnName = columnName === 'dateadmit' ? 'i.regdate' : columnName;
+        columnName = columnName === 'datedisc' ? 'i.dchdate' : columnName;
         let validRefer = columnName === 'datedisc' ? ' AND LENGTH(i.rfrilct)=5 ' : '';
         const sql = `
             SELECT
                 (select hospitalcode from opdconfig) as HOSPCODE,
                 i.hn as PID,
-                q.seq_id, o.vn SEQ,
-                i.an AS AN,
+                q.seq_id, o.vn SEQ, i.an AS AN, pt.sex as SEX,
                 date_format(concat(i.regdate, ' ', i.regtime),'%Y-%m-%d %H:%i:%s') as datetime_admit,
                 i.ward as WARD_LOCAL,
                 CASE WHEN s.provis_code IS NULL THEN '' ELSE s.provis_code END AS wardadmit,
@@ -678,7 +830,8 @@ class HisHosxpv4Model {
                 ifnull(date_format(concat(ipt.regdate,' ',ipt.regtime),'%Y-%m-%d %H:%i:%s'),'') as datetime_admit,
                 concat('0',right(spclty.provis_code,4)) as warddiag,
                 iptdiag.diagtype as diagtype,
-                iptdiag.icd10 as diagcode,
+                iptdiag.icd10 as diagcode, 
+                icd.name AS diagname,
                 iptdiag.doctor as provider,
                 ifnull(date_format(iptdiag.modify_datetime,'%Y-%m-%d %H:%i:%s'),date_format(NOW(),'%Y-%m-%d %H:%i:%s')) d_update,
                 pt.cid as CID
@@ -689,6 +842,7 @@ class HisHosxpv4Model {
                 left join ovst_seq q ON q.vn = ipt.vn
                 left join patient pt on pt.hn = ipt.hn
                 left join person p on p.patient_hn = ipt.hn
+                LEFT JOIN icd10_sss as icd ON iptdiag.icd10 = icd.code
                 left outer join spclty on spclty.spclty=ipt.spclty              
             where ${columnName}='${searchNo}'
             order by ipt.an, iptdiag.diagtype`;
@@ -699,6 +853,8 @@ class HisHosxpv4Model {
         if (dateStart & dateEnd) {
             return db('iptdiag as dx')
                 .innerJoin('ipt as ipd', 'dx.an', 'ipd.an')
+                .innerJoin('icd10_sss as icd', 'dx.icd10', 'icd.code')
+                .select('dx.*', 'icd.name AS diagname')
                 .whereBetween('ipd.dchdate', [dateStart, dateEnd])
                 .whereRaw(`LEFT(dx.icd10,1) IN ('V','W','X','Y')`)
                 .limit(maxLimit);
@@ -876,7 +1032,7 @@ class HisHosxpv4Model {
                 ,o.doctor PROVIDER
                 ,ifnull(date_format(concat(o.rxdate,' ',o.rxtime),'%Y-%m-%d %H:%i:%s'),'') D_UPDATE
                 ,pt.cid as CID
-            from ipt i
+            from ipt as i
                 left join an_stat a on a.an=i.an
                 left join opitemrece o on o.an=i.an
                 left join patient pt on pt.hn=i.hn
@@ -1044,7 +1200,7 @@ class HisHosxpv4Model {
                 left join patient pt on pt.hn = ro.hn 
                 left join person ps on ps.cid = pt.cid 
                 left join ovst o on o.vn = ro.vn or o.an=ro.vn
-                left join ipt i on i.an = o.an 
+                left join ipt as i on i.an = o.an 
                 left join ovst_seq os on os.vn = o.vn
                 left join spclty sp on sp.spclty = ro.spclty 
                 left join opdscreen s on s.vn = o.vn 

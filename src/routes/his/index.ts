@@ -267,7 +267,7 @@ const router = (fastify, { }, next) => {
     }
 
     let typeSearch: string = body.typeSearch;
-    let textSearch: string = body.textSearch;
+    let textSearch: any = body.textSearch;
     if (body.an) {
       typeSearch = 'an';
       textSearch = body.an;
@@ -319,6 +319,25 @@ const router = (fastify, { }, next) => {
     try {
       const result = await hisModel.getDiagnosisOpdAccident(global.dbHIS, dateStart, dateEnd);
       reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows: result });
+    } catch (error) {
+      console.log('diagnosis_opd_accident', error.message);
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
+    }
+  })
+
+  fastify.post('/diagnosis-sepsis', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
+    const body = req.body || {};
+    const dateStart = body.dateStart;
+    const dateEnd = body.dateEnd || dateStart;
+
+    if (!dateStart || !dateEnd) {
+      return reply.send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
+    }
+
+    try {
+      const opd = await hisModel.getDiagnosisSepsisOpd(global.dbHIS, dateStart, dateEnd);
+      const ipd = await hisModel.getDiagnosisSepsisIpd(global.dbHIS, dateStart, dateEnd);
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, opd, ipd });
     } catch (error) {
       console.log('diagnosis_opd_accident', error.message);
       reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })

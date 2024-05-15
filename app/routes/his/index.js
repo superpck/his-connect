@@ -281,6 +281,23 @@ const router = (fastify, {}, next) => {
             reply.status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, message: error.message });
         }
     });
+    fastify.post('/diagnosis-sepsis', { preHandler: [fastify.authenticate] }, async (req, reply) => {
+        const body = req.body || {};
+        const dateStart = body.dateStart;
+        const dateEnd = body.dateEnd || dateStart;
+        if (!dateStart || !dateEnd) {
+            return reply.send({ statusCode: http_status_codes_1.StatusCodes.BAD_REQUEST, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.BAD_REQUEST) });
+        }
+        try {
+            const opd = await hismodel_1.default.getDiagnosisSepsisOpd(global.dbHIS, dateStart, dateEnd);
+            const ipd = await hismodel_1.default.getDiagnosisSepsisIpd(global.dbHIS, dateStart, dateEnd);
+            reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, opd, ipd });
+        }
+        catch (error) {
+            console.log('diagnosis_opd_accident', error.message);
+            reply.status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, message: error.message });
+        }
+    });
     fastify.post('/diagnosis-ipd', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const body = req.body || {};
         const an = body.an;
