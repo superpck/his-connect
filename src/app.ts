@@ -29,7 +29,7 @@ if (process.env.SSL_ENABLE && process.env.SSL_ENABLE == '1' && process.env.SSL_K
       key: fs.readFileSync(process.env.SSL_KEY),
       cert: fs.readFileSync(process.env.SSL_CRT)
     }
-    }
+  }
 } else {
   serverOption = {
     logger: {
@@ -141,7 +141,7 @@ app.addHook('preHandler', async (request, reply) => {
   ipAddr = ipAddr ? ipAddr.split(',') : [''];
   const ip = ipAddr[0].trim();
   var geo = geoip.lookup(ip);
-  if (geo && geo.country && geo.country != 'TH') {
+  if (geo && geo.country && geo.country != 'TH' && ip != process.env.HOST) {
     console.log(`Unacceptable country: ${geo.country}`);
     reply.send({ status: StatusCodes.NOT_ACCEPTABLE, ok: false, message: getReasonPhrase(StatusCodes.NOT_ACCEPTABLE) });
   }
@@ -154,15 +154,6 @@ app.register(cronjob);
 var options: any = {
   port: process.env.PORT || 3001,
   host: process.env.HOST || '0.0.0.0'
-}
-
-// Fix การอ่านข้อมูลย้อนหลัง มติที่ประชุม จ.ขอนแก่น ให้อ่านย้อนหลัง 1 เดือน
-if (typeof process.env.NREFER_DATA_BACKWARD_MONTH == 'undefined'){ // กรณีไม่ได้ set
-  if (['10670','11000','11001','11002','11003','11004','11005'].indexOf(process.env.HOSPCODE)>=0){
-    process.env.NREFER_DATA_BACKWARD_MONTH = '1';
-  } else {
-    process.env.NREFER_DATA_BACKWARD_MONTH = '0';  // Set ให้เป็น 0=ไม่อ่านย้อนหลัง
-  }
 }
 
 app.listen(options, (err) => {

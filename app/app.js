@@ -103,7 +103,7 @@ app.addHook('preHandler', async (request, reply) => {
     ipAddr = ipAddr ? ipAddr.split(',') : [''];
     const ip = ipAddr[0].trim();
     var geo = geoip.lookup(ip);
-    if (geo && geo.country && geo.country != 'TH') {
+    if (geo && geo.country && geo.country != 'TH' && ip != process.env.HOST) {
         console.log(`Unacceptable country: ${geo.country}`);
         reply.send({ status: http_status_codes_1.StatusCodes.NOT_ACCEPTABLE, ok: false, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.NOT_ACCEPTABLE) });
     }
@@ -115,14 +115,6 @@ var options = {
     port: process.env.PORT || 3001,
     host: process.env.HOST || '0.0.0.0'
 };
-if (typeof process.env.NREFER_DATA_BACKWARD_MONTH == 'undefined') {
-    if (['10670', '11000', '11001', '11002', '11003', '11004', '11005'].indexOf(process.env.HOSPCODE) >= 0) {
-        process.env.NREFER_DATA_BACKWARD_MONTH = '1';
-    }
-    else {
-        process.env.NREFER_DATA_BACKWARD_MONTH = '0';
-    }
-}
 app.listen(options, (err) => {
     if (err)
         throw err;

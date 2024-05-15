@@ -1,6 +1,7 @@
 # 3.7.2
 ## Feature
   - เพิ่มการค้นหา Diag สำหรับ Service plan Sepsis (R651, R572)
+  - Allow IP ที่กำหนดไว้ที่ config file
 
 # 3.7.1
 ## Feature
