@@ -358,7 +358,7 @@ export class HisHosxpv3Model {
                 LEFT JOIN icd10_sss as icd ON dx.icd10 = icd.code
             WHERE vn IN (
                 SELECT vn FROM ovstdiag as dx
-                WHERE dx.vstdate BETWEEN ? AND ? AND LEFT(icd10,4) IN ('R651','R572') GROUP BY dx.vn)
+                WHERE dx.vstdate BETWEEN ? AND ? AND (LEFT(icd10,4) IN ('R651','R572') OR LEFT(diag,3) IN ('A40','A41')) GROUP BY dx.vn)
             ORDER BY dx.vn, diagtype, update_datetime LIMIT `+ maxLimit;
 
         const result = await db.raw(sql, [dateStart, dateEnd]);
@@ -381,7 +381,7 @@ export class HisHosxpv3Model {
                 LEFT JOIN ward on ipt.ward=ward.ward
                 WHERE dx.an IN (
                 SELECT dx.an FROM iptdiag as dx LEFT JOIN ipt on dx.an=ipt.an
-                WHERE ipt.dchdate BETWEEN ? AND ? AND LEFT(icd10,4) IN ('R651','R572') GROUP BY dx.an)
+                WHERE ipt.dchdate BETWEEN ? AND ? AND (LEFT(icd10,4) IN ('R651','R572') OR LEFT(diag,3) IN ('A40','A41')) GROUP BY dx.an)
             ORDER BY dx.an, diagtype, ipt.update_datetime LIMIT `+ maxLimit;
 
         // return db('iptdiag as dx')

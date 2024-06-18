@@ -200,7 +200,7 @@ export class HisEzhospModel {
                 , "IT" as codeset, lastupdate as d_update
             FROM view_opd_dx WHERE vn IN (
                 SELECT vn FROM view_opd_dx 
-                WHERE date BETWEEN ? AND ? AND LEFT(diag,4) IN ('R651','R572') GROUP BY vn)
+                WHERE date BETWEEN ? AND ? AND (LEFT(diag,4) IN ('R651','R572') OR LEFT(diag,3) IN ('A40','A41'))  GROUP BY vn)
             ORDER BY vn, type, lastupdate LIMIT ${maxLimit}`
         const result = await db.raw(sql, [dateStart, dateEnd]);
         return result[0];
@@ -221,7 +221,7 @@ export class HisEzhospModel {
                 LEFT JOIN lib_ward on ipd.ward=lib_ward.code
             WHERE dx.an IN (
                 SELECT an FROM view_ipd_dx 
-                WHERE admite BETWEEN ? AND ? AND LEFT(dx,4) IN ('R651','R572') GROUP BY an)
+                WHERE admite BETWEEN ? AND ? AND (LEFT(dx,4) IN ('R651','R572') OR LEFT(dx,3) IN ('A40','A41')) GROUP BY an)
                 AND dx.type != "5"
             ORDER BY dx.an, dx.type, dx.lastupdate LIMIT ${maxLimit}`
 
