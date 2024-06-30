@@ -48,7 +48,7 @@ app.register(require('@fastify/cors'), {});
 app.register(require('fastify-no-icon'));
 app.register(helmet, {});
 app.register(require('@fastify/rate-limit'), {
-  max: +process.env.MAX_CONNECTION_PER_MINUTE || 10000,
+  max: +process.env.MAX_CONNECTION_PER_MINUTE || 1000,
   // skipOnError: true,
   // cache: 10000,
   timeWindow: '1 minute'
@@ -61,29 +61,15 @@ app.register(require('@fastify/view'), {
   }
 })
 
-// app.register(fastifyCookie);
-// app.register(fastifySession, { secret: process.env.SECRET_KEY });
-
 app.register(require('@fastify/jwt'), {
   secret: process.env.SECRET_KEY
 });
-
-// app.register(require('@fastify/cookie'), {
-//   secret: "hisConnectCookies",
-//   hook: 'onRequest',
-//   parseOptions: {}
-// })
-// app.register(require('fastify-ws'), {});
 global.ipAddr = require('./routes/main/local-server')(global.ipAddr, {});
 
 // set MOPH Url =========================================
 global.mophService = require('./routes/main/crontab')(global.mophService, {});
 global.firstProcessPid = 0;
 global.mophService = null;
-
-// if (!app.mophService) {
-//   getmophUrl();
-// }
 
 // DB connection =========================================
 const dbConnection = require('./plugins/db');
