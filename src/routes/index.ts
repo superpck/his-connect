@@ -16,11 +16,6 @@ const resultText = './sent_result.txt';
 const router = (fastify, { }, next) => {
   var startServer = fastify.startServerTime;
 
-  // fastify.register(require('@fastify/cookie'), {
-  //   secret: process.env.SECRET_KEY,
-  //   parseOptions: {}
-  // })
-
   fastify.get('/', async (req: any, reply: any) => {
     reply.send({
       status: 200, statusCode: 200, ok: true,

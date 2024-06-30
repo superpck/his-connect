@@ -40,7 +40,7 @@ app.register(require('@fastify/cors'), {});
 app.register(require('fastify-no-icon'));
 app.register(helmet, {});
 app.register(require('@fastify/rate-limit'), {
-    max: +process.env.MAX_CONNECTION_PER_MINUTE || 10000,
+    max: +process.env.MAX_CONNECTION_PER_MINUTE || 1000,
     timeWindow: '1 minute'
 });
 app.register(serveStatic(path.join(__dirname, '../public')));
@@ -52,7 +52,6 @@ app.register(require('@fastify/view'), {
 app.register(require('@fastify/jwt'), {
     secret: process.env.SECRET_KEY
 });
-global.ipAddr = require('./routes/main/local-server')(global.ipAddr, {});
 global.mophService = require('./routes/main/crontab')(global.mophService, {});
 global.firstProcessPid = 0;
 global.mophService = null;

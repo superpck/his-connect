@@ -2,8 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const HttpStatus = require("http-status-codes");
 const refer_1 = require("../../models/his/refer");
-const request = require('request');
-var crypto = require('crypto');
 const referModel = new refer_1.ReferModel();
 const router = (fastify, {}, next) => {
     fastify.get('/tbl', async (req, reply) => {

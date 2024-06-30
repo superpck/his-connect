@@ -13,7 +13,6 @@ require('dotenv').config({ path: path.join(__dirname, '../config') });
 import helmet = require('@fastify/helmet');
 
 // const fastifySession = require('fastify-session');
-// const fastifyCookie = require('@fastify/cookie');
 // var cron = require('node-cron');
 // var shell = require("shelljs");
 
@@ -64,7 +63,7 @@ app.register(require('@fastify/view'), {
 app.register(require('@fastify/jwt'), {
   secret: process.env.SECRET_KEY
 });
-global.ipAddr = require('./routes/main/local-server')(global.ipAddr, {});
+// global.ipAddr = require('./routes/main/local-server')(global.ipAddr, {});
 
 // set MOPH Url =========================================
 global.mophService = require('./routes/main/crontab')(global.mophService, {});

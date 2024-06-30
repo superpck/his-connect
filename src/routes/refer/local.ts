@@ -1,9 +1,6 @@
 // ห้ามแก้ไข file นี้ // 
-import * as fastify from 'fastify';
 import * as HttpStatus from 'http-status-codes';
 import { ReferModel } from '../../models/his/refer';
-const request = require('request')
-var crypto = require('crypto');
 
 const referModel = new ReferModel();
 
