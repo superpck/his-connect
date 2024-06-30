@@ -40,7 +40,7 @@ app.register(require('@fastify/cors'), {});
 app.register(require('fastify-no-icon'));
 app.register(helmet, {});
 app.register(require('@fastify/rate-limit'), {
-    max: +process.env.MAX_CONNECTION_PER_MINUTE || 10000,
+    max: +process.env.MAX_CONNECTION_PER_MINUTE || 1000,
     timeWindow: '1 minute'
 });
 app.register(serveStatic(path.join(__dirname, '../public')));
@@ -52,7 +52,6 @@ app.register(require('@fastify/view'), {
 app.register(require('@fastify/jwt'), {
     secret: process.env.SECRET_KEY
 });
-global.ipAddr = require('./routes/main/local-server')(global.ipAddr, {});
 global.mophService = require('./routes/main/crontab')(global.mophService, {});
 global.firstProcessPid = 0;
 global.mophService = null;
@@ -104,8 +103,8 @@ app.addHook('preHandler', async (request, reply) => {
     const ip = ipAddr[0].trim();
     var geo = geoip.lookup(ip);
     if (geo && geo.country && geo.country != 'TH' && ip != process.env.HOST) {
-        console.log(`Unacceptable country: ${geo.country}`);
-        reply.send({ status: http_status_codes_1.StatusCodes.NOT_ACCEPTABLE, ok: false, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.NOT_ACCEPTABLE) });
+        console.log(ip, `Unacceptable country: ${geo.country}`);
+        return reply.send({ status: http_status_codes_1.StatusCodes.NOT_ACCEPTABLE, ip, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.NOT_ACCEPTABLE) });
     }
     console.log(moment().format('HH:mm:ss'), geo ? geo.country : 'unk', ip, request.url);
 });

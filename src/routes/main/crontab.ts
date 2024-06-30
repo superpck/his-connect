@@ -1,9 +1,6 @@
-
-
 var fastify = require('fastify');
 var http = require('http');
 var querystring = require('querystring');
-// var ip = require("ip");
 
 async function getServiceUrl(config) {
   return {
