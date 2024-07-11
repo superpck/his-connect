@@ -14,7 +14,6 @@ import { HisSpdcModel } from './../../models/isonline/his_spdc.model';
 import { HisMdModel } from './../../models/isonline/his_md.model';
 import { HisPmkModel } from './../../models/isonline/his_pmk.model';
 import { HisJhosModel } from './../../models/isonline/his_jhos.model';
-// import { IsLoginModel } from './../../models/isonline/login';
 import { HisMedical2020Model } from '../../models/isonline/his_medical2020.model';
 import { HisEmrSoftModel } from '../../models/isonline/his_emrsoft.model';
 import { HisKpstatModel } from '../../models/his/his_kpstat';
@@ -25,30 +24,8 @@ import { Jwt } from './../../plugins/jwt';
 import moment = require('moment');
 var jwt = new Jwt();
 
-// const loginModel = new IsLoginModel();
-// const hisModels = {
-//   ezhosp: new HisEzhospModel(),
-//   ihospital: new HisEzhospModel(),
-//   hosxpv3: new HisHosxpv3Model(),
-//   hosxpv4: new HisHosxpv4Model(),
-//   hosxppcu: new HisHosxppcuModel(),
-//   hospos: new HisHospitalOsModel(),
-//   jhosp: new HisJhosModel(),
-//   jhcis: new HisJhcisModel(),
-//   ssb: new HisSsbModel(),
-//   homc: new HisInfodModel(),
-//   hi: new HisHiModel(),
-//   himpro: new HisHimproModel(),
-//   pmk: new HisPmkModel(),
-//   spdc: new HisSpdcModel(),
-//   meedee: new HisMdModel(),
-//   other: new HisModel()
-// };
-
 const provider = process.env.HIS_PROVIDER;
 let hisModel: any;
-// let errorRespond = {};
-// let currentRoutePath = '';
 
 switch (provider) {
   case 'ezhosp':
@@ -114,13 +91,9 @@ switch (provider) {
     hisModel = new HisModel();
 }
 
-// const dbName = process.env.HIS_DB_NAME;
-// const allowTableNames = [
-//   'patient', 'view_opd_visit', 'opd_dx', 'opd_op', 'opd_vs', 'ipd_ipd', 'view_pharmacy_opd_drug_item',
-// ];
 const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb'
   , 'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades'
-  , 'himpro', 'nemo', 'mypcu', 'emrsoft', 'other'];
+  , 'himpro', 'nemo', 'mypcu', 'emrsoft', 'haos', 'other'];
 
 const router = (fastify, { }, next) => {
 

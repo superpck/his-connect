@@ -2,6 +2,7 @@
 ## Feature
   - เพิ่มการค้นหา Diag สำหรับ Service plan Sepsis (R651, R572)
   - Allow IP ที่กำหนดไว้ที่ config file
+  - add HA-OS รพ.นครปฐม
 
 # 3.7.1
 ## Feature
