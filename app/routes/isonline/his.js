@@ -20,6 +20,7 @@ const his_medical2020_model_1 = require("../../models/isonline/his_medical2020.m
 const his_emrsoft_model_1 = require("../../models/isonline/his_emrsoft.model");
 const his_kpstat_1 = require("../../models/his/his_kpstat");
 const his_mkhospital_model_1 = require("../../models/isonline/his_mkhospital.model");
+const his_haos_model_1 = require("../../models/isonline/his_haos.model");
 const jwt_1 = require("./../../plugins/jwt");
 const moment = require("moment");
 var jwt = new jwt_1.Jwt();
@@ -81,6 +82,9 @@ switch (provider) {
         break;
     case 'medical2020':
         hisModel = new his_medical2020_model_1.HisMedical2020Model();
+        break;
+    case 'haos':
+        hisModel = new his_haos_model_1.HisHaosModel();
         break;
     default:
         hisModel = new his_model_1.HisModel();
