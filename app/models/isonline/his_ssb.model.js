@@ -22,18 +22,24 @@ class HisSsbModel {
         if (hn)
             where['hn'] = hn;
         if (date)
-            where['date'] = date;
+            where['adate'] = date;
         if (columnName && searchText)
             where[columnName] = searchText;
-        return db('VW_IS_SERVICE')
+        return db('VW_PHER_SERVICE')
+            .select('*', 'htime AS time', 'hdate AS date')
             .where(where)
             .orderBy('date', 'desc')
             .limit(maxLimit);
     }
     getDiagnosisOpd(knex, visitno) {
-        return knex('opd_dx')
-            .select('vn as visitno', 'diag as diagcode', 'type as diag_type')
-            .where('vn', "=", visitno);
+        return knex('VW_PHER_DIAGNOSIS').where('vn', "=", visitno);
+    }
+    getDiagnosisOpdVWXY(knex, date) {
+        return knex('VW_PHER_DIAGNOSIS').where('hdate', "=", date)
+            .andWhere(function () {
+            this.whereIn(knex.raw("LEFT(icd10,1)"), ['V', 'W', 'X', 'Y'])
+                .orWhereIn(knex.raw("LEFT(icd10,1)"), ['S', 'T', 'V', 'W', 'X', 'Y']);
+        });
     }
     getProcedureOpd(knex, columnName, searchNo, hospCode) {
         return knex('procedure_opd')
