@@ -14,6 +14,7 @@ const his_nemo_1 = require("../../models/his/his_nemo");
 const his_pmk_1 = require("../../models/his/his_pmk");
 const his_mypcu_1 = require("../../models/his/his_mypcu");
 const his_emrsoft_1 = require("../../models/his/his_emrsoft");
+const his_haos_1 = require("../../models/his/his_haos");
 const hisProvider = process.env.HIS_PROVIDER;
 let hisModel;
 switch (hisProvider) {
@@ -67,6 +68,9 @@ switch (hisProvider) {
         break;
     case 'emrsoft':
         hisModel = new his_emrsoft_1.HisEmrSoftModel();
+        break;
+    case 'haos':
+        hisModel = new his_haos_1.HisHaosModel();
         break;
     case 'spdc':
     case 'kpstat':
