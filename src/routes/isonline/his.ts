@@ -19,6 +19,7 @@ import { HisMedical2020Model } from '../../models/isonline/his_medical2020.model
 import { HisEmrSoftModel } from '../../models/isonline/his_emrsoft.model';
 import { HisKpstatModel } from '../../models/his/his_kpstat';
 import { HisMkhospitalModel } from '../../models/isonline/his_mkhospital.model';
+import { HisHaosModel } from '../../models/isonline/his_haos.model';
 
 import { Jwt } from './../../plugins/jwt';
 import moment = require('moment');
@@ -105,6 +106,9 @@ switch (provider) {
     break;
   case 'medical2020':
     hisModel = new HisMedical2020Model();
+    break;
+  case 'haos':
+    hisModel = new HisHaosModel();
     break;
   default:
     hisModel = new HisModel();
@@ -199,7 +203,7 @@ const router = (fastify, { }, next) => {
     if (columnName && searchText) {
       try {
         const rows = await hisModel.getPerson(global.dbHIS, columnName, searchText);
-        res.send({statusCode: StatusCodes.OK,rows});
+        res.send({ statusCode: StatusCodes.OK, rows });
       } catch (error) {
         console.log('person', error.message);
         res.send({
