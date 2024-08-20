@@ -1,6 +1,8 @@
 node_modules
 node_modules/*
 typings/*
+images/*
+isonline_mysql
 npm-debug.log
 package-lock.json
 .settings/*
