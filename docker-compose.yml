@@ -1,6 +1,6 @@
 services:
   his-connect-api:
-    image: superpck/his-connect:3.7.3-2024.06.18-1
+    image: superpck/his-connect:3.7.3-2024.08.20-1
     ports:
       - "3004:3004"
     volumes:
