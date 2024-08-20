@@ -563,29 +563,32 @@ async function getLabResult(db, row, sentResult) {
             const cHOSPCODE = r.HOSPCODE || r.hospcode || process.env.HOSPCODE;
             const investvalue = r.INVESTVALUE || r.investvalue || '';
             const investresult = r.INVESTRESULT || r.investresult || '';
-            await rowsSave.push({
-                HOSPCODE: cHOSPCODE,
-                REFERID: referID,
-                REFERID_PROVINCE: cHOSPCODE + referID,
-                PID: r.PID || r.pid || r.HN || r.hn,
-                SEQ: visitNo,
-                AN: r.AN || r.an || '',
-                DATETIME_INVEST: r.DATETIME_INVEST || r.datetime_invest || '',
-                INVESTTYPE: r.INVESTTYPE || r.investtype || 'LAB',
-                INVESTCODE: r.INVESTCODE || r.investcode || r.LOCALCODE || r.localcode || '',
-                LOCALCODE: r.LOCALCODE || r.localcode || '',
-                ICDCM: r.ICDCM || r.icdcm || '',
-                LOINC: r.LOINC || r.loinc || '',
-                INVESTNAME: r.INVESTNAME || r.investname || '',
-                DATETIME_REPORT: r.DATETIME_REPORT || r.datetime_report || '',
-                INVESTVALUE: investvalue.toString(),
-                LH: r.LH || r.lh || '',
-                UNIT: r.UNIT || r.unit || '',
-                NORMAL_MIN: r.NORMAL_MIN || r.normal_min || '',
-                NORMAL_MAX: r.NORMAL_MAX || r.normal_max || '',
-                INVESTRESULT: investresult.toString(),
-                D_UPDATE: r.D_UPDATE || r.d_update || d_update
-            });
+            const investname = r.INVESTNAME || r.investname || '';
+            if (/hiv|cd4|amphetamine|log10 equivalence/.test(investname.toLowerCase()) == false) {
+                rowsSave.push({
+                    HOSPCODE: cHOSPCODE,
+                    REFERID: referID,
+                    REFERID_PROVINCE: cHOSPCODE + referID,
+                    PID: r.PID || r.pid || r.HN || r.hn,
+                    SEQ: visitNo,
+                    AN: r.AN || r.an || '',
+                    DATETIME_INVEST: r.DATETIME_INVEST || r.datetime_invest || '',
+                    INVESTTYPE: r.INVESTTYPE || r.investtype || 'LAB',
+                    INVESTCODE: r.INVESTCODE || r.investcode || r.LOCALCODE || r.localcode || '',
+                    LOCALCODE: r.LOCALCODE || r.localcode || '',
+                    ICDCM: r.ICDCM || r.icdcm || '',
+                    LOINC: r.LOINC || r.loinc || '',
+                    INVESTNAME: investname,
+                    DATETIME_REPORT: r.DATETIME_REPORT || r.datetime_report || '',
+                    INVESTVALUE: investvalue.toString(),
+                    LH: r.LH || r.lh || '',
+                    UNIT: r.UNIT || r.unit || '',
+                    NORMAL_MIN: r.NORMAL_MIN || r.normal_min || '',
+                    NORMAL_MAX: r.NORMAL_MAX || r.normal_max || '',
+                    INVESTRESULT: investresult.toString(),
+                    D_UPDATE: r.D_UPDATE || r.d_update || d_update
+                });
+            }
         }
         const saveResult = await referSending('/save-investigation-refer', rowsSave);
         if (saveResult.statusCode === 200) {
@@ -618,7 +621,7 @@ async function getAdmission(db, type = 'VN', searchValue) {
 }
 async function sendAdmission(row) {
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
-    const data = await {
+    const data = {
         HOSPCODE: row.HOSPCODE || row.hospcode || hcode,
         PID: row.PID || row.pid || row.HN || row.hn,
         SEQ: row.SEQ || row.seq || row.HN || row.vn,
