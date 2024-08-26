@@ -30,20 +30,6 @@ var options = {
             encrypt: process.env.IS_DB_ENCRYPT || process.env.HIS_DB_ENCRYPT || true,
             timezone
         }
-    },
-    REFER: {
-        client: process.env.REFER_DB_CLIENT || process.env.HIS_DB_CLIENT || 'mysql',
-        connection: {
-            host: process.env.REFER_DB_HOST || process.env.HIS_DB_HOST,
-            user: process.env.REFER_DB_USER || process.env.HIS_DB_USER,
-            password: process.env.REFER_DB_PASSWORD || process.env.HIS_DB_PASSWORD,
-            database: process.env.REFER_DB_NAME || process.env.HIS_DB_NAME,
-            port: +process.env.REFER_DB_PORT || +process.env.HIS_DB_PORT || 3306,
-            charset: process.env.REFER_DB_CHARSET || process.env.HIS_DB_CHARSET || 'utf8',
-            schema: process.env.REFER_DB_SCHEMA || process.env.HIS_DB_SCHEMA || 'public',
-            encrypt: process.env.REFER_DB_ENCRYPT || process.env.HIS_DB_ENCRYPT || true,
-            timezone
-        }
     }
 };
 const dbConnection = (type = 'HIS') => {

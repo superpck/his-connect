@@ -55,11 +55,7 @@ app.register(require('@fastify/jwt'), {
 global.mophService = require('./routes/main/crontab')(global.mophService, {});
 global.firstProcessPid = 0;
 global.mophService = null;
-const dbConnection = require('./plugins/db');
-global.dbHIS = dbConnection('HIS');
-global.dbRefer = dbConnection('REFER');
-global.dbIs = dbConnection('ISONLINE');
-global.dbISOnline = global.dbIs;
+connectDB();
 app.decorate("authenticate", async (request, reply) => {
     request.authenDecoded = null;
     if (request.body && request.body.token) {
@@ -117,5 +113,18 @@ var options = {
 app.listen(options, (err) => {
     if (err)
         throw err;
-    console.log(`HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid}`);
+    console.info(`${moment().format('HH:mm:ss')} HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid}`);
 });
+async function connectDB() {
+    const dbConnection = require('./plugins/db');
+    global.dbHIS = dbConnection('HIS');
+    global.dbIs = dbConnection('ISONLINE');
+    global.dbISOnline = global.dbIs;
+    try {
+        const result = await global.dbHIS.raw('SELECT NOW() as date');
+        console.info(`   PID:${process.pid} >> HIS DB server connected, date on DB server: `, result[0][0].date);
+    }
+    catch (error) {
+        console.error(`   PID:${process.pid} >> HIS DB server connect error: `, error.message);
+    }
+}

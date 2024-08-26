@@ -3,8 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const moment = require("moment");
 var shell = require("shelljs");
 var cron = require('node-cron');
-let firstProcessPid = null;
-let pm2Name = '???';
+let firstProcessPid = 0;
+let pm2Name = 'unknown';
 async function cronjob(fastify) {
     firstProcessPid = await firstPM2InstancePID();
     console.log(`First process ID of '${pm2Name}' is ${firstProcessPid}`);
@@ -85,10 +85,10 @@ async function cronjob(fastify) {
     async function firstPM2InstancePID() {
         var jlist = await shell.exec('pm2 jlist', { silent: true });
         let pm2Process = jlist && jlist !== '' && jlist.length > 32 ? JSON.parse(jlist) : [];
-        pm2Name = '???';
+        pm2Name = 'unknown';
         if (pm2Process && pm2Process.length) {
             const prc = pm2Process.filter((o) => process.pid == o.pid && o.pm2_env.status == 'online');
-            pm2Name = prc && prc.length ? prc[0].name : '???';
+            pm2Name = prc && prc.length ? prc[0].name : 'unknown';
         }
         for (let procss of pm2Process) {
             if (procss.name == pm2Name) {

@@ -3,8 +3,8 @@ import * as moment from 'moment';
 
 var shell = require("shelljs");
 var cron = require('node-cron');
-let firstProcessPid: any = null;
-let pm2Name = '???';
+let firstProcessPid: any = 0;
+let pm2Name = 'unknown'
 
 export default async function cronjob(fastify: FastifyInstance) {
     firstProcessPid = await firstPM2InstancePID();
@@ -105,10 +105,10 @@ export default async function cronjob(fastify: FastifyInstance) {
     async function firstPM2InstancePID() {
         var jlist: any = await shell.exec('pm2 jlist', { silent: true });
         let pm2Process = jlist && jlist !== '' && jlist.length > 32 ? JSON.parse(jlist) : [];
-        pm2Name = '???';
+        pm2Name = 'unknown';
         if (pm2Process && pm2Process.length){
             const prc = pm2Process.filter((o: any) => process.pid == o.pid && o.pm2_env.status == 'online');
-            pm2Name = prc && prc.length ? prc[0].name : '???';
+            pm2Name = prc && prc.length ? prc[0].name : 'unknown';
         }
 
         for (let procss of pm2Process) {
