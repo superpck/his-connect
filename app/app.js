@@ -1,11 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const fs = require('node:fs');
+checkConfigFile();
 const path = require("path");
 const http_status_codes_1 = require("http-status-codes");
 const fastify_1 = require("fastify");
 const moment = require("moment");
 const nodecron_1 = require("./nodecron");
-const fs = require('node:fs');
 const serveStatic = require('serve-static');
 var crypto = require('crypto');
 require('dotenv').config({ path: path.join(__dirname, '../config') });
@@ -107,7 +108,7 @@ app.addHook('preHandler', async (request, reply) => {
 app.register(require('./route'));
 app.register(nodecron_1.default);
 var options = {
-    port: process.env.PORT || 3001,
+    port: process.env.PORT || 3004,
     host: process.env.HOST || '0.0.0.0'
 };
 app.listen(options, (err) => {
@@ -126,5 +127,16 @@ async function connectDB() {
     }
     catch (error) {
         console.error(`   PID:${process.pid} >> HIS DB server connect error: `, error.message);
+    }
+}
+async function checkConfigFile() {
+    if (fs.existsSync('./config')) {
+        console.log('Config file exist: Successfully');
+        return true;
+    }
+    else {
+        console.error(`Config file exist: Not found, please create file 'config' and try again.`);
+        process.exit(1);
+        return false;
     }
 }

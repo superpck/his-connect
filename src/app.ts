@@ -1,9 +1,12 @@
+const fs = require('node:fs');
+// Check config file ====================================
+checkConfigFile();
+
 import path = require('path');
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import fastify from 'fastify';
 import * as moment from 'moment';
 import cronjob from './nodecron';
-const fs = require('node:fs');
 
 const serveStatic = require('serve-static');
 var crypto = require('crypto');
@@ -133,7 +136,7 @@ app.register(require('./route'));
 app.register(cronjob);
 
 var options: any = {
-  port: process.env.PORT || 3001,
+  port: process.env.PORT || 3004,
   host: process.env.HOST || '0.0.0.0'
 }
 
@@ -154,5 +157,14 @@ async function connectDB() {
     console.info(`   PID:${process.pid} >> HIS DB server connected, date on DB server: `, result[0][0].date);
   } catch (error) {
     console.error(`   PID:${process.pid} >> HIS DB server connect error: `, error.message);
+  }
+}
+
+async function checkConfigFile() {
+  if (fs.existsSync('./config')) {
+    console.info('Config file exist: Successfully');
+  } else {
+    console.error(`Config file exist: Not found, please create file 'config' and try again.`);
+    process.exit(1);
   }
 }
