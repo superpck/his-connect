@@ -1,9 +1,12 @@
+const fs = require('node:fs');
+// Check config file ====================================
+checkConfigFile();
+
 import path = require('path');
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import fastify from 'fastify';
 import * as moment from 'moment';
 import cronjob from './nodecron';
-const fs = require('node:fs');
 
 const serveStatic = require('serve-static');
 var crypto = require('crypto');
@@ -71,11 +74,7 @@ global.firstProcessPid = 0;
 global.mophService = null;
 
 // DB connection =========================================
-const dbConnection = require('./plugins/db');
-global.dbHIS = dbConnection('HIS');
-global.dbRefer = dbConnection('REFER');
-global.dbIs = dbConnection('ISONLINE');
-global.dbISOnline = global.dbIs;
+connectDB();
 
 // check token ===========================================================
 app.decorate("authenticate", async (request: any, reply: any) => {
@@ -137,11 +136,35 @@ app.register(require('./route'));
 app.register(cronjob);
 
 var options: any = {
-  port: process.env.PORT || 3001,
+  port: process.env.PORT || 3004,
   host: process.env.HOST || '0.0.0.0'
 }
 
 app.listen(options, (err) => {
   if (err) throw err;
-  console.log(`HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid}`);
+  console.info(`${moment().format('HH:mm:ss')} HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid}`);
 });
+
+// DB connection =========================================
+async function connectDB() {
+  const dbConnection = require('./plugins/db');
+  global.dbHIS = dbConnection('HIS');
+  global.dbIs = dbConnection('ISONLINE');
+  global.dbISOnline = global.dbIs;
+
+  try {
+    const result = await global.dbHIS.raw('SELECT NOW() as date');
+    console.info(`   PID:${process.pid} >> HIS DB server connected, date on DB server: `, result[0][0].date);
+  } catch (error) {
+    console.error(`   PID:${process.pid} >> HIS DB server connect error: `, error.message);
+  }
+}
+
+async function checkConfigFile() {
+  if (fs.existsSync('./config')) {
+    console.info('Config file exist: Successfully');
+  } else {
+    console.error(`Config file exist: Not found, please create file 'config' and try again.`);
+    process.exit(1);
+  }
+}

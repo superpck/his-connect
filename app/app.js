@@ -1,11 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const fs = require('node:fs');
+checkConfigFile();
 const path = require("path");
 const http_status_codes_1 = require("http-status-codes");
 const fastify_1 = require("fastify");
 const moment = require("moment");
 const nodecron_1 = require("./nodecron");
-const fs = require('node:fs');
 const serveStatic = require('serve-static');
 var crypto = require('crypto');
 require('dotenv').config({ path: path.join(__dirname, '../config') });
@@ -55,11 +56,7 @@ app.register(require('@fastify/jwt'), {
 global.mophService = require('./routes/main/crontab')(global.mophService, {});
 global.firstProcessPid = 0;
 global.mophService = null;
-const dbConnection = require('./plugins/db');
-global.dbHIS = dbConnection('HIS');
-global.dbRefer = dbConnection('REFER');
-global.dbIs = dbConnection('ISONLINE');
-global.dbISOnline = global.dbIs;
+connectDB();
 app.decorate("authenticate", async (request, reply) => {
     request.authenDecoded = null;
     if (request.body && request.body.token) {
@@ -111,11 +108,33 @@ app.addHook('preHandler', async (request, reply) => {
 app.register(require('./route'));
 app.register(nodecron_1.default);
 var options = {
-    port: process.env.PORT || 3001,
+    port: process.env.PORT || 3004,
     host: process.env.HOST || '0.0.0.0'
 };
 app.listen(options, (err) => {
     if (err)
         throw err;
-    console.log(`HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid}`);
+    console.info(`${moment().format('HH:mm:ss')} HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid}`);
 });
+async function connectDB() {
+    const dbConnection = require('./plugins/db');
+    global.dbHIS = dbConnection('HIS');
+    global.dbIs = dbConnection('ISONLINE');
+    global.dbISOnline = global.dbIs;
+    try {
+        const result = await global.dbHIS.raw('SELECT NOW() as date');
+        console.info(`   PID:${process.pid} >> HIS DB server connected, date on DB server: `, result[0][0].date);
+    }
+    catch (error) {
+        console.error(`   PID:${process.pid} >> HIS DB server connect error: `, error.message);
+    }
+}
+async function checkConfigFile() {
+    if (fs.existsSync('./config')) {
+        console.info('Config file exist: Successfully');
+    }
+    else {
+        console.error(`Config file exist: Not found, please create file 'config' and try again.`);
+        process.exit(1);
+    }
+}

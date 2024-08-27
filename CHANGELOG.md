@@ -2,6 +2,8 @@
 ## Feature
   - เพิ่ม Image ของ Docker
   - ยกเลิกการ Upload lab hiv, cd4, amphetamine, log10 equivalence
+  - แสดงผลการ connect HIS db หลัง run API
+  - ตรวจสอบ config file ว่ามีหรือไม่ก่อนการทำงาน
 
 # 3.7.2
 ## Feature

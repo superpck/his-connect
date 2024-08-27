@@ -1,12 +1,14 @@
 services:
-  his-connect-api:
-    image: superpck/his-connect:3.7.3-2024.08.20-1
+  api:
+    image: superpck/his-connect:latest
+    container_name: his-connect-api
     ports:
       - "3004:3004"
     volumes:
       - ./config:/usr/src/his_connect/config:ro
       - ./sent_result.txt:/usr/src/his_connect/sent_result.txt
-    command: ["pm2-runtime", "start", "app/app.js", "-i", "2", "--name", "his-connect"]
+    command: ["pm2-runtime", "start", "app/app.js", "-i", "2", "--name", "his-connect", "&&", "apt-get","install -y","iputils-ping","net-tools"]
+    # command: /bin/bash -c "apt-get update && apt-get install -y iputils-ping net-tools && echo 'Installation complete' && /bin/bash && pm2-runtime start app/app.js -i 2"
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3004"]
