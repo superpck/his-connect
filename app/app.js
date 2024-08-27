@@ -131,12 +131,10 @@ async function connectDB() {
 }
 async function checkConfigFile() {
     if (fs.existsSync('./config')) {
-        console.log('Config file exist: Successfully');
-        return true;
+        console.info('Config file exist: Successfully');
     }
     else {
         console.error(`Config file exist: Not found, please create file 'config' and try again.`);
         process.exit(1);
-        return false;
     }
 }
