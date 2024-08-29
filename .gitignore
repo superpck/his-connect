@@ -9,7 +9,7 @@ package-lock.json
 .git/*
 bower_components/*
 config
-config.
+config.*
 .DS_Store
 .idea
 .env
