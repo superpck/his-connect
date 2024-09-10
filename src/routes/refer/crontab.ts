@@ -65,7 +65,7 @@ async function getRefer_out(db, date) {
   try {
     const referout = await hisModel.getReferOut(db, date, hcode);
     console.log('******** >> referout', referout.length, ' case');
-    console.log(process.env.NREFER_DATA_BACKWARD_MONTH);
+    // console.log(process.env.NREFER_DATA_BACKWARD_MONTH);
     sentContent += `\rsave refer_history ${date} \r`;
     sentContent += `\rsave refer service data ${date} \r`;
     let index = 0;
@@ -115,7 +115,7 @@ async function getRefer_out(db, date) {
     console.log(' nrefer sent ', process.env.HOSPCODE, sentResult.message || sentResult);
     return referout;
   } catch (error) {
-    console.log('crontab error:', error.message)
+    console.log('getRefer_out, crontab error:', error.message)
     sentContent += moment().format('HH:mm:ss.SSS') + 'crontab error ' + error.message + '\r\r';
     return [];
   }
@@ -175,7 +175,7 @@ async function getReferResult(db, date) {
     await getReferInIPDByDateDisc(db, sentResultResult);
     return referResult;
   } catch (error) {
-    console.log('crontab error:', error.message)
+    console.log('getReferResult, crontab error:', error.message)
     sentContent += moment().format('HH:mm:ss.SSS') + 'crontab error ' + error.message + '\r\r';
     return [];
   }
@@ -195,7 +195,7 @@ async function getReferInIPDByDateDisc(db: any, sentResultResult: any) {
     console.log(process.env.HOSPCODE, ' refer result (refer in)', sentResultResult);
     return true;
   } catch (error) {
-    console.log('crontab error:', error.message)
+    console.log('getReferInIPDByDateDisc, crontab error:', error.message)
     return false;
   }
 }
@@ -425,7 +425,7 @@ async function getService(db, visitNo, sentResult) {
       const data = {
         HOSPCODE: row.HOSPCODE || row.hospcode,
         PID: row.PID || row.pid || row.HN || row.hn,
-        SEQ: row.SEQ || row.seq || visitNo,
+        SEQ: row.SEQ || row.seq || row.vn || visitNo || '',
         HN: row.PID || row.pid || row.HN || row.hn,
         CID: row.CID || row.cid,
         DATE_SERV: row.DATE_SERV || row.date_serv || row.date,
@@ -550,10 +550,11 @@ async function getProcedureOpd(db, visitNo, sentResult) {
 async function getDrugOpd(db, visitNo, sentResult) {
   let opdDrug = [];
   const rows = await hisModel.getDrugOpd(db, visitNo, hcode);
+  console.log('getDrugOpd',visitNo, rows.message || rows);
   sentContent += '  - drug_opd = ' + rows.length + '\r';
   if (rows && rows.length) {
     for (let r of rows) {
-      await opdDrug.push({
+      opdDrug.push({
         HOSPCODE: r.HOSPCODE || r.hospcode || hcode,
         PID: r.PID || r.pid || r.HN || r.hn,
         SEQ: r.SEQ || r.seq || r.vn,
@@ -777,7 +778,7 @@ async function getDrugAllergy(db, hn, sentResult) {
 }
 
 async function referSending(path, dataArray) {
-  const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/apis';
+  const fixedUrl = process.env.NREFER_API_URL || 'https://refer.moph.go.th/api/his';
   const bodyData = {
     ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
     hospcode: hcode, data: JSON.stringify(dataArray),
@@ -803,7 +804,7 @@ async function referSending(path, dataArray) {
 }
 
 async function getNReferToken(apiKey: string, secretKey: string) {
-  const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/apis';
+  const fixedUrl = process.env.NREFER_API_URL || 'https://refer.moph.go.th/api/his';
   const url = fixedUrl + '/login/api-key';
   const bodyData = {
     ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',

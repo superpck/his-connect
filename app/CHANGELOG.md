@@ -4,7 +4,6 @@
   - ยกเลิกการ Upload lab hiv, cd4, amphetamine, log10 equivalence
   - แสดงผลการ connect HIS db หลัง run API
   - ตรวจสอบ config file ว่ามีหรือไม่ก่อนการทำงาน
-  - เพิ่ม Driver MySQL2
 
 # 3.7.2
 ## Feature
