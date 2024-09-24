@@ -59,11 +59,13 @@ global.mophService = null;
 connectDB();
 app.decorate("authenticate", async (request, reply) => {
     request.authenDecoded = null;
+    request.user = null;
     if (request.body && request.body.token) {
         request.headers.authorization = 'Bearer ' + request.body.token;
     }
     try {
-        request.authenDecoded = await request.jwtVerify();
+        request.user = await request.jwtVerify();
+        request.authenDecoded = request.user;
     }
     catch (err) {
         let ipAddr = request.headers["x-real-ip"] || request.headers["x-forwarded-for"] || request.ip;
@@ -131,10 +133,10 @@ async function connectDB() {
 }
 async function checkConfigFile() {
     if (fs.existsSync('./config')) {
-        console.info('Config file exist: Successfully');
+        console.info('Check config file exist: Successfully');
     }
     else {
-        console.error(`Config file exist: Not found, please create file 'config' and try again.`);
+        console.error(`Check config file exist: Not found, please create file 'config' and try again.`);
         process.exit(1);
     }
 }

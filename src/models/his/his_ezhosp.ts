@@ -319,25 +319,39 @@ export class HisEzhospModel {
         // `LOINC` varchar(20) DEFAULT NULL,
     }
 
-    async getDrugOpd(db: Knex, visitNo: string, hospCode = hcode) {
-        const sql = `
-            SELECT '${hospCode}' as hospcode, drug.hn as pid, drug.vn as seq
-                , concat(visit.date,' ',visit.time) as date_serv
-                , visit.clinic, std.stdcode as didstd, drug.drugname as dname
-                , drug.no as amount, drug.unit, drug.price as drugprice
-                , concat('ว',visit.dr) as provider
-                , now() as d_update, patient.no_card as cid
-                , concat(drug.methodname, ' ' , drug.no_use, ' ', drug.unit_use, ' ',drug.freqname, ' ', timesname) as drug_usage
-                , drug.caution
-                FROM view_pharmacy_opd_drug_item as drug
-                    LEFT JOIN opd_visit as visit on drug.vn=visit.vn
-                    LEFT JOIN patient on drug.hn=patient.hn
-                    LEFT JOIN pharmacy_inventory_stdcode as std on drug.drugcode=std.drugcode and 
-                    std.code_group='OPD' and std.type='CODE24' and (isnull(std.expire) or std.expire='0000-00-00')
-                WHERE drug.vn='${visitNo}'
-                limit 1000`;
-        const result = await db.raw(sql);
-        return result[0];
+    getDrugOpd(db: Knex, visitNo: string, hospCode = hcode) {
+        // if (!visitNo) {
+        return db('view_pharmacy_opd_drug_item as drug')
+            .select(db.raw('? as hospcode', [hospCode])
+                , 'drug.hn', 'drug.hn as pid', 'drug.vn', 'drug.vn as seq'
+                , db.raw("concat(drug.date_serv,' ',drug.time_serv) as date_serv")
+                , 'drug.clinic', 'drug.code24 as didstd', 'drug.tmt'
+                , 'drug.drugname as dname'
+                , 'drug.no as amount', 'drug.unit', 'drug.price as drugprice'
+                , db.raw('concat("ว",drug.dr_visit) as provider')
+                , db.raw("now() as d_update"), 'drug.cid'
+                , db.raw("concat(drug.methodname, ' ' , drug.no_use, ' ', drug.unit_use, ' ',drug.freqname, ' ', timesname) as drug_usage")
+                , 'drug.caution')
+            .where('vn', visitNo)
+            .limit(1000);
+        // } else {
+        //     throw new Error('getDrugOpd: Invalid visitNo: ' + visitNo);
+        // }
+
+        // const sql1 = `
+        //     SELECT '${hospCode}' as hospcode, drug.hn as pid, drug.vn, drug.vn as seq
+        //         , concat(drug.date_serv,' ',drug.time_serv) as date_serv
+        //         , drug.clinic, drug.code24 as didstd, drug.tmt, drug.drugname as dname
+        //         , drug.no as amount, drug.unit, drug.price as drugprice
+        //         , concat('ว',drug.dr_visit) as provider
+        //         , now() as d_update, drug.cid
+        //         , concat(drug.methodname, ' ' , drug.no_use, ' ', drug.unit_use, ' ',drug.freqname, ' ', timesname) as drug_usage
+        //         , drug.caution
+        //         FROM view_pharmacy_opd_drug_item as drug
+        //         WHERE drug.vn='${visitNo}'
+        //         limit 1000`;
+        // const result = await db.raw(sql1);
+        // return result[0];
     }
 
     getAdmission(db: Knex, columnName: string, searchValue: any, hospCode = hcode) {
@@ -389,7 +403,7 @@ export class HisEzhospModel {
         return db('view_ipd_dx_hdc as dx')
             .select('dx.*', db.raw(' "IT" as codeset'))
             .where(columnName, searchNo)
-            .where('DIAGTYPE','!=','5')
+            .where('DIAGTYPE', '!=', '5')
             .orderBy('AN')
             .orderBy('DIAGTYPE')
             .orderBy('D_UPDATE')
@@ -399,7 +413,7 @@ export class HisEzhospModel {
         if (dateStart & dateEnd) {
             return db('view_ipd_dx as dx')
                 .whereBetween('admite', [dateStart, dateEnd])
-                .where('type','!=','5')
+                .where('type', '!=', '5')
                 .whereRaw(`LEFT(dx,1) IN ('V','W','X','Y')`)
                 .orderBy(['disc', 'timedisc'])
                 .limit(maxLimit);
@@ -543,7 +557,7 @@ export class HisEzhospModel {
             .select(db.raw('1 as REFER_RESULT'))
             .select(db.raw(`concat(visit.date,' ',visit.time) as D_UPDATE`))
             .where('visit.date', visitDate)
-            .where('visit.refer', '!=', hcode)
+            .where('visit.refer', '!=', hospCode)
             .where(db.raw('length(visit.refer)=5'))
             .groupBy('visit.vn')
             .limit(maxLimit);

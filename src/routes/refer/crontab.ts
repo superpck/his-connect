@@ -65,7 +65,7 @@ async function getRefer_out(db, date) {
   try {
     const referout = await hisModel.getReferOut(db, date, hcode);
     console.log('******** >> referout', referout.length, ' case');
-    console.log(process.env.NREFER_DATA_BACKWARD_MONTH);
+    // console.log(process.env.NREFER_DATA_BACKWARD_MONTH);
     sentContent += `\rsave refer_history ${date} \r`;
     sentContent += `\rsave refer service data ${date} \r`;
     let index = 0;
@@ -115,7 +115,7 @@ async function getRefer_out(db, date) {
     console.log(' nrefer sent ', process.env.HOSPCODE, sentResult.message || sentResult);
     return referout;
   } catch (error) {
-    console.log('crontab error:', error.message)
+    console.log('getRefer_out, crontab error:', error.message)
     sentContent += moment().format('HH:mm:ss.SSS') + 'crontab error ' + error.message + '\r\r';
     return [];
   }
@@ -175,7 +175,7 @@ async function getReferResult(db, date) {
     await getReferInIPDByDateDisc(db, sentResultResult);
     return referResult;
   } catch (error) {
-    console.log('crontab error:', error.message)
+    console.log('getReferResult, crontab error:', error.message)
     sentContent += moment().format('HH:mm:ss.SSS') + 'crontab error ' + error.message + '\r\r';
     return [];
   }
@@ -184,22 +184,34 @@ async function getReferResult(db, date) {
 async function getReferInIPDByDateDisc(db: any, sentResultResult: any) {
   try {
     let backward = 2;
-    if ([2, 12].indexOf(moment().get('hour')) > 0 && moment().get('minute') >= (60 - crontabConfig.minute)) {
-      backward = moment().get('hour') == 2 ? 14 : 7;  //02:00 = 14 days
+    let dateEnd = moment().format('YYYY-MM-DD');
+    const hour = moment().get('hour');
+    if ([2, 12, 17].indexOf(hour) > 0 && moment().get('minute') >= (60 - crontabConfig.minute)) {
+      if (hour == 12) {
+        backward = 7;
+      } else {
+        backward = hour == 2 ? 21 : 7;
+        dateEnd = moment().subtract(7, 'days').format('YYYY-MM-DD');
+      }
     }
-    let datedisc = moment().subtract(backward, 'days').format('YYYY-MM-DD');
-    for (let i = 0; i <= backward; i++) {
-      await getReferInIPD(db, datedisc, sentResultResult);
-      datedisc = moment(datedisc).add(1, 'day').format('YYYY-MM-DD');
-    }
+    let date = moment().subtract(backward, 'days').format('YYYY-MM-DD');
+    // let datedisc = moment().subtract(backward, 'days').format('YYYY-MM-DD');
+    do {
+      await getReferInIPD(db, date, 0, sentResultResult);
+      date = moment(date).add(1, 'day').format('YYYY-MM-DD');
+    } while (date > dateEnd);
+    // for (let i = 0; i <= backward; i++) {
+    //   await getReferInIPD(db, datedisc, 0, sentResultResult);
+    //   datedisc = moment(datedisc).add(1, 'day').format('YYYY-MM-DD');
+    // }
     console.log(process.env.HOSPCODE, ' refer result (refer in)', sentResultResult);
     return true;
   } catch (error) {
-    console.log('crontab error:', error.message)
+    console.log('getReferInIPDByDateDisc, crontab error:', error.message)
     return false;
   }
 }
-async function getReferInIPD(db, dateDisc, sentResultResult) {
+async function getReferInIPD(db: any, dateDisc: any, resultOnly: number, sentResultResult: any) {
   let ipdData: any = await hisModel.getAdmission(db, 'datedisc', dateDisc);
   console.log(moment().format('HH:mm:ss'), process.env.HOSPCODE, `Get refer result from IPD discharge date ${dateDisc} = ${ipdData.length} case`)
   for (let row of ipdData) {
@@ -425,7 +437,7 @@ async function getService(db, visitNo, sentResult) {
       const data = {
         HOSPCODE: row.HOSPCODE || row.hospcode,
         PID: row.PID || row.pid || row.HN || row.hn,
-        SEQ: row.SEQ || row.seq || visitNo,
+        SEQ: row.SEQ || row.seq || row.vn || visitNo || '',
         HN: row.PID || row.pid || row.HN || row.hn,
         CID: row.CID || row.cid,
         DATE_SERV: row.DATE_SERV || row.date_serv || row.date,
@@ -553,7 +565,7 @@ async function getDrugOpd(db, visitNo, sentResult) {
   sentContent += '  - drug_opd = ' + rows.length + '\r';
   if (rows && rows.length) {
     for (let r of rows) {
-      await opdDrug.push({
+      opdDrug.push({
         HOSPCODE: r.HOSPCODE || r.hospcode || hcode,
         PID: r.PID || r.pid || r.HN || r.hn,
         SEQ: r.SEQ || r.seq || r.vn,
@@ -602,7 +614,7 @@ async function getLabResult(db, row, sentResult) {
       const investresult = r.INVESTRESULT || r.investresult || '';
       const investname = r.INVESTNAME || r.investname || '';
 
-      if (/hiv|cd4|amphetamine|log10 equivalence/.test(investname.toLowerCase()) == false ) {
+      if (/hiv|cd4|amphetamine|log10 equivalence/.test(investname.toLowerCase()) == false) {
         rowsSave.push({
           HOSPCODE: cHOSPCODE,
           REFERID: referID,
@@ -777,7 +789,7 @@ async function getDrugAllergy(db, hn, sentResult) {
 }
 
 async function referSending(path, dataArray) {
-  const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/apis';
+  const fixedUrl = process.env.NREFER_API_URL || 'https://refer.moph.go.th/api/his';
   const bodyData = {
     ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
     hospcode: hcode, data: JSON.stringify(dataArray),
@@ -795,16 +807,21 @@ async function referSending(path, dataArray) {
 
   try {
     const { status, data } = await axios.post(url, bodyData, { headers });
+    // console.log(path, status, data);
     return data;
   } catch (error) {
-    console.log('referSending error ', path, error.message);
+    // console.log(' ====> save data URL: ' + url);
+    // console.log('referSending error ', error.message);
+    // console.log(nReferToken);
+    // process.exit(1);
     return error;
   }
 }
 
 async function getNReferToken(apiKey: string, secretKey: string) {
-  const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/apis';
+  const fixedUrl = process.env.NREFER_API_URL || 'https://refer.moph.go.th/api/his';
   const url = fixedUrl + '/login/api-key';
+  // console.log(' ====> Token URL: ' + url);
   const bodyData = {
     ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
     apiKey, secretKey, hospcode: hcode,

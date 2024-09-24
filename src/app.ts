@@ -79,12 +79,14 @@ connectDB();
 // check token ===========================================================
 app.decorate("authenticate", async (request: any, reply: any) => {
   request.authenDecoded = null;
+  request.user = null;
   if (request.body && request.body.token) {
     request.headers.authorization = 'Bearer ' + request.body.token;
   }
 
   try {
-    request.authenDecoded = await request.jwtVerify();
+    request.user = await request.jwtVerify();
+    request.authenDecoded = request.user;
   } catch (err) {
     let ipAddr: any = request.headers["x-real-ip"] || request.headers["x-forwarded-for"] || request.ip;
     console.log(moment().format('HH:mm:ss.SSS'), ipAddr, 'error:' + StatusCodes.UNAUTHORIZED, err.message);
