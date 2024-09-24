@@ -320,7 +320,6 @@ export class HisEzhospModel {
     }
 
     getDrugOpd(db: Knex, visitNo: string, hospCode = hcode) {
-        console.log("model getDrugOpd", visitNo, typeof visitNo, hospCode);
         // if (!visitNo) {
         return db('view_pharmacy_opd_drug_item as drug')
             .select(db.raw('? as hospcode', [hospCode])

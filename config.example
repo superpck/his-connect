@@ -55,7 +55,7 @@ IS_MOPH_USER="??"
 IS_MOPH_PASSWORD="??"
 
 [nRefer]
-NREFER_API_URL="https://nrefer.moph.go.th/apis"
+NREFER_API_URL="https://refer.moph.go.th/api/his"
 NREFER_DATA_BACKWARD_MONTH=0
 
 #Key from https://nrefer.moph.go.th

@@ -159,14 +159,22 @@ async function getReferResult(db, date) {
 async function getReferInIPDByDateDisc(db, sentResultResult) {
     try {
         let backward = 2;
-        if ([2, 12].indexOf(moment().get('hour')) > 0 && moment().get('minute') >= (60 - crontabConfig.minute)) {
-            backward = moment().get('hour') == 2 ? 14 : 7;
+        let dateEnd = moment().format('YYYY-MM-DD');
+        const hour = moment().get('hour');
+        if ([2, 12, 17].indexOf(hour) > 0 && moment().get('minute') >= (60 - crontabConfig.minute)) {
+            if (hour == 12) {
+                backward = 7;
+            }
+            else {
+                backward = hour == 2 ? 21 : 7;
+                dateEnd = moment().subtract(7, 'days').format('YYYY-MM-DD');
+            }
         }
-        let datedisc = moment().subtract(backward, 'days').format('YYYY-MM-DD');
-        for (let i = 0; i <= backward; i++) {
-            await getReferInIPD(db, datedisc, sentResultResult);
-            datedisc = moment(datedisc).add(1, 'day').format('YYYY-MM-DD');
-        }
+        let date = moment().subtract(backward, 'days').format('YYYY-MM-DD');
+        do {
+            await getReferInIPD(db, date, 0, sentResultResult);
+            date = moment(date).add(1, 'day').format('YYYY-MM-DD');
+        } while (date > dateEnd);
         console.log(process.env.HOSPCODE, ' refer result (refer in)', sentResultResult);
         return true;
     }
@@ -175,7 +183,7 @@ async function getReferInIPDByDateDisc(db, sentResultResult) {
         return false;
     }
 }
-async function getReferInIPD(db, dateDisc, sentResultResult) {
+async function getReferInIPD(db, dateDisc, resultOnly, sentResultResult) {
     let ipdData = await hismodel_1.default.getAdmission(db, 'datedisc', dateDisc);
     console.log(moment().format('HH:mm:ss'), process.env.HOSPCODE, `Get refer result from IPD discharge date ${dateDisc} = ${ipdData.length} case`);
     for (let row of ipdData) {
@@ -513,7 +521,6 @@ async function getProcedureOpd(db, visitNo, sentResult) {
 async function getDrugOpd(db, visitNo, sentResult) {
     let opdDrug = [];
     const rows = await hismodel_1.default.getDrugOpd(db, visitNo, hcode);
-    console.log('getDrugOpd', visitNo, rows.message || rows);
     sentContent += '  - drug_opd = ' + rows.length + '\r';
     if (rows && rows.length) {
         for (let r of rows) {
@@ -751,16 +758,21 @@ async function referSending(path, dataArray) {
     };
     try {
         const { status, data } = await axios_1.default.post(url, bodyData, { headers });
+        console.log(path, status, data);
         return data;
     }
     catch (error) {
+        console.log(' ====> save data URL: ' + url);
         console.log('referSending error ', path, error.message);
+        console.log(nReferToken);
+        process.exit(1);
         return error;
     }
 }
 async function getNReferToken(apiKey, secretKey) {
     const fixedUrl = process.env.NREFER_API_URL || 'https://refer.moph.go.th/api/his';
     const url = fixedUrl + '/login/api-key';
+    console.log(' ====> Token URL: ' + url);
     const bodyData = {
         ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
         apiKey, secretKey, hospcode: hcode,

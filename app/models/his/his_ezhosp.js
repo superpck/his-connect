@@ -252,7 +252,6 @@ class HisEzhospModel {
             .limit(maxLimit);
     }
     getDrugOpd(db, visitNo, hospCode = hcode) {
-        console.log("model getDrugOpd", visitNo, typeof visitNo, hospCode);
         return db('view_pharmacy_opd_drug_item as drug')
             .select(db.raw('? as hospcode', [hospCode]), 'drug.hn', 'drug.hn as pid', 'drug.vn', 'drug.vn as seq', db.raw("concat(drug.date_serv,' ',drug.time_serv) as date_serv"), 'drug.clinic', 'drug.code24 as didstd', 'drug.tmt', 'drug.drugname as dname', 'drug.no as amount', 'drug.unit', 'drug.price as drugprice', db.raw('concat("ว",drug.dr_visit) as provider'), db.raw("now() as d_update"), 'drug.cid', db.raw("concat(drug.methodname, ' ' , drug.no_use, ' ', drug.unit_use, ' ',drug.freqname, ' ', timesname) as drug_usage"), 'drug.caution')
             .where('vn', visitNo)
