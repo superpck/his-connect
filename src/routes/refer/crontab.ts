@@ -804,16 +804,11 @@ async function referSending(path, dataArray) {
     'Authorization': 'Bearer ' + nReferToken,
     'Source-Agent': 'HISConnect-' + (crontabConfig.version || 'x') + '-' + (crontabConfig.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
   };
-
   try {
     const { status, data } = await axios.post(url, bodyData, { headers });
-    // console.log(path, status, data);
     return data;
   } catch (error) {
-    // console.log(' ====> save data URL: ' + url);
-    // console.log('referSending error ', error.message);
-    // console.log(nReferToken);
-    // process.exit(1);
+    console.log('referSending error ', error.message);
     return error;
   }
 }
@@ -821,7 +816,6 @@ async function referSending(path, dataArray) {
 async function getNReferToken(apiKey: string, secretKey: string) {
   const fixedUrl = process.env.NREFER_API_URL || 'https://refer.moph.go.th/api/his';
   const url = fixedUrl + '/login/api-key';
-  // console.log(' ====> Token URL: ' + url);
   const bodyData = {
     ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
     apiKey, secretKey, hospcode: hcode,
@@ -838,7 +832,7 @@ async function getNReferToken(apiKey: string, secretKey: string) {
     const { status, data } = await axios.post(url, bodyData, { headers });
     return data;
   } catch (error) {
-    console.log('getNReferToken', error.message);
+    console.log('getNReferToken', error.status || '', error.message);
     return error;
   }
 }

@@ -758,21 +758,16 @@ async function referSending(path, dataArray) {
     };
     try {
         const { status, data } = await axios_1.default.post(url, bodyData, { headers });
-        console.log(path, status, data);
         return data;
     }
     catch (error) {
-        console.log(' ====> save data URL: ' + url);
-        console.log('referSending error ', path, error.message);
-        console.log(nReferToken);
-        process.exit(1);
+        console.log('referSending error ', error.message);
         return error;
     }
 }
 async function getNReferToken(apiKey, secretKey) {
     const fixedUrl = process.env.NREFER_API_URL || 'https://refer.moph.go.th/api/his';
     const url = fixedUrl + '/login/api-key';
-    console.log(' ====> Token URL: ' + url);
     const bodyData = {
         ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
         apiKey, secretKey, hospcode: hcode,
@@ -789,7 +784,7 @@ async function getNReferToken(apiKey, secretKey) {
         return data;
     }
     catch (error) {
-        console.log('getNReferToken', error.message);
+        console.log('getNReferToken', error.status || '', error.message);
         return error;
     }
 }

@@ -27,7 +27,7 @@ async function cronjob(fastify) {
     timingSchedule['nrefer'].minute = process.env.NREFER_AUTO_SEND_EVERY_MINUTE ? parseInt(process.env.NREFER_AUTO_SEND_EVERY_MINUTE) : 0;
     timingSchedule['nrefer'].hour = process.env.NREFER_AUTO_SEND_EVERY_HOUR ? parseInt(process.env.NREFER_AUTO_SEND_EVERY_HOUR) : 0;
     timingSchedule['nrefer'].minute = timingSchedule['nrefer'].minute + timingSchedule['nrefer'].hour * 60;
-    timingSchedule['nrefer'].minute = timingSchedule['nrefer'].minute < 1 ? 10 : timingSchedule['nrefer'].minute;
+    timingSchedule['nrefer'].minute = timingSchedule['nrefer'].minute < 10 ? 10 : timingSchedule['nrefer'].minute;
     if (timingSchedule['nrefer'].minute <= 0) {
         timingSchedule['nrefer'].autosend = false;
     }
