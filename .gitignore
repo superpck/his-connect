@@ -21,3 +21,5 @@ bower_components/*
 *.sql
 null
 /sent_result.txt
+/docker-compose.yml
+
