@@ -2,7 +2,7 @@
 
 ## 1.การติดตั้ง
  - ติดตั้งด้วย NodeJS [เอกสารขั้นตอนการติดตั้ง API](https://connect.moph.go.th/pher-plus/#/main/link)
- - ติดตั้งด้วย Docker [HIS Connect Docker] (https://hub.docker.com/r/superpck/his-connect)
+ - ติดตั้งด้วย Docker [HIS Connect Docker](https://hub.docker.com/r/superpck/his-connect)
 
 ## 1.1 SSB (ตัวอย่าง รพ.สระบุรี) สร้าง VIEW สำหรับดึงข้อมูล
 ```
