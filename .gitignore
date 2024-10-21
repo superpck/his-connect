@@ -8,8 +8,7 @@ package-lock.json
 .settings/*
 .git/*
 bower_components/*
-config
-config.*
+/config
 .DS_Store
 .idea
 .env
@@ -21,4 +20,4 @@ config.*
 *.tmp
 *.sql
 null
-sent_result.txt
+/sent_result.txt
