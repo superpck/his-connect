@@ -1,0 +1,75 @@
+[Hospital]
+API_LEVEL=hospital
+HOSPCODE=00000
+
+[API]
+PORT=3004
+HOST=0.0.0.0
+ROUTE_PREFIX=
+START_TOOL=pm2
+PM2_NAME=his-connect
+PM2_INSTANCE=2
+AUTO_RESTART=1
+
+[HTTPS]
+SSL_ENABLE=0
+SSL_KEY=public/ssl/localhost.key
+SSL_CRT=public/ssl/localhost.crt
+
+# valid db client type: mysql, pg, mssql, oracledb
+# valid HIS provider name: 
+#    ihospital, hosxpv3, hosxpv4, hosxppcu, infod, homc, ssb
+#    hospitalos, jhcis, kpstat, md, mkhospital, thiades, 
+#    himpro, nemo, mypcu, emrsoft, haos other
+
+[HIS DB]
+HIS_PROVIDER=hosxpv3
+HIS_DB_CLIENT=mysql
+HIS_DB_HOST=localhost
+HIS_DB_PORT=3306
+HIS_DB_SCHEMA=public
+HIS_DB_NAME=db
+HIS_DB_USER="user"
+HIS_DB_PASSWORD="password"
+HIS_DB_CHARSET=utf8
+HIS_DB_ENCRYPT=true
+MAX_CONNECTION_PER_MINUTE=1000
+
+[ISDB - for ISONLINE only]
+IS_DB_HOST=localhost
+IS_DB_PORT=3306
+IS_DB_CLIENT=mysql
+IS_DB_SCHEMA=public
+IS_DB_NAME=isdb
+IS_DB_USER="user"
+IS_DB_PASSWORD="password"
+IS_DB_CHARSET=utf8
+IS_DB_ENCRYPT=true
+IS_AUTO_SEND=0
+IS_AUTO_SEND_EVERY_MINUTE=30
+IS_AUTO_SEND_EVERY_HOUR=0
+IS_URL=https://connect.moph.go.th/is-api
+
+#User from https://connect.moph.go.th/pher-plus/#/login
+IS_MOPH_USER="??"
+IS_MOPH_PASSWORD="??"
+
+[nRefer]
+NREFER_API_URL="https://refer.moph.go.th/api/his"
+NREFER_DATA_BACKWARD_MONTH=0
+
+#Key from https://nrefer.moph.go.th
+NREFER_APIKEY="กรุณาระบุ API Key"
+NREFER_SECRETKEY="กรุณาระบุ API Secret Key"
+NREFER_AUTO_SEND=1
+NREFER_AUTO_SEND_EVERY_MINUTE=11
+NREFER_AUTO_SEND_EVERY_HOUR=0
+
+[Chat Config]
+NOTIFY_URL=https://nrefer.moph.go.th/apis/message
+NOTIFY_TOKEN="$nRefer@MoPH$"
+NOTIFY_CHANNEL="nRefer@<กรุณาระบุ hcode>"
+
+[JWT]
+REQUEST_KEY="<ใส่อะไรก็ได้ที่จำได้_10_ถึง_16_ตัว>"
+SECRET_KEY="<ใส่อะไรก็ได้_16_ถึง_64_ตัว_dsjfkKK3@oOse889@wd9dlixXdrTC2LQQqoi*345>"
