@@ -6,6 +6,7 @@
   - ตรวจสอบ config file ว่ามีหรือไม่ก่อนการทำงาน
   - เพิ่ม Driver MySQL2
   - แก้ไข DockerFile
+  - update SQL HI (HIS Provider)
 
 # 3.7.2
 ## Feature
