@@ -84,10 +84,10 @@ class HisHosxpPcuModel {
                 left join opdscreen on r.vn=opdscreen.vn
             WHERE
                 ${filterText} and r.vn is not null and r.refer_hospcode!='' and r.refer_hospcode is not null
-                and hcode!=r.refer_hospcode
+                and r.refer_hospcode!=?
             ORDER BY
                 r.refer_date`;
-        const result = await db.raw(sql, [filter]);
+        const result = await db.raw(sql, [filter, hcode]);
         return result[0];
     }
     async getPerson(db, columnName, searchText, hospCode = hcode) {

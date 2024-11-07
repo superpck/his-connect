@@ -85,10 +85,10 @@ class HisHosxpv3Model {
             left join opdscreen on r.vn=opdscreen.vn
         WHERE
             ${filterText} and r.vn is not null and r.refer_hospcode!='' and r.refer_hospcode is not null
-            and hcode!=r.refer_hospcode
+            and r.refer_hospcode != ?
         ORDER BY
             r.refer_date`;
-        const result = await db.raw(sql, [filter]);
+        const result = await db.raw(sql, [filter, hcode]);
         return result[0];
     }
     async getPerson(db, columnName, searchText, hospCode = hcode) {
@@ -142,7 +142,7 @@ class HisHosxpv3Model {
             ,p.type_area as TYPEAREA
             ,p.mobile_phone_number as MOBILE
             ,p.deathday as dead
-            ,p.last_update as D_UPDATE
+            ,CASE WHEN p.last_update IS NULL THEN p.last_update ELSE p.last_visit END as D_UPDATE
         from patient as p
             left join person on p.hn=person.patient_hn
             left join house h on person.house_id=h.house_id
