@@ -95,10 +95,10 @@ export class HisHosxpv4Model {
                 left join opdscreen on r.vn=opdscreen.vn
             WHERE
                 ${filterText} and r.vn is not null and r.refer_hospcode!='' and r.refer_hospcode is not null
-                and hcode!=r.refer_hospcode
+                and r.refer_hospcode != ?
             ORDER BY
                 r.refer_date`;
-        const result = await db.raw(sql, [filter]);
+        const result = await db.raw(sql, [filter, hcode]);
         return result[0];
     }
 
@@ -153,7 +153,7 @@ export class HisHosxpv4Model {
             ,p.type_area as TYPEAREA
             ,p.mobile_phone_number as MOBILE
             ,p.deathday as dead
-            ,p.last_update as D_UPDATE
+            ,CASE WHEN p.last_update IS NULL THEN p.last_update ELSE p.last_visit END as D_UPDATE
         from patient as p
             left join person on p.hn=person.patient_hn
             left join house h on person.house_id=h.house_id
@@ -1314,16 +1314,14 @@ export class HisHosxpv4Model {
 
     getClinicalRefer(db, referNo, hospCode = hcode) {
         return db('view_clinical_refer')
-            .select(db.raw('"' + hcode + '" as hospcode'))
-            .select('*')
+            .select(db.raw(`"${hcode}" as hospcode`))
             .where('refer_no', "=", referNo)
             .limit(maxLimit);
     }
 
     getInvestigationRefer(db, referNo, hospCode = hcode) {
         return db('view_investigation_refer')
-            .select(db.raw('"' + hcode + '" as hospcode'))
-            .select('*')
+            .select(db.raw(`"${hcode}" as hospcode`))
             .where('refer_no', "=", referNo)
             .limit(maxLimit);
     }
