@@ -79,7 +79,7 @@ class HisEzhospModel {
             .leftJoin('hospdata.opd_visit as visit', 'refer.vn', 'visit.vn')
             .leftJoin('hospdata.patient as pt', 'visit.hn', 'pt.hn')
             .leftJoin('hospdata.opd_vs as vs', 'refer.vn', 'vs.vn')
-            .select(db.raw('"' + hcode + '" as hospcode'))
+            .select(db.raw(`"${hcode}" as hospcode`))
             .select(db.raw('concat(refer_date, " " , refer_time) as refer_date'))
             .select('refer.refer_no as referid', 'refer.refer_hcode as hosp_destination', 'visit.hn', 'pt.no_card as cid', 'refer.vn as seq', 'refer.an', 'pt.title as prename', 'pt.name as fname', 'pt.surname as lname', 'pt.birth as dob', 'pt.sex', 'refer.icd10 as dx', 'vs.pi as PI')
             .select(db.raw('case when isnull(refer.history_ill) OR refer.history_ill="" then vs.nurse_ph else refer.history_ill end as PH'))
