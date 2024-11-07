@@ -1,3 +1,7 @@
+# 3.7.4
+## Bug
+  - แก้ไขการ select ข้อมูล refer ที่ไม่ใช่ HCode ของ รพ.
+
 # 3.7.3
 ## Feature
   - เพิ่ม Image ของ Docker

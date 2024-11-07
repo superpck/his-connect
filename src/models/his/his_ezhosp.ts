@@ -86,7 +86,7 @@ export class HisEzhospModel {
             .leftJoin('hospdata.opd_visit as visit', 'refer.vn', 'visit.vn')
             .leftJoin('hospdata.patient as pt', 'visit.hn', 'pt.hn')
             .leftJoin('hospdata.opd_vs as vs', 'refer.vn', 'vs.vn')
-            .select(db.raw('"' + hcode + '" as hospcode'))
+            .select(db.raw(`"${hcode}" as hospcode`))
             .select(db.raw('concat(refer_date, " " , refer_time) as refer_date'))
             .select('refer.refer_no as referid'
                 , 'refer.refer_hcode as hosp_destination'
