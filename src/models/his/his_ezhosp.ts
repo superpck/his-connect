@@ -83,21 +83,24 @@ export class HisEzhospModel {
     //getReferOut(db: Knex, date, hospCode = hcode, visitNo = null) {
     getReferOut(db: Knex, date: any, hospCode = hcode, visitNo: string = null) {
         let sql = db('hospdata.refer_out as refer')
-            .leftJoin('hospdata.opd_visit as visit', 'refer.vn', 'visit.vn')
-            .leftJoin('hospdata.patient as pt', 'visit.hn', 'pt.hn')
-            .leftJoin('hospdata.opd_vs as vs', 'refer.vn', 'vs.vn')
+                .leftJoin('hospdata.opd_visit as visit', 'refer.vn', 'visit.vn')
+                .leftJoin('hospdata.patient as pt', 'visit.hn', 'pt.hn')
+                .leftJoin('hospdata.opd_vs as vs', 'refer.vn', 'vs.vn')
+                .leftJoin('hospdata.ipd_ipd as ipd', 'refer.vn', 'ipd.vn')
+                .leftJoin('hospdata.refer_in', 'refer.vn', 'refer_in.vn')
             .select(db.raw(`"${hcode}" as hospcode`))
-            .select(db.raw('concat(refer_date, " " , refer_time) as refer_date'))
+            .select(db.raw('concat(refer.refer_date, " " , refer.refer_time) as refer_date'))
             .select('refer.refer_no as referid'
                 , 'refer.refer_hcode as hosp_destination'
-                , 'visit.hn', 'pt.no_card as cid', 'refer.vn as seq', 'refer.an'
+                , 'refer_in.refer as hospcode_origin', 'refer_in.refer_no as referid_origin'
+                , 'visit.hn', 'pt.no_card as cid', 'refer.vn as seq', 'ipd.an'
                 , 'pt.title as prename', 'pt.name as fname', 'pt.surname as lname'
-                , 'pt.birth as dob', 'pt.sex', 'refer.icd10 as dx'
-                , 'vs.pi as PI'
+                , 'pt.birth as dob', 'pt.sex', 'refer.icd10 as dx','visit.dx as diaglast'
+                , 'vs.nurse_cc as chiefcomp', 'pi_dr as pi', 'pe_dr as pe', 'nurse_ph as ph'
+                , db.raw('IF(ipd.an IS NULL,null, concat(ipd.admite," ",ipd.time)) as datetime_admit')
+                , db.raw(`IF(visit.dr > 0, CONCAT("ว",visit.dr),'') as provider`)
+                , `visit.dr`, 'refer.dr_request as request', 'refer.cause1 as causeout'
             )
-            .select(db.raw('case when isnull(refer.history_ill) OR refer.history_ill="" then vs.nurse_ph else refer.history_ill end as PH'))
-            .select(db.raw('case when isnull(refer.history_exam) or refer.history_exam="" then vs.pe else refer.history_exam end as PE'))
-            .select(db.raw('case when isnull(refer.current_ill)or refer.current_ill="" then vs.cc else refer.current_ill end as CHIEFCOMP'))
             .where('refer.hcode', hospCode);
         if (visitNo) {
             sql.where(`refer.vn`, visitNo);
@@ -106,6 +109,7 @@ export class HisEzhospModel {
         }
         return sql
             .orderBy('refer.refer_date')
+            .groupBy('refer.vn')
             .limit(maxLimit);
     }
 
@@ -139,7 +143,7 @@ export class HisEzhospModel {
             .limit(maxLimit);
     }
 
-    getService(db: Knex, columnName, searchText, hospCode = hcode) {
+    getService(db: Knex, columnName: string, searchText: any, hospCode = hcode) {
         //columnName => visitNo, hn
         columnName = columnName === 'visitNo' ? 'vn' : columnName;
         columnName = columnName === 'date_serv' ? 'visit.date' : columnName;
@@ -147,12 +151,16 @@ export class HisEzhospModel {
             .select(db.raw('"' + hcode + '" as hospcode'))
             .select('hn as pid', 'hn', 'vn as seq', 'date as date_serv',
                 'hospmain as main', 'hospsub as hsub',
-                'refer as referinhosp')
-            .select(db.raw(' case when time="" or time="08:00" then time_opd else time end as time_serv '))
-            .select(db.raw('"1" as servplace'))
-            .select('t as btemp', 'bp as sbp', 'bp1 as dbp',
-                'puls as pr', 'rr',
-                'no_card as cid', 'pttype_std as instype', 'no_ptt as insid')
+                'refer as referinhosp',
+                db.raw(' case when time="" or time="08:00" then time_opd else time end as time_serv '),
+                db.raw('"1" as servplace'), 'nurse_cc as chiefcomp',
+                'pi_dr as presentillness', 'pe_dr as physicalexam', 'nurse_ph as pasthistory',
+                't as btemp', 'bp as sbp', 'bp1 as dbp', 'weigh as weight', 'high as height',
+                'puls as pr', 'rr', db.raw(`IF(dr > 0, CONCAT("ว",dr),'') as provider`),
+                'no_card as cid', 'pttype_std as instype', 'no_ptt as insid',
+                db.raw('IF(period>1,2,1) AS intime'),'cost as price','opd_result_hdc as typeout',
+                db.raw('IF(hospmain=? OR `add`=?,1,2) AS location', [hcode, '4001'])
+            )
             .select(db.raw('concat(date, " " , time) as d_update'))
             .where(columnName, searchText)
             .orderBy('date', 'desc')
@@ -563,24 +571,17 @@ export class HisEzhospModel {
             .limit(maxLimit);
     }
 
-    getProvider(db: Knex, columnName, searchNo, hospCode = hcode) {
-        columnName = columnName === 'licenseNo' ? 'code' : columnName;
-        const now = moment().locale('th').format('YYYYMMDDHHmmss');
-        return db('view_lib_dr')
-            .select(db.raw('"' + hcode + '" as hospcode'))
-            .select('code as provider', 'code as council',
-                'councilno as registerno', 'cid', 'title as prename',
-                'name as fname', 'surname as lname', 'sex',
-                'dob as birth', 'branch as providertype')
-            .select(db.raw('"" as startdate'))
-            .select('expire as outdate')
-            .select(db.raw('"" as movefrom'))
-            .select(db.raw('"" as moveto'))
-            .select(db.raw('"' + now + '" as d_update'))
-            .where(columnName, "=", searchNo)
+    getProviderDr(db: Knex, drList: any[]) {
+        return db('hdc.provider')
+            .whereIn('REGISTERNO', drList)
             .limit(maxLimit);
     }
-
+    getProvider(db: Knex, columnName, searchNo, hospCode = hcode) {
+        return db('hdc.provider')
+            .whereIn(columnName, searchNo)
+            .limit(maxLimit);
+    }
+    
     getData(db: Knex, tableName, columnName, searchNo, hospCode = hcode) {
         return db(tableName)
             .select('*')

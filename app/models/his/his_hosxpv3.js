@@ -67,7 +67,7 @@ class HisHosxpv3Model {
             case when r.refer_hospcode then r.refer_hospcode else r.hospcode end AS hosp_destination,
             r.hn AS PID, r.hn AS hn, pt.cid AS CID, r.vn, r.vn as SEQ,
             an_stat.an as AN, pt.pname AS prename,
-            pt.fname AS fname,
+            pt.fname AS fname, r.doctor as dr, doctor.licenseno as provider
             pt.lname AS lname,
             pt.birthday AS dob,
             pt.sex AS sex, r.referout_emergency_type_id as EMERGENCY, 
@@ -83,6 +83,7 @@ class HisHosxpv3Model {
             INNER JOIN patient pt ON pt.hn = r.hn
             left join an_stat on r.vn=an_stat.vn
             left join opdscreen on r.vn=opdscreen.vn
+            left join doctor on r.doctor = doctor.code
         WHERE
             ${filterText} and r.vn is not null and r.refer_hospcode!='' and r.refer_hospcode is not null
             and r.refer_hospcode != ?
@@ -243,6 +244,7 @@ class HisHosxpv3Model {
                 else '7' end) as TYPEOUT,
                 CASE WHEN o.rfrolct IS NULL THEN i.rfrolct ELSE o.rfrolct END as REFEROUTHOSP,
                 CASE WHEN o.rfrocs IS NULL THEN i.rfrocs ELSE o.rfrocs END as CAUSEOUT,
+                o.doctor as dr, doctor.licenseno as provider, 
                 if(vn.inc01 + vn.inc12 , replace(format(vn.inc01 + vn.inc12,2),',',''), format(0,2))as COST,
                 if(vn.item_money , replace(format(vn.item_money,2),',',''), format(0,2))as PRICE,
                 if(vn.paid_money , replace(format(vn.paid_money,2),',',''), format(0,2))as PAYPRICE,
@@ -266,6 +268,7 @@ class HisHosxpv3Model {
                 left join village v on v.village_id = p.village_id
                 left join patient pt on pt.hn = o.hn
                 left join ovst_seq os on os.vn = o.vn 
+                left join doctor on o.doctor = doctor.code
             
             where ${columnName}="${searchText}"
             `;
@@ -1244,6 +1247,30 @@ class HisHosxpv3Model {
             `;
         const result = await db.raw(sql);
         return result[0];
+    }
+    getProviderDr(db, drList) {
+        return db('doctor as d')
+            .leftJoin('patient as p', 'd.cid', 'p.cid')
+            .leftJoin('pname as pn', 'pn.name', 'p.pname')
+            .leftJoin('provis_pname as p2', 'p2.provis_pname_code', 'pn.provis_code')
+            .select(db.raw(`
+                (select hospitalcode from opdconfig) as hospcode,
+                d.code as provider,
+                d.licenseno as registerno,
+                d.council_code as council,
+                d.cid as cid,
+                CASE WHEN p2.provis_pname_long_name IS NULL THEN d.pname ELSE p2.provis_pname_long_name END as prename,
+                CASE WHEN p.fname IS NULL THEN d.fname ELSE p.fname END as name,
+                CASE WHEN p.lname IS NULL THEN d.lname ELSE p.lname END as lname,
+                d.sex as sex,	
+                if(p.birthday is null or trim(p.birthday )='' or p.birthday   like '0000-00-00%','',date_format(p.birthday,'%Y-%m-%d')) as  birth,
+                d.provider_type_code as providertype,
+                if( d.start_date is null or trim(d.start_date)='' or d.start_date like '0000-00-00%','',date_format(d.start_date,'%Y-%m-%d')) as startdate,
+                if( d.finish_date is null or trim(d.finish_date)='' or d.finish_date like '0000-00-00%','',date_format(d.finish_date,'%Y-%m-%d')) as outdate,
+                d.move_from_hospcode as movefrom,
+                d.move_to_hospcode as  moveto,
+                if(d.update_datetime is null or trim(d.update_datetime)='' or d.update_datetime like '0000-00-00%','',date_format(d.update_datetime,'%Y-%m-%d %H:%i:%s') ) as d_update`))
+            .whereIn('d.code', drList);
     }
     getData(db, tableName, columnName, searchNo, hospCode = hcode) {
         return db(tableName)

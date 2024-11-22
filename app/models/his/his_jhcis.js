@@ -226,6 +226,12 @@ class HisJhcisModel {
     getReferResult(db, hospDestination, referNo, hospCode = hcode) {
         return [];
     }
+    async getProvider(db, columnName, searchNo, hospCode = hcode) {
+        return [];
+    }
+    getProviderDr(db, drList) {
+        return [];
+    }
     getData(db, tableName, columnName, searchNo, hospCode = hcode) {
         return db(tableName)
             .select(db.raw('"' + hcode + '" as hospcode'))
