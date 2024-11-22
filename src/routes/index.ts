@@ -43,7 +43,7 @@ const router = (fastify, { }, next) => {
     const ip = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;
     const source = req.params.source || '';
     const key = req.params.key || '';
-    const trust = req.headers.host.search('localhost|127.0.0.1|192.168.0.89') > -1 || ip === '203.157.103.176';
+    const trust = req.headers.host.search('localhost|127.0.0.1|192.168.0.89') > -1 || ip.indexOf('203.157.')>=0;
     if (trust) {
       const token = fastify.jwt.sign({
         uid: 0,
@@ -62,7 +62,7 @@ const router = (fastify, { }, next) => {
     const ip = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;
     const source = req.params.source || '';
     const key = req.params.key;
-    const trust = req.headers.host.search('localhost|127.0.0.1|192.168.0.89') > -1 || ip === '203.157.103.176';
+    const trust = req.headers.host.search('localhost|127.0.0.1|192.168.0.89') > -1 || ip.indexOf('203.157.')>=0;
     if (trust) {
       const now = moment().locale('th').format('YYYYMMDDTHHmmss');
       var appkey = crypto.createHash('sha256').update(now + process.env.REQUEST_KEY).digest('hex');

@@ -13,7 +13,7 @@ export class HisJhcisModel {
     testConnect(db: Knex) {
         return db('person').select('pid').limit(1)
     }
-    
+
     // รหัสห้องตรวจ
     getDepartment(db: Knex, depCode: string = '', depName: string = '') {
         let sql = db('lib_clinic');
@@ -44,7 +44,7 @@ export class HisJhcisModel {
         }
         return sql
             .select('code as ward_code', 'ward as ward_name',
-            'standard as moph_code')
+                'standard as moph_code')
             .limit(maxLimit);
     }
 
@@ -329,23 +329,23 @@ export class HisJhcisModel {
 
     async getDrugAllergy(db: Knex, hn: string, hospCode = hcode) {
         return db('personalergic as drugallg')
-            .leftJoin('cdrug', 'drugallg.drugcode','cdrug.drugcode')
-            .leftJoin('cdrugallergysymtom as sym', 'drugallg.symptom','sym.symtomcode')
-            .leftJoin('person', 'drugallg.pid','person.pid')
+            .leftJoin('cdrug', 'drugallg.drugcode', 'cdrug.drugcode')
+            .leftJoin('cdrugallergysymtom as sym', 'drugallg.symptom', 'sym.symtomcode')
+            .leftJoin('person', 'drugallg.pid', 'person.pid')
             .select('person.pcucodeperson as HOSPCODE', 'person.pcucodeperson as INFORMHOSP',
                 'drugallg.pid as PID', 'person.idcard as CID',
                 'cdrug.drugcode24 as DRUGALLERGY',
                 'cdrug.drugcode as DCODE',
                 'cdrug.drugname as DNAME',
                 'drugallg.levelalergic as ALEVE',
-                'drugallg.symptom as SYMPTOM', 'sym.symtomname as DETAIL', 
+                'drugallg.symptom as SYMPTOM', 'sym.symtomname as DETAIL',
                 'drugallg.typedx as TYPEDX',
                 'drugallg.informant as INFORMANT',
-                'cdrug.drugcode24 as DID','cdrug.tmtcode as DID_TMT',
+                'cdrug.drugcode24 as DID', 'cdrug.tmtcode as DID_TMT',
                 'drugallg.daterecord as DATERECORD',
                 'drugallg.dateupdate as D_UPDATE')
             // .select(db.raw('case when cdrug.drugcode24 then cdrug.drugcode24 else drugallg.drugcode end as DRUGALLERGY'))
-            .where('drugallg.pid',hn)
+            .where('drugallg.pid', hn)
             .whereRaw('(drugallg.informhosp is null or drugallg.pcucodeperson=drugallg.informhosp)');
     }
 
@@ -366,6 +366,13 @@ export class HisJhcisModel {
     }
 
     getReferResult(db, hospDestination, referNo, hospCode = hcode) {
+        return [];
+    }
+
+    async getProvider(db: Knex, columnName, searchNo, hospCode = hcode) {
+        return [];
+    }
+    getProviderDr(db: Knex, drList: any[]) {
         return [];
     }
 
