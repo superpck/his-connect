@@ -641,6 +641,7 @@ class HisHosxpv3Model {
             .leftJoin('dchtype as dt', 'i.dchtype', 'dt.dchtype')
             .leftJoin('dchstts as ds', 'i.dchstts', 'ds.dchstts')
             .leftJoin('opitemrece as c', 'c.an', 'i.an')
+            .leftJoin('doctor', 'a.dx_doctor', 'doctor.code')
             .leftJoin('ward', 'i.ward', 'ward.ward');
         if (Array.isArray(searchValue)) {
             sqlCommand.whereIn(columnName, searchValue);
@@ -711,9 +712,9 @@ class HisHosxpv3Model {
                     2
                 ) payprice,
                 CASE WHEN a.paid_money IS NULL THEN 0.00 ELSE ROUND(a.paid_money,2) END AS actualpay,
-                a.dx_doctor provider,
+                a.dx_doctor as dr, doctor.licenseno as provider,
                 CASE WHEN idx.modify_datetime IS NULL THEN '' ELSE date_format(idx.modify_datetime,'%Y-%m-%d %H:%i:%s') END AS d_update,
-                i.drg, a.rw, i.adjrw,
+                i.drg, a.rw, i.adjrw,i.wtlos,
                 CASE WHEN i.grouper_err IS NULL THEN 1 ELSE i.grouper_err END AS error,
                 CASE WHEN i.grouper_warn IS NULL THEN 64 ELSE i.grouper_warn END AS warning,
                 CASE WHEN i.grouper_actlos IS NULL THEN 0 ELSE i.grouper_actlos END AS actlos,
@@ -1203,8 +1204,9 @@ class HisHosxpv3Model {
             .leftJoin('patient', 'referin.hn', 'patient.hn')
             .leftJoin('ovst', 'referin.vn', 'ovst.vn')
             .leftJoin('refer_reply', 'referin.vn', 'refer_reply.vn')
+            .leftJoin('doctor', 'ovst.doctor', 'doctor.code')
             .select(db.raw(`'${hcode}' as HOSPCODE`))
-            .select('referin.refer_hospcode as HOSP_SOURCE', 'patient.cid as CID_IN', 'referin.hn as PID_IN', 'referin.vn as SEQ_IN', 'referin.docno as REFERID', 'referin.refer_date as DATETIME_REFER', 'referin.icd10 as detail', 'refer_reply.diagnosis_text as reply_diagnostic', 'refer_reply.advice_text as reply_recommend')
+            .select('referin.refer_hospcode as HOSP_SOURCE', 'patient.cid as CID_IN', 'referin.hn as PID_IN', 'referin.vn as SEQ_IN', 'referin.docno as REFERID', 'referin.refer_date as DATETIME_REFER', 'referin.icd10 as detail', 'ovst.doctor as dr', 'doctor.licenseno as provider', 'refer_reply.diagnosis_text as reply_diagnostic', 'refer_reply.advice_text as reply_recommend')
             .select(db.raw(`case when referin.referin_number then referin.referin_number else concat('${hcode}-',referin.docno) end as REFERID_SOURCE`))
             .select(db.raw(`concat(refer_reply.reply_date, ' ',refer_reply.reply_time) as reply_date`))
             .select(db.raw(`'' as AN_IN, concat(referin.refer_hospcode,referin.referin_number) as REFERID_PROVINCE`))

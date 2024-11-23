@@ -83,11 +83,11 @@ export class HisEzhospModel {
     //getReferOut(db: Knex, date, hospCode = hcode, visitNo = null) {
     getReferOut(db: Knex, date: any, hospCode = hcode, visitNo: string = null) {
         let sql = db('hospdata.refer_out as refer')
-                .leftJoin('hospdata.opd_visit as visit', 'refer.vn', 'visit.vn')
-                .leftJoin('hospdata.patient as pt', 'visit.hn', 'pt.hn')
-                .leftJoin('hospdata.opd_vs as vs', 'refer.vn', 'vs.vn')
-                .leftJoin('hospdata.ipd_ipd as ipd', 'refer.vn', 'ipd.vn')
-                .leftJoin('hospdata.refer_in', 'refer.vn', 'refer_in.vn')
+            .leftJoin('hospdata.opd_visit as visit', 'refer.vn', 'visit.vn')
+            .leftJoin('hospdata.patient as pt', 'visit.hn', 'pt.hn')
+            .leftJoin('hospdata.opd_vs as vs', 'refer.vn', 'vs.vn')
+            .leftJoin('hospdata.ipd_ipd as ipd', 'refer.vn', 'ipd.vn')
+            .leftJoin('hospdata.refer_in', 'refer.vn', 'refer_in.vn')
             .select(db.raw(`"${hcode}" as hospcode`))
             .select(db.raw('concat(refer.refer_date, " " , refer.refer_time) as refer_date'))
             .select('refer.refer_no as referid'
@@ -95,7 +95,7 @@ export class HisEzhospModel {
                 , 'refer_in.refer as hospcode_origin', 'refer_in.refer_no as referid_origin'
                 , 'visit.hn', 'pt.no_card as cid', 'refer.vn as seq', 'ipd.an'
                 , 'pt.title as prename', 'pt.name as fname', 'pt.surname as lname'
-                , 'pt.birth as dob', 'pt.sex', 'refer.icd10 as dx','visit.dx as diaglast'
+                , 'pt.birth as dob', 'pt.sex', 'refer.icd10 as dx', 'visit.dx as diaglast'
                 , 'vs.nurse_cc as chiefcomp', 'pi_dr as pi', 'pe_dr as pe', 'nurse_ph as ph'
                 , db.raw('IF(ipd.an IS NULL,null, concat(ipd.admite," ",ipd.time)) as datetime_admit')
                 , db.raw(`IF(visit.dr > 0, CONCAT("ว",visit.dr),'') as provider`)
@@ -158,7 +158,7 @@ export class HisEzhospModel {
                 't as btemp', 'bp as sbp', 'bp1 as dbp', 'weigh as weight', 'high as height',
                 'puls as pr', 'rr', db.raw(`IF(dr > 0, CONCAT("ว",dr),'') as provider`),
                 'no_card as cid', 'pttype_std as instype', 'no_ptt as insid',
-                db.raw('IF(period>1,2,1) AS intime'),'cost as price','opd_result_hdc as typeout',
+                db.raw('IF(period>1,2,1) AS intime'), 'cost as price', 'opd_result_hdc as typeout',
                 db.raw('IF(hospmain=? OR `add`=?,1,2) AS location', [hcode, '4001'])
             )
             .select(db.raw('concat(date, " " , time) as d_update'))
@@ -554,16 +554,17 @@ export class HisEzhospModel {
 
         return db('view_opd_visit as visit')
             .leftJoin('refer_in', 'visit.vn', 'refer_in.vn')
-            .select(db.raw(`(select hcode from sys_hospital) as HOSPCODE`))
-            .select('visit.refer as HOSP_SOURCE', 'visit.refer_no as REFERID_SOURCE')
-            .select(db.raw('concat(visit.refer,visit.refer_no) as REFERID_PROVINCE'))
-            .select('visit.date as DATETIME_IN'
+            .select(db.raw(`(select hcode from sys_hospital) as HOSPCODE`)
+                , 'visit.refer as HOSP_SOURCE', 'visit.refer_no as REFERID_SOURCE'
+                , db.raw('concat(visit.refer,visit.refer_no) as REFERID_PROVINCE')
+                , 'visit.date as DATETIME_IN'
                 , 'visit.hn as PID_IN', 'visit.vn as SEQ_IN'
                 , 'visit.ipd_an as AN_IN', 'visit.no_card as CID_IN'
                 , 'refer_in.refer_in as REFERID', 'visit.dx1 as detail'
-                , 'visit.dr_note as reply_diagnostic', 'visit.lastupdate as reply_date')
-            .select(db.raw('1 as REFER_RESULT'))
-            .select(db.raw(`concat(visit.date,' ',visit.time) as D_UPDATE`))
+                , 'visit.dr_note as reply_diagnostic', 'visit.lastupdate as reply_date'
+                , db.raw('1 as REFER_RESULT')
+                , db.raw(`concat(visit.date,' ',visit.time) as D_UPDATE`)
+                , 'visit.dr as PROVIDER', 'visit.dr')
             .where('visit.date', visitDate)
             .where('visit.refer', '!=', hospCode)
             .where(db.raw('length(visit.refer)=5'))
@@ -581,7 +582,7 @@ export class HisEzhospModel {
             .whereIn(columnName, searchNo)
             .limit(maxLimit);
     }
-    
+
     getData(db: Knex, tableName, columnName, searchNo, hospCode = hcode) {
         return db(tableName)
             .select('*')
