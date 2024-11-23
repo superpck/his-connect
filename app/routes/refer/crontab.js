@@ -38,7 +38,7 @@ async function sendMoph(req, reply, db) {
         const date = moment().subtract(1, 'days').format('YYYY-MM-DD');
         var [referOut, referResult] = await sendRefer(db, date);
     }
-    else if (hourNow == 4 && minuteNow > 44) {
+    else if (hourNow == 4 && minuteNow > 48) {
         let oldDate = moment(dateNow).subtract(1, 'months').format('YYYY-MM-DD');
         while (oldDate < dateNow) {
             var [referOut, referResult] = await sendRefer(db, oldDate);
@@ -92,10 +92,12 @@ async function getReferOut(db, date) {
             provider: 0,
         };
         for (let row of referout) {
-            const hn = row.hn || row.HN || row.pid || row.PID;
-            const seq = row.seq || row.SEQ || row.vn || row.VN;
-            const referid = row.REFERID || row.referid;
-            sentContent += (index + 1) + '. refer no.' + referid + ', hn ' + hn + ', seq ' + seq + '\r';
+            for (let fld in row) {
+                row[fld.toLowerCase()] = row[fld];
+            }
+            const hn = row.hn || row.pid;
+            const seq = row.seq || row.vn;
+            sentContent += (index + 1) + '. refer no.' + row.referid + ', hn ' + hn + ', seq ' + seq + '\r';
             await Promise.all([
                 sendReferOut(row, sentResult),
                 getPerson(db, hn, sentResult),
@@ -103,7 +105,6 @@ async function getReferOut(db, date) {
                 getService(db, seq, sentResult),
                 getDrugAllergy(db, hn, sentResult),
                 getLabResult(db, row, sentResult),
-                getProvider(db, drList, sentResult)
             ]);
             let ipd = await getAdmission(db, 'VN', seq);
             const an = ipd && ipd.length ? ipd[0].an : '';
@@ -115,6 +116,7 @@ async function getReferOut(db, date) {
                 console.log(moment().format('HH:mm:ss.SSS'), 'finished...');
             }
         }
+        getProvider(db, drList, sentResult);
         console.log(' nrefer sent ', process.env.HOSPCODE, sentResult.message || sentResult);
         return referout;
     }
@@ -161,8 +163,7 @@ async function getReferIn(db, date) {
                 getPerson(db, hn, sentResultResult),
                 getAddress(db, hn, sentResultResult),
                 getService(db, seq, sentResultResult),
-                getDrugAllergy(db, hn, sentResultResult),
-                getProvider(db, drList, sentResultResult)
+                getDrugAllergy(db, hn, sentResultResult)
             ]);
             let ipd = await getAdmission(db, 'VN', seq);
             const an = ipd && ipd.length ? ipd[0].an : '';
@@ -175,6 +176,7 @@ async function getReferIn(db, date) {
                 console.log(moment().format('HH:mm:ss.SSS'), 'finished...');
             }
         }
+        getProvider(db, drList, sentResultResult);
         console.log(moment().format('HH:mm:ss.SSS'), 'sent >> refer result (refer in)', sentResultResult);
         await getReferInIPDByDateDisc(db, sentResultResult);
         return referResult;
@@ -237,8 +239,8 @@ async function sendReferInIPD(db, row, sentResultResult) {
 async function sendReferOut(row, sentResult) {
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
     if (row) {
-        for (let r in row) {
-            row[r.toLowerCase()] = row[r];
+        for (let fld in row) {
+            row[fld.toLowerCase()] = row[fld];
         }
         const hcode = row.hospcode;
         const referId = row.referid;
@@ -345,16 +347,19 @@ async function getPerson(db, pid, sentResult) {
     sentContent += '  - person = ' + rows.length + '\r';
     if (rows && rows.length) {
         for (const row of rows) {
-            const person = await {
-                HOSPCODE: row.HOSPCODE || row.hospcode,
-                CID: row.CID || row.cid,
-                PID: row.HN || row.hn || row.PID || row.pid,
-                HID: row.HID || row.hid || '',
-                HN: row.HN || row.hn || row.PID || row.pid,
-                PRENAME: row.PRENAME || row.prename,
-                NAME: row.NAME || row.name,
-                LNAME: row.LNAME || row.lname,
-                SEX: row.SEX || row.sex,
+            for (let fld in row) {
+                row[fld.toLowerCase()] = row[fld];
+            }
+            const person = {
+                HOSPCODE: row.hospcode,
+                CID: row.cid,
+                PID: row.hn || row.pid,
+                HID: row.hid || '',
+                HN: row.hn || row.pid,
+                PRENAME: row.prename,
+                NAME: row.name,
+                LNAME: row.lname,
+                SEX: row.sex,
                 BIRTH: row.BIRTH || row.birth,
                 MSTATUS: row.MSTATUS || row.mstatus,
                 OCCUPATION_NEW: row.OCCUPATION_NEW || row.occupation_new,
@@ -496,21 +501,24 @@ async function getDiagnosisOpd(db, visitNo, sentResult) {
     if (rows && rows.length) {
         let r = [];
         for (const row of rows) {
-            await r.push({
-                HOSPCODE: row.HOSPCODE || row.hospcode,
-                PID: row.PID || row.pid,
-                SEQ: row.SEQ || row.seq,
-                DATE_SERV: row.DATE_SERV || row.date_serv,
-                DIAGTYPE: row.DIAGTYPE || row.diagtype,
-                DIAGCODE: row.DIAGCODE || row.diagcode,
-                DIAGNAME: row.DIAGNAME || row.diagname || '',
-                CLINIC: row.CLINIC || row.clinic || '',
-                PROVIDER: row.PROVIDER || row.provider || '',
-                D_UPDATE: row.D_UPDATE || row.d_update,
-                ID: row.ID || row.id || '',
-                BR: row.BR || row.br || '',
-                AIS: row.AIS || row.ais || '',
-                CID: row.CID || row.cid || ''
+            for (let fld in row) {
+                row[fld.toLowerCase()] = row[fld];
+            }
+            r.push({
+                HOSPCODE: row.hospcode,
+                PID: row.pid || row.hn,
+                SEQ: row.seq || row.vn,
+                DATE_SERV: row.date_serv,
+                DIAGTYPE: row.diagtype,
+                DIAGCODE: row.diagcode,
+                DIAGNAME: row.diagname || '',
+                CLINIC: row.clinic || '',
+                PROVIDER: row.provider || '',
+                D_UPDATE: row.d_update,
+                ID: row.id || '',
+                BR: row.br || '',
+                AIS: row.ais || '',
+                CID: row.cid || ''
             });
         }
         const saveResult = await referSending('/save-diagnosis-opd', r);
@@ -532,18 +540,21 @@ async function getProcedureOpd(db, visitNo, sentResult) {
     let rowSave = [];
     if (rows && rows.length) {
         for (const row of rows) {
-            await rowSave.push({
-                HOSPCODE: row.HOSPCODE || row.hospcode,
-                PID: row.PID || row.pid || row.HN || row.hn,
-                SEQ: row.SEQ || row.seq || row.visitno || visitNo,
-                PROCEDCODE: row.PROCEDCODE || row.procedcode || row.OP_CODE || row.op_code,
-                PROCEDNAME: row.PROCEDNAME || row.procedname || row.OP_NAME || row.op_name || '',
-                DATE_SERV: row.DATE_SERV || row.date_serv || row.date || '',
-                CLINIC: row.CLINIC || row.clinic || '',
-                SERVICEPRICE: row.SERVICEPRICE || row.serviceprice || 0,
-                PROVIDER: row.PROVIDER || row.provider || row.dr || '',
-                D_UPDATE: row.D_UPDATE || row.d_update || row.date || d_update,
-                CID: row.CID || row.cid || '',
+            for (let fld in row) {
+                row[fld.toLowerCase()] = row[fld];
+            }
+            rowSave.push({
+                HOSPCODE: row.hospcode,
+                PID: row.pid || row.hn,
+                SEQ: row.seq || row.vn || row.visitno || visitNo,
+                PROCEDCODE: row.procedcode || row.op_code,
+                PROCEDNAME: row.procedname || row.op_name || '',
+                DATE_SERV: row.date_serv || row.date || '',
+                CLINIC: row.clinic || '',
+                SERVICEPRICE: row.serviceprice || 0,
+                PROVIDER: row.provider || row.dr || '',
+                D_UPDATE: row.d_update || row.date || d_update,
+                CID: row.cid || '',
             });
         }
         const saveResult = await referSending('/save-procedure-opd', rowSave);
@@ -564,6 +575,9 @@ async function getDrugOpd(db, visitNo, sentResult) {
     sentContent += '  - drug_opd = ' + rows.length + '\r';
     if (rows && rows.length) {
         for (let r of rows) {
+            for (let fld in r) {
+                r[fld.toLowerCase()] = r[fld];
+            }
             opdDrug.push({
                 HOSPCODE: r.HOSPCODE || r.hospcode || hcode,
                 PID: r.PID || r.pid || r.HN || r.hn,
@@ -607,6 +621,9 @@ async function getLabResult(db, row, sentResult) {
     sentContent += '  - lab result = ' + rowsLabResult.length + '\r';
     if (rowsLabResult && rowsLabResult.length) {
         for (const r of rowsLabResult) {
+            for (let fld in r) {
+                r[fld.toLowerCase()] = r[fld];
+            }
             const cHOSPCODE = r.HOSPCODE || r.hospcode || process.env.HOSPCODE;
             const investvalue = r.INVESTVALUE || r.investvalue || '';
             const investresult = r.INVESTRESULT || r.investresult || '';
@@ -650,7 +667,6 @@ async function getLabResult(db, row, sentResult) {
     return rowsLabResult;
 }
 async function getAdmission(db, type = 'VN', searchValue) {
-    const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
     let rows;
     if (type == 'datedisc') {
         rows = await hismodel_1.default.getAdmission(db, 'datedisc', searchValue, hcode);
@@ -701,6 +717,7 @@ async function sendAdmission(row) {
         DRG: row.drg || '',
         RW: row.rw || 0,
         ADJRW: row.adjrw || 0,
+        WTLOS: row.wtlos || 0,
         ERROR: row.error || '',
         WARNING: row.warning || '',
         ACTLOS: row.actlos || 0,
@@ -792,6 +809,7 @@ async function getProvider(db, drList, sentResult) {
     }
     const rows = await hismodel_1.default.getProviderDr(db, drList);
     sentContent += `  - provider = ${drList.length} founded: ${rows.length}\r`;
+    console.log('PID', process.pid, 'get provider:', drList.length, `founded: ${rows.length}`);
     sentResult.provider = rows.length;
     let rowSave = [];
     if (rows && rows.length) {
@@ -818,7 +836,6 @@ async function getProvider(db, drList, sentResult) {
             });
         }
         const saveResult = await referSending('/save-provider', rowSave);
-        console.log('save-provider', saveResult);
         sentContent += '    -- save provider ', rowSave.length, JSON.stringify(saveResult) + '\r';
     }
     return rowSave;

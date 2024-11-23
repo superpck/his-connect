@@ -51,15 +51,16 @@ export default async function cronjob(fastify: FastifyInstance) {
     if (firstProcessPid === process.pid) {
         console.log(moment().format('HH:mm:ss'), " Start API for Hospcode", process.env.HOSPCODE);
         console.log('crontab start: ', timingSch, 'minuteSinceLastNight', minuteSinceLastNight, `on process ID ${process.pid} of '${pm2Name}'`);
+
+        if (timingSchedule['nrefer'].autosend) {
+            console.log('crontab nRefer start every', timingSchedule['nrefer'].minute, ' (minute) from midnight.');
         }
-    if (firstProcessPid === process.pid && timingSchedule['nrefer'].autosend) {
-        console.log('crontab nRefer start every', timingSchedule['nrefer'].minute, ' (minute) from midnight.');
-    }
-    if (firstProcessPid === process.pid && timingSchedule['isonline'].autosend) {
-        console.log('crontab ISOnline start every', timingSchedule['isonline'].minute, ' (minute) from midnight.');
-    }
-    if (firstProcessPid === process.pid && timingSchedule['cupDataCenter'].autosend) {
-        console.log('crontab Data Center start every', timingSchedule['cupDataCenter'].minute, ' (minute) from midnight.');
+        if (timingSchedule['isonline'].autosend) {
+            console.log('crontab ISOnline start every', timingSchedule['isonline'].minute, ' (minute) from midnight.');
+        }
+        if (timingSchedule['cupDataCenter'].autosend) {
+            console.log('crontab Data Center start every', timingSchedule['cupDataCenter'].minute, ' (minute) from midnight.');
+        }
     }
 
     cron.schedule(timingSch, async (req: any, res: any) => {
@@ -67,26 +68,27 @@ export default async function cronjob(fastify: FastifyInstance) {
         const minuteSinceLastNight = (+moment().get('hour')) * 60 + (+moment().get('minute'));
         const minuteNow = +moment().get('minute') == 0 ? 60 : +moment().get('minute');
         const hourNow = +moment().get('hour');
+        if (firstProcessPid === process.pid) {
 
-        if (timingSchedule['nrefer']['autosend'] &&
-            minuteSinceLastNight % timingSchedule['nrefer'].minute == 0) {
-            doAutoSend(req, res, 'nrefer', './routes/refer/crontab');
+            if (timingSchedule['nrefer']['autosend'] &&
+                minuteSinceLastNight % timingSchedule['nrefer'].minute == 0) {
+                doAutoSend(req, res, 'nrefer', './routes/refer/crontab');
+            }
+
+            if (timingSchedule['isonline']['autosend'] &&
+                minuteSinceLastNight % timingSchedule['isonline'].minute == 0) {
+                doAutoSend(req, res, 'isonline', './routes/isonline/crontab');
+            }
+
+            if (timingSchedule['cupDataCenter'].autosend &&
+                minuteSinceLastNight % timingSchedule['cupDataCenter'].minute == 0) {
+                doAutoSend(req, res, 'cupDataCenter', './routes/pcc/crontab');
+            }
+
+            if (minuteNow == 0) {
+                getmophUrl();
+            }
         }
-
-        if (timingSchedule['isonline']['autosend'] &&
-            minuteSinceLastNight % timingSchedule['isonline'].minute == 0) {
-            doAutoSend(req, res, 'isonline', './routes/isonline/crontab');
-        }
-
-        if (timingSchedule['cupDataCenter'].autosend &&
-            minuteSinceLastNight % timingSchedule['cupDataCenter'].minute == 0) {
-            doAutoSend(req, res, 'cupDataCenter', './routes/pcc/crontab');
-        }
-
-        if (minuteNow == 0) {
-            getmophUrl();
-        }
-
     });
 
     async function doAutoSend(req: any, res: any, serviceName: string, functionName: string) {
@@ -106,7 +108,7 @@ export default async function cronjob(fastify: FastifyInstance) {
         var jlist: any = await shell.exec('pm2 jlist', { silent: true });
         let pm2Process = jlist && jlist !== '' && jlist.length > 32 ? JSON.parse(jlist) : [];
         pm2Name = 'unknown';
-        if (pm2Process && pm2Process.length){
+        if (pm2Process && pm2Process.length) {
             const prc = pm2Process.filter((o: any) => process.pid == o.pid && o.pm2_env.status == 'online');
             pm2Name = prc && prc.length ? prc[0].name : 'unknown';
         }
@@ -116,7 +118,7 @@ export default async function cronjob(fastify: FastifyInstance) {
                 firstProcessPid = firstProcessPid ? firstProcessPid : procss.pid;
             }
         }
-        if (firstProcessPid == process.pid){
+        if (firstProcessPid == process.pid) {
             global.firstProcessPid = firstProcessPid;
         }
         return firstProcessPid;
