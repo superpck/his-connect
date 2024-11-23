@@ -418,12 +418,7 @@ class HisEzhospModel {
         visitDate = moment(visitDate).format('YYYY-MM-DD');
         return db('view_opd_visit as visit')
             .leftJoin('refer_in', 'visit.vn', 'refer_in.vn')
-            .select(db.raw(`(select hcode from sys_hospital) as HOSPCODE`))
-            .select('visit.refer as HOSP_SOURCE', 'visit.refer_no as REFERID_SOURCE')
-            .select(db.raw('concat(visit.refer,visit.refer_no) as REFERID_PROVINCE'))
-            .select('visit.date as DATETIME_IN', 'visit.hn as PID_IN', 'visit.vn as SEQ_IN', 'visit.ipd_an as AN_IN', 'visit.no_card as CID_IN', 'refer_in.refer_in as REFERID', 'visit.dx1 as detail', 'visit.dr_note as reply_diagnostic', 'visit.lastupdate as reply_date')
-            .select(db.raw('1 as REFER_RESULT'))
-            .select(db.raw(`concat(visit.date,' ',visit.time) as D_UPDATE`))
+            .select(db.raw(`(select hcode from sys_hospital) as HOSPCODE`), 'visit.refer as HOSP_SOURCE', 'visit.refer_no as REFERID_SOURCE', db.raw('concat(visit.refer,visit.refer_no) as REFERID_PROVINCE'), 'visit.date as DATETIME_IN', 'visit.hn as PID_IN', 'visit.vn as SEQ_IN', 'visit.ipd_an as AN_IN', 'visit.no_card as CID_IN', 'refer_in.refer_in as REFERID', 'visit.dx1 as detail', 'visit.dr_note as reply_diagnostic', 'visit.lastupdate as reply_date', db.raw('1 as REFER_RESULT'), db.raw(`concat(visit.date,' ',visit.time) as D_UPDATE`), 'visit.dr as PROVIDER', 'visit.dr')
             .where('visit.date', visitDate)
             .where('visit.refer', '!=', hospCode)
             .where(db.raw('length(visit.refer)=5'))

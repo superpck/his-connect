@@ -36,37 +36,34 @@ async function sendMoph(req, reply, db) {
     if ((hourNow == 1 || hourNow == 8 || hourNow == 12 || hourNow == 18 || hourNow == 22)
         && minuteNow - 1 < +process.env.NREFER_AUTO_SEND_EVERY_MINUTE) {
         const date = moment().subtract(1, 'days').format('YYYY-MM-DD');
-        await getRefer_out(db, date);
-        await getReferResult(db, date);
+        var [referOut, referResult] = await sendRefer(db, date);
     }
     else if (hourNow == 4 && minuteNow > 44) {
         let oldDate = moment(dateNow).subtract(1, 'months').format('YYYY-MM-DD');
         while (oldDate < dateNow) {
-            await Promise.all([
-                getRefer_out(db, oldDate),
-                getReferResult(db, oldDate)
-            ]);
+            var [referOut, referResult] = await sendRefer(db, oldDate);
             oldDate = moment(oldDate).add(1, 'days').format('YYYY-MM-DD');
         }
     }
     else if ([3, 14].indexOf(hourNow) >= 0 && minuteNow - 1 > +process.env.NREFER_AUTO_SEND_EVERY_MINUTE) {
         let oldDate = moment(dateNow).subtract(7, 'days').format('YYYY-MM-DD');
         while (oldDate < dateNow) {
-            await Promise.all([
-                getRefer_out(db, oldDate),
-                getReferResult(db, oldDate)
-            ]);
+            var [referOut, referResult] = await sendRefer(db, oldDate);
             oldDate = moment(oldDate).add(1, 'days').format('YYYY-MM-DD');
         }
     }
     console.log(moment().format('HH:mm:ss'), '='.repeat(60));
-    var [referOut, referResult] = await Promise.all([
-        getRefer_out(db, dateNow),
-        getReferResult(db, dateNow)
-    ]);
+    var [referOut, referResult] = await sendRefer(db, dateNow);
     return { date: dateNow, referOut, referResult };
 }
-async function getRefer_out(db, date) {
+async function sendRefer(db, date) {
+    var [referOut, referResult] = await Promise.all([
+        getReferOut(db, date),
+        getReferIn(db, date)
+    ]);
+    return [referOut, referResult];
+}
+async function getReferOut(db, date) {
     try {
         const referout = await hismodel_1.default.getReferOut(db, date, hcode);
         console.log('******** >> referout', referout.length, ' case');
@@ -77,7 +74,6 @@ async function getRefer_out(db, date) {
                 drList.push(r.dr || r.provider);
             }
         }
-        const saveProviderResult = getProvider(db, drList);
         sentContent += `\rsave refer_history ${date} \r`;
         sentContent += `\rsave refer service data ${date} \r`;
         let index = 0;
@@ -92,7 +88,8 @@ async function getRefer_out(db, date) {
             procedureOpd: { success: 0, fail: 0 },
             drugOpd: { success: 0, fail: 0 },
             drugAllergy: { success: 0, fail: 0 },
-            investigationRefer: { success: 0, fail: 0 }
+            investigationRefer: { success: 0, fail: 0 },
+            provider: 0,
         };
         for (let row of referout) {
             const hn = row.hn || row.HN || row.pid || row.PID;
@@ -105,7 +102,8 @@ async function getRefer_out(db, date) {
                 getAddress(db, hn, sentResult),
                 getService(db, seq, sentResult),
                 getDrugAllergy(db, hn, sentResult),
-                getLabResult(db, row, sentResult)
+                getLabResult(db, row, sentResult),
+                getProvider(db, drList, sentResult)
             ]);
             let ipd = await getAdmission(db, 'VN', seq);
             const an = ipd && ipd.length ? ipd[0].an : '';
@@ -121,12 +119,12 @@ async function getRefer_out(db, date) {
         return referout;
     }
     catch (error) {
-        console.log('getRefer_out, crontab error:', error.message);
+        console.log('getReferOut, crontab error:', error.message);
         sentContent += moment().format('HH:mm:ss.SSS') + 'crontab error ' + error.message + '\r\r';
         return [];
     }
 }
-async function getReferResult(db, date) {
+async function getReferIn(db, date) {
     let index = 0;
     let sentResultResult = {
         pid: process.pid,
@@ -138,10 +136,18 @@ async function getReferResult(db, date) {
         procedureOpd: { success: 0, fail: 0 },
         drugOpd: { success: 0, fail: 0 },
         drugAllergy: { success: 0, fail: 0 },
-        investigationRefer: { success: 0, fail: 0 }
+        investigationRefer: { success: 0, fail: 0 },
+        provider: 0
     };
     try {
         const referResult = await hismodel_1.default.getReferResult(db, date, hcode);
+        let drList = [];
+        for (let r of referResult) {
+            const dr = r.dr || r.provider;
+            if (dr && drList.indexOf(dr) < 0) {
+                drList.push(r.dr || r.provider);
+            }
+        }
         sentContent += `\rsave refer_result ${date} \r`;
         sentContent += `\rsave refer service data ${date} \r`;
         console.log(moment().format('HH:mm:ss'), process.env.HOSPCODE, 'refer result (refer in)=', referResult.length, 'row');
@@ -151,11 +157,12 @@ async function getReferResult(db, date) {
             const referid = row.REFERID_SOURCE;
             sentContent += (index + 1) + '. refer no.' + referid + ', hn ' + hn + ', seq ' + seq + '\r';
             await Promise.all([
-                sendReferResult(row, sentResultResult),
+                sendReferIn(row, sentResultResult),
                 getPerson(db, hn, sentResultResult),
                 getAddress(db, hn, sentResultResult),
                 getService(db, seq, sentResultResult),
-                getDrugAllergy(db, hn, sentResultResult)
+                getDrugAllergy(db, hn, sentResultResult),
+                getProvider(db, drList, sentResultResult)
             ]);
             let ipd = await getAdmission(db, 'VN', seq);
             const an = ipd && ipd.length ? ipd[0].an : '';
@@ -173,7 +180,7 @@ async function getReferResult(db, date) {
         return referResult;
     }
     catch (error) {
-        console.log('getReferResult, crontab error:', error.message);
+        console.log('getReferIn, crontab error:', error.message);
         sentContent += moment().format('HH:mm:ss.SSS') + 'crontab error ' + error.message + '\r\r';
         return [];
     }
@@ -291,7 +298,7 @@ async function sendReferOut(row, sentResult) {
         return null;
     }
 }
-async function sendReferResult(row, sentResult) {
+async function sendReferIn(row, sentResult) {
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
     if (row) {
         const data = {
@@ -661,44 +668,47 @@ async function getAdmission(db, type = 'VN', searchValue) {
 }
 async function sendAdmission(row) {
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
+    for (let r in row) {
+        row[r.toLowerCase()] = row[r];
+    }
     const data = {
-        HOSPCODE: row.HOSPCODE || row.hospcode || hcode,
-        PID: row.PID || row.pid || row.HN || row.hn,
-        SEQ: row.SEQ || row.seq || row.HN || row.vn,
-        AN: row.AN || row.an,
-        CID: row.CID || row.cid || '',
-        DATETIME_ADMIT: row.DATETIME_ADMIT || row.datetime_admit,
-        WARDADMIT: row.WARDADMIT || row.wardadmit || '',
-        WARDADMITNAME: row.WARDADMITNAME || row.wardadmitname || '',
-        WARDDISCHNAME: row.WARDDISCHNAME || row.warddischname || '',
-        INSTYPE: row.INSTYPE || row.instype || '',
-        TYPEIN: row.TYPEIN || row.typein || '',
-        REFERINHOSP: row.REFERINHOSP || row.referinhosp || '',
-        CAUSEIN: row.CAUSEIN || row.causein || '',
-        ADMITWEIGHT: row.ADMITWEIGHT || row.admitweight || 0,
-        ADMITHEIGHT: row.ADMITHEIGHT || row.admitheight || 0,
-        DATETIME_DISCH: row.DATETIME_DISCH || row.datetime_disch || '',
-        WARDDISCH: row.WARDDISCH || row.warddish || '',
-        DISCHSTATUS: row.DISCHSTATUS || row.dischstatus || '',
-        DISCHTYPE: row.DISCHTYPE || row.disctype || '',
-        REFEROUTHOSP: row.REFEROUTHOSP || row.referouthosp || '',
-        CAUSEOUT: row.CAUSEOUT || row.causeout || '',
-        COST: row.COST || row.cost || '',
-        PRICE: row.PRICE || row.price || '',
-        PAYPRICE: row.PAYPRICE || row.payprice || '',
-        ACTUALPAY: row.ACTUALPAY || row.actualpay || '',
-        PROVIDER: row.PROVIDER || row.provider || row.dr || '',
-        DRG: row.DRG || row.drg || '',
-        RW: row.RW || row.rw || 0,
-        ADJRW: row.ADJRW || row.adjrw || 0,
-        ERROR: row.ERROR || row.error || '',
-        WARNING: row.WARNING || row.warning || '',
-        ACTLOS: row.ACTLOS || row.actlos || 0,
-        GROUPER_VERSION: row.GROUPER_VERSION || row.grouper_version || '',
-        CLINIC: row.CLINIC || row.clinic || '',
-        MAIN: row.MAIN || row.main || '',
-        SUB: row.HSUB || row.hsub || row.SUB || row.sub || '',
-        D_UPDATE: row.D_UPDATE || row.d_update || d_update,
+        HOSPCODE: row.hospcode || hcode,
+        PID: row.pid || row.hn,
+        SEQ: row.seq || row.vn,
+        AN: row.an,
+        CID: row.cid || '',
+        DATETIME_ADMIT: row.datetime_admit,
+        WARDADMIT: row.wardadmit || '',
+        WARDADMITNAME: row.wardadmitname || '',
+        WARDDISCHNAME: row.warddischname || '',
+        INSTYPE: row.instype || '',
+        TYPEIN: row.typein || '',
+        REFERINHOSP: row.referinhosp || '',
+        CAUSEIN: row.causein || '',
+        ADMITWEIGHT: row.admitweight || 0,
+        ADMITHEIGHT: row.admitheight || 0,
+        DATETIME_DISCH: row.datetime_disch || '',
+        WARDDISCH: row.warddish || '',
+        DISCHSTATUS: row.dischstatus || '',
+        DISCHTYPE: row.disctype || '',
+        REFEROUTHOSP: row.referouthosp || '',
+        CAUSEOUT: row.causeout || '',
+        COST: row.cost || '',
+        PRICE: row.price || '',
+        PAYPRICE: row.payprice || '',
+        ACTUALPAY: row.actualpay || '',
+        PROVIDER: row.provider || row.dr || '',
+        DRG: row.drg || '',
+        RW: row.rw || 0,
+        ADJRW: row.adjrw || 0,
+        ERROR: row.error || '',
+        WARNING: row.warning || '',
+        ACTLOS: row.actlos || 0,
+        GROUPER_VERSION: row.grouper_version || '',
+        CLINIC: row.clinic || '',
+        MAIN: row.main || '',
+        SUB: row.hsub || row.sub || '',
+        D_UPDATE: row.d_update || d_update,
     };
     const saveResult = await referSending('/save-admission', data);
     sentContent += '    -- AN ' + data.AN + ' ' + (saveResult.result || saveResult.message) + '\r';
@@ -774,11 +784,15 @@ async function getDrugAllergy(db, hn, sentResult) {
         return [];
     }
 }
-async function getProvider(db, drList) {
-    if (!drList || drList.length === 0)
+async function getProvider(db, drList, sentResult) {
+    if (!drList || drList.length === 0) {
+        sentResult.provider = -1;
+        console.log(' no provider in refer out data');
         return null;
+    }
     const rows = await hismodel_1.default.getProviderDr(db, drList);
-    sentContent += '  - provider = ' + rows.length + '\r';
+    sentContent += `  - provider = ${drList.length} founded: ${rows.length}\r`;
+    sentResult.provider = rows.length;
     let rowSave = [];
     if (rows && rows.length) {
         for (let row of rows) {
@@ -805,7 +819,7 @@ async function getProvider(db, drList) {
         }
         const saveResult = await referSending('/save-provider', rowSave);
         console.log('save-provider', saveResult);
-        sentContent += '    -- provider ' + JSON.stringify(saveResult) + '\r';
+        sentContent += '    -- save provider ', rowSave.length, JSON.stringify(saveResult) + '\r';
     }
     return rowSave;
 }

@@ -627,6 +627,7 @@ class HisHosxpv4Model {
             .leftJoin('dchtype as dt', 'i.dchtype', 'dt.dchtype')
             .leftJoin('dchstts as ds', 'i.dchstts', 'ds.dchstts')
             .leftJoin('opitemrece as c', 'c.an', 'i.an')
+            .leftJoin('doctor', 'a.dx_doctor', 'doctor.code')
             .leftJoin('ward', 'i.ward', 'ward.ward');
         if (Array.isArray(searchValue)) {
             sqlCommand.whereIn(columnName, searchValue);
@@ -697,9 +698,9 @@ class HisHosxpv4Model {
                     2
                 ) payprice,
                 CASE WHEN a.paid_money IS NULL THEN 0.00 ELSE ROUND(a.paid_money,2) END AS actualpay,
-                a.dx_doctor provider,
+                a.dx_doctor as dr, doctor.licenseno as provider,
                 CASE WHEN idx.modify_datetime IS NULL THEN '' ELSE date_format(idx.modify_datetime,'%Y-%m-%d %H:%i:%s') END AS d_update,
-                i.drg, a.rw, i.adjrw,
+                i.drg, a.rw, i.adjrw, i.wtlos,
                 CASE WHEN i.grouper_err IS NULL THEN 1 ELSE i.grouper_err END AS error,
                 CASE WHEN i.grouper_warn IS NULL THEN 64 ELSE i.grouper_warn END AS warning,
                 CASE WHEN i.grouper_actlos IS NULL THEN 0 ELSE i.grouper_actlos END AS actlos,
@@ -1174,6 +1175,7 @@ class HisHosxpv4Model {
                 ifnull(ro.pre_diagnosis,'ไม่ระบุ') as DIAGFIRST,
                 ifnull(ro.pre_diagnosis,'ไม่ระบุ') as DIAGLAST,
                 ifnull(ro.ptstatus_text,'ไม่ระบุ') as PSTATUS,
+                ovst.doctor as dr, doctor.licenseno as provider,
                 (select case e.er_pt_type 
                     when '2' then '2' 
                     when '1' then '3' 
@@ -1201,15 +1203,15 @@ class HisHosxpv4Model {
 
             from
                 referout ro 
-                left join patient pt on pt.hn = ro.hn 
-                left join person ps on ps.cid = pt.cid 
-                left join ovst o on o.vn = ro.vn or o.an=ro.vn
+                left join patient as pt on pt.hn = ro.hn 
+                left join person as ps on ps.cid = pt.cid 
+                left join ovst as o on o.vn = ro.vn or o.an=ro.vn
                 left join ipt as i on i.an = o.an 
-                left join ovst_seq os on os.vn = o.vn
-                left join spclty sp on sp.spclty = ro.spclty 
-                left join opdscreen s on s.vn = o.vn 
-                left join er_regist e on e.vn = o.vn 
-
+                left join ovst_seq as os on os.vn = o.vn
+                left join spclty as sp on sp.spclty = ro.spclty 
+                left join opdscreen as s on s.vn = o.vn 
+                left join er_regist as e on e.vn = o.vn 
+                left join doctor on o.doctor = doctor.code
             where
                 ${columnName}='${searchNo}'
                 and ro.refer_hospcode!='' and !isnull(ro.refer_hospcode)
