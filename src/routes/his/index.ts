@@ -150,6 +150,21 @@ const router = (fastify, { }, next) => {
     }
   })
 
+  fastify.post('/referout-compress', { preHandler: [fastify.authenticate], compress: false }, async (req: any, reply: any) => {
+    const now = moment().locale('th').format('YYYY-MM-DD');
+    const body = req.body || {};
+    const date = body.date || now;
+    const hospcode = body.hospcode || process.env.HOSPCODE;
+
+    try {
+      const rows: any = await hisModel.getReferOut(global.dbHIS, date, hospcode);
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rowCount: rows.length, rows });
+    } catch (error) {
+      console.log('referout', error.message);
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
+    }
+  })
+
   fastify.post('/person', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     const body: any = req.body;
     if (!body || (!body.hn && !body.cid)) {

@@ -38,7 +38,8 @@ if (process.env.SSL_ENABLE && process.env.SSL_ENABLE == '1' && process.env.SSL_K
     logger: {
       level: 'error',
     },
-    bodyLimit: 5 * 1048576
+    bodyLimit: 5 * 1048576,
+    connectionTimeout: 10000
   }
 }
 const app = fastify(serverOption);
@@ -48,7 +49,10 @@ global.appDetail = { name, subVersion, version };
 
 app.register(require('@fastify/formbody'));
 app.register(require('@fastify/cors'), {});
-app.register(require('@fastify/compress'), { threshold: 1024, encodings: ['gzip','br'] });
+app.register(require('@fastify/compress'), {
+  global: false,
+  threshold: 1024
+});
 app.register(require('fastify-no-icon'));
 app.register(helmet, {});
 app.register(require('@fastify/rate-limit'), {
@@ -137,15 +141,16 @@ app.addHook('preHandler', async (request, reply) => {
 });
 app.addHook('onRequest', async (req: any, reply) => {
   const encoding = req.headers['content-encoding']; // ตรวจสอบ Content-Encoding
-
+  // console.log('encoding', req.url, req.headers);
+  console.log('encoding', req.url, encoding, req.headers['accept-encoding']);
   // ถ้า Request Body ถูกบีบอัดด้วย Gzip
-  if (encoding === 'gzip') {
-    req.raw = req.raw.pipe(zlib.createGunzip()); // คลาย Gzip
-  } else if (encoding === 'br') {
-    req.raw = req.raw.pipe(zlib.createBrotliDecompress()); // คลาย Brotli
-  } else if (encoding === 'deflate') {
-    req.raw = req.raw.pipe(zlib.createInflate()); // คลาย Deflate
-  }
+  // if (encoding === 'gzip') {
+  //   req.raw = req.raw.pipe(zlib.createGunzip()); // คลาย Gzip
+  // } else if (encoding === 'br') {
+  //   req.raw = req.raw.pipe(zlib.createBrotliDecompress()); // คลาย Brotli
+  // } else if (encoding === 'deflate') {
+  //   req.raw = req.raw.pipe(zlib.createInflate()); // คลาย Deflate
+  // }
 });
 
 app.register(require('./route'));
