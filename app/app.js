@@ -6,6 +6,7 @@ const path = require("path");
 const http_status_codes_1 = require("http-status-codes");
 const fastify_1 = require("fastify");
 const moment = require("moment");
+const zlib = require("node:zlib");
 const nodecron_1 = require("./nodecron");
 const serveStatic = require('serve-static');
 var crypto = require('crypto');
@@ -38,6 +39,7 @@ const { name, version, subVersion } = require('./../package.json');
 global.appDetail = { name, subVersion, version };
 app.register(require('@fastify/formbody'));
 app.register(require('@fastify/cors'), {});
+app.register(require('@fastify/compress'), { threshold: 1024, encodings: ['gzip', 'br'] });
 app.register(require('fastify-no-icon'));
 app.register(helmet, {});
 app.register(require('@fastify/rate-limit'), {
@@ -106,6 +108,18 @@ app.addHook('preHandler', async (request, reply) => {
         return reply.send({ status: http_status_codes_1.StatusCodes.NOT_ACCEPTABLE, ip, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.NOT_ACCEPTABLE) });
     }
     console.log(moment().format('HH:mm:ss'), geo ? geo.country : 'unk', ip, request.url);
+});
+app.addHook('onRequest', async (req, reply) => {
+    const encoding = req.headers['content-encoding'];
+    if (encoding === 'gzip') {
+        req.raw = req.raw.pipe(zlib.createGunzip());
+    }
+    else if (encoding === 'br') {
+        req.raw = req.raw.pipe(zlib.createBrotliDecompress());
+    }
+    else if (encoding === 'deflate') {
+        req.raw = req.raw.pipe(zlib.createInflate());
+    }
 });
 app.register(require('./route'));
 app.register(nodecron_1.default);

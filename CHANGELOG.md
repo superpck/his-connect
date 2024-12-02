@@ -1,6 +1,7 @@
 # 3.7.5
 ## Feature
   - เพิ่มการส่ง Provider เพื่อเชื่อมกับ MOPH Refer
+  - เพิ่มการรับ-ส่ง แบบ compress
 
 # 3.7.4
 ## Bug

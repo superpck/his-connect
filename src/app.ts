@@ -4,8 +4,9 @@ checkConfigFile();
 
 import path = require('path');
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
-import fastify from 'fastify';
+import fastify, { FastifyRequest } from 'fastify';
 import * as moment from 'moment';
+import zlib = require('node:zlib');
 import cronjob from './nodecron';
 
 const serveStatic = require('serve-static');
@@ -47,6 +48,7 @@ global.appDetail = { name, subVersion, version };
 
 app.register(require('@fastify/formbody'));
 app.register(require('@fastify/cors'), {});
+app.register(require('@fastify/compress'), { threshold: 1024, encodings: ['gzip','br'] });
 app.register(require('fastify-no-icon'));
 app.register(helmet, {});
 app.register(require('@fastify/rate-limit'), {
@@ -133,6 +135,19 @@ app.addHook('preHandler', async (request, reply) => {
   }
   console.log(moment().format('HH:mm:ss'), geo ? geo.country : 'unk', ip, request.url);
 });
+app.addHook('onRequest', async (req: any, reply) => {
+  const encoding = req.headers['content-encoding']; // ตรวจสอบ Content-Encoding
+
+  // ถ้า Request Body ถูกบีบอัดด้วย Gzip
+  if (encoding === 'gzip') {
+    req.raw = req.raw.pipe(zlib.createGunzip()); // คลาย Gzip
+  } else if (encoding === 'br') {
+    req.raw = req.raw.pipe(zlib.createBrotliDecompress()); // คลาย Brotli
+  } else if (encoding === 'deflate') {
+    req.raw = req.raw.pipe(zlib.createInflate()); // คลาย Deflate
+  }
+});
+
 app.register(require('./route'));
 
 app.register(cronjob);
