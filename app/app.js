@@ -30,7 +30,8 @@ else {
         logger: {
             level: 'error',
         },
-        bodyLimit: 5 * 1048576
+        bodyLimit: 5 * 1048576,
+        connectionTimeout: 10000
     };
 }
 const app = (0, fastify_1.default)(serverOption);
@@ -38,6 +39,10 @@ const { name, version, subVersion } = require('./../package.json');
 global.appDetail = { name, subVersion, version };
 app.register(require('@fastify/formbody'));
 app.register(require('@fastify/cors'), {});
+app.register(require('@fastify/compress'), {
+    global: false,
+    threshold: 1024
+});
 app.register(require('fastify-no-icon'));
 app.register(helmet, {});
 app.register(require('@fastify/rate-limit'), {
@@ -91,21 +96,26 @@ app.decorate("checkRequestKey", async (request, reply) => {
     }
 });
 var geoip = require('geoip-lite');
+app.addHook('onRequest', async (req, reply) => {
+    let ipAddr = req.headers["x-real-ip"] || req.headers["x-forwarded-for"] || req.ip;
+    ipAddr = ipAddr ? ipAddr.split(',') : [''];
+    req.ipAddr = ipAddr[0].trim();
+    var geo = geoip.lookup(req.ipAddr);
+    if (geo && geo.country && geo.country != 'TH' && req.ipAddr != process.env.HOST) {
+        console.log(req.ipAddr, `Unacceptable country: ${geo.country}`);
+        return reply.send({ status: http_status_codes_1.StatusCodes.NOT_ACCEPTABLE, ip: req.ipAddr, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.NOT_ACCEPTABLE) });
+    }
+    console.log(moment().format('HH:mm:ss'), geo ? geo.country : 'unk', req.ipAddr, req.url);
+});
 app.addHook('preHandler', async (request, reply) => {
+});
+app.addHook('onSend', async (request, reply, payload) => {
     const headers = {
         "Cache-Control": "no-store",
         Pragma: "no-cache",
     };
     reply.headers(headers);
-    let ipAddr = request.headers["x-real-ip"] || request.headers["x-forwarded-for"] || request.ip;
-    ipAddr = ipAddr ? ipAddr.split(',') : [''];
-    const ip = ipAddr[0].trim();
-    var geo = geoip.lookup(ip);
-    if (geo && geo.country && geo.country != 'TH' && ip != process.env.HOST) {
-        console.log(ip, `Unacceptable country: ${geo.country}`);
-        return reply.send({ status: http_status_codes_1.StatusCodes.NOT_ACCEPTABLE, ip, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.NOT_ACCEPTABLE) });
-    }
-    console.log(moment().format('HH:mm:ss'), geo ? geo.country : 'unk', ip, request.url);
+    return payload;
 });
 app.register(require('./route'));
 app.register(nodecron_1.default);
@@ -125,7 +135,7 @@ async function connectDB() {
     global.dbISOnline = global.dbIs;
     try {
         const result = await global.dbHIS.raw('SELECT NOW() as date');
-        console.info(`   PID:${process.pid} >> HIS DB server connected, date on DB server: `, result[0][0].date);
+        console.info(`   PID:${process.pid} >> HIS DB server connected, date on DB server: `, moment(result[0][0].date).format('YYYY-MM-DD HH:mm:ss'));
     }
     catch (error) {
         console.error(`   PID:${process.pid} >> HIS DB server connect error: `, error.message);

@@ -94,7 +94,7 @@ async function cronjob(fastify) {
         }
         for (let procss of pm2Process) {
             if (procss.name == pm2Name) {
-                firstProcessPid = firstProcessPid ? firstProcessPid : procss.pid;
+                firstProcessPid = firstProcessPid > 0 ? firstProcessPid : procss.pid;
             }
         }
         if (firstProcessPid == process.pid) {
