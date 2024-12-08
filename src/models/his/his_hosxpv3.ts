@@ -2,9 +2,19 @@ import { Knex } from 'knex';
 import * as moment from 'moment';
 
 const maxLimit = 250;
-const hcode = process.env.HOSPCODE;
 const hn_len = +process.env.HN_LENGTH || 6;
+let hcode = process.env.HOSPCODE;
+const getHospcode = async() => {
+    let row = await global.dbHIS('opdconfig').select('hospitalcode').first();
+    hcode = row ? row.hospitalcode : process.env.HOSPCODE;
+    console.log('opdconfig v.3', hcode);
+}
+
 export class HisHosxpv3Model {
+    constructor(){
+        getHospcode();
+    }
+
     check() {
         return true;
     }
@@ -82,11 +92,11 @@ export class HisHosxpv3Model {
             pt.birthday AS dob,
             pt.sex AS sex, r.referout_emergency_type_id as EMERGENCY, 
             r.request_text as REQUEST,
-            r.pdx AS dx, r.pre_diagnosis AS DIAGFIRST,
+            r.pdx AS dx,
             case when r.pmh then r.pmh else opdscreen.pmh end as PH,
             case when r.hpi then r.hpi else opdscreen.hpi end as PI,
             r.treatment_text as PHYSICALEXAM,
-            r.pre_diagnosis as DISGLAST,
+            r.pre_diagnosis as DIAGLAST,
             IF((SELECT count(an) as cc from an_stat WHERE an =r.vn) = 1,r.vn,null) as an
         FROM
             referout r
@@ -251,6 +261,7 @@ export class HisHosxpv3Model {
                 format(s.bpd,0) as DBP,
                 format(s.pulse,0) as PR,
                 format(s.rr,0) as RR,
+                s.o2sat, s.bw as weight, s.height,
                 (select case   
                     when (o.ovstost >='01' and o.ovstost <='14') then '2' 
                     when o.ovstost in ('98','99','61','62','63','00') then '1' 

@@ -120,29 +120,23 @@ app.decorate("checkRequestKey", async (request, reply) => {
 
 });
 
-// Add Route path ================================
+// addHook pre-process ================================
 var geoip = require('geoip-lite');
-app.addHook('preHandler', async (request, reply) => {
-  const headers = {
-    "Cache-Control": "no-store",
-    Pragma: "no-cache",
-  };
-  reply.headers(headers);
-
-  let ipAddr: any = request.headers["x-real-ip"] || request.headers["x-forwarded-for"] || request.ip;
-  ipAddr = ipAddr ? ipAddr.split(',') : [''];
-  const ip = ipAddr[0].trim();
-  var geo = geoip.lookup(ip);
-  if (geo && geo.country && geo.country != 'TH' && ip != process.env.HOST) {
-    console.log(ip, `Unacceptable country: ${geo.country}`);
-    return reply.send({ status: StatusCodes.NOT_ACCEPTABLE, ip, message: getReasonPhrase(StatusCodes.NOT_ACCEPTABLE) });
-  }
-  console.log(moment().format('HH:mm:ss'), geo ? geo.country : 'unk', ip, request.url);
-});
 app.addHook('onRequest', async (req: any, reply) => {
-  const encoding = req.headers['content-encoding']; // ตรวจสอบ Content-Encoding
+  let ipAddr: any = req.headers["x-real-ip"] || req.headers["x-forwarded-for"] || req.ip;
+  ipAddr = ipAddr ? ipAddr.split(',') : [''];
+  req.ipAddr = ipAddr[0].trim();
+
+  var geo = geoip.lookup(req.ipAddr);
+  if (geo && geo.country && geo.country != 'TH' && req.ipAddr != process.env.HOST) {
+    console.log(req.ipAddr, `Unacceptable country: ${geo.country}`);
+    return reply.send({ status: StatusCodes.NOT_ACCEPTABLE, ip: req.ipAddr, message: getReasonPhrase(StatusCodes.NOT_ACCEPTABLE) });
+  }
+  console.log(moment().format('HH:mm:ss'), geo ? geo.country : 'unk', req.ipAddr, req.url);
+
+  // const encoding = req.headers['content-encoding']; // ตรวจสอบ Content-Encoding
   // console.log('encoding', req.url, req.headers);
-  console.log('encoding', req.url, encoding, req.headers['accept-encoding']);
+  // console.log('encoding', req.url, encoding, req.headers['accept-encoding']);
   // ถ้า Request Body ถูกบีบอัดด้วย Gzip
   // if (encoding === 'gzip') {
   //   req.raw = req.raw.pipe(zlib.createGunzip()); // คลาย Gzip
@@ -152,16 +146,28 @@ app.addHook('onRequest', async (req: any, reply) => {
   //   req.raw = req.raw.pipe(zlib.createInflate()); // คลาย Deflate
   // }
 });
+app.addHook('preHandler', async (request, reply) => {
+});
+app.addHook('onSend', async (request, reply, payload) => {
+  const headers = {
+    "Cache-Control": "no-store",
+    Pragma: "no-cache",
+  };
+  reply.headers(headers);
+  return payload;
+});
 
+// Add route path ======================================
 app.register(require('./route'));
 
+// Add crontab job ======================================
 app.register(cronjob);
 
+// start app ============================================
 var options: any = {
   port: process.env.PORT || 3004,
   host: process.env.HOST || '0.0.0.0'
 }
-
 app.listen(options, (err) => {
   if (err) throw err;
   console.info(`${moment().format('HH:mm:ss')} HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid}`);
@@ -176,7 +182,7 @@ async function connectDB() {
 
   try {
     const result = await global.dbHIS.raw('SELECT NOW() as date');
-    console.info(`   PID:${process.pid} >> HIS DB server connected, date on DB server: `, result[0][0].date);
+    console.info(`   PID:${process.pid} >> HIS DB server connected, date on DB server: `, moment(result[0][0].date).format('YYYY-MM-DD HH:mm:ss'));
   } catch (error) {
     console.error(`   PID:${process.pid} >> HIS DB server connect error: `, error.message);
   }

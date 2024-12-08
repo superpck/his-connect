@@ -91,16 +91,16 @@ const dbConnection = (type = 'HIS') => {
         user: connection.user,
         password: connection.password,
         database: connection.database,
-        timezone
+        // timezone
       },
       pool: {
         min: 0,
         max: 7,
-        afterCreate: (conn, done) => {
-          conn.query('SET NAMES ' + connection.charset, (err) => {
-            done(err, conn);
-          });
-        }
+        // afterCreate: (conn, done) => {
+        //   conn.query('SET NAMES ' + connection.charset, (err) => {
+        //     done(err, conn);
+        //   });
+        // }
       },
       debug: false,
     };
