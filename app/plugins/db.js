@@ -4,7 +4,7 @@ const knex_1 = require("knex");
 var timezone = 'Asia/Bangkok';
 var options = {
     HIS: {
-        client: process.env.HIS_DB_CLIENT || 'mysql',
+        client: process.env.HIS_DB_CLIENT || 'mysql2',
         connection: {
             host: process.env.HIS_DB_HOST,
             user: process.env.HIS_DB_USER,
@@ -75,8 +75,7 @@ const dbConnection = (type = 'HIS') => {
                 port: +connection.port,
                 user: connection.user,
                 password: connection.password,
-                database: connection.database,
-                timezone
+                database: connection.database
             },
             pool: {
                 min: 0,
@@ -85,6 +84,7 @@ const dbConnection = (type = 'HIS') => {
         };
     }
     else {
+        config.client = config.client == 'mysql' ? 'mysql2' : config.client;
         opt = {
             client: config.client,
             connection: {
