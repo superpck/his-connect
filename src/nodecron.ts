@@ -105,20 +105,30 @@ export default async function cronjob(fastify: FastifyInstance) {
     }
 
     async function firstPM2InstancePID() {
-        var jlist: any = await shell.exec('pm2 jlist', { silent: true });
-        let pm2Process = jlist && jlist !== '' && jlist.length > 32 ? JSON.parse(jlist) : [];
-        pm2Name = 'unknown';
-        if (pm2Process && pm2Process.length) {
-            const prc = pm2Process.filter((o: any) => process.pid == o.pid && o.pm2_env.status == 'online');
-            pm2Name = prc && prc.length ? prc[0].name : 'unknown';
-        }
-
-        for (let procss of pm2Process) {
-            if (procss.name == pm2Name) {
-                firstProcessPid = firstProcessPid > 0 ? firstProcessPid : procss.pid;
+        try {
+            var jlist: any = await shell.exec('pm2 jlist', { silent: true });
+            if (jlist.substr(0,1) != '['){
+                jlist = jlist.substring(jlist.indexOf('['));
             }
-        }
-        if (firstProcessPid == process.pid) {
+            let pm2Process = jlist && jlist !== '' && jlist.length > 32 ? JSON.parse(jlist) : [];
+            
+            pm2Name = 'unknown';
+            if (pm2Process && pm2Process.length) {
+                const prc = pm2Process.filter((o: any) => process.pid == o.pid && o.pm2_env.status == 'online');
+                pm2Name = prc && prc.length ? prc[0].name : 'unknown';
+            }
+
+            for (let procss of pm2Process) {
+                if (procss.name == pm2Name) {
+                    firstProcessPid = firstProcessPid > 0 ? firstProcessPid : procss.pid;
+                }
+            }
+            if (firstProcessPid == process.pid) {
+                global.firstProcessPid = firstProcessPid;
+            }
+        } catch (error: any) {
+            console.log('get firstPM2InstancePID Error: ', error.message || error);
+            firstProcessPid = 0; //process.pid;
             global.firstProcessPid = firstProcessPid;
         }
         return firstProcessPid;

@@ -998,7 +998,7 @@ class HisHosxpv4Model {
             where              
                 ipt.an= ?                  
             `;
-        const result = await db.raw(sql, [hisHospcode, an, hisHospcode, an]);
+        const result = await db.raw(sql, [hisHospcode, an]);
         return result[0];
     }
     async getChargeIpd(db, an, hospCode = hisHospcode) {
@@ -1163,31 +1163,26 @@ class HisHosxpv4Model {
         columnName = columnName === 'vn' ? 'os.vn' : columnName;
         columnName = columnName === 'seq_id' ? 'os.seq_id' : columnName;
         columnName = columnName === 'referNo' ? 'ro.refer_number' : columnName;
-        const sql = `
-            select
-                ? as HOSPCODE,
-                ro.refer_number as REFERID,
-                concat(?,ro.refer_number ) as REFERID_PROVINCE,
-                pt.hn as PID, pt.cid,
-                os.seq_id, os.vn as SEQ,
-                o.an as AN,
-                o.i_refer_number as REFERID_ORIGIN,
-                o.rfrilct as HOSPCODE_ORIGIN,
-                if(
-                    concat(o.vstdate,' ', o.vsttime) is null 
-                        or trim(concat(o.vstdate,' ', o.vsttime)) = '' 
-                        or concat(o.vstdate,' ', o.vsttime) like '0000-00-00%',
-                    '',
-                    date_format(concat(o.vstdate,' ', o.vsttime),'%Y-%m-%d %H:%i:%s')
-                ) as DATETIME_SERV,
-                if(
-                    concat(i.regdate,' ', i.regtime) is null 
+        return db('referout as ro')
+            .leftJoin('patient as pt', 'pt.hn', 'ro.hn')
+            .leftJoin('person as ps', 'ps.cid', 'pt.cid')
+            .leftJoin(db.raw('ovst as o on o.vn = ro.vn or o.an=ro.vn'))
+            .leftJoin('ipt as i', 'i.an', 'o.an')
+            .leftJoin('ovst_seq as os', 'os.vn', 'o.vn')
+            .leftJoin('spclty as sp', 'sp.spclty', 'ro.spclty')
+            .leftJoin('opdscreen as s', 's.vn', 'o.vn')
+            .leftJoin('er_regist as e', 'e.vn', 'o.vn')
+            .leftJoin('doctor', 'o.doctor', 'doctor.code')
+            .select(db.raw('? as HOSPCODE', [hisHospcode]))
+            .select('ro.refer_number as REFERID', db.raw('concat(?,ro.refer_number) as REFERID_PROVINCE', [hisHospcode]), 'pt.hn as PID', 'pt.cid', 'os.seq_id', 'os.vn as SEQ', 'o.an as AN')
+            .select('o.i_refer_number as REFERID_ORIGIN', 'o.rfrilct as HOSPCODE_ORIGIN', db.raw(`if(concat(o.vstdate,' ', o.vsttime) is null 
+                or trim(concat(o.vstdate,' ', o.vsttime)) = '' 
+                or concat(o.vstdate,' ', o.vsttime) like '0000-00-00%',
+                '', date_format(concat(o.vstdate,' ', o.vsttime),'%Y-%m-%d %H:%i:%s')) as DATETIME_SERV`), db.raw(`if(concat(i.regdate,' ', i.regtime) is null 
                         or trim(concat(i.regdate,' ', i.regtime)) = '' 
-                        or concat(i.regdate,' ', i.regtime) like '0000-00-00%',
-                    '',
+                        or concat(i.regdate,' ', i.regtime) like '0000-00-00%','',
                     date_format(concat(i.regdate,' ', i.regtime),'%Y-%m-%d %H:%i:%s')
-                ) as DATETIME_ADMIT,
-                if(
+                ) as DATETIME_ADMIT`), db.raw(`if(
                     concat(ro.refer_date, ' ', ro.refer_time) is null 
                         or trim(concat(ro.refer_date, ' ', ro.refer_time)) = '' 
                         or concat(ro.refer_date, ' ', ro.refer_time) like '0000-00-00%',
@@ -1230,25 +1225,10 @@ class HisHosxpv4Model {
                         or concat(o.vstdate, ' ', o.vsttime) like '0000-00-00%',
                     '',
                     date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s')
-                ) as D_UPDATE 
-
-            from
-                referout ro 
-                left join patient as pt on pt.hn = ro.hn 
-                left join person as ps on ps.cid = pt.cid 
-                left join ovst as o on o.vn = ro.vn or o.an=ro.vn
-                left join ipt as i on i.an = o.an 
-                left join ovst_seq as os on os.vn = o.vn
-                left join spclty as sp on sp.spclty = ro.spclty 
-                left join opdscreen as s on s.vn = o.vn 
-                left join er_regist as e on e.vn = o.vn 
-                left join doctor on o.doctor = doctor.code
-            where
-                ${columnName}=?
-                and ro.refer_hospcode!='' and !isnull(ro.refer_hospcode)
-            `;
-        const result = await db.raw(sql, [hisHospcode, hisHospcode, searchNo]);
-        return result[0];
+                ) as D_UPDATE `))
+            .where(columnName, searchNo)
+            .whereNotNull('ro.refer_hospcode')
+            .whereNot('ro.refer_hospcode', '');
     }
     getClinicalRefer(db, referNo, hospCode = hisHospcode) {
         return db('view_clinical_refer')

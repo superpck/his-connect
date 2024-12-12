@@ -76,7 +76,7 @@ async function sendRefer(db: Knex, date: any) {
 
 async function getReferOut(db: Knex, date) {
   try {
-    const referout = await hisModel.getReferOut(db, date, hcode);
+    const referout = await hisModel.getReferOut(db, date, hcode, null);
     console.log('******** >> referout', referout.length, ' case');
 
     // list of provider/dr
@@ -137,7 +137,7 @@ async function getReferOut(db: Knex, date) {
         console.log(moment().format('HH:mm:ss.SSS'), 'finished...');
       }
     }
-    getProvider(db, drList, sentResult);
+    await getProvider(db, drList, sentResult);
     console.log(' nrefer sent ', process.env.HOSPCODE, sentResult.message || sentResult);
     return referout;
   } catch (error) {
