@@ -24,7 +24,7 @@ SSL_CRT=public/ssl/localhost.crt
 
 [HIS DB]
 HIS_PROVIDER=hosxpv3
-HIS_DB_CLIENT=mysql
+HIS_DB_CLIENT=mysql2
 HIS_DB_HOST=localhost
 HIS_DB_PORT=3306
 HIS_DB_SCHEMA=public
@@ -38,7 +38,7 @@ MAX_CONNECTION_PER_MINUTE=1000
 [ISDB - for ISONLINE only]
 IS_DB_HOST=localhost
 IS_DB_PORT=3306
-IS_DB_CLIENT=mysql
+IS_DB_CLIENT=mysql2
 IS_DB_SCHEMA=public
 IS_DB_NAME=isdb
 IS_DB_USER="user"
