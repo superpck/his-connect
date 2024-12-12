@@ -1,7 +1,7 @@
 services:
 
   api:
-    image: superpck/his-connect:latest
+    image: superpck/his-connect:linux-latest
     container_name: his-connect-api
     environment:
       - TZ=Asia/Bangkok
