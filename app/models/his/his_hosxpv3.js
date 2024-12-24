@@ -75,7 +75,7 @@ class HisHosxpv3Model {
             case when r.refer_hospcode then r.refer_hospcode else r.hospcode end AS hosp_destination,
             r.hn AS PID, r.hn AS hn, pt.cid AS CID, r.vn, r.vn as SEQ,
             an_stat.an as AN, pt.pname AS prename,
-            pt.fname AS fname, r.doctor as dr, doctor.licenseno as provider
+            pt.fname AS fname, r.doctor as dr, doctor.licenseno as provider,
             pt.lname AS lname,
             pt.birthday AS dob,
             pt.sex AS sex, r.referout_emergency_type_id as EMERGENCY, 
@@ -745,7 +745,7 @@ class HisHosxpv3Model {
                 iptdiag.icd10 as diagcode,
                 icd.name AS diagname,
                 iptdiag.doctor as provider,
-                CASE WHEN ptdiag.modify_datetime IS NULL THEN date_format(NOW(),'%Y-%m-%d %H:%i:%s') ELSE date_format(iptdiag.modify_datetime,'%Y-%m-%d %H:%i:%s') END AS d_update,
+                CASE WHEN iptdiag.modify_datetime IS NULL THEN date_format(NOW(),'%Y-%m-%d %H:%i:%s') ELSE date_format(iptdiag.modify_datetime,'%Y-%m-%d %H:%i:%s') END AS d_update,
                 pt.cid as CID
             from 
                 iptdiag

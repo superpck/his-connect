@@ -1,3 +1,9 @@
+# 3.8.1
+## Bug
+  - Refer: his_hosxpv3, his_hosxpv4 ระบุ . และ ptdiag => iptdiag
+## Feature
+  - IS: แก้ปัญหา pgsql โดยยกเลิก group by ovst.vn
+
 # 3.8.0
 ## Feature
   - เพิ่มการเชื่อมข้อมูลไปยัง MOPH Refer

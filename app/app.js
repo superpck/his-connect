@@ -93,11 +93,12 @@ app.decorate("checkRequestKey", async (request, reply) => {
 });
 var geoip = require('geoip-lite');
 app.addHook('onRequest', async (req, reply) => {
+    const unBlockIP = process.env.UNBLOCK_IP || '??';
     let ipAddr = req.headers["x-real-ip"] || req.headers["x-forwarded-for"] || req.ip;
     ipAddr = ipAddr ? ipAddr.split(',') : [''];
     req.ipAddr = ipAddr[0].trim();
     var geo = geoip.lookup(req.ipAddr);
-    if (geo && geo.country && geo.country != 'TH' && req.ipAddr != process.env.HOST) {
+    if (geo && geo.country && geo.country != 'TH' && req.ipAddr != process.env.HOST && !unBlockIP.includes(req.ipAddr)) {
         console.log(req.ipAddr, `Unacceptable country: ${geo.country}`);
         return reply.send({ status: http_status_codes_1.StatusCodes.NOT_ACCEPTABLE, ip: req.ipAddr, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.NOT_ACCEPTABLE) });
     }

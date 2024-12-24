@@ -88,7 +88,7 @@ export class HisHosxpv3Model {
             // .select(db.raw('if(ovstdiag.diagtype =1,ovstdiag.icd10,null) as diag1'))
             // .select(db.raw('if(ovstdiag.diagtype =2,ovstdiag.icd10,null) as diag2'))
             .where(where)
-            .groupBy('ovst.vn')
+            // .groupBy('ovst.vn')
             // .orderBy('opdscreen.vstdate', 'desc')
             .limit(maxLimit);
     }
@@ -139,8 +139,8 @@ export class HisHosxpv3Model {
             )
             .select(db.raw('if(ovstdiag.diagtype =1,ovstdiag.icd10,null) as diag1'))
             .select(db.raw('if(ovstdiag.diagtype =2,ovstdiag.icd10,null) as diag2'))
-            .groupBy('ovst.vn')
-            .limit(maxLimit);
+            // .groupBy('ovst.vn')
+            .limit(1);
     }
 
     // with is_code

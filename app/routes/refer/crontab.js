@@ -66,7 +66,10 @@ async function sendRefer(db, date) {
 async function getReferOut(db, date) {
     try {
         const referout = await hismodel_1.default.getReferOut(db, date, hcode, null);
-        console.log('******** >> referout', referout.length, ' case');
+        console.log('******** >> refer out', date, referout.length, ' cases');
+        if (!referout || referout.length == 0) {
+            return '';
+        }
         let drList = [];
         for (let r of referout) {
             const dr = r.dr || r.provider;
@@ -143,6 +146,10 @@ async function getReferIn(db, date) {
     };
     try {
         const referResult = await hismodel_1.default.getReferResult(db, date, hcode);
+        console.log('******** >> refer in', date, referResult.length, ' cases');
+        if (!referResult || referResult.length == 0) {
+            return '';
+        }
         let drList = [];
         for (let r of referResult) {
             const dr = r.dr || r.provider;
