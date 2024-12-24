@@ -123,12 +123,13 @@ app.decorate("checkRequestKey", async (request, reply) => {
 // addHook pre-process ================================
 var geoip = require('geoip-lite');
 app.addHook('onRequest', async (req: any, reply) => {
+  const unBlockIP = process.env.UNBLOCK_IP || '??';
   let ipAddr: any = req.headers["x-real-ip"] || req.headers["x-forwarded-for"] || req.ip;
   ipAddr = ipAddr ? ipAddr.split(',') : [''];
   req.ipAddr = ipAddr[0].trim();
 
   var geo = geoip.lookup(req.ipAddr);
-  if (geo && geo.country && geo.country != 'TH' && req.ipAddr != process.env.HOST) {
+  if (geo && geo.country && geo.country != 'TH' && req.ipAddr != process.env.HOST && !unBlockIP.includes(req.ipAddr)) {
     console.log(req.ipAddr, `Unacceptable country: ${geo.country}`);
     return reply.send({ status: StatusCodes.NOT_ACCEPTABLE, ip: req.ipAddr, message: getReasonPhrase(StatusCodes.NOT_ACCEPTABLE) });
   }

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = cronjob;
 const moment = require("moment");
 var shell = require("shelljs");
 var cron = require('node-cron');
@@ -113,4 +114,3 @@ async function cronjob(fastify) {
         return firstProcessPid;
     }
 }
-exports.default = cronjob;

@@ -59,10 +59,6 @@ async function sendMoph(req, reply, db) {
 
   console.log(moment().format('HH:mm:ss'), '='.repeat(60));
   var [referOut, referResult] = await sendRefer(db, dateNow);
-  // var [referOut, referResult] = await Promise.all([
-  //   getReferOut(db, dateNow),
-  //   getReferIn(db, dateNow)
-  // ]);
   return { date: dateNow, referOut, referResult };
 }
 
@@ -77,7 +73,10 @@ async function sendRefer(db: Knex, date: any) {
 async function getReferOut(db: Knex, date) {
   try {
     const referout = await hisModel.getReferOut(db, date, hcode, null);
-    console.log('******** >> referout', referout.length, ' case');
+    console.log('******** >> refer out', date, referout.length, ' cases');
+    if (!referout || referout.length == 0){
+      return '';
+    }
 
     // list of provider/dr
     let drList: any = [];
@@ -164,6 +163,10 @@ async function getReferIn(db, date) {
   };
   try {
     const referResult = await hisModel.getReferResult(db, date, hcode);
+    console.log('******** >> refer in', date, referResult.length, ' cases');
+    if (!referResult || referResult.length == 0){
+      return '';
+    }
 
     // list of provider/dr
     let drList: any = [];
