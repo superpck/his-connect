@@ -1,6 +1,6 @@
 [Hospital]
 API_LEVEL=hospital
-HOSPCODE=00000
+HOSPCODE=11176
 
 [API]
 PORT=3004
