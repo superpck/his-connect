@@ -2,6 +2,7 @@
 ## Feature
   - เพิ่มการ get ข้อมูล Provider ใน JHCIS เพื่อเชื่อมข้อมูลไปยัง MOPH Refer
   - เพิ่มการตรวจสอบ encrypt ใน Connection ของ MSSQL
+  - แก้ไข Docker ให้ใช้ image linux-latest
 
 # 3.8.1
 ## BugFix
