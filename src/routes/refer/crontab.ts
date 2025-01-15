@@ -80,12 +80,12 @@ async function getReferOut(db: Knex, date) {
 
     // list of provider/dr
     let drList: any = [];
-    for (let r of referout) {
-      const dr = r.dr || r.provider;
-      if (dr && drList.indexOf(dr) < 0) {
-        drList.push(r.dr || r.provider);
-      }
-    }
+    // for (let r of referout) {
+    //   const dr = r.dr || r.provider;
+    //   if (dr && drList.indexOf(dr) < 0) {
+    //     drList.push(r.dr || r.provider);
+    //   }
+    // }
 
     // console.log(process.env.NREFER_DATA_BACKWARD_MONTH);
     sentContent += `\rsave refer_history ${date} \r`;
@@ -106,6 +106,10 @@ async function getReferOut(db: Knex, date) {
       provider: 0,
     };
     for (let row of referout) {
+      const dr = row.dr || row.provider;
+      if (dr && drList.indexOf(dr) < 0) {
+        drList.push(row.dr || row.provider);
+      }
       // transform column name to lowercase
       for (let fld in row) {
         row[fld.toLowerCase()] = row[fld];
@@ -866,13 +870,12 @@ async function getDrugAllergy(db, hn, sentResult) {
 async function getProvider(db: Knex, drList: any, sentResult: any) {
   if (!drList || drList.length === 0) {
     sentResult.provider = -1;
-    console.log(' no provider in refer out data');
+    console.log('No provider in refer out data');
     return null;
   }
 
   const rows = await hisModel.getProviderDr(db, drList);
   sentContent += `  - provider = ${drList.length} founded: ${rows.length}\r`;
-  console.log('PID', process.pid, 'get provider:', drList.length, `founded: ${rows.length}`);
   sentResult.provider = rows.length;
   let rowSave: any = [];
   if (rows && rows.length) {

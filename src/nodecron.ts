@@ -12,7 +12,7 @@ export default async function cronjob(fastify: FastifyInstance) {
 
     // node-cron =========================================
     const secondNow = +moment().get('second');
-    const timingSch = `${secondNow} */1 * * * *`;  // every minute
+    const timingSch = `${secondNow} * * * * *`;  // every minute
     let timingSchedule: any = [];
     timingSchedule['isonline'] = { version: global.appDetail.version, apiSubVersion: global.appDetail.subVersion };
     timingSchedule['nrefer'] = { version: global.appDetail.version, apiSubVersion: global.appDetail.subVersion };
@@ -63,16 +63,22 @@ export default async function cronjob(fastify: FastifyInstance) {
         }
     }
 
+    let sendingRefer = false;
     cron.schedule(timingSch, async (req: any, res: any) => {
+        console.log(moment().format('HH:mm:ss'), firstProcessPid, process.pid);
         firstProcessPid = await firstPM2InstancePID();  // เรียกซ้ำเพื่อตรวจสอบ off-line
         const minuteSinceLastNight = (+moment().get('hour')) * 60 + (+moment().get('minute'));
         const minuteNow = +moment().get('minute') == 0 ? 60 : +moment().get('minute');
         const hourNow = +moment().get('hour');
         if (firstProcessPid === process.pid) {
-
+            if (!sendingRefer){
+                sendingRefer = true;
+                doAutoSend(req, res, 'nrefer', './routes/refer/crontab');
+                sendingRefer = false;
+            }
             if (timingSchedule['nrefer']['autosend'] &&
                 minuteSinceLastNight % timingSchedule['nrefer'].minute == 0) {
-                doAutoSend(req, res, 'nrefer', './routes/refer/crontab');
+                // doAutoSend(req, res, 'nrefer', './routes/refer/crontab');
             }
 
             if (timingSchedule['isonline']['autosend'] &&
@@ -123,12 +129,13 @@ export default async function cronjob(fastify: FastifyInstance) {
                     firstProcessPid = firstProcessPid > 0 ? firstProcessPid : procss.pid;
                 }
             }
+            firstProcessPid = firstProcessPid || process.pid;
             if (firstProcessPid == process.pid) {
                 global.firstProcessPid = firstProcessPid;
             }
         } catch (error: any) {
             console.log('get firstPM2InstancePID Error: ', error.message || error);
-            firstProcessPid = 0; //process.pid;
+            firstProcessPid = process.pid;
             global.firstProcessPid = firstProcessPid;
         }
         return firstProcessPid;

@@ -1,5 +1,9 @@
+# 3.8.2
+## Feature
+  - เพิ่มการ get ข้อมูล Provider ใน JHCIS เพื่อเชื่อมข้อมูลไปยัง MOPH Refer
+
 # 3.8.1
-## Bug
+## BugFix
   - Refer: his_hosxpv3, his_hosxpv4 ระบุ . และ ptdiag => iptdiag
 ## Feature
   - IS: แก้ปัญหา pgsql โดยยกเลิก group by ovst.vn
@@ -15,7 +19,7 @@
   - เพิ่มการรับ-ส่ง แบบ compress
 
 # 3.7.4
-## Bug
+## BugFix
   - แก้ไขการ select ข้อมูล refer ที่ไม่ใช่ HCode ของ รพ.
 
 # 3.7.3
@@ -52,7 +56,7 @@
   - เพิ่ม req.authenDecoded ในการตรวจสอบ Authen
 
 # 3.6.2
-## Bug
+## BugFix
   - Query HOSxP เปลี่ยน Query ให้รองรับ PgSQL
   - Query HOSxP เปลี่ยน an AS AN -> i.an AS AN
 
@@ -165,7 +169,7 @@
 
 # 3.1.6 - 2020.10.15-01
 
-## Bug:
+## BugFix:
   >> none
 
 ## Feature
@@ -173,7 +177,7 @@
 
 # 3.1.3 - 2020.09.23-01
 
-## Bug:
+## BugFix:
   >> none
 
 ## Feature
@@ -181,7 +185,7 @@
 
 # 3.1.3 - 2020.09.21-01
 
-## Bug:
+## BugFix:
   >> none
 
 ## Feature
