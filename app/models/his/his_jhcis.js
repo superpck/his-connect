@@ -3,9 +3,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisJhcisModel = void 0;
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
-const dbName = process.env.HIS_DB_NAME;
-const dbClient = process.env.HIS_DB_CLIENT;
+let hisHospcode = process.env.HOSPCODE;
+const getHospcode = async () => {
+    let row = await global.dbHIS('j2_hospital').first();
+    hisHospcode = row ? row.HMAIN : process.env.HOSPCODE;
+    console.log('hisHospcode v.4', hisHospcode);
+};
 class HisJhcisModel {
+    constructor() {
+        getHospcode();
+    }
     check() {
         return true;
     }
@@ -59,7 +66,9 @@ class HisJhcisModel {
             .limit(maxLimit);
     }
     getReferOut(db, date, hospCode = hcode, visitNo = null) {
-        let sql = db('visit').leftJoin('person', 'visit.pid', 'person.pid');
+        let sql = db('visit')
+            .leftJoin('person', 'visit.pid', 'person.pid')
+            .leftJoin('user', 'visit.username', 'user.username');
         if (visitNo) {
             sql.where(`visit.visitno`, visitNo);
         }
@@ -67,19 +76,9 @@ class HisJhcisModel {
             sql.where('visit.visitdate', date);
         }
         return sql
-            .select('visit.pcucode as HOSPCODE', 'visit.refertohos as HOSP_DESTINATION', 'visit.numberrefer as REFERID')
-            .select(db.raw(`concat(visit.pcucode,'-',visit.numberrefer) as REFERID_PROVINCE`))
-            .select('visit.pid as PID', 'person.idcard as CID', 'visit.visitno as SEQ', 'person.prename', 'person.fname', 'person.lname', 'person.birth as dob', 'person.sex', 'visit.symptoms as CHIEFCOMP', 'visit.vitalcheck as PI', 'visit.symptomsco as PH', 'visit.healthsuggest1 as PHYSICALEXAM', 'visit.diagnote as DIAGLAST', 'visit.receivefromhos as HOSPCODE_ORIGIN')
-            .select(db.raw(`concat(visit.visitdate,' ',visit.timestart) as DATETIME_SERV`))
-            .select(db.raw(`concat(visit.visitdate,' ',visit.timeend) as DATETIME_REFER`))
-            .select(db.raw(`case when isnull(visit.refertohos) then '' when visit.refer='06' then '3' else '1' end as CAUSEOUT`))
-            .select(db.raw(`'5' as EMERGENCY`))
-            .select(db.raw(`'1' as PTYPE`))
-            .select(db.raw(`'99' as PTYPEDIS`))
-            .select(db.raw(`'1' as referout_type`))
-            .select(db.raw(`concat(visit.visitdate,' ', visit.timeend) as D_UPDATE`))
-            .whereRaw('!isnull(visit.numberrefer)')
-            .whereRaw('!isnull(refertohos)')
+            .select('visit.pcucode as HOSPCODE', 'visit.refertohos as HOSP_DESTINATION', 'visit.numberrefer as REFERID', db.raw(`concat(visit.pcucode,'-',visit.numberrefer) as REFERID_PROVINCE`), 'visit.pid as PID', 'person.idcard as CID', 'visit.visitno as SEQ', 'person.prename', 'person.fname', 'person.lname', 'person.birth as dob', 'person.sex', 'visit.symptoms as CHIEFCOMP', 'visit.vitalcheck as PI', 'visit.symptomsco as PH', 'visit.healthsuggest1 as PHYSICALEXAM', 'visit.diagnote as DIAGLAST', 'visit.receivefromhos as HOSPCODE_ORIGIN', 'visit.username', db.raw('CASE WHEN user.licenseno="" OR user.licenseno IS NULL THEN user.noofoccupation ELSE user.licenseno END as provider'), db.raw(`concat(visit.visitdate,' ',visit.timestart) as DATETIME_SERV`), db.raw(`concat(visit.visitdate,' ',visit.timeend) as DATETIME_REFER`), db.raw(`case when isnull(visit.refertohos) then '' when visit.refer='06' then '3' else '1' end as CAUSEOUT`), db.raw(`'5' as EMERGENCY`), db.raw(`'1' as PTYPE`), db.raw(`'99' as PTYPEDIS`), db.raw(`'1' as referout_type`), db.raw(`concat(visit.visitdate,' ', visit.timeend) as D_UPDATE`))
+            .whereNotNull('visit.numberrefer')
+            .whereNotNull('refertohos')
             .orderBy('visit.visitdate')
             .limit(maxLimit);
     }
@@ -226,11 +225,40 @@ class HisJhcisModel {
     getReferResult(db, hospDestination, referNo, hospCode = hcode) {
         return [];
     }
-    async getProvider(db, columnName, searchNo, hospCode = hcode) {
-        return [];
+    async getProvider(db, columnName, searchNo) {
+        return db('user as dr')
+            .leftJoin('ctitle as t', 'dr.prename', 't.titlecode')
+            .select(db.raw(`"${hisHospcode}" as hospcode`), db.raw('CASE WHEN licenseno="" OR licenseno IS NULL THEN dr.noofoccupation ELSE dr.licenseno END as provider'), db.raw('CASE WHEN licenseno="" OR licenseno IS NULL THEN dr.noofoccupation ELSE dr.licenseno END as registerno'), db.raw(`
+                CASE
+                    WHEN dr.council IS NOT NULL AND dr.council!="" THEN dr.council
+                    WHEN dr.prename IN ('132','133','134','135') THEN '01'
+                    WHEN dr.prename IN ('136','137') THEN '04'
+                    WHEN dr.prename IN ('144','145') THEN '03'
+                    WHEN LOCATE("พยาบาล", dr.officerposition)>0 THEN '02'
+                    ELSE '' END AS council
+                `), 'dr.idcard as cid', 'dr.prename as prenamecode', 't.titlename as prename', 'dr.fname as name', 'dr.lname as lname', 'dr.usersex as sex', 'dr.userbirth as birth', db.raw(`CASE WHEN dr.prename IN ('136','137') THEN '02' ELSE '01' END as providertype`), 'dr.dateworkhere as startdate', 'dr.datemovehere as outdate', 'dr.pcucodemovefrom as movefrom', 'dr.pcucodemoveto as  moveto', 'dr.dateupdate as d_update')
+            .whereNotNull('dr.idcard')
+            .where('dr.idcard', '=', '')
+            .where('dr.council', '=', '')
+            .whereNotNull('dr.council')
+            .where(columnName, searchNo);
     }
     getProviderDr(db, drList) {
-        return [];
+        const licenseNo = '"' + drList.join('","') + '"';
+        return db('user as dr')
+            .leftJoin('ctitle as t', 'dr.prename', 't.titlecode')
+            .select(db.raw(`"${hisHospcode}" as hospcode`), db.raw('CASE WHEN licenseno="" OR licenseno IS NULL THEN dr.noofoccupation ELSE dr.licenseno END as provider'), db.raw('CASE WHEN licenseno="" OR licenseno IS NULL THEN dr.noofoccupation ELSE dr.licenseno END as registerno'), db.raw(`
+                    CASE
+                        WHEN dr.council IS NOT NULL AND dr.council!="" THEN dr.council
+                        WHEN dr.prename IN ('132','133','134','135') THEN '01'
+                        WHEN dr.prename IN ('136','137') THEN '04'
+                        WHEN dr.prename IN ('144','145') THEN '03'
+                        WHEN LOCATE("พยาบาล", dr.officerposition)>0 THEN '02'
+                        ELSE '' END AS council
+                    `), 'dr.idcard as cid', 'dr.prename as prenamecode', 't.titlename as prename', 'dr.fname as name', 'dr.lname as lname', 'dr.usersex as sex', 'dr.userbirth as birth', db.raw(`CASE WHEN dr.prename IN ('136','137') THEN '02' ELSE '01' END as providertype`), 'dr.dateworkhere as startdate', 'dr.datemovehere as outdate', 'dr.pcucodemovefrom as movefrom', 'dr.pcucodemoveto as  moveto', 'dr.dateupdate as d_update')
+            .whereRaw(`(dr.noofoccupation in (${licenseNo}) or dr.licenseno in (${licenseNo}) )`)
+            .whereNotNull('dr.idcard')
+            .where('dr.idcard', '!=', '');
     }
     getData(db, tableName, columnName, searchNo, hospCode = hcode) {
         return db(tableName)

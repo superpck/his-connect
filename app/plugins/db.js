@@ -13,7 +13,7 @@ var options = {
             port: +process.env.HIS_DB_PORT || 3306,
             charset: process.env.HIS_DB_CHARSET || 'utf8',
             schema: process.env.HIS_DB_SCHEMA || 'public',
-            encrypt: process.env.HIS_DB_ENCRYPT || true,
+            encrypt: process.env.HIS_DB_ENCRYPT || null,
             timezone
         }
     },
@@ -45,13 +45,15 @@ const dbConnection = (type = 'HIS') => {
                 user: connection.user,
                 password: connection.password,
                 database: connection.database,
-                encrypt: connection.encrypt,
                 options: {
                     port: +connection.port,
                     schema: connection.schema
                 }
             }
         };
+        if (connection?.encrypt) {
+            opt.connection.encrypt = connection.encrypt;
+        }
     }
     else if (config.client == 'oracledb') {
         opt = {

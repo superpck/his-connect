@@ -71,12 +71,6 @@ async function getReferOut(db, date) {
             return '';
         }
         let drList = [];
-        for (let r of referout) {
-            const dr = r.dr || r.provider;
-            if (dr && drList.indexOf(dr) < 0) {
-                drList.push(r.dr || r.provider);
-            }
-        }
         sentContent += `\rsave refer_history ${date} \r`;
         sentContent += `\rsave refer service data ${date} \r`;
         let index = 0;
@@ -95,6 +89,10 @@ async function getReferOut(db, date) {
             provider: 0,
         };
         for (let row of referout) {
+            const dr = row.dr || row.provider;
+            if (dr && drList.indexOf(dr) < 0) {
+                drList.push(row.dr || row.provider);
+            }
             for (let fld in row) {
                 row[fld.toLowerCase()] = row[fld];
             }
@@ -811,12 +809,11 @@ async function getDrugAllergy(db, hn, sentResult) {
 async function getProvider(db, drList, sentResult) {
     if (!drList || drList.length === 0) {
         sentResult.provider = -1;
-        console.log(' no provider in refer out data');
+        console.log('No provider in refer out data');
         return null;
     }
     const rows = await hismodel_1.default.getProviderDr(db, drList);
     sentContent += `  - provider = ${drList.length} founded: ${rows.length}\r`;
-    console.log('PID', process.pid, 'get provider:', drList.length, `founded: ${rows.length}`);
     sentResult.provider = rows.length;
     let rowSave = [];
     if (rows && rows.length) {
