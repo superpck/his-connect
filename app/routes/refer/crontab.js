@@ -647,6 +647,8 @@ async function getLabResult(db, row, sentResult) {
                     LOCALCODE: r.LOCALCODE || r.localcode || '',
                     ICDCM: r.ICDCM || r.icdcm || '',
                     LOINC: r.LOINC || r.loinc || '',
+                    GROUPCODE: r?.GROUPCODE || null,
+                    GROUPNAME: r?.GROUPNAME || null,
                     INVESTNAME: investname,
                     DATETIME_REPORT: r.DATETIME_REPORT || r.datetime_report || '',
                     INVESTVALUE: investvalue.toString(),

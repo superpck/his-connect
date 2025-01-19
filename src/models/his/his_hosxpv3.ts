@@ -586,6 +586,7 @@ export class HisHosxpv3Model {
         return db('lab_head')
             .leftJoin('lab_order', 'lab_head.lab_order_number', 'lab_order.lab_order_number')
             .leftJoin('lab_items', 'lab_order.lab_items_code', 'lab_items.lab_items_code')
+            .leftJoin('lab_items_sub_group', 'lab_items.lab_items_sub_group_code', 'lab_items_sub_group.lab_items_sub_group_code')
             .innerJoin('ovst', 'lab_head.vn', 'ovst.vn')
             .innerJoin('patient', 'ovst.hn', 'patient.hn')
             .select(db.raw(`'${hcode}' as HOSPCODE,'LAB' as INVESTTYPE`))
@@ -596,7 +597,9 @@ export class HisHosxpv3Model {
                 'lab_head.form_name as lab_group',
                 'lab_order.lab_items_name_ref as INVESTNAME',
                 'lab_order.lab_order_result as INVESTVALUE',
-                'lab_items.icode as ICDCM')
+                'lab_items.icode as ICDCM',
+                'lab_items.lab_items_sub_group_code as GROUPCODE', 
+                'lab_items_sub_group.lab_items_sub_group_name as GROUPNAME')
             // .select(db.raw(`concat(lab_items.lab_items_unit, ' ', lab_order.lab_items_normal_value_ref) as UNIT`))
             .select(db.raw(`case when lab_order.lab_items_normal_value_ref then concat(lab_items.lab_items_unit,' (', lab_order.lab_items_normal_value_ref,')') else lab_items.lab_items_unit end  as UNIT`))
             .select(db.raw(`concat(lab_head.order_date, ' ', lab_head.order_time) as DATETIME_INVEST`))
