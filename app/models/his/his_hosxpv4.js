@@ -532,10 +532,11 @@ class HisHosxpv4Model {
         return db('lab_head')
             .leftJoin('lab_order', 'lab_head.lab_order_number', 'lab_order.lab_order_number')
             .leftJoin('lab_items', 'lab_order.lab_items_code', 'lab_items.lab_items_code')
+            .leftJoin('lab_items_sub_group', 'lab_items.lab_items_sub_group_code', 'lab_items_sub_group.lab_items_sub_group_code')
             .innerJoin('ovst', 'lab_head.vn', 'ovst.vn')
             .innerJoin('patient', 'ovst.hn', 'patient.hn')
             .select(db.raw(`'${hisHospcode}' as HOSPCODE,'LAB' as INVESTTYPE`))
-            .select('lab_head.vn', 'lab_head.vn as visitno', 'lab_head.vn as SEQ', 'lab_head.hn as PID', 'patient.cid as CID', 'lab_head.lab_order_number as request_id', 'lab_order.lab_items_code as LOCALCODE', 'lab_items.tmlt_code as tmlt', 'lab_head.form_name as lab_group', 'lab_order.lab_items_name_ref as INVESTNAME', 'lab_order.lab_order_result as INVESTVALUE', 'lab_items.icode as ICDCM')
+            .select('lab_head.vn', 'lab_head.vn as visitno', 'lab_head.vn as SEQ', 'lab_head.hn as PID', 'patient.cid as CID', 'lab_head.lab_order_number as request_id', 'lab_order.lab_items_code as LOCALCODE', 'lab_items.tmlt_code as tmlt', 'lab_head.form_name as lab_group', 'lab_order.lab_items_name_ref as INVESTNAME', 'lab_order.lab_order_result as INVESTVALUE', 'lab_items.icode as ICDCM', 'lab_items.lab_items_sub_group_code as GROUPCODE', 'lab_items_sub_group.lab_items_sub_group_name as GROUPNAME')
             .select(db.raw(`case when lab_order.lab_items_normal_value_ref then concat(lab_items.lab_items_unit,' (', lab_order.lab_items_normal_value_ref,')') else lab_items.lab_items_unit end  as UNIT`))
             .select(db.raw(`concat(lab_head.order_date, ' ', lab_head.order_time) as DATETIME_INVEST`))
             .select(db.raw(`concat(lab_head.report_date, ' ', lab_head.report_time) as DATETIME_REPORT`))
@@ -864,19 +865,19 @@ class HisHosxpv4Model {
                 pt.hn as pid,
                 ipt.an,
                 if(
-                    ipt.regdate IS NULL OR ipt.regdate = '' OR ipt.regdate = '0000-00-00',
+                    ipt.regdate IS NULL OR ipt.regdate = '0000-00-00',
                     '',
                     date_format(concat(ipt.regdate, ' ', ipt.regtime), '%Y-%m-%d %H:%i:%s')
                 ) as datetime_admit,
                 concat('0', right(spclty.provis_code, 4)) as wardstay,
                 ipc.icd9cm as procedcode,
                 if(
-                    i.begin_date_time IS NULL OR i.begin_date_time = '' OR i.begin_date_time LIKE '0000-00-00%',
+                    i.begin_date_time IS NULL OR i.begin_date_time LIKE '0000-00-00%',
                     '',
                     date_format(i.begin_date_time, '%Y-%m-%d %H:%i:%s')
                 ) as timestart,
                 if(
-                    i.end_date_time IS NULL OR i.end_date_time = '' OR i.end_date_time LIKE '0000-00-00%',
+                    i.end_date_time IS NULL OR i.end_date_time LIKE '0000-00-00%',
                     '',
                     date_format(i.end_date_time, '%Y-%m-%d %H:%i:%s')
                 ) as timefinish,
@@ -887,7 +888,7 @@ class HisHosxpv4Model {
                 ) as serviceprice,
                 i.doctor as provider,
                 if(
-                    ipt.dchdate IS NOT NULL AND ipt.dchdate != '' AND ipt.dchdate != '0000-00-00',
+                    ipt.dchdate IS NOT NULL AND ipt.dchdate != '0000-00-00',
                     date_format(concat(ipt.dchdate, ' ', ipt.dchtime), '%Y-%m-%d %H:%i:%s'),
                     ''
                 ) as d_update

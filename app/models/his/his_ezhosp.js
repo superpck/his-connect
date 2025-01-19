@@ -226,7 +226,7 @@ class HisEzhospModel {
             .select(db.raw('"' + referID + '" as REFERID_PROVINCE'))
             .select(db.raw('"LAB" as INVESTTYPE'))
             .select(db.raw('CONCAT(result.date," ",result.time) as DATETIME_INVEST'))
-            .select('result.hn as PID', 'result.vn as SEQ', 'result.cid as CID', 'an as AN', 'result.type_result as LH', 'result.lab_code as LOCALCODE', 'result.icdcm as INVESTCODE', 'result.lab_name as INVESTNAME', 'result.result as INVESTVALUE', 'result.unit as UNIT', 'result.result_text as INVESTRESULT', 'result.minresult as NORMAL_MIN', 'result.maxresult as NORMAL_MAX', 'result.date_result as DATETIME_REPORT')
+            .select('result.hn as PID', 'result.vn as SEQ', 'result.cid as CID', 'an as AN', 'result.type_result as LH', 'result.lab_code as LOCALCODE', 'result.icdcm as INVESTCODE', 'result.lab_name as INVESTNAME', 'result.result as INVESTVALUE', 'result.unit as UNIT', 'result.result_text as INVESTRESULT', 'result.minresult as NORMAL_MIN', 'result.maxresult as NORMAL_MAX', 'result.lab_code_request as GROUPCODE', 'result.request_lab_name as GROUPNAME', 'result.date_result as DATETIME_REPORT')
             .select(db.raw('CONCAT(result.date," ",result.time) as D_UPDATE'))
             .where(columnName, "=", searchNo)
             .whereNotIn('result.lab_code', ['03098', '02066', '03155'])

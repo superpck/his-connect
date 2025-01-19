@@ -292,6 +292,7 @@ export class HisEzhospModel {
                 , 'result.result as INVESTVALUE', 'result.unit as UNIT'
                 , 'result.result_text as INVESTRESULT'
                 , 'result.minresult as NORMAL_MIN', 'result.maxresult as NORMAL_MAX'
+                , 'result.lab_code_request as GROUPCODE', 'result.request_lab_name as GROUPNAME'
                 , 'result.date_result as DATETIME_REPORT')
             .select(db.raw('CONCAT(result.date," ",result.time) as D_UPDATE'))
             .where(columnName, "=", searchNo)
