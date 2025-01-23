@@ -1,3 +1,7 @@
+# 3.8.3
+## Feature
+  - เพิ่มการรายงานจำนวนการรับและส่ง Refer เพื่อแสดงใน nRefer
+
 # 3.8.2
 ## Feature
   - เพิ่มการ get ข้อมูล Provider ใน JHCIS เพื่อเชื่อมข้อมูลไปยัง MOPH Refer

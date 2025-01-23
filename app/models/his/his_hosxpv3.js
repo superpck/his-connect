@@ -4,11 +4,11 @@ exports.HisHosxpv3Model = void 0;
 const moment = require("moment");
 const maxLimit = 250;
 const hn_len = +process.env.HN_LENGTH || 6;
-let hcode = process.env.HOSPCODE;
+let hisHospcode = process.env.HOSPCODE;
 const getHospcode = async () => {
     let row = await global.dbHIS('opdconfig').select('hospitalcode').first();
-    hcode = row ? row.hospitalcode : process.env.HOSPCODE;
-    console.log('opdconfig v.3', hcode);
+    hisHospcode = row ? row.hospitalcode : process.env.HOSPCODE;
+    console.log('opdconfig v.3', hisHospcode);
 };
 class HisHosxpv3Model {
     constructor() {
@@ -65,7 +65,7 @@ class HisHosxpv3Model {
             .whereRaw(`LEFT(licenseno,1) IN ('ว','ท')`)
             .limit(maxLimit);
     }
-    async getReferOut(db, date, hospCode = hcode, visitNo = null) {
+    async getReferOut(db, date, hospCode = hisHospcode, visitNo = null) {
         const filter = visitNo ? visitNo : date;
         const filterText = visitNo ? 'r.vn =?' : 'r.refer_date =?';
         const sql = `
@@ -97,10 +97,22 @@ class HisHosxpv3Model {
             and r.refer_hospcode != ?
         ORDER BY
             r.refer_date`;
-        const result = await db.raw(sql, [filter, hcode]);
+        const result = await db.raw(sql, [filter, hisHospcode]);
         return result[0];
     }
-    async getPerson(db, columnName, searchText, hospCode = hcode) {
+    sumReferOut(db, dateStart, dateEnd) {
+        return db('referout as r')
+            .select('r.refer_date')
+            .count('r.vn as cases')
+            .whereNotNull('r.vn')
+            .whereBetween('r.refer_date', [dateStart, dateEnd])
+            .where('r.refer_hospcode', '!=', "")
+            .whereNotNull('r.refer_hospcode')
+            .where('r.refer_hospcode', '!=', hisHospcode)
+            .groupBy('r.refer_date')
+            .orderBy('r.refer_date');
+    }
+    async getPerson(db, columnName, searchText, hospCode = hisHospcode) {
         columnName = columnName == 'hn' ? 'p.hn' : columnName;
         columnName = columnName == 'cid' ? 'p.cid' : columnName;
         columnName = columnName == 'name' ? 'p.fname' : columnName;
@@ -166,7 +178,7 @@ class HisHosxpv3Model {
         const result = await db.raw(sql);
         return result[0];
     }
-    async getAddress(db, columnName, searchText, hospCode = hcode) {
+    async getAddress(db, columnName, searchText, hospCode = hisHospcode) {
         const sql = `
             SELECT
                 (SELECT	hospitalcode FROM	opdconfig) AS hospcode,
@@ -200,7 +212,7 @@ class HisHosxpv3Model {
         const result = await db.raw(sql);
         return result[0];
     }
-    async getService(db, columnName, searchText, hospCode = hcode) {
+    async getService(db, columnName, searchText, hospCode = hisHospcode) {
         columnName = columnName === 'visitNo' ? 'os.vn' : columnName;
         columnName = columnName === 'vn' ? 'os.vn' : columnName;
         columnName = columnName === 'seq_id' ? 'os.seq_id' : columnName;
@@ -284,7 +296,7 @@ class HisHosxpv3Model {
         const result = await db.raw(sql);
         return result[0];
     }
-    async getDiagnosisOpd(db, visitNo, hospCode = hcode) {
+    async getDiagnosisOpd(db, visitNo, hospCode = hisHospcode) {
         const sql = `
             SELECT
                 (
@@ -318,7 +330,7 @@ class HisHosxpv3Model {
         const result = await db.raw(sql);
         return result[0];
     }
-    async getDiagnosisOpdAccident(db, dateStart, dateEnd, hospCode = hcode) {
+    async getDiagnosisOpdAccident(db, dateStart, dateEnd, hospCode = hisHospcode) {
         if (dateStart & dateEnd) {
             return db('ovstdiag as dx')
                 .whereBetween('vstdate', [dateStart, dateEnd])
@@ -382,7 +394,7 @@ class HisHosxpv3Model {
         const result = await db.raw(sql, [dateStart, dateEnd]);
         return result[0];
     }
-    async getProcedureOpd(db, visitNo, hospCode = hcode) {
+    async getProcedureOpd(db, visitNo, hospCode = hisHospcode) {
         const sql = `
             select 
                 (select hospitalcode from opdconfig) as hospcode,
@@ -487,7 +499,7 @@ class HisHosxpv3Model {
         const result = await db.raw(sql);
         return result[0];
     }
-    async getChargeOpd(db, visitNo, hospCode = hcode) {
+    async getChargeOpd(db, visitNo, hospCode = hisHospcode) {
         const sql = `select
                 (select hospitalcode from opdconfig) as hospcode,
                 pt.hn as pid,
@@ -528,7 +540,7 @@ class HisHosxpv3Model {
         const result = await db.raw(sql, [visitNo]);
         return result[0];
     }
-    getLabRequest(db, columnName, searchNo, hospCode = hcode) {
+    getLabRequest(db, columnName, searchNo, hospCode = hisHospcode) {
         columnName = columnName === 'visitNo' ? 'vn' : columnName;
         return db('lab_order as o')
             .leftJoin('lab_order_service as s', 'o.lab_order_number', 's.lab_order_number')
@@ -537,7 +549,7 @@ class HisHosxpv3Model {
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
     }
-    getInvestigation(db, columnName, searchNo, hospCode = hcode) {
+    getInvestigation(db, columnName, searchNo, hospCode = hisHospcode) {
         return this.getLabResult(db, columnName, searchNo);
     }
     ;
@@ -551,7 +563,7 @@ class HisHosxpv3Model {
             .leftJoin('lab_items_sub_group', 'lab_items.lab_items_sub_group_code', 'lab_items_sub_group.lab_items_sub_group_code')
             .innerJoin('ovst', 'lab_head.vn', 'ovst.vn')
             .innerJoin('patient', 'ovst.hn', 'patient.hn')
-            .select(db.raw(`'${hcode}' as HOSPCODE,'LAB' as INVESTTYPE`))
+            .select(db.raw(`'${hisHospcode}' as HOSPCODE,'LAB' as INVESTTYPE`))
             .select('lab_head.vn', 'lab_head.vn as visitno', 'lab_head.vn as SEQ', 'lab_head.hn as PID', 'patient.cid as CID', 'lab_head.lab_order_number as request_id', 'lab_order.lab_items_code as LOCALCODE', 'lab_items.tmlt_code as tmlt', 'lab_head.form_name as lab_group', 'lab_order.lab_items_name_ref as INVESTNAME', 'lab_order.lab_order_result as INVESTVALUE', 'lab_items.icode as ICDCM', 'lab_items.lab_items_sub_group_code as GROUPCODE', 'lab_items_sub_group.lab_items_sub_group_name as GROUPNAME')
             .select(db.raw(`case when lab_order.lab_items_normal_value_ref then concat(lab_items.lab_items_unit,' (', lab_order.lab_items_normal_value_ref,')') else lab_items.lab_items_unit end  as UNIT`))
             .select(db.raw(`concat(lab_head.order_date, ' ', lab_head.order_time) as DATETIME_INVEST`))
@@ -562,7 +574,7 @@ class HisHosxpv3Model {
             .whereNotNull('lab_order.lab_order_result')
             .limit(maxLimit);
     }
-    getLabResult_old_source(db, columnName, searchNo, referID = '', hospCode = hcode) {
+    getLabResult_old_source(db, columnName, searchNo, referID = '', hospCode = hisHospcode) {
         columnName = columnName === 'visitNo' ? 'lab.vn' : columnName;
         columnName = columnName === 'hn' ? 'ovst.hn' : columnName;
         columnName = columnName === 'cid' ? 'patient.cid' : columnName;
@@ -580,7 +592,7 @@ class HisHosxpv3Model {
             .whereRaw('!isnull(o.lab_order_result)')
             .limit(maxLimit);
     }
-    async getDrugOpd(db, visitNo, hospCode = hcode) {
+    async getDrugOpd(db, visitNo, hospCode = hisHospcode) {
         const sql = `
             SELECT (select hospitalcode from opdconfig) as HOSPCODE,
                 pt.hn as PID, pt.cid as CID,
@@ -631,7 +643,7 @@ class HisHosxpv3Model {
         const result = await db.raw(sql);
         return result[0];
     }
-    async getAdmission(db, columnName, searchValue, hospCode = hcode) {
+    async getAdmission(db, columnName, searchValue, hospCode = hisHospcode) {
         columnName = columnName === 'an' ? 'i.an' : columnName;
         columnName = columnName === 'hn' ? 'i.hn' : columnName;
         columnName = columnName === 'visitNo' ? 'q.vn' : columnName;
@@ -732,7 +744,7 @@ class HisHosxpv3Model {
                 CASE WHEN i.grouper_version IS NULL THEN '5.1.3' ELSE i.grouper_version END AS grouper_version
         `)).groupBy('i.an');
     }
-    async getDiagnosisIpd(db, columnName, searchNo, hospCode = hcode) {
+    async getDiagnosisIpd(db, columnName, searchNo, hospCode = hisHospcode) {
         columnName = columnName === 'visitNo' ? 'q.vn' : columnName;
         columnName = columnName === 'an' ? 'ipt.an' : columnName;
         const sql = `
@@ -761,7 +773,7 @@ class HisHosxpv3Model {
         const result = await db.raw(sql);
         return result[0];
     }
-    async getDiagnosisIpdAccident(db, dateStart, dateEnd, hospCode = hcode) {
+    async getDiagnosisIpdAccident(db, dateStart, dateEnd, hospCode = hisHospcode) {
         if (dateStart & dateEnd) {
             return db('iptdiag as dx')
                 .innerJoin('ipt as ipd', 'dx.an', 'ipd.an')
@@ -775,7 +787,7 @@ class HisHosxpv3Model {
             throw new Error('Invalid parameters');
         }
     }
-    async getProcedureIpd(db, an, hospCode = hcode) {
+    async getProcedureIpd(db, an, hospCode = hisHospcode) {
         const sql = `
             select 
                 (select hospitalcode from opdconfig) as hospcode,
@@ -877,7 +889,7 @@ class HisHosxpv3Model {
         const result = await db.raw(sql);
         return result[0];
     }
-    async getChargeIpd(db, an, hospCode = hcode) {
+    async getChargeIpd(db, an, hospCode = hisHospcode) {
         const sql = `
             select
                 (select hospitalcode from opdconfig) as hospcode,
@@ -923,7 +935,7 @@ class HisHosxpv3Model {
         const result = await db.raw(sql);
         return result[0];
     }
-    async getDrugIpd(db, an, hospCode = hcode) {
+    async getDrugIpd(db, an, hospCode = hisHospcode) {
         const sql = `
             select 
                 (select hospitalcode from opdconfig) as HOSPCODE
@@ -963,7 +975,7 @@ class HisHosxpv3Model {
         const result = await db.raw(sql);
         return result[0];
     }
-    async getAccident(db, visitNo, hospCode = hcode) {
+    async getAccident(db, visitNo, hospCode = hisHospcode) {
         const sql = `
             select 
                 (select hospitalcode from opdconfig) as hospcode,
@@ -1004,7 +1016,7 @@ class HisHosxpv3Model {
         const result = await db.raw(sql);
         return result[0];
     }
-    async getDrugAllergy__(db, hn, hospCode = hcode) {
+    async getDrugAllergy__(db, hn, hospCode = hisHospcode) {
         const sql = `
             select 
                 (select hospitalcode from opdconfig) as hospcode,
@@ -1051,7 +1063,7 @@ class HisHosxpv3Model {
         const result = await db.raw(sql);
         return result[0];
     }
-    async getDrugAllergy(db, hn, hospCode = hcode) {
+    async getDrugAllergy(db, hn, hospCode = hisHospcode) {
         return db('opd_allergy as oe')
             .leftJoin('drugitems_register as di', 'oe.agent', 'di.drugname')
             .leftJoin('patient', 'oe.hn', 'patient.hn')
@@ -1073,14 +1085,14 @@ class HisHosxpv3Model {
                 date_format(oe.update_datetime,'%Y-%m-%d %H:%i:%s')) as D_UPDATE`))
             .where('oe.hn', hn);
     }
-    getAppointment(db, visitNo, hospCode = hcode) {
+    getAppointment(db, visitNo, hospCode = hisHospcode) {
         return db('view_opd_fu')
-            .select(db.raw('"' + hcode + '" as hospcode'))
+            .select(db.raw('"' + hisHospcode + '" as hospcode'))
             .select('*')
             .where('vn', "=", visitNo)
             .limit(maxLimit);
     }
-    async getReferHistory(db, columnName, searchNo, hospCode = hcode) {
+    async getReferHistory(db, columnName, searchNo, hospCode = hisHospcode) {
         columnName = columnName === 'visitNo' ? 'os.vn' : columnName;
         columnName = columnName === 'vn' ? 'os.vn' : columnName;
         columnName = columnName === 'seq_id' ? 'os.seq_id' : columnName;
@@ -1171,21 +1183,21 @@ class HisHosxpv3Model {
         const result = await db.raw(sql);
         return result[0];
     }
-    getClinicalRefer(db, referNo, hospCode = hcode) {
+    getClinicalRefer(db, referNo, hospCode = hisHospcode) {
         return db('view_clinical_refer')
-            .select(db.raw('"' + hcode + '" as hospcode'))
+            .select(db.raw('"' + hisHospcode + '" as hospcode'))
             .select('*')
             .where('refer_no', "=", referNo)
             .limit(maxLimit);
     }
-    getInvestigationRefer(db, referNo, hospCode = hcode) {
+    getInvestigationRefer(db, referNo, hospCode = hisHospcode) {
         return db('view_investigation_refer')
-            .select(db.raw('"' + hcode + '" as hospcode'))
+            .select(db.raw('"' + hisHospcode + '" as hospcode'))
             .select('*')
             .where('refer_no', "=", referNo)
             .limit(maxLimit);
     }
-    async getCareRefer(db, referNo, hospCode = hcode) {
+    async getCareRefer(db, referNo, hospCode = hisHospcode) {
         const sql = `
             select 
                 (select hospitalcode from opdconfig) as hospcode,
@@ -1208,16 +1220,16 @@ class HisHosxpv3Model {
         const result = await db.raw(sql);
         return result[0];
     }
-    getReferResult(db, visitDate, hospCode = hcode) {
+    getReferResult(db, visitDate, hospCode = hisHospcode) {
         visitDate = moment(visitDate).format('YYYY-MM-DD');
         return db('referin')
             .leftJoin('patient', 'referin.hn', 'patient.hn')
             .leftJoin('ovst', 'referin.vn', 'ovst.vn')
             .leftJoin('refer_reply', 'referin.vn', 'refer_reply.vn')
             .leftJoin('doctor', 'ovst.doctor', 'doctor.code')
-            .select(db.raw(`'${hcode}' as HOSPCODE`))
+            .select(db.raw(`'${hisHospcode}' as HOSPCODE`))
             .select('referin.refer_hospcode as HOSP_SOURCE', 'patient.cid as CID_IN', 'referin.hn as PID_IN', 'referin.vn as SEQ_IN', 'referin.docno as REFERID', 'referin.refer_date as DATETIME_REFER', 'referin.icd10 as detail', 'ovst.doctor as dr', 'doctor.licenseno as provider', 'refer_reply.diagnosis_text as reply_diagnostic', 'refer_reply.advice_text as reply_recommend')
-            .select(db.raw(`case when referin.referin_number then referin.referin_number else concat('${hcode}-',referin.docno) end as REFERID_SOURCE`))
+            .select(db.raw(`case when referin.referin_number then referin.referin_number else concat('${hisHospcode}-',referin.docno) end as REFERID_SOURCE`))
             .select(db.raw(`concat(refer_reply.reply_date, ' ',refer_reply.reply_time) as reply_date`))
             .select(db.raw(`'' as AN_IN, concat(referin.refer_hospcode,referin.referin_number) as REFERID_PROVINCE`))
             .select(db.raw(`concat(ovst.vstdate, ' ',ovst.vsttime) as DATETIME_IN, '1' as REFER_RESULT`))
@@ -1228,7 +1240,19 @@ class HisHosxpv3Model {
             .whereNotNull('patient.hn')
             .limit(maxLimit);
     }
-    async getProvider(db, columnName, searchNo, hospCode = hcode) {
+    sumReferIn(db, dateStart, dateEnd) {
+        return db('referin')
+            .leftJoin('ovst', 'referin.vn', 'ovst.vn')
+            .select('referin.refer_date')
+            .count('referin.vn as cases')
+            .whereBetween('referin.refer_date', [dateStart, dateEnd])
+            .where('referin.refer_hospcode', '!=', hisHospcode)
+            .whereNotNull('referin.refer_hospcode')
+            .whereNotNull('referin.vn')
+            .whereNotNull('ovst.vn')
+            .groupBy('referin.refer_date');
+    }
+    async getProvider(db, columnName, searchNo, hospCode = hisHospcode) {
         columnName = columnName === 'licenseNo' ? 'd.code' : columnName;
         columnName = columnName === 'cid' ? 'd.cid' : columnName;
         const sql = `
@@ -1284,9 +1308,9 @@ class HisHosxpv3Model {
                 if(d.update_datetime is null or trim(d.update_datetime)='' or d.update_datetime like '0000-00-00%','',date_format(d.update_datetime,'%Y-%m-%d %H:%i:%s') ) as d_update`))
             .whereIn('d.code', drList);
     }
-    getData(db, tableName, columnName, searchNo, hospCode = hcode) {
+    getData(db, tableName, columnName, searchNo, hospCode = hisHospcode) {
         return db(tableName)
-            .select(db.raw('"' + hcode + '" as hospcode'))
+            .select(db.raw('"' + hisHospcode + '" as hospcode'))
             .select('*')
             .where(columnName, "=", searchNo)
             .limit(maxLimit);

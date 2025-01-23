@@ -85,6 +85,18 @@ class HisHosxpv4Model {
             .groupBy('r.referout_id')
             .orderBy('r.refer_date');
     }
+    sumReferOut(db, dateStart, dateEnd) {
+        return db('referout as r')
+            .select('r.refer_date')
+            .count('r.vn as cases')
+            .whereNotNull('r.vn')
+            .whereBetween('r.refer_date', [dateStart, dateEnd])
+            .where('r.refer_hospcode', '!=', "")
+            .whereNotNull('r.refer_hospcode')
+            .where('r.refer_hospcode', '!=', hisHospcode)
+            .groupBy('r.refer_date')
+            .orderBy('r.refer_date');
+    }
     async getPerson(db, columnName, searchText, hospCode = hisHospcode) {
         columnName = columnName == 'hn' ? 'p.hn' : columnName;
         columnName = columnName == 'cid' ? 'p.cid' : columnName;
@@ -1284,6 +1296,18 @@ class HisHosxpv4Model {
             .whereNotNull('referin.vn')
             .whereNotNull('patient.hn')
             .limit(maxLimit);
+    }
+    sumReferIn(db, dateStart, dateEnd) {
+        return db('referin')
+            .leftJoin('ovst', 'referin.vn', 'ovst.vn')
+            .select('referin.refer_date')
+            .count('referin.vn as cases')
+            .whereBetween('referin.refer_date', [dateStart, dateEnd])
+            .where('referin.refer_hospcode', '!=', hisHospcode)
+            .whereNotNull('referin.refer_hospcode')
+            .whereNotNull('referin.vn')
+            .whereNotNull('ovst.vn')
+            .groupBy('referin.refer_date');
     }
     async getProvider(db, columnName, searchNo, hospCode = hisHospcode) {
         columnName = columnName === 'licenseNo' ? 'd.code' : columnName;

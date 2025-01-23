@@ -51,6 +51,19 @@ const router = (fastify, {}, next) => {
             reply.status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR) });
         }
     });
+    fastify.post('/sum-referout', { preHandler: [fastify.authenticate] }, async (req, reply) => {
+        const now = moment().locale('th').format('YYYY-MM-DD');
+        const dateStart = req.body.dateStart || now;
+        const dateEnd = req.body.dateEnd || now;
+        try {
+            const rows = await hismodel_1.default.sumReferOut(global.dbHIS, dateStart, dateEnd);
+            reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
+        }
+        catch (error) {
+            console.log('referout', error.message);
+            reply.status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, message: error.message });
+        }
+    });
     fastify.post('/referout', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const now = moment().locale('th').format('YYYY-MM-DD');
         const date = req.body.date || now;
@@ -414,6 +427,19 @@ const router = (fastify, {}, next) => {
         }
         catch (error) {
             console.log('refer_result', error.message);
+            reply.status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, message: error.message });
+        }
+    });
+    fastify.post('/sum-referin', { preHandler: [fastify.authenticate] }, async (req, reply) => {
+        const now = moment().locale('th').format('YYYY-MM-DD');
+        const dateStart = req.body.dateStart || now;
+        const dateEnd = req.body.dateEnd || now;
+        try {
+            const rows = await hismodel_1.default.sumReferIn(global.dbHIS, dateStart, dateEnd);
+            reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
+        }
+        catch (error) {
+            console.log('referout', error.message);
             reply.status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, message: error.message });
         }
     });

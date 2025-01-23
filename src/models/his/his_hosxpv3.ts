@@ -3,11 +3,11 @@ import * as moment from 'moment';
 
 const maxLimit = 250;
 const hn_len = +process.env.HN_LENGTH || 6;
-let hcode = process.env.HOSPCODE;
+let hisHospcode = process.env.HOSPCODE;
 const getHospcode = async() => {
     let row = await global.dbHIS('opdconfig').select('hospitalcode').first();
-    hcode = row ? row.hospitalcode : process.env.HOSPCODE;
-    console.log('opdconfig v.3', hcode);
+    hisHospcode = row ? row.hospitalcode : process.env.HOSPCODE;
+    console.log('opdconfig v.3', hisHospcode);
 }
 
 export class HisHosxpv3Model {
@@ -76,7 +76,7 @@ export class HisHosxpv3Model {
     }
 
     //select รายชื่อเพื่อแสดงทะเบียน refer
-    async getReferOut(db: Knex, date: any, hospCode = hcode, visitNo: string = null) {
+    async getReferOut(db: Knex, date: any, hospCode = hisHospcode, visitNo: string = null) {
         const filter = visitNo ? visitNo : date;
         const filterText = visitNo ? 'r.vn =?' : 'r.refer_date =?';
 
@@ -109,11 +109,23 @@ export class HisHosxpv3Model {
             and r.refer_hospcode != ?
         ORDER BY
             r.refer_date`;
-        const result = await db.raw(sql, [filter, hcode]);
+        const result = await db.raw(sql, [filter, hisHospcode]);
         return result[0];
     }
+    sumReferOut(db: Knex, dateStart: any, dateEnd: any) {
+        return db('referout as r')
+            .select('r.refer_date')
+            .count('r.vn as cases')
+            .whereNotNull('r.vn')
+            .whereBetween('r.refer_date', [dateStart, dateEnd])
+            .where('r.refer_hospcode', '!=', "")
+            .whereNotNull('r.refer_hospcode')
+            .where('r.refer_hospcode', '!=', hisHospcode)
+            .groupBy('r.refer_date')
+            .orderBy('r.refer_date');
+    }
 
-    async getPerson(db: Knex, columnName, searchText, hospCode = hcode) {
+    async getPerson(db: Knex, columnName, searchText, hospCode = hisHospcode) {
         columnName = columnName == 'hn' ? 'p.hn' : columnName;
         columnName = columnName == 'cid' ? 'p.cid' : columnName;
         columnName = columnName == 'name' ? 'p.fname' : columnName;
@@ -180,7 +192,7 @@ export class HisHosxpv3Model {
         return result[0];
     }
 
-    async getAddress(db: Knex, columnName, searchText, hospCode = hcode) {
+    async getAddress(db: Knex, columnName, searchText, hospCode = hisHospcode) {
         //columnName => hn
         const sql = `
             SELECT
@@ -215,7 +227,7 @@ export class HisHosxpv3Model {
         const result = await db.raw(sql);
         return result[0];
     }
-    async getService(db: Knex, columnName, searchText, hospCode = hcode) {
+    async getService(db: Knex, columnName, searchText, hospCode = hisHospcode) {
         //columnName = visitNo, hn
         columnName = columnName === 'visitNo' ? 'os.vn' : columnName;
         columnName = columnName === 'vn' ? 'os.vn' : columnName;
@@ -301,7 +313,7 @@ export class HisHosxpv3Model {
         return result[0];
     }
 
-    async getDiagnosisOpd(db: Knex, visitNo, hospCode = hcode) {
+    async getDiagnosisOpd(db: Knex, visitNo, hospCode = hisHospcode) {
         const sql = `
             SELECT
                 (
@@ -335,7 +347,7 @@ export class HisHosxpv3Model {
         const result = await db.raw(sql);
         return result[0];
     }
-    async getDiagnosisOpdAccident(db: Knex, dateStart: any, dateEnd: any, hospCode = hcode) {
+    async getDiagnosisOpdAccident(db: Knex, dateStart: any, dateEnd: any, hospCode = hisHospcode) {
         if (dateStart & dateEnd) {
             return db('ovstdiag as dx')
                 .whereBetween('vstdate', [dateStart, dateEnd])
@@ -406,7 +418,7 @@ export class HisHosxpv3Model {
         return result[0];
     }
 
-    async getProcedureOpd(db: Knex, visitNo, hospCode = hcode) {
+    async getProcedureOpd(db: Knex, visitNo, hospCode = hisHospcode) {
         const sql = `
             select 
                 (select hospitalcode from opdconfig) as hospcode,
@@ -512,7 +524,7 @@ export class HisHosxpv3Model {
         return result[0];
     }
 
-    async getChargeOpd(db: Knex, visitNo, hospCode = hcode) {
+    async getChargeOpd(db: Knex, visitNo, hospCode = hisHospcode) {
         // ifnull(right(concat('00000000', p.person_id), ${hn_len}),pt.hn) as pid2,
         const sql = `select
                 (select hospitalcode from opdconfig) as hospcode,
@@ -555,7 +567,7 @@ export class HisHosxpv3Model {
         return result[0];
     }
 
-    getLabRequest(db, columnName, searchNo, hospCode = hcode) {
+    getLabRequest(db, columnName, searchNo, hospCode = hisHospcode) {
         columnName = columnName === 'visitNo' ? 'vn' : columnName;
         return db('lab_order as o')
             .leftJoin('lab_order_service as s', 'o.lab_order_number', 's.lab_order_number')
@@ -574,7 +586,7 @@ export class HisHosxpv3Model {
             .limit(maxLimit);
     }
 
-    getInvestigation(db: Knex, columnName: string, searchNo: string, hospCode = hcode) {
+    getInvestigation(db: Knex, columnName: string, searchNo: string, hospCode = hisHospcode) {
         return this.getLabResult(db, columnName, searchNo);
     };
 
@@ -589,7 +601,7 @@ export class HisHosxpv3Model {
             .leftJoin('lab_items_sub_group', 'lab_items.lab_items_sub_group_code', 'lab_items_sub_group.lab_items_sub_group_code')
             .innerJoin('ovst', 'lab_head.vn', 'ovst.vn')
             .innerJoin('patient', 'ovst.hn', 'patient.hn')
-            .select(db.raw(`'${hcode}' as HOSPCODE,'LAB' as INVESTTYPE`))
+            .select(db.raw(`'${hisHospcode}' as HOSPCODE,'LAB' as INVESTTYPE`))
             .select('lab_head.vn', 'lab_head.vn as visitno', 'lab_head.vn as SEQ',
                 'lab_head.hn as PID', 'patient.cid as CID',
                 'lab_head.lab_order_number as request_id',
@@ -611,7 +623,7 @@ export class HisHosxpv3Model {
             .limit(maxLimit);
     }
 
-    getLabResult_old_source(db: Knex, columnName, searchNo, referID = '', hospCode = hcode) {
+    getLabResult_old_source(db: Knex, columnName, searchNo, referID = '', hospCode = hisHospcode) {
         columnName = columnName === 'visitNo' ? 'lab.vn' : columnName;
         columnName = columnName === 'hn' ? 'ovst.hn' : columnName;
         columnName = columnName === 'cid' ? 'patient.cid' : columnName;
@@ -658,7 +670,7 @@ export class HisHosxpv3Model {
         // return result[0];
     }
 
-    async getDrugOpd(db: Knex, visitNo, hospCode = hcode) {
+    async getDrugOpd(db: Knex, visitNo, hospCode = hisHospcode) {
         const sql = `
             SELECT (select hospitalcode from opdconfig) as HOSPCODE,
                 pt.hn as PID, pt.cid as CID,
@@ -755,7 +767,7 @@ export class HisHosxpv3Model {
         return result[0];
     }
 
-    async getAdmission(db: Knex, columnName: string, searchValue: any, hospCode = hcode) {
+    async getAdmission(db: Knex, columnName: string, searchValue: any, hospCode = hisHospcode) {
         columnName = columnName === 'an' ? 'i.an' : columnName;
         columnName = columnName === 'hn' ? 'i.hn' : columnName;
         columnName = columnName === 'visitNo' ? 'q.vn' : columnName;
@@ -857,7 +869,7 @@ export class HisHosxpv3Model {
         `)).groupBy('i.an');
     }
 
-    async getDiagnosisIpd(db: Knex, columnName, searchNo, hospCode = hcode) {
+    async getDiagnosisIpd(db: Knex, columnName, searchNo, hospCode = hisHospcode) {
         columnName = columnName === 'visitNo' ? 'q.vn' : columnName;
         columnName = columnName === 'an' ? 'ipt.an' : columnName;
         const sql = `
@@ -886,7 +898,7 @@ export class HisHosxpv3Model {
         const result = await db.raw(sql);
         return result[0];
     }
-    async getDiagnosisIpdAccident(db: Knex, dateStart: any, dateEnd: any, hospCode = hcode) {
+    async getDiagnosisIpdAccident(db: Knex, dateStart: any, dateEnd: any, hospCode = hisHospcode) {
         if (dateStart & dateEnd) {
             return db('iptdiag as dx')
                 .innerJoin('ipt as ipd', 'dx.an', 'ipd.an')
@@ -900,7 +912,7 @@ export class HisHosxpv3Model {
         }
     }
 
-    async getProcedureIpd(db: Knex, an, hospCode = hcode) {
+    async getProcedureIpd(db: Knex, an, hospCode = hisHospcode) {
         const sql = `
             select 
                 (select hospitalcode from opdconfig) as hospcode,
@@ -1003,7 +1015,7 @@ export class HisHosxpv3Model {
         return result[0];
     }
 
-    async getChargeIpd(db: Knex, an, hospCode = hcode) {
+    async getChargeIpd(db: Knex, an, hospCode = hisHospcode) {
         const sql = `
             select
                 (select hospitalcode from opdconfig) as hospcode,
@@ -1050,7 +1062,7 @@ export class HisHosxpv3Model {
         return result[0];
     }
 
-    async getDrugIpd(db: Knex, an, hospCode = hcode) {
+    async getDrugIpd(db: Knex, an, hospCode = hisHospcode) {
         const sql = `
             select 
                 (select hospitalcode from opdconfig) as HOSPCODE
@@ -1091,7 +1103,7 @@ export class HisHosxpv3Model {
         return result[0];
     }
 
-    async getAccident(db: Knex, visitNo, hospCode = hcode) {
+    async getAccident(db: Knex, visitNo, hospCode = hisHospcode) {
         const sql = `
             select 
                 (select hospitalcode from opdconfig) as hospcode,
@@ -1133,7 +1145,7 @@ export class HisHosxpv3Model {
         return result[0];
     }
 
-    async getDrugAllergy__(db: Knex, hn, hospCode = hcode) {
+    async getDrugAllergy__(db: Knex, hn, hospCode = hisHospcode) {
         const sql = `
             select 
                 (select hospitalcode from opdconfig) as hospcode,
@@ -1180,7 +1192,7 @@ export class HisHosxpv3Model {
         const result = await db.raw(sql);
         return result[0];
     }
-    async getDrugAllergy(db: Knex, hn, hospCode = hcode) {
+    async getDrugAllergy(db: Knex, hn, hospCode = hisHospcode) {
         return db('opd_allergy as oe')
             .leftJoin('drugitems_register as di', 'oe.agent', 'di.drugname')
             .leftJoin('patient', 'oe.hn', 'patient.hn')
@@ -1205,15 +1217,15 @@ export class HisHosxpv3Model {
             .where('oe.hn', hn)
     }
 
-    getAppointment(db, visitNo, hospCode = hcode) {
+    getAppointment(db, visitNo, hospCode = hisHospcode) {
         return db('view_opd_fu')
-            .select(db.raw('"' + hcode + '" as hospcode'))
+            .select(db.raw('"' + hisHospcode + '" as hospcode'))
             .select('*')
             .where('vn', "=", visitNo)
             .limit(maxLimit);
     }
 
-    async getReferHistory(db: Knex, columnName, searchNo, hospCode = hcode) {
+    async getReferHistory(db: Knex, columnName, searchNo, hospCode = hisHospcode) {
         //columnName = visitNo, referNo
         columnName = columnName === 'visitNo' ? 'os.vn' : columnName;
         columnName = columnName === 'vn' ? 'os.vn' : columnName;
@@ -1306,23 +1318,23 @@ export class HisHosxpv3Model {
         return result[0];
     }
 
-    getClinicalRefer(db, referNo, hospCode = hcode) {
+    getClinicalRefer(db, referNo, hospCode = hisHospcode) {
         return db('view_clinical_refer')
-            .select(db.raw('"' + hcode + '" as hospcode'))
+            .select(db.raw('"' + hisHospcode + '" as hospcode'))
             .select('*')
             .where('refer_no', "=", referNo)
             .limit(maxLimit);
     }
 
-    getInvestigationRefer(db, referNo, hospCode = hcode) {
+    getInvestigationRefer(db, referNo, hospCode = hisHospcode) {
         return db('view_investigation_refer')
-            .select(db.raw('"' + hcode + '" as hospcode'))
+            .select(db.raw('"' + hisHospcode + '" as hospcode'))
             .select('*')
             .where('refer_no', "=", referNo)
             .limit(maxLimit);
     }
 
-    async getCareRefer(db: Knex, referNo, hospCode = hcode) {
+    async getCareRefer(db: Knex, referNo, hospCode = hisHospcode) {
         const sql = `
             select 
                 (select hospitalcode from opdconfig) as hospcode,
@@ -1346,14 +1358,14 @@ export class HisHosxpv3Model {
         return result[0];
     }
 
-    getReferResult(db: Knex, visitDate: string, hospCode = hcode) {
+    getReferResult(db: Knex, visitDate: string, hospCode = hisHospcode) {
         visitDate = moment(visitDate).format('YYYY-MM-DD');
         return db('referin')
             .leftJoin('patient', 'referin.hn', 'patient.hn')
             .leftJoin('ovst', 'referin.vn', 'ovst.vn')
             .leftJoin('refer_reply', 'referin.vn', 'refer_reply.vn')
             .leftJoin('doctor', 'ovst.doctor', 'doctor.code')
-            .select(db.raw(`'${hcode}' as HOSPCODE`))
+            .select(db.raw(`'${hisHospcode}' as HOSPCODE`))
             .select('referin.refer_hospcode as HOSP_SOURCE',
                 'patient.cid as CID_IN',
                 'referin.hn as PID_IN', 'referin.vn as SEQ_IN', 'referin.docno as REFERID',
@@ -1361,7 +1373,7 @@ export class HisHosxpv3Model {
                 'ovst.doctor as dr', 'doctor.licenseno as provider',
                 'refer_reply.diagnosis_text as reply_diagnostic',
                 'refer_reply.advice_text as reply_recommend')
-            .select(db.raw(`case when referin.referin_number then referin.referin_number else concat('${hcode}-',referin.docno) end as REFERID_SOURCE`))
+            .select(db.raw(`case when referin.referin_number then referin.referin_number else concat('${hisHospcode}-',referin.docno) end as REFERID_SOURCE`))
             .select(db.raw(`concat(refer_reply.reply_date, ' ',refer_reply.reply_time) as reply_date`))
             .select(db.raw(`'' as AN_IN, concat(referin.refer_hospcode,referin.referin_number) as REFERID_PROVINCE`))
             .select(db.raw(`concat(ovst.vstdate, ' ',ovst.vsttime) as DATETIME_IN, '1' as REFER_RESULT`))
@@ -1372,8 +1384,20 @@ export class HisHosxpv3Model {
             .whereNotNull('patient.hn')
             .limit(maxLimit);
     }
+    sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
+        return db('referin')
+            .leftJoin('ovst', 'referin.vn', 'ovst.vn')
+            .select('referin.refer_date')
+            .count('referin.vn as cases')
+            .whereBetween('referin.refer_date', [dateStart, dateEnd])
+            .where('referin.refer_hospcode','!=', hisHospcode)
+            .whereNotNull('referin.refer_hospcode')
+            .whereNotNull('referin.vn')
+            .whereNotNull('ovst.vn')
+            .groupBy('referin.refer_date');
+    }
 
-    async getProvider(db: Knex, columnName, searchNo, hospCode = hcode) {
+    async getProvider(db: Knex, columnName, searchNo, hospCode = hisHospcode) {
         columnName = columnName === 'licenseNo' ? 'd.code' : columnName;
         columnName = columnName === 'cid' ? 'd.cid' : columnName;
         const sql = `
@@ -1431,9 +1455,9 @@ export class HisHosxpv3Model {
             .whereIn('d.code', drList);
     }
 
-    getData(db, tableName, columnName, searchNo, hospCode = hcode) {
+    getData(db, tableName, columnName, searchNo, hospCode = hisHospcode) {
         return db(tableName)
-            .select(db.raw('"' + hcode + '" as hospcode'))
+            .select(db.raw('"' + hisHospcode + '" as hospcode'))
             .select('*')
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
