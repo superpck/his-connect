@@ -104,7 +104,7 @@ app.decorate("authenticate", async (request: any, reply: any) => {
 });
 // end: check token ===========================================================
 
-app.decorate("checkRequestKey", async (request, reply) => {
+app.decorate("checkRequestKey", async (request: FastifyRequest, reply) => {
   let skey = null;
   if (request.headers.localkey) {
     skey = request.headers.localkey;

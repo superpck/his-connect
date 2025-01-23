@@ -144,6 +144,18 @@ export class HisHosxpv4Model {
         // const result = await db.raw(sql, [filter]);
         // return result[0];
     }
+    sumReferOut(db: Knex, dateStart: any, dateEnd: any) {
+        return db('referout as r')
+            .select('r.refer_date')
+            .count('r.vn as cases')
+            .whereNotNull('r.vn')
+            .whereBetween('r.refer_date', [dateStart, dateEnd])
+            .where('r.refer_hospcode', '!=', "")
+            .whereNotNull('r.refer_hospcode')
+            .where('r.refer_hospcode', '!=', hisHospcode)
+            .groupBy('r.refer_date')
+            .orderBy('r.refer_date');
+    }
 
     async getPerson(db: Knex, columnName, searchText, hospCode = hisHospcode) {
         columnName = columnName == 'hn' ? 'p.hn' : columnName;
@@ -625,8 +637,8 @@ export class HisHosxpv4Model {
                 'lab_head.form_name as lab_group',
                 'lab_order.lab_items_name_ref as INVESTNAME',
                 'lab_order.lab_order_result as INVESTVALUE',
-                'lab_items.icode as ICDCM', 
-                'lab_items.lab_items_sub_group_code as GROUPCODE', 
+                'lab_items.icode as ICDCM',
+                'lab_items.lab_items_sub_group_code as GROUPCODE',
                 'lab_items_sub_group.lab_items_sub_group_name as GROUPNAME')
             // .select(db.raw(`concat(lab_items.lab_items_unit, ' ', lab_order.lab_items_normal_value_ref) as UNIT`))
             .select(db.raw(`case when lab_order.lab_items_normal_value_ref then concat(lab_items.lab_items_unit,' (', lab_order.lab_items_normal_value_ref,')') else lab_items.lab_items_unit end  as UNIT`))
@@ -1534,6 +1546,18 @@ export class HisHosxpv4Model {
             .whereNotNull('referin.vn')
             .whereNotNull('patient.hn')
             .limit(maxLimit);
+    }
+    sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
+        return db('referin')
+            .leftJoin('ovst', 'referin.vn', 'ovst.vn')
+            .select('referin.refer_date')
+            .count('referin.vn as cases')
+            .whereBetween('referin.refer_date', [dateStart, dateEnd])
+            .where('referin.refer_hospcode','!=', hisHospcode)
+            .whereNotNull('referin.refer_hospcode')
+            .whereNotNull('referin.vn')
+            .whereNotNull('ovst.vn')
+            .groupBy('referin.refer_date');
     }
 
     async getProvider(db: Knex, columnName, searchNo, hospCode = hisHospcode) {

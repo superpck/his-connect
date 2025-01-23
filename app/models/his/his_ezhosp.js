@@ -4,8 +4,7 @@ exports.HisEzhospModel = void 0;
 const moment = require("moment");
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
-const dbName = process.env.HIS_DB_NAME;
-const dbClient = process.env.HIS_DB_CLIENT;
+let hisHospcode = process.env.HOSPCODE;
 class HisEzhospModel {
     check() {
         return true;
@@ -74,7 +73,7 @@ class HisEzhospModel {
         const result = await db.raw(sql);
         return result[0];
     }
-    getReferOut(db, date, hospCode = hcode, visitNo = null) {
+    getReferOut(db, date, hospCode = hisHospcode, visitNo = null) {
         let sql = db('hospdata.refer_out as refer')
             .leftJoin('hospdata.opd_visit as visit', 'refer.vn', 'visit.vn')
             .leftJoin('hospdata.patient as pt', 'visit.hn', 'pt.hn')
@@ -96,16 +95,28 @@ class HisEzhospModel {
             .groupBy('refer.vn')
             .limit(maxLimit);
     }
-    getPerson(db, columnName, searchText, hospCode = hcode) {
+    sumReferOut(db, dateStart, dateEnd) {
+        return db('hospdata.refer_out as r')
+            .select('r.refer_date')
+            .count('r.vn as cases')
+            .whereNotNull('r.vn')
+            .whereBetween('r.refer_date', [dateStart, dateEnd])
+            .where('r.refer_hcode', '!=', "")
+            .whereNotNull('r.refer_hcode')
+            .where('r.refer_hcode', '!=', hisHospcode)
+            .groupBy('r.refer_date')
+            .orderBy('r.refer_date');
+    }
+    getPerson(db, columnName, searchText, hospCode = hisHospcode) {
         columnName = columnName === 'cid' ? 'no_card' : columnName;
         return db('hospdata.view_patient')
-            .select(db.raw('"' + hcode + '" as hospcode'))
+            .select(db.raw('"' + hisHospcode + '" as hospcode'))
             .select(db.raw('4 as typearea'))
             .select('no_card as cid', 'hn as pid', 'title as prename', 'name', 'name as fname', 'surname as lname', 'hn', 'birth', 'sex', 'marry_std as mstatus', 'blood as abogroup', 'occ_std as occupation_new', 'race_std as race', 'nation_std as nation', 'religion_std as religion', 'edu_std as education', 'tel as telephone', 'lastupdate as d_update')
             .where(columnName, "=", searchText)
             .limit(maxLimit);
     }
-    getAddress(db, columnName, searchNo, hospCode = hcode) {
+    getAddress(db, columnName, searchNo, hospCode = hisHospcode) {
         columnName = columnName === 'cid' ? 'CID' : columnName;
         return db('view_address_hdc')
             .select('HOSPCODE', `PID`, `ADDRESSTYPE`, `HOUSE_ID`, `HOUSETYPE`, `ROOMNO`, `CONDO`, `HOUSENO`, `SOISUB`, `SOIMAIN`, `ROAD`, `VILLANAME`, `VILLAGE`, `TAMBON`, `AMPUR`, `CHANGWAT`, `TELEPHONE`, `MOBILE`, `D_UPDATE`)
@@ -113,18 +124,18 @@ class HisEzhospModel {
             .orderBy('ADDRESSTYPE')
             .limit(maxLimit);
     }
-    getService(db, columnName, searchText, hospCode = hcode) {
+    getService(db, columnName, searchText, hospCode = hisHospcode) {
         columnName = columnName === 'visitNo' ? 'vn' : columnName;
         columnName = columnName === 'date_serv' ? 'visit.date' : columnName;
         return db('view_opd_visit as visit')
-            .select(db.raw('"' + hcode + '" as hospcode'))
+            .select(db.raw('"' + hisHospcode + '" as hospcode'))
             .select('hn as pid', 'hn', 'vn as seq', 'date as date_serv', 'hospmain as main', 'hospsub as hsub', 'refer as referinhosp', db.raw(' case when time="" or time="08:00" then time_opd else time end as time_serv '), db.raw('"1" as servplace'), 'nurse_cc as chiefcomp', 'pi_dr as presentillness', 'pe_dr as physicalexam', 'nurse_ph as pasthistory', 't as btemp', 'bp as sbp', 'bp1 as dbp', 'weigh as weight', 'high as height', 'puls as pr', 'rr', db.raw(`IF(dr > 0, CONCAT("ว",dr),'') as provider`), 'no_card as cid', 'pttype_std as instype', 'no_ptt as insid', db.raw('IF(period>1,2,1) AS intime'), 'cost as price', 'opd_result_hdc as typeout', db.raw('IF(hospmain=? OR `add`=?,1,2) AS location', [hcode, '4001']))
             .select(db.raw('concat(date, " " , time) as d_update'))
             .where(columnName, searchText)
             .orderBy('date', 'desc')
             .limit(maxLimit);
     }
-    getDiagnosisOpd(db, visitno, hospCode = hcode) {
+    getDiagnosisOpd(db, visitno, hospCode = hisHospcode) {
         return db('view_opd_dx_hdc as dx')
             .select('dx.*')
             .select(db.raw(' "IT" as codeset'))
@@ -134,7 +145,7 @@ class HisEzhospModel {
             .orderBy('dx.D_UPDATE')
             .limit(maxLimit);
     }
-    getDiagnosisOpdAccident(db, dateStart, dateEnd, hospCode = hcode) {
+    getDiagnosisOpdAccident(db, dateStart, dateEnd, hospCode = hisHospcode) {
         if (dateStart & dateEnd) {
             return db('view_opd_dx as dx')
                 .whereBetween('date', [dateStart, dateEnd])
@@ -192,7 +203,7 @@ class HisEzhospModel {
         const result = await db.raw(sql, [dateStart, dateEnd]);
         return result[0];
     }
-    getProcedureOpd(db, visitno, hospCode = hcode) {
+    getProcedureOpd(db, visitno, hospCode = hisHospcode) {
         return db('view_opd_op')
             .select(db.raw('"' + hcode + '" as hospcode'))
             .select('vn as visitno', 'date', 'hn', 'op as op_code', 'op as procedcode', 'desc as procedname', 'icd_9 as icdcm', 'dr as provider', 'clinic_std as clinic', 'price as serviceprice')
@@ -201,14 +212,14 @@ class HisEzhospModel {
             .where('vn', "=", visitno)
             .limit(maxLimit);
     }
-    getChargeOpd(db, visitNo, hospCode = hcode) {
+    getChargeOpd(db, visitNo, hospCode = hisHospcode) {
         return db('view_opd_charge_item')
             .select('*')
             .select(db.raw('"' + hcode + '" as hospcode'))
             .where('vn', visitNo)
             .limit(maxLimit);
     }
-    getLabRequest(db, columnName, searchNo, hospCode = hcode) {
+    getLabRequest(db, columnName, searchNo, hospCode = hisHospcode) {
         columnName = columnName === 'visitNo' ? 'vn' : columnName;
         return db('view_lab_request_item as lab')
             .select(db.raw('"' + hcode + '" as hospcode'))
@@ -216,7 +227,7 @@ class HisEzhospModel {
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
     }
-    getLabResult(db, columnName, searchNo, referID = '', hospCode = hcode) {
+    getLabResult(db, columnName, searchNo, referID = '', hospCode = hisHospcode) {
         columnName = columnName === 'visitNo' ? 'result.vn' : columnName;
         columnName = columnName === 'pid' ? 'result.hn' : columnName;
         columnName = columnName === 'cid' ? 'result.no_card' : columnName;
@@ -233,7 +244,7 @@ class HisEzhospModel {
             .whereRaw('result.lab_code NOT LIKE "03037%" AND result.lab_name NOT LIKE "HIV%"  AND result.result NOT LIKE "%ส่งตรวจภายนอก%" ')
             .limit(maxLimit);
     }
-    getInvestigation(db, columnName, searchNo, hospCode = hcode) {
+    getInvestigation(db, columnName, searchNo, hospCode = hisHospcode) {
         columnName = columnName === 'visitNo' ? 'result.vn' : columnName;
         columnName = columnName === 'pid' ? 'result.hn' : columnName;
         columnName = columnName === 'cid' ? 'result.no_card' : columnName;
@@ -248,13 +259,13 @@ class HisEzhospModel {
             .whereRaw('result.lab_code NOT LIKE "03037%" AND result.lab_code NOT LIKE "HIV%"')
             .limit(maxLimit);
     }
-    getDrugOpd(db, visitNo, hospCode = hcode) {
+    getDrugOpd(db, visitNo, hospCode = hisHospcode) {
         return db('view_pharmacy_opd_drug_item as drug')
             .select(db.raw('? as hospcode', [hospCode]), 'drug.hn', 'drug.hn as pid', 'drug.vn', 'drug.vn as seq', db.raw("concat(drug.date_serv,' ',drug.time_serv) as date_serv"), 'drug.clinic', 'drug.code24 as didstd', 'drug.tmt', 'drug.drugname as dname', 'drug.no as amount', 'drug.unit', 'drug.price as drugprice', db.raw('concat("ว",drug.dr_visit) as provider'), db.raw("now() as d_update"), 'drug.cid', db.raw("concat(drug.methodname, ' ' , drug.no_use, ' ', drug.unit_use, ' ',drug.freqname, ' ', timesname) as drug_usage"), 'drug.caution')
             .where('vn', visitNo)
             .limit(1000);
     }
-    getAdmission(db, columnName, searchValue, hospCode = hcode) {
+    getAdmission(db, columnName, searchValue, hospCode = hisHospcode) {
         columnName = columnName === 'cid' ? 'no_card' : columnName;
         columnName = columnName === 'visitNo' ? 'vn' : columnName;
         columnName = columnName === 'dateadmit' ? 'admite' : columnName;
@@ -287,7 +298,7 @@ class HisEzhospModel {
             .select('ipd.drg as DRG', 'ipd.rw as RW', 'ipd.adjrw as ADJRW', 'ipd.drg_error as ERROR', 'ipd.drg_warning as WARNING', 'ipd.los as ACTLOS', 'ipd.grouper_version as GROUPER_VERSION', 'ipd.no_card as CID')
             .limit(maxLimit);
     }
-    getDiagnosisIpd(db, columnName, searchNo, hospCode = hcode) {
+    getDiagnosisIpd(db, columnName, searchNo, hospCode = hisHospcode) {
         columnName = columnName === 'visitNo' ? 'dx.SEQ' : columnName;
         columnName = columnName === 'an' ? 'dx.AN' : columnName;
         columnName = columnName === 'pid' ? 'dx.PID' : columnName;
@@ -301,7 +312,7 @@ class HisEzhospModel {
             .orderBy('D_UPDATE')
             .limit(maxLimit);
     }
-    getDiagnosisIpdAccident(db, dateStart, dateEnd, hospCode = hcode) {
+    getDiagnosisIpdAccident(db, dateStart, dateEnd, hospCode = hisHospcode) {
         if (dateStart & dateEnd) {
             return db('view_ipd_dx as dx')
                 .whereBetween('admite', [dateStart, dateEnd])
@@ -314,7 +325,7 @@ class HisEzhospModel {
             throw new Error('Invalid parameters');
         }
     }
-    getProcedureIpd(db, an, hospCode = hcode) {
+    getProcedureIpd(db, an, hospCode = hisHospcode) {
         return db('view_ipd_op as op')
             .select(db.raw('"' + hcode + '" as HOSPCODE'))
             .select('hn as PID', 'an as AN', 'vn as SEQ')
@@ -323,13 +334,13 @@ class HisEzhospModel {
             .where('an', an)
             .limit(maxLimit);
     }
-    getChargeIpd(db, an, hospCode = hcode) {
+    getChargeIpd(db, an, hospCode = hisHospcode) {
         return db('ipd_charge')
             .select(db.raw('"' + hcode + '" as hospcode'))
             .where({ an })
             .limit(maxLimit);
     }
-    getDrugIpd(db, an, hospCode = hcode) {
+    getDrugIpd(db, an, hospCode = hisHospcode) {
         return db('view_pharmacy_ipd_psctmc as drug')
             .select(db.raw('"' + hcode + '" as hospcode'))
             .select('hn as pid', 'an')
@@ -339,28 +350,28 @@ class HisEzhospModel {
             .where('odr_type', '1')
             .limit(maxLimit);
     }
-    getAccident(db, visitNo, hospCode = hcode) {
+    getAccident(db, visitNo, hospCode = hisHospcode) {
         return db('accident')
             .select('*')
             .select(db.raw('"' + hcode + '" as hospcode'))
             .where('vn', visitNo)
             .limit(maxLimit);
     }
-    getDrugAllergy(db, hn, hospCode = hcode) {
+    getDrugAllergy(db, hn, hospCode = hisHospcode) {
         return db('view_drug_allergy')
             .select('*')
             .select(db.raw('"' + hcode + '" as hospcode'))
             .where('hn', hn)
             .limit(maxLimit);
     }
-    getAppointment(db, visitNo, hospCode = hcode) {
+    getAppointment(db, visitNo, hospCode = hisHospcode) {
         return db('view_opd_fu')
             .select('*')
             .select(db.raw('"' + hcode + '" as hospcode'))
             .where('vn', "=", visitNo)
             .limit(maxLimit);
     }
-    async getReferHistory(db, columnName, searchNo, hospCode = hcode) {
+    async getReferHistory(db, columnName, searchNo, hospCode = hisHospcode) {
         columnName = columnName === 'visitNo' ? 'refer.vn' : ('refer.' + columnName);
         columnName = columnName === 'refer.referNo' ? 'refer.refer_no' : columnName;
         const sql = `
@@ -393,28 +404,28 @@ class HisEzhospModel {
         const result = await db.raw(sql, [hospCode, hospCode, hospCode, searchNo, maxLimit]);
         return result[0];
     }
-    getClinicalRefer(db, referNo, hospCode = hcode) {
+    getClinicalRefer(db, referNo, hospCode = hisHospcode) {
         return db('view_clinical_refer')
             .select('*')
             .select(db.raw('"' + hcode + '" as hospcode'))
             .where('refer_no', "=", referNo)
             .limit(maxLimit);
     }
-    getInvestigationRefer(db, referNo, hospCode = hcode) {
+    getInvestigationRefer(db, referNo, hospCode = hisHospcode) {
         return db('view_investigation_refer')
             .select('*')
             .select(db.raw('"' + hcode + '" as hospcode'))
             .where('refer_no', "=", referNo)
             .limit(maxLimit);
     }
-    getCareRefer(db, referNo, hospCode = hcode) {
+    getCareRefer(db, referNo, hospCode = hisHospcode) {
         return db('view_care_refer')
             .select('*')
             .select(db.raw('"' + hcode + '" as hospcode'))
             .where('refer_no', "=", referNo)
             .limit(maxLimit);
     }
-    getReferResult(db, visitDate, hospCode = hcode) {
+    getReferResult(db, visitDate, hospCode = hisHospcode) {
         visitDate = moment(visitDate).format('YYYY-MM-DD');
         return db('view_opd_visit as visit')
             .leftJoin('refer_in', 'visit.vn', 'refer_in.vn')
@@ -425,17 +436,28 @@ class HisEzhospModel {
             .groupBy('visit.vn')
             .limit(maxLimit);
     }
+    sumReferIn(db, dateStart, dateEnd) {
+        return db('opd_visit as visit')
+            .select('visit.date')
+            .count('visit.vn as cases')
+            .whereBetween('visit.date', [dateStart, dateEnd])
+            .whereNotNull('visit.refer')
+            .where('visit.refer', '!=', hisHospcode)
+            .whereRaw('LENGTH(visit.refer)=5')
+            .whereNotNull('visit.vn')
+            .groupBy('visit.date');
+    }
     getProviderDr(db, drList) {
         return db('hdc.provider')
             .whereIn('REGISTERNO', drList)
             .limit(maxLimit);
     }
-    getProvider(db, columnName, searchNo, hospCode = hcode) {
+    getProvider(db, columnName, searchNo, hospCode = hisHospcode) {
         return db('hdc.provider')
             .whereIn(columnName, searchNo)
             .limit(maxLimit);
     }
-    getData(db, tableName, columnName, searchNo, hospCode = hcode) {
+    getData(db, tableName, columnName, searchNo, hospCode = hisHospcode) {
         return db(tableName)
             .select('*')
             .select(db.raw('"' + hcode + '" as hospcode'))

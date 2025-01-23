@@ -59,6 +59,20 @@ const router = (fastify, { }, next) => {
   });
 
   // 43 แฟ้ม =============================================================
+  fastify.post('/sum-referout', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
+    const now = moment().locale('th').format('YYYY-MM-DD');
+    const dateStart = req.body.dateStart || now;
+    const dateEnd = req.body.dateEnd || now;
+
+    try {
+      const rows = await hisModel.sumReferOut(global.dbHIS, dateStart, dateEnd);
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
+    } catch (error) {
+      console.log('referout', error.message);
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
+    }
+  })
+
   fastify.post('/referout', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
 
     const now = moment().locale('th').format('YYYY-MM-DD');
@@ -501,6 +515,19 @@ const router = (fastify, { }, next) => {
       reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
     } catch (error) {
       console.log('refer_result', error.message);
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
+    }
+  })
+  fastify.post('/sum-referin', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
+    const now = moment().locale('th').format('YYYY-MM-DD');
+    const dateStart = req.body.dateStart || now;
+    const dateEnd = req.body.dateEnd || now;
+
+    try {
+      const rows = await hisModel.sumReferIn(global.dbHIS, dateStart, dateEnd);
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
+    } catch (error) {
+      console.log('referout', error.message);
       reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
     }
   })
