@@ -9,7 +9,7 @@ let pm2Name = 'unknown';
 const instanceId = process.env.NODE_APP_INSTANCE || '0';
 async function cronjob(fastify) {
     firstProcessPid = await firstPM2InstancePID();
-    console.log(process.pid, `First process ID of '${pm2Name}' is ${firstProcessPid}`);
+    console.log(`First process ID of '${pm2Name}' is ${firstProcessPid}`, process.pid == firstProcessPid);
     const secondNow = +moment().get('second');
     const timingSch = `${secondNow} * * * * *`;
     let timingSchedule = [];
@@ -54,16 +54,13 @@ async function cronjob(fastify) {
     }
     let sendingRefer = false;
     cron.schedule(timingSch, async (req, res) => {
-        console.log(moment().format('HH:mm:ss'), firstProcessPid, process.pid);
         firstProcessPid = await firstPM2InstancePID();
         const minuteSinceLastNight = (+moment().get('hour')) * 60 + (+moment().get('minute'));
         const minuteNow = +moment().get('minute') == 0 ? 60 : +moment().get('minute');
-        const hourNow = +moment().get('hour');
         if (firstProcessPid === process.pid) {
             if (!sendingRefer && timingSchedule['nrefer']['autosend'] &&
                 minuteSinceLastNight % timingSchedule['nrefer'].minute == 0) {
                 sendingRefer = true;
-                console.log('nRefer sending', timingSchedule['nrefer']['autosend'], minuteSinceLastNight, timingSchedule['nrefer'].minute, minuteSinceLastNight % timingSchedule['nrefer'].minute);
                 doAutoSend(req, res, 'nrefer', './routes/refer/crontab');
                 sendingRefer = false;
             }

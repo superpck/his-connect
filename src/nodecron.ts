@@ -9,7 +9,7 @@ const instanceId = process.env.NODE_APP_INSTANCE || '0';
 
 export default async function cronjob(fastify: FastifyInstance) {
     firstProcessPid = await firstPM2InstancePID();
-    console.log(process.pid, `First process ID of '${pm2Name}' is ${firstProcessPid}`);
+    console.log(`First process ID of '${pm2Name}' is ${firstProcessPid}`, process.pid==firstProcessPid);
 
     // node-cron =========================================
     const secondNow = +moment().get('second');
@@ -66,21 +66,13 @@ export default async function cronjob(fastify: FastifyInstance) {
 
     let sendingRefer = false;
     cron.schedule(timingSch, async (req: any, res: any) => {
-        console.log(moment().format('HH:mm:ss'), firstProcessPid, process.pid);
         firstProcessPid = await firstPM2InstancePID();  // เรียกซ้ำเพื่อตรวจสอบ off-line
         const minuteSinceLastNight = (+moment().get('hour')) * 60 + (+moment().get('minute'));
         const minuteNow = +moment().get('minute') == 0 ? 60 : +moment().get('minute');
-        const hourNow = +moment().get('hour');
         if (firstProcessPid === process.pid) {
-            // if (!sendingRefer){
-            //     sendingRefer = true;
-            //     doAutoSend(req, res, 'nrefer', './routes/refer/crontab');
-            //     sendingRefer = false;
-            // }
             if (!sendingRefer && timingSchedule['nrefer']['autosend'] &&
                 minuteSinceLastNight % timingSchedule['nrefer'].minute == 0) {
                 sendingRefer = true;
-                console.log('nRefer sending', timingSchedule['nrefer']['autosend'], minuteSinceLastNight, timingSchedule['nrefer'].minute, minuteSinceLastNight % timingSchedule['nrefer'].minute);
                 doAutoSend(req, res, 'nrefer', './routes/refer/crontab');
                 sendingRefer = false;
             }

@@ -6,7 +6,6 @@ import path = require('path');
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import fastify, { FastifyRequest } from 'fastify';
 import * as moment from 'moment';
-import zlib = require('node:zlib');
 import cronjob from './nodecron';
 
 const serveStatic = require('serve-static');
@@ -15,10 +14,6 @@ var crypto = require('crypto');
 require('dotenv').config({ path: path.join(__dirname, '../config') });
 
 import helmet = require('@fastify/helmet');
-
-// const fastifySession = require('fastify-session');
-// var cron = require('node-cron');
-// var shell = require("shelljs");
 
 var serverOption = {}
 if (process.env.SSL_ENABLE && process.env.SSL_ENABLE == '1' && process.env.SSL_KEY) {
@@ -49,16 +44,10 @@ global.appDetail = { name, subVersion, version };
 
 app.register(require('@fastify/formbody'));
 app.register(require('@fastify/cors'), {});
-// app.register(require('@fastify/compress'), {
-//   global: false,
-//   threshold: 1024
-// });
 app.register(require('fastify-no-icon'));
 app.register(helmet, {});
 app.register(require('@fastify/rate-limit'), {
   max: +process.env.MAX_CONNECTION_PER_MINUTE || 1000,
-  // skipOnError: true,
-  // cache: 10000,
   timeWindow: '1 minute'
 });
 app.register(serveStatic(path.join(__dirname, '../public')));
@@ -72,7 +61,6 @@ app.register(require('@fastify/view'), {
 app.register(require('@fastify/jwt'), {
   secret: process.env.SECRET_KEY
 });
-// global.ipAddr = require('./routes/main/local-server')(global.ipAddr, {});
 
 // set MOPH Url =========================================
 global.mophService = require('./routes/main/crontab')(global.mophService, {});
