@@ -1,3 +1,8 @@
+# 3.8.4
+## Feature
+  - ปรับการ Get Provider council ใน JHCIS ให้ตรวจสอบตาม prename กรณีไม่ได้ระบุ council
+  - ปรับความถี่การ Autosend nRefder ตาม config
+
 # 3.8.3
 ## Feature
   - เพิ่มการรายงานจำนวนการรับและส่ง Refer เพื่อแสดงใน nRefer

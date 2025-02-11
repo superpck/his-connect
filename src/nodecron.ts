@@ -5,10 +5,11 @@ var shell = require("shelljs");
 var cron = require('node-cron');
 let firstProcessPid: any = 0;
 let pm2Name = 'unknown'
+const instanceId = process.env.NODE_APP_INSTANCE || '0';
 
 export default async function cronjob(fastify: FastifyInstance) {
     firstProcessPid = await firstPM2InstancePID();
-    console.log(`First process ID of '${pm2Name}' is ${firstProcessPid}`);
+    console.log(process.pid, `First process ID of '${pm2Name}' is ${firstProcessPid}`);
 
     // node-cron =========================================
     const secondNow = +moment().get('second');
@@ -71,14 +72,17 @@ export default async function cronjob(fastify: FastifyInstance) {
         const minuteNow = +moment().get('minute') == 0 ? 60 : +moment().get('minute');
         const hourNow = +moment().get('hour');
         if (firstProcessPid === process.pid) {
-            if (!sendingRefer){
+            // if (!sendingRefer){
+            //     sendingRefer = true;
+            //     doAutoSend(req, res, 'nrefer', './routes/refer/crontab');
+            //     sendingRefer = false;
+            // }
+            if (!sendingRefer && timingSchedule['nrefer']['autosend'] &&
+                minuteSinceLastNight % timingSchedule['nrefer'].minute == 0) {
                 sendingRefer = true;
+                console.log('nRefer sending', timingSchedule['nrefer']['autosend'], minuteSinceLastNight, timingSchedule['nrefer'].minute, minuteSinceLastNight % timingSchedule['nrefer'].minute);
                 doAutoSend(req, res, 'nrefer', './routes/refer/crontab');
                 sendingRefer = false;
-            }
-            if (timingSchedule['nrefer']['autosend'] &&
-                minuteSinceLastNight % timingSchedule['nrefer'].minute == 0) {
-                // doAutoSend(req, res, 'nrefer', './routes/refer/crontab');
             }
 
             if (timingSchedule['isonline']['autosend'] &&
@@ -113,11 +117,11 @@ export default async function cronjob(fastify: FastifyInstance) {
     async function firstPM2InstancePID() {
         try {
             var jlist: any = await shell.exec('pm2 jlist', { silent: true });
-            if (jlist.substr(0,1) != '['){
+            if (jlist.substr(0, 1) != '[') {
                 jlist = jlist.substring(jlist.indexOf('['));
             }
             let pm2Process = jlist && jlist !== '' && jlist.length > 32 ? JSON.parse(jlist) : [];
-            
+
             pm2Name = 'unknown';
             if (pm2Process && pm2Process.length) {
                 const prc = pm2Process.filter((o: any) => process.pid == o.pid && o.pm2_env.status == 'online');
