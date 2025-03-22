@@ -1,3 +1,9 @@
+# 3.9.0
+## Feature
+  - เพิ่มระบบการส่งข้อความไปยัง Telegram
+  - เพิ่มการตรวจสอบการทำงานของ API Service
+  - เพิ่มระบบ Alert การ login เข้าใช้ระบบ nRefer และ PHER+
+
 # 3.8.4
 ## Feature
   - nRefer: ปรับการ Get Provider council ใน JHCIS ให้ตรวจสอบตาม prename กรณีไม่ได้ระบุ council
