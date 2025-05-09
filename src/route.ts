@@ -13,9 +13,6 @@ export default async function router(fastify: FastifyInstance) {
   fastify.register(require('./routes/refer/v3'), { prefix: `${rootPrefix}/refer/his` });
   fastify.register(require('./routes/refer/local'), { prefix: `${rootPrefix}/refer/local` });
 
-  // HDC Connect (รอประสาน สสจ.)
-  // fastify.register(require('./routes/hdc/index'), { prefix: `${rootPrefix}/hdc`, logger: true });
-
   // ISOnline service
   fastify.register(require('./routes/isonline/index'), { prefix: `${rootPrefix}/isonline`, logger: true });
   fastify.register(require('./routes/isonline/login'), { prefix: `${rootPrefix}/isonline/login`, logger: true });

@@ -10,7 +10,8 @@ let pm2Name = 'unknown'
 let pm2List: any = [];
 const instanceId = process.env.NODE_APP_INSTANCE ? +process.env.NODE_APP_INSTANCE + 1 : null;
 let onProcess: any = {
-  sendNRefer: false, sendNReferIPD: false, sendISOnline: false
+  sendNRefer: false, sendNReferIPD: false, sendISOnline: false,
+  sendCupDataCenter: false
 };
 let lastProcess: any = {};
 
@@ -28,6 +29,7 @@ export default async function cronjob(fastify: FastifyInstance) {
   let timingSchedule: any = [];
   timingSchedule['isonline'] = { version: global.appDetail.version, apiSubVersion: global.appDetail.subVersion };
   timingSchedule['nrefer'] = { version: global.appDetail.version, apiSubVersion: global.appDetail.subVersion };
+  timingSchedule['cupDataCenter'] = { version: global.appDetail.version, apiSubVersion: global.appDetail.subVersion };
 
   // Check IS-Online Auto Send
   timingSchedule['isonline'].autosend = +process.env.IS_AUTO_SEND === 1 || false;
@@ -50,6 +52,13 @@ export default async function cronjob(fastify: FastifyInstance) {
     timingSchedule['nrefer'].autosend = false;
   }
 
+  // Auto send CUP Data Center
+  timingSchedule['cupDataCenter'].autosend = +process.env.HIS_DATACENTER_ENABLE === 1 || false;
+  timingSchedule['cupDataCenter'].minute =
+    (process.env.HIS_DATACENTER_SEND_EVERY_MINUTE ? +process.env.HIS_DATACENTER_SEND_EVERY_MINUTE : 0) +
+    (process.env.HIS_DATACENTER_SEND_EVERY_HOUR ? +process.env.HIS_DATACENTER_SEND_EVERY_HOUR : 2) * 60;
+  timingSchedule['cupDataCenter'].minute = timingSchedule['cupDataCenter'].minute < 20 ? 20 : timingSchedule['cupDataCenter'].minute;
+
   // ตรวจสอบการ start ด้วยเวลาที่กำหนด (ทุกๆ 1 นาที)
   const minuteSinceLastNight = (+moment().get('hour')) * 60 + (+moment().get('minute'));
   if (firstProcessPid === process.pid) {
@@ -61,6 +70,9 @@ export default async function cronjob(fastify: FastifyInstance) {
     }
     if (timingSchedule['isonline'].autosend) {
       console.log('crontab ISOnline start every', timingSchedule['isonline'].minute, ' (minute) from midnight.');
+    }
+    if (timingSchedule['cupDataCenter'].autosend) {
+      console.log('crontab Data Center start every', timingSchedule['cupDataCenter'].minute, ' (minute) from midnight.');
     }
   }
 

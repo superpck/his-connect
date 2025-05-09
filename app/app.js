@@ -3,13 +3,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require('node:fs');
 checkConfigFile();
 const path = require("path");
+require('dotenv').config({ path: path.join(__dirname, '../config') });
 const http_status_codes_1 = require("http-status-codes");
 const fastify_1 = require("fastify");
 const moment = require("moment");
-const nodecron_1 = require("./nodecron");
+const nodecron_optimized_1 = require("./nodecron.optimized");
 const serveStatic = require('serve-static');
 var crypto = require('crypto');
-require('dotenv').config({ path: path.join(__dirname, '../config') });
 const helmet = require("@fastify/helmet");
 var serverOption = {};
 if (process.env.SSL_ENABLE && process.env.SSL_ENABLE == '1' && process.env.SSL_KEY) {
@@ -115,7 +115,7 @@ app.addHook('onSend', async (request, reply, payload) => {
     return payload;
 });
 app.register(require('./route'));
-app.register(nodecron_1.default);
+app.register(nodecron_optimized_1.default);
 var options = {
     port: process.env.PORT || 3004,
     host: process.env.HOST || '0.0.0.0'
@@ -124,7 +124,6 @@ app.listen(options, (err) => {
     if (err)
         throw err;
     const instanceId = process.env.NODE_APP_INSTANCE || '0';
-    console.log("NODE App instance:", instanceId);
     console.info(`${moment().format('HH:mm:ss')} HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid}`);
 });
 async function connectDB() {

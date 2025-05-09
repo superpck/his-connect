@@ -1,17 +1,17 @@
-const fs = require('node:fs');
 // Check config file ====================================
+const fs = require('node:fs');
 checkConfigFile();
 
 import path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../config') });
+
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import fastify, { FastifyRequest } from 'fastify';
 import * as moment from 'moment';
-import cronjob from './nodecron';
+import cronjob from './nodecron.optimized';
 
 const serveStatic = require('serve-static');
 var crypto = require('crypto');
-
-require('dotenv').config({ path: path.join(__dirname, '../config') });
 
 import helmet = require('@fastify/helmet');
 
@@ -160,7 +160,6 @@ var options: any = {
 app.listen(options, (err) => {
   if (err) throw err;
   const instanceId = process.env.NODE_APP_INSTANCE || '0';
-  console.log("NODE App instance:", instanceId);
   console.info(`${moment().format('HH:mm:ss')} HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid}`);
 });
 

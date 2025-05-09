@@ -1,4 +1,5 @@
 import * as moment from 'moment';
+import * as os from 'os';
 
 export const randomString = async (length: number, format = 'AlphaNumeric') => {
   // format AlphaNumeric=String+number, Special=AlphaNumeric+Special characters
@@ -72,4 +73,13 @@ export const timeMinute = (date = moment()) => {
 
 export const timeSecond = (date = moment()) => {
   return moment(date).format('HH:mm:ss');
+};
+
+export const getIP = () => {
+  const interfaces = os.networkInterfaces();
+  for (const ifaces of Object.values(interfaces)) {
+    const iface = ifaces.find(i => i.family === 'IPv4' && !i.internal);
+    if (iface) return { ip: iface.address, interfaces };
+  }
+  return { ip: null, interfaces };
 };

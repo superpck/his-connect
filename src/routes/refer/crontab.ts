@@ -1,3 +1,6 @@
+import path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../../../config') });
+
 var fastify = require('fastify');
 import * as moment from 'moment';
 import axios from 'axios';
@@ -8,18 +11,39 @@ var fs = require('fs');
 const hcode = process.env.HOSPCODE;
 const hisProvider = process.env.HIS_PROVIDER;
 const resultText = 'sent_result.txt';
+const apiKey = process.env.NREFER_APIKEY || 'api-key';
+const secretKey = process.env.NREFER_SECRETKEY || 'secret-key';
+
 let sentContent = '';
 let nReferToken: any = '';
+let sentResult: any = {};
 let crontabConfig: any = {
-  client_ip: '', version: global.appDetail.version,
-  subVersion: global.appDetail.subVersion
+  client_ip: '', version: global.appDetail?.version || '',
+  subVersion: global.appDetail?.subVersion || ''
 };
+let db: Knex;
+
+const processSend = (request: any, reply: any, dbConn: Knex, config = {}) => {
+  db = dbConn;
+  crontabConfig = { ...crontabConfig, ...config };
+  crontabConfig['client_ip'] = '127.0.0.1';
+
+  if (request) {
+    if (request.headers) {
+      crontabConfig['client_ip'] = request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || request.ip || request.raw['ip'] || crontabConfig['client_ip'];
+    } else {
+      crontabConfig['client_ip'] = request.ip || crontabConfig['client_ip'];
+    }
+  }
+  if (crontabConfig?.service == 'ipdChecking') {
+    return ipdChecking(request, reply);
+  } else {
+    return sendMoph(request, reply, db);  // ข้อมูลปัจจุบัน
+  }
+}
 
 async function sendMoph(req, reply, db) {
   const dateNow = moment().format('YYYY-MM-DD');
-
-  const apiKey = process.env.NREFER_APIKEY || 'api-key';
-  const secretKey = process.env.NREFER_SECRETKEY || 'secret-key';
 
   sentContent = `${global.appDetail.name} v.${global.appDetail.version}-${global.appDetail.subVersion} ` +
     moment().format('YYYY-MM-DD HH:mm:ss') + ' data:' + dateNow + "\r\n";
@@ -70,11 +94,11 @@ async function sendRefer(db: Knex, date: any) {
   return [referOut, referResult];
 }
 
-async function getReferOut(db: Knex, date) {
+async function getReferOut(db: Knex, date: any) {
   try {
     const referout = await hisModel.getReferOut(db, date, hcode, null);
-    console.log('******** >> refer out', date, referout.length, ' cases');
-    if (!referout || referout.length == 0){
+    // console.log('******** >> refer out', date, referout.length, ' cases');
+    if (!referout || referout.length == 0) {
       return '';
     }
 
@@ -91,7 +115,7 @@ async function getReferOut(db: Knex, date) {
     sentContent += `\rsave refer_history ${date} \r`;
     sentContent += `\rsave refer service data ${date} \r`;
     let index = 0;
-    let sentResult: any = {
+    sentResult = {
       date,
       pid: process.pid,
       referout: { success: 0, fail: 0, vnFail: [] },
@@ -103,6 +127,9 @@ async function getReferOut(db: Knex, date) {
       drugOpd: { success: 0, fail: 0 },
       drugAllergy: { success: 0, fail: 0 },
       investigationRefer: { success: 0, fail: 0 },
+      admission: { success: 0, fail: 0 },
+      drugIpd: { success: 0, fail: 0 },
+      diagnosisIpd: { success: 0, fail: 0 },
       provider: 0,
     };
     for (let row of referout) {
@@ -167,8 +194,8 @@ async function getReferIn(db, date) {
   };
   try {
     const referResult = await hisModel.getReferResult(db, date, hcode);
-    console.log('******** >> refer in', date, referResult.length, ' cases');
-    if (!referResult || referResult.length == 0){
+    // console.log('******** >> refer in', date, referResult.length, ' cases');
+    if (!referResult || referResult.length == 0) {
       return '';
     }
 
@@ -730,7 +757,52 @@ async function getLabResult(db, row, sentResult) {
   return rowsLabResult;
 }
 
-async function getAdmission(db, type = 'VN', searchValue: string) {
+// IPD ---------------------------------------------------------------
+// ตรวจสอบย้อนหลัง
+async function ipdChecking(req: any, res: any) {
+  try {
+    const resultToken: any = await getNReferToken(apiKey, secretKey);
+    if (resultToken && resultToken.statusCode == 200 && resultToken.token) {
+      nReferToken = resultToken.token;
+    } else {
+      console.log('Get nRefer token error', resultToken.message);
+      return false;
+    }
+    sentResult = {
+      admission: { success: 0, fail: 0 },
+      drugIpd: { success: 0, fail: 0 },
+      diagnosisIpd: { success: 0, fail: 0 },
+    };
+
+    let dateStart = moment().subtract(2, 'months').format('YYYY-MM-DD');
+    let dateEnd = moment().subtract(1, 'days').format('YYYY-MM-DD');
+    let date = dateStart;
+
+    do {
+      const result = await getNReferIPD({ date });
+      let response = result?.response || result;
+      let rows = response.rows || [];
+      let anList = [];
+      for (let row of rows) {
+        const an = row.AN || row.an || '';
+        const vn = row.SEQ || row.seq || row.VN || row.vn || '';
+        if (an && vn) {
+          anList.push(an);
+          await getAdmission(db, 'vn', vn);
+        }
+      }
+      console.log(`Send IPD backward: ${date} founed: ${rows.length} rows, IPD sent: ${anList.length} rows`);
+      date = moment(date).add(1, 'day').format('YYYY-MM-DD');
+    }
+    while (date <= dateEnd);
+    console.log(sentResult);
+    return sentResult;
+  } catch (error) {
+    console.log('ipdChecking', error.message)
+  }
+}
+
+async function getAdmission(db: Knex, type = 'VN', searchValue: string) {
   let rows: any;
   if (type == 'datedisc') {
     rows = await hisModel.getAdmission(db, 'datedisc', searchValue, hcode);
@@ -740,13 +812,76 @@ async function getAdmission(db, type = 'VN', searchValue: string) {
   sentContent += '  - admission = ' + rows.length + '\r';
   if (rows && rows.length) {
     for (const row of rows) {
+      const an = row.AN || row.an;
       await sendAdmission(row);
+      const [resultIpd, resultIpdDx] = await Promise.all([
+        drugIPD(db, an),
+        getDiagnosisIpd(db, an),
+      ]).finally(() => { });
     }
   }
   return rows;
 }
 
-async function sendAdmission(row) {
+async function drugIPD(db: Knex, an: string) {
+  try {
+    let ipdDrug = [];
+    const rows = await hisModel.getDrugIpd(db, an, hcode);
+    sentContent += '  - drug_ipd = ' + rows.length + '\r';
+    if (rows && rows.length) {
+      for (let r of rows) {
+        for (let fld in r) {
+          r[fld.toLowerCase()] = r[fld];
+        }
+
+        if (r.dname) {
+          ipdDrug.push({
+            HOSPCODE: r.hospcode || hcode,
+            PID: r.pid || r.hn,
+            AN: r.an,
+            DATETIME_ADMIT: r.datetime_admit || null,
+            WARDSTAY: r.wardstay || '',
+            TYPEDRUG: r.typedrug || '',
+            DIDSTD: r.didstd || '',
+            DNAME: r.dname || '',
+            DATESTART: r.datestart || null,
+            DATEFINISH: r.datefinish || null,
+            AMOUNT: r.amount || null,
+            UNIT: r.unit || null,
+            UNIT_PACKING: r.unit_packing || null,
+            DRUGPRICE: r.drugprice || null,
+            DRUGCOST: r.drugcost || null,
+            PROVIDER: r.provider || r.dr || null,
+            D_UPDATE: r.d_update || null,
+            CID: r.cid || null,
+            DID: r.did || null,
+            DID_TMT: r.did_tmt || null,
+            tmt: r.tmt || null,
+            ID: r.id || null,
+            drug_usage: r.drug_usage || null,
+            caution: r.caution || null
+          });
+        }
+      }
+
+      if (ipdDrug.length > 0) {
+        const saveResult: any = await referSending('/save-drug-ipd', ipdDrug);
+        sentContent += '    -- ' + an + ' ' + JSON.stringify(saveResult) + '\r';
+        if (saveResult.statusCode == 200) {
+          sentResult.drugIpd.success += 1;
+        } else {
+          console.log('drug ipd error: vn ', an, saveResult.message || saveResult);
+          sentResult.drugIpd.fail += 1;
+        }
+      }
+    }
+    return ipdDrug;
+  } catch (error) {
+    return false;
+  }
+}
+
+async function sendAdmission(row: any) {
   const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
   for (let r in row) {
     row[r.toLowerCase()] = row[r];
@@ -793,7 +928,61 @@ async function sendAdmission(row) {
   }
 
   const saveResult: any = await referSending('/save-admission', data);
+  if (saveResult.statusCode == 200) {
+    sentResult.admission.success += 1;
+  } else {
+    sentResult.admission.fail += 1;
+  }
   sentContent += '    -- AN ' + data.AN + ' ' + (saveResult.result || saveResult.message) + '\r';
+}
+async function getDiagnosisIpd(db: Knex, an: string) {
+  try {
+    const rows = await hisModel.getDiagnosisIpd(db, 'an', an);
+    sentContent += '  - diagnosis_ipd = ' + rows.length + '\r';
+    if (rows && rows.length) {
+      let r = [];
+      for (const row of rows) {
+        // transform column name to lowercase
+        for (let fld in row) {
+          row[fld.toLowerCase()] = row[fld];
+        }
+        if (row.diagcode && row.an) {
+          r.push({
+            HOSPCODE: row.hospcode,
+            PID: row.pid || row.hn,
+            AN: row.an,
+            DATETIME_ADMIT: row.datetime_admit,
+            WARDDIAG: row.warddiag || '',
+            DIAGTYPE: row.diagtype || '',
+            DIAGCODE: row.diagcode || '',
+            DIAGNAME: row.diagname || '',
+            CLINIC: row.clinic || '',
+            PROVIDER: row.provider || row.dr || '',
+            CODESET: row.codeset || '',
+            D_UPDATE: row.d_update || '',
+            CID: row.cid || '',
+            ID: row.id || null,
+            BR: row.br || null,
+            AIS: row.ais || null,
+            ncd_id: row.ncd_id || null
+          });
+        }
+      }
+      if (r.length > 0) {
+        const saveResult: any = await referSending('/save-diagnosis-ipd', r);
+        sentContent += '    -- ' + an + ' ' + JSON.stringify(saveResult) + '\r';
+        if (saveResult.statusCode === 200) {
+          sentResult.diagnosisIpd.success += 1;
+        } else {
+          sentResult.diagnosisIpd.fail += 1;
+          console.log('save-diagnosis-ipd', an, saveResult.message || saveResult);
+        }
+      }
+    }
+    return rows;
+  } catch (error) {
+    return false;
+  }
 }
 
 async function getProcedureIpd(db, an) {
@@ -960,6 +1149,31 @@ async function getNReferToken(apiKey: string, secretKey: string) {
   }
 }
 
+async function getNReferIPD(bodyData: any = {}) {
+  const fixedUrl = 'https://nrefer.moph.go.th/ws'; //process.env.NREFER_API_URL || 'https://refer.moph.go.th/api/his';
+  const body = {
+    ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
+    ...bodyData,
+    processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
+    sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version, subVersion: crontabConfig.subVersion,
+    hisProvider: process.env.HIS_PROVIDER
+  };
+
+  const url = fixedUrl + '/v3/refer-history';
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + nReferToken,
+    'Source-Agent': 'HISConnect-' + (crontabConfig.version || 'x') + '-' + (crontabConfig.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+  };
+  try {
+    const { status, data } = await axios.post(url, body, { headers });
+    return data;
+  } catch (error) {
+    console.log('referSending error ', error.message);
+    return error;
+  }
+}
+
 async function writeResult(file, content) {
   fs.writeFile(file, content, async function (err) {
     if (err) {
@@ -977,18 +1191,4 @@ async function writeResult(file, content) {
   });
 }
 
-const router = (request, reply, dbConn: any, config = {}) => {
-  crontabConfig = config;
-  crontabConfig['client_ip'] = '127.0.0.1';
-  if (request) {
-    if (request.headers) {
-      crontabConfig['client_ip'] = request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || request.ip || request.raw['ip'] || crontabConfig['client_ip'];
-    } else {
-      crontabConfig['client_ip'] = request.ip || crontabConfig['client_ip'];
-    }
-  }
-  // apiVersion = crontabConfig.version ? crontabConfig.version : '-';
-  // subVersion = crontabConfig.subVersion ? crontabConfig.subVersion : '-';
-  return sendMoph(request, reply, dbConn);
-};
-module.exports = router;
+module.exports = { processSend, ipdChecking };
