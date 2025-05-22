@@ -268,7 +268,7 @@ async function getReferInIPDByDateDisc(db: any, sentResultResult: any) {
     do {
       await getReferInIPD(db, date, 0, sentResultResult);
       date = moment(date).add(1, 'day').format('YYYY-MM-DD');
-    } while (date <= dateEnd);
+    } while (date <= dateEnd && date <= today);
     // for (let i = 0; i <= backward; i++) {
     //   await getReferInIPD(db, datedisc, 0, sentResultResult);
     //   datedisc = moment(datedisc).add(1, 'day').format('YYYY-MM-DD');
