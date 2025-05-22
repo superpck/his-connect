@@ -218,6 +218,7 @@ async function getReferIn(db, date) {
 async function getReferInIPDByDateDisc(db, sentResultResult) {
     try {
         let backward = 2;
+        let today = moment().format('YYYY-MM-DD');
         let dateEnd = moment().format('YYYY-MM-DD');
         const hour = moment().get('hour');
         if ([2, 12, 17].indexOf(hour) > 0 && moment().get('minute') >= (60 - crontabConfig.minute)) {
@@ -233,7 +234,7 @@ async function getReferInIPDByDateDisc(db, sentResultResult) {
         do {
             await getReferInIPD(db, date, 0, sentResultResult);
             date = moment(date).add(1, 'day').format('YYYY-MM-DD');
-        } while (date > dateEnd);
+        } while (date <= dateEnd);
         console.log(process.env.HOSPCODE, ' refer result (refer in)', sentResultResult);
         return true;
     }
@@ -243,6 +244,9 @@ async function getReferInIPDByDateDisc(db, sentResultResult) {
     }
 }
 async function getReferInIPD(db, dateDisc, resultOnly, sentResultResult) {
+    if (!dateDisc || dateDisc > moment().format('YYYY-MM-DD')) {
+        return null;
+    }
     let ipdData = await hismodel_1.default.getAdmission(db, 'datedisc', dateDisc);
     console.log(moment().format('HH:mm:ss'), process.env.HOSPCODE, `Get refer result from IPD discharge date ${dateDisc} = ${ipdData.length} case`);
     for (let row of ipdData) {
@@ -281,7 +285,7 @@ async function sendReferOut(row, sentResult) {
         const data = {
             HOSPCODE: hcode,
             REFERID: referId,
-            PID: row.PID || row.pid || row.HN || row.hn,
+            PID: row.pid || row.hn,
             SEQ,
             AN: row.an || '',
             CID: row.cid,
@@ -306,6 +310,7 @@ async function sendReferOut(row, sentResult) {
             CAUSEOUT: row.causeout || '',
             REQUEST: row.request || '',
             PROVIDER: row.provider || '',
+            detail: row.detail || '',
             REFERID_PROVINCE: referProvId,
             referout_type: row.referout_type || 1,
             D_UPDATE: row.d_update || d_update,
@@ -711,6 +716,7 @@ async function ipdChecking(req, res) {
             drugIpd: { success: 0, fail: 0 },
             diagnosisIpd: { success: 0, fail: 0 },
         };
+        let today = moment().format('YYYY-MM-DD');
         let dateStart = moment().subtract(2, 'months').format('YYYY-MM-DD');
         let dateEnd = moment().subtract(1, 'days').format('YYYY-MM-DD');
         let date = dateStart;
@@ -729,7 +735,7 @@ async function ipdChecking(req, res) {
             }
             console.log(`Send IPD backward: ${date} founed: ${rows.length} rows, IPD sent: ${anList.length} rows`);
             date = moment(date).add(1, 'day').format('YYYY-MM-DD');
-        } while (date <= dateEnd);
+        } while (date <= dateEnd && date <= today);
         console.log(sentResult);
         return sentResult;
     }
