@@ -9,7 +9,6 @@ import { Knex } from 'knex';
 var fs = require('fs');
 
 const hcode = process.env.HOSPCODE;
-const hisProvider = process.env.HIS_PROVIDER;
 const resultText = 'sent_result.txt';
 const apiKey = process.env.NREFER_APIKEY || 'api-key';
 const secretKey = process.env.NREFER_SECRETKEY || 'secret-key';
@@ -354,7 +353,7 @@ async function sendReferOut(row, sentResult) {
       REFERID_PROVINCE: referProvId,
       referout_type: row.referout_type || 1,
       D_UPDATE: row.d_update || d_update,
-      his: hisProvider,
+      his: process.env.HIS_PROVIDER,
       typesave: 'autosent'
     }
 

@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 let rootPrefix = process.env.ROUTE_PREFIX || '';
 rootPrefix = rootPrefix ? ('/' + rootPrefix) : '';
-const hisProvider = process.env.HIS_PROVIDER;
+const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 
 export default async function router(fastify: FastifyInstance) {
   fastify.register(require('./routes/index'), { prefix: "/" });

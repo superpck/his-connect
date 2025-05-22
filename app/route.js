@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = router;
 let rootPrefix = process.env.ROUTE_PREFIX || '';
 rootPrefix = rootPrefix ? ('/' + rootPrefix) : '';
-const hisProvider = process.env.HIS_PROVIDER;
+const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 async function router(fastify) {
     fastify.register(require('./routes/index'), { prefix: "/" });
     fastify.register(require('./routes/his/index'), { prefix: `${rootPrefix}/${hisProvider}` });

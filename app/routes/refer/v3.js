@@ -4,7 +4,6 @@ const http_status_codes_1 = require("http-status-codes");
 const moment = require("moment");
 var crypto = require('crypto');
 const hismodel_1 = require("./../his/hismodel");
-const hisProvider = process.env.HIS_PROVIDER;
 const router = (fastify, {}, next) => {
     fastify.get('/', async (req, reply) => {
         reply.send({
@@ -22,7 +21,7 @@ const router = (fastify, {}, next) => {
             if (result && result.length) {
                 reply.status(http_status_codes_1.StatusCodes.OK).send({
                     statusCode: http_status_codes_1.StatusCodes.OK,
-                    hisProvider: hisProvider, connection: true,
+                    hisProvider: process.env.HIS_PROVIDER, connection: true,
                     RequestKey: requestKeyVerified,
                 });
             }

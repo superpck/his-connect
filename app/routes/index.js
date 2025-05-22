@@ -7,10 +7,7 @@ var crypto = require('crypto');
 var fs = require('fs');
 const jwt_1 = require("./../plugins/jwt");
 var jwt = new jwt_1.Jwt();
-const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb',
-    'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades',
-    'himpro', 'nemo', 'mypcu', 'emrsoft other'];
-const hisProvider = process.env.HIS_PROVIDER;
+const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 const resultText = './sent_result.txt';
 const router = (fastify, {}, next) => {
     var startServer = fastify.startServerTime;

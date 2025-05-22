@@ -4,7 +4,7 @@ const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
 
-export class HisEzhospModel {
+export class HisIHospitalModel {
   check() {
     return true;
   }
@@ -94,16 +94,14 @@ export class HisEzhospModel {
         , 'refer_in.refer as hospcode_origin', 'refer_in.refer_no as referid_origin'
         , 'visit.hn', 'pt.no_card as cid', 'refer.vn as seq', 'ipd.an'
         , 'pt.title as prename', 'pt.name as fname', 'pt.surname as lname'
-        , 'pt.birth as dob', 'pt.sex'
-
+        , 'pt.birth as dob', 'pt.sex', 'refer.treated AS PHYSICALEXAM'
         , 'refer.history_ill as PH', 'refer.current_ill as PI'
         , 'refer.dr_request as REQUEST', 'visit.dx1 as ICD10'
-        , 'refer.dx as DIAGLAST', 'refer.dx'
-
+        , 'refer.dx as DIAGLAST', 'refer.dx','refer.other as detail'
         , 'vs.nurse_cc as chiefcomp', 'pi_dr as pi', 'pe_dr as pe', 'nurse_ph as ph'
         , db.raw('IF(ipd.an IS NULL,null, concat(ipd.admite," ",ipd.time)) as datetime_admit')
         , db.raw(`IF(visit.dr > 0, CONCAT("ว",visit.dr),'') as provider`)
-        , `visit.dr`, 'refer.dr_request as request', 'refer.cause1 as causeout'
+        , `visit.dr`, 'refer.dr_request as request', 'refer.causeout'
       )
       .where('refer.hcode', hospCode);
     if (visitNo) {
@@ -112,10 +110,12 @@ export class HisEzhospModel {
       sql.where('refer.refer_date', date);
     }
     return sql
+      .whereNull('refer.datecancel')
       .orderBy('refer.refer_date')
       .groupBy('refer.vn')
       .limit(maxLimit);
   }
+
   sumReferOut(db: Knex, dateStart: any, dateEnd: any) {
     return db('hospdata.refer_out as r')
       .select('r.refer_date')
@@ -125,6 +125,7 @@ export class HisEzhospModel {
       .where('r.refer_hcode', '!=', "")
       .whereNotNull('r.refer_hcode')
       .where('r.refer_hcode', '!=', hisHospcode)
+      .whereNull('r.datecancel')
       .groupBy('r.refer_date')
       .orderBy('r.refer_date');
   }
@@ -519,36 +520,35 @@ export class HisEzhospModel {
     //columnName = visitNo, referNo
     columnName = columnName === 'visitNo' ? 'refer.vn' : ('refer.' + columnName);
     columnName = columnName === 'refer.referNo' ? 'refer.refer_no' : columnName;
-    const sql = `
-            SELECT ? as hospcode, refer.refer_no as referid
-                , concat(?,refer.refer_no) as referid_province
-                , refer.hn as pid, refer.vn as seq, refer.an
-                , concat(refer.date_service,' ',refer.refer_time) as datetime_serv
-                , concat(ipd.admite,' ',ipd.time) as datetime_admit
-                , concat(refer.refer_date,' ',refer.refer_time) as datetime_refer
-                , visit.clinic as clinic_refer, refer.refer_hcode as hosp_destination
-                , refer.sendto as destination_req, vs.cc as CHIEFCOMP
-                , vs.pi as PRESENTILLNESS, vs.pe AS PHYSICALEXAM
-                , refer.history_ill as PH, refer.current_ill as PI
-                , refer.dr_request as REQUEST, visit.dx1 as ICD10
-                , vs.nurse_ph as PASTHISTORY, refer.dx as DIAGLAST
-                , case when visit.dep=1 then 3 else 1 end as ptype
-                , case when refer.severity=5 then '1'
-                    when refer.severity=4 then '2'
-                    when refer.severity=3 then '3'
-                    when refer.severity=2 then '4'
-                    else '5' end as emergency
-                , '99' as ptypedis, '1' as causeout
-                , concat('ว',visit.dr) as provider
-                , now() as d_update
-            from refer_out as refer 
-            LEFT JOIN opd_visit as visit on refer.vn=visit.vn
-            LEFT JOIN opd_vs as vs on refer.vn=vs.vn
-            LEFT JOIN ipd_ipd as ipd on refer.an=ipd.an
-            WHERE refer.hcode=? and ${columnName}=?
-            limit ?;
-        `;
-    const result = await db.raw(sql, [hospCode, hospCode, hospCode, searchNo, maxLimit]);
+    const Sql = `SELECT ? as hospcode, refer.refer_no as referid
+            , concat(?,refer.refer_no) as referid_province
+            , refer.hn as pid, refer.vn as seq, refer.an
+            , concat(refer.date_service,' ',refer.refer_time) as datetime_serv
+            , concat(ipd.admite,' ',ipd.time) as datetime_admit
+            , concat(refer.refer_date,' ',refer.refer_time) as datetime_refer
+            , visit.clinic as clinic_refer, refer.refer_hcode as hosp_destination
+            , refer.sendto as destination_req, vs.cc as CHIEFCOMP
+            , vs.pi as PRESENTILLNESS, vs.pe, refer.treated AS PHYSICALEXAM
+            , refer.history_ill as PH, refer.current_ill as PI
+            , refer.dr_request as REQUEST, visit.dx1 as ICD10
+            , vs.nurse_ph as PASTHISTORY, refer.dx as DIAGLAST
+            , case when visit.dep=1 then 3 else 1 end as ptype
+            , refer.other as detail
+            , case when refer.severity=5 then '1'
+                when refer.severity=4 then '2'
+                when refer.severity=3 then '3'
+                when refer.severity=2 then '4'
+                else '5' end as emergency
+            , '99' as ptypedis, refer.causeout
+            , concat('ว',visit.dr) as provider
+            , now() as d_update
+        from refer_out as refer 
+        LEFT JOIN opd_visit as visit on refer.vn=visit.vn
+        LEFT JOIN opd_vs as vs on refer.vn=vs.vn
+        LEFT JOIN ipd_ipd as ipd on refer.an=ipd.an
+        WHERE refer.hcode=? and ${columnName}=? AND refer.datecancel IS NULL
+        limit ?;`;
+    const result = await db.raw(Sql, [hospCode, hospCode, hospCode, searchNo, maxLimit]);
     return result[0];
   }
 

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const his_ezhosp_1 = require("../../models/his/his_ezhosp");
+const his_ihospital_1 = require("../../models/his/his_ihospital");
 const his_thiades_1 = require("../../models/his/his_thiades");
 const his_hosxpv3_1 = require("../../models/his/his_hosxpv3");
 const his_hosxpv4_1 = require("../../models/his/his_hosxpv4");
@@ -16,12 +16,12 @@ const his_mypcu_1 = require("../../models/his/his_mypcu");
 const his_emrsoft_1 = require("../../models/his/his_emrsoft");
 const his_haos_1 = require("../../models/his/his_haos");
 const his_ssb_srih_1 = require("../../models/his/his_ssb_srih");
-const hisProvider = process.env.HIS_PROVIDER;
+const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 let hisModel;
 switch (hisProvider) {
     case 'ihospital':
     case 'ezhosp':
-        hisModel = new his_ezhosp_1.HisEzhospModel();
+        hisModel = new his_ihospital_1.HisIHospitalModel();
         break;
     case 'thiades':
         hisModel = new his_thiades_1.HisThiadesModel();
