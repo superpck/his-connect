@@ -11,6 +11,7 @@ const hcode = process.env.HOSPCODE;
 const resultText = 'sent_result.txt';
 const apiKey = process.env.NREFER_APIKEY || 'api-key';
 const secretKey = process.env.NREFER_SECRETKEY || 'secret-key';
+const backwardMonth = process.env.NREFER_DATA_BACKWARD_MONTH;
 let sentContent = '';
 let nReferToken = '';
 let sentResult = {};
@@ -234,7 +235,7 @@ async function getReferInIPDByDateDisc(db, sentResultResult) {
         do {
             await getReferInIPD(db, date, 0, sentResultResult);
             date = moment(date).add(1, 'day').format('YYYY-MM-DD');
-        } while (date <= dateEnd);
+        } while (date <= dateEnd && date <= today);
         console.log(process.env.HOSPCODE, ' refer result (refer in)', sentResultResult);
         return true;
     }

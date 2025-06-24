@@ -2,6 +2,7 @@
 ## Feature
   - เพิ่มการตรวจสอบการทำงานของ API Service
   - เพิ่มการส่งข้อมูล nRefer กรณี IPD
+  - เพิ่มการ connect oracleDB
 
 # 3.8.4
 ## Feature

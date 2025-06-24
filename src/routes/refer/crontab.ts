@@ -12,6 +12,7 @@ const hcode = process.env.HOSPCODE;
 const resultText = 'sent_result.txt';
 const apiKey = process.env.NREFER_APIKEY || 'api-key';
 const secretKey = process.env.NREFER_SECRETKEY || 'secret-key';
+const backwardMonth = process.env.NREFER_DATA_BACKWARD_MONTH;
 
 let sentContent = '';
 let nReferToken: any = '';
@@ -110,7 +111,6 @@ async function getReferOut(db: Knex, date: any) {
     //   }
     // }
 
-    // console.log(process.env.NREFER_DATA_BACKWARD_MONTH);
     sentContent += `\rsave refer_history ${date} \r`;
     sentContent += `\rsave refer service data ${date} \r`;
     let index = 0;

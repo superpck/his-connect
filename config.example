@@ -1,8 +1,8 @@
-[Hospital]
+# [Hospital]
 API_LEVEL=hospital
 HOSPCODE=00000
 
-[API]
+# [API]
 PORT=3004
 HOST=0.0.0.0
 ROUTE_PREFIX=
@@ -11,7 +11,7 @@ PM2_NAME=his-connect
 PM2_INSTANCE=2
 AUTO_RESTART=1
 
-[HTTPS]
+# [HTTPS]
 SSL_ENABLE=0
 SSL_KEY=public/ssl/localhost.key
 SSL_CRT=public/ssl/localhost.crt
@@ -22,7 +22,7 @@ SSL_CRT=public/ssl/localhost.crt
 #    hospitalos, jhcis, kpstat, md, mkhospital, thiades, 
 #    himpro, nemo, mypcu, emrsoft, haos other
 
-[HIS DB]
+# [HIS DB]
 HIS_PROVIDER=HOSxPv3
 HIS_DB_CLIENT=mysql2
 HIS_DB_HOST=localhost
@@ -34,8 +34,10 @@ HIS_DB_PASSWORD="password"
 HIS_DB_CHARSET=utf8
 HIS_DB_ENCRYPT=true
 MAX_CONNECTION_PER_MINUTE=1000
+# oracledb
+NODE_ORACLEDB_DRIVER_MODE=thin
 
-[ISDB - for ISONLINE only]
+# [ISDB - for ISONLINE only]
 IS_DB_HOST=localhost
 IS_DB_PORT=3306
 IS_DB_CLIENT=mysql2
@@ -54,7 +56,7 @@ IS_URL=https://connect.moph.go.th/is-api
 IS_MOPH_USER="??"
 IS_MOPH_PASSWORD="??"
 
-[nRefer]
+# [nRefer]
 NREFER_API_URL="https://refer.moph.go.th/api/his"
 NREFER_DATA_BACKWARD_MONTH=0
 
@@ -65,11 +67,11 @@ NREFER_AUTO_SEND=1
 NREFER_AUTO_SEND_EVERY_MINUTE=15
 NREFER_AUTO_SEND_EVERY_HOUR=0
 
-[Chat Config]
+# [Chat Config]
 NOTIFY_URL=https://nrefer.moph.go.th/apis/message
 NOTIFY_TOKEN="$nRefer@MoPH$"
 NOTIFY_CHANNEL="nRefer@<กรุณาระบุ hcode>"
 
-[JWT]
+# [JWT]
 REQUEST_KEY="<ใส่อะไรก็ได้ที่จำได้_10_ถึง_16_ตัว>"
 SECRET_KEY="<ใส่อะไรก็ได้_16_ถึง_64_ตัว_dsjfkKK3@oOse889@wd9dlixXdrTC2LQQqoi*345>"
