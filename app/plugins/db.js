@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const knex_1 = require("knex");
+require('dotenv').config('/config');
 var timezone = 'Asia/Bangkok';
 var options = {
     HIS: {
@@ -33,6 +34,7 @@ var options = {
     }
 };
 const dbConnection = (type = 'HIS') => {
+    var _a;
     type = type.toUpperCase();
     const config = options[type];
     const connection = config.connection;
@@ -56,17 +58,15 @@ const dbConnection = (type = 'HIS') => {
         }
     }
     else if (config.client == 'oracledb') {
+        (_a = process.env).NODE_ORACLEDB_DRIVER_MODE || (_a.NODE_ORACLEDB_DRIVER_MODE = process.env.DB_ORACLEDB_DRIVER_MODE || 'thin');
         opt = {
-            client: config.client,
-            caseSensitive: false,
+            client: 'oracledb',
             connection: {
-                connectString: `${connection.host}/${connection.schema}`,
+                connectString: `${connection.host}:${connection.port | 1521}/${connection.database}`,
                 user: connection.user,
-                password: connection.password,
-                port: +connection.port,
-                externalAuth: false,
-                fetchAsString: ['DATE'],
-            }
+                password: connection.password
+            },
+            pool: { min: 0, max: 10 },
         };
     }
     else if (config.client == 'pg') {

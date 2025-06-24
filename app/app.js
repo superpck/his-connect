@@ -131,12 +131,27 @@ async function connectDB() {
     global.dbHIS = dbConnection('HIS');
     global.dbIs = dbConnection('ISONLINE');
     global.dbISOnline = global.dbIs;
+    const dbClient = process.env.HIS_DB_CLIENT;
     try {
-        const result = await global.dbHIS.raw('SELECT NOW() as date');
-        console.info(`   PID:${process.pid} >> HIS DB server connected, date on DB server: `, moment(result[0][0].date).format('YYYY-MM-DD HH:mm:ss'));
+        let sql = '';
+        switch (dbClient) {
+            case 'oracledb':
+                sql = 'SELECT CURRENT_TIMESTAMP AS "date" FROM dual';
+                break;
+            case 'mssql':
+                sql = 'SELECT SYSDATETIME() AS date';
+                break;
+            default:
+                sql = 'SELECT NOW() as date';
+        }
+        const result = await global.dbHIS.raw(sql);
+        let date = result?.rows?.[0]?.date ??
+            result?.[0]?.date ??
+            result?.[0]?.[0]?.date;
+        console.info(`   ✅ PID:${process.pid} >> HIS DB server '${dbClient}' connected, date on DB server: `, moment(date).format('YYYY-MM-DD HH:mm:ss'));
     }
     catch (error) {
-        console.error(`   PID:${process.pid} >> HIS DB server connect error: `, error.message);
+        console.error(`   ❌ PID:${process.pid} >> HIS DB server '${dbClient}' connect error: `, error.message);
     }
 }
 async function checkConfigFile() {
