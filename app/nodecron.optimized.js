@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = cronjob;
 const moment = require("moment");
 const child_process_1 = require("child_process");
 const shell = require("shelljs");
@@ -181,4 +180,5 @@ async function cronjob(fastify) {
         }
     });
 }
+exports.default = cronjob;
 updateProcessState();
