@@ -1,23 +1,46 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const path = require("path");
+require('dotenv').config({ path: path.join(__dirname, '../../../config') });
 var fastify = require('fastify');
 const moment = require("moment");
 const axios_1 = require("axios");
 const hismodel_1 = require("./../his/hismodel");
 var fs = require('fs');
 const hcode = process.env.HOSPCODE;
-const hisProvider = process.env.HIS_PROVIDER;
 const resultText = 'sent_result.txt';
+const apiKey = process.env.NREFER_APIKEY || 'api-key';
+const secretKey = process.env.NREFER_SECRETKEY || 'secret-key';
+const backwardMonth = process.env.NREFER_DATA_BACKWARD_MONTH;
 let sentContent = '';
 let nReferToken = '';
+let sentResult = {};
 let crontabConfig = {
-    client_ip: '', version: global.appDetail.version,
-    subVersion: global.appDetail.subVersion
+    client_ip: '', version: global.appDetail?.version || '',
+    subVersion: global.appDetail?.subVersion || ''
+};
+let db;
+const processSend = (request, reply, dbConn, config = {}) => {
+    db = dbConn;
+    crontabConfig = { ...crontabConfig, ...config };
+    crontabConfig['client_ip'] = '127.0.0.1';
+    if (request) {
+        if (request.headers) {
+            crontabConfig['client_ip'] = request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || request.ip || request.raw['ip'] || crontabConfig['client_ip'];
+        }
+        else {
+            crontabConfig['client_ip'] = request.ip || crontabConfig['client_ip'];
+        }
+    }
+    if (crontabConfig?.service == 'ipdChecking') {
+        return ipdChecking(request, reply);
+    }
+    else {
+        return sendMoph(request, reply, db);
+    }
 };
 async function sendMoph(req, reply, db) {
     const dateNow = moment().format('YYYY-MM-DD');
-    const apiKey = process.env.NREFER_APIKEY || 'api-key';
-    const secretKey = process.env.NREFER_SECRETKEY || 'secret-key';
     sentContent = `${global.appDetail.name} v.${global.appDetail.version}-${global.appDetail.subVersion} ` +
         moment().format('YYYY-MM-DD HH:mm:ss') + ' data:' + dateNow + "\r\n";
     const resultToken = await getNReferToken(apiKey, secretKey);
@@ -66,7 +89,6 @@ async function sendRefer(db, date) {
 async function getReferOut(db, date) {
     try {
         const referout = await hismodel_1.default.getReferOut(db, date, hcode, null);
-        console.log('******** >> refer out', date, referout.length, ' cases');
         if (!referout || referout.length == 0) {
             return '';
         }
@@ -74,7 +96,7 @@ async function getReferOut(db, date) {
         sentContent += `\rsave refer_history ${date} \r`;
         sentContent += `\rsave refer service data ${date} \r`;
         let index = 0;
-        let sentResult = {
+        sentResult = {
             date,
             pid: process.pid,
             referout: { success: 0, fail: 0, vnFail: [] },
@@ -86,6 +108,9 @@ async function getReferOut(db, date) {
             drugOpd: { success: 0, fail: 0 },
             drugAllergy: { success: 0, fail: 0 },
             investigationRefer: { success: 0, fail: 0 },
+            admission: { success: 0, fail: 0 },
+            drugIpd: { success: 0, fail: 0 },
+            diagnosisIpd: { success: 0, fail: 0 },
             provider: 0,
         };
         for (let row of referout) {
@@ -144,7 +169,6 @@ async function getReferIn(db, date) {
     };
     try {
         const referResult = await hismodel_1.default.getReferResult(db, date, hcode);
-        console.log('******** >> refer in', date, referResult.length, ' cases');
         if (!referResult || referResult.length == 0) {
             return '';
         }
@@ -195,6 +219,7 @@ async function getReferIn(db, date) {
 async function getReferInIPDByDateDisc(db, sentResultResult) {
     try {
         let backward = 2;
+        let today = moment().format('YYYY-MM-DD');
         let dateEnd = moment().format('YYYY-MM-DD');
         const hour = moment().get('hour');
         if ([2, 12, 17].indexOf(hour) > 0 && moment().get('minute') >= (60 - crontabConfig.minute)) {
@@ -210,7 +235,7 @@ async function getReferInIPDByDateDisc(db, sentResultResult) {
         do {
             await getReferInIPD(db, date, 0, sentResultResult);
             date = moment(date).add(1, 'day').format('YYYY-MM-DD');
-        } while (date > dateEnd);
+        } while (date <= dateEnd && date <= today);
         console.log(process.env.HOSPCODE, ' refer result (refer in)', sentResultResult);
         return true;
     }
@@ -220,6 +245,9 @@ async function getReferInIPDByDateDisc(db, sentResultResult) {
     }
 }
 async function getReferInIPD(db, dateDisc, resultOnly, sentResultResult) {
+    if (!dateDisc || dateDisc > moment().format('YYYY-MM-DD')) {
+        return null;
+    }
     let ipdData = await hismodel_1.default.getAdmission(db, 'datedisc', dateDisc);
     console.log(moment().format('HH:mm:ss'), process.env.HOSPCODE, `Get refer result from IPD discharge date ${dateDisc} = ${ipdData.length} case`);
     for (let row of ipdData) {
@@ -258,7 +286,7 @@ async function sendReferOut(row, sentResult) {
         const data = {
             HOSPCODE: hcode,
             REFERID: referId,
-            PID: row.PID || row.pid || row.HN || row.hn,
+            PID: row.pid || row.hn,
             SEQ,
             AN: row.an || '',
             CID: row.cid,
@@ -283,10 +311,11 @@ async function sendReferOut(row, sentResult) {
             CAUSEOUT: row.causeout || '',
             REQUEST: row.request || '',
             PROVIDER: row.provider || '',
+            detail: row.detail || '',
             REFERID_PROVINCE: referProvId,
             referout_type: row.referout_type || 1,
             D_UPDATE: row.d_update || d_update,
-            his: hisProvider,
+            his: process.env.HIS_PROVIDER,
             typesave: 'autosent'
         };
         const saveResult = await referSending('/save-refer-history', data);
@@ -673,6 +702,48 @@ async function getLabResult(db, row, sentResult) {
     }
     return rowsLabResult;
 }
+async function ipdChecking(req, res) {
+    try {
+        const resultToken = await getNReferToken(apiKey, secretKey);
+        if (resultToken && resultToken.statusCode == 200 && resultToken.token) {
+            nReferToken = resultToken.token;
+        }
+        else {
+            console.log('Get nRefer token error', resultToken.message);
+            return false;
+        }
+        sentResult = {
+            admission: { success: 0, fail: 0 },
+            drugIpd: { success: 0, fail: 0 },
+            diagnosisIpd: { success: 0, fail: 0 },
+        };
+        let today = moment().format('YYYY-MM-DD');
+        let dateStart = moment().subtract(2, 'months').format('YYYY-MM-DD');
+        let dateEnd = moment().subtract(1, 'days').format('YYYY-MM-DD');
+        let date = dateStart;
+        do {
+            const result = await getNReferIPD({ date });
+            let response = result?.response || result;
+            let rows = response.rows || [];
+            let anList = [];
+            for (let row of rows) {
+                const an = row.AN || row.an || '';
+                const vn = row.SEQ || row.seq || row.VN || row.vn || '';
+                if (an && vn) {
+                    anList.push(an);
+                    await getAdmission(db, 'vn', vn);
+                }
+            }
+            console.log(`Send IPD backward: ${date} founed: ${rows.length} rows, IPD sent: ${anList.length} rows`);
+            date = moment(date).add(1, 'day').format('YYYY-MM-DD');
+        } while (date <= dateEnd && date <= today);
+        console.log(sentResult);
+        return sentResult;
+    }
+    catch (error) {
+        console.log('ipdChecking', error.message);
+    }
+}
 async function getAdmission(db, type = 'VN', searchValue) {
     let rows;
     if (type == 'datedisc') {
@@ -684,10 +755,72 @@ async function getAdmission(db, type = 'VN', searchValue) {
     sentContent += '  - admission = ' + rows.length + '\r';
     if (rows && rows.length) {
         for (const row of rows) {
+            const an = row.AN || row.an;
             await sendAdmission(row);
+            const [resultIpd, resultIpdDx] = await Promise.all([
+                drugIPD(db, an),
+                getDiagnosisIpd(db, an),
+            ]).finally(() => { });
         }
     }
     return rows;
+}
+async function drugIPD(db, an) {
+    try {
+        let ipdDrug = [];
+        const rows = await hismodel_1.default.getDrugIpd(db, an, hcode);
+        sentContent += '  - drug_ipd = ' + rows.length + '\r';
+        if (rows && rows.length) {
+            for (let r of rows) {
+                for (let fld in r) {
+                    r[fld.toLowerCase()] = r[fld];
+                }
+                if (r.dname) {
+                    ipdDrug.push({
+                        HOSPCODE: r.hospcode || hcode,
+                        PID: r.pid || r.hn,
+                        AN: r.an,
+                        DATETIME_ADMIT: r.datetime_admit || null,
+                        WARDSTAY: r.wardstay || '',
+                        TYPEDRUG: r.typedrug || '',
+                        DIDSTD: r.didstd || '',
+                        DNAME: r.dname || '',
+                        DATESTART: r.datestart || null,
+                        DATEFINISH: r.datefinish || null,
+                        AMOUNT: r.amount || null,
+                        UNIT: r.unit || null,
+                        UNIT_PACKING: r.unit_packing || null,
+                        DRUGPRICE: r.drugprice || null,
+                        DRUGCOST: r.drugcost || null,
+                        PROVIDER: r.provider || r.dr || null,
+                        D_UPDATE: r.d_update || null,
+                        CID: r.cid || null,
+                        DID: r.did || null,
+                        DID_TMT: r.did_tmt || null,
+                        tmt: r.tmt || null,
+                        ID: r.id || null,
+                        drug_usage: r.drug_usage || null,
+                        caution: r.caution || null
+                    });
+                }
+            }
+            if (ipdDrug.length > 0) {
+                const saveResult = await referSending('/save-drug-ipd', ipdDrug);
+                sentContent += '    -- ' + an + ' ' + JSON.stringify(saveResult) + '\r';
+                if (saveResult.statusCode == 200) {
+                    sentResult.drugIpd.success += 1;
+                }
+                else {
+                    console.log('drug ipd error: vn ', an, saveResult.message || saveResult);
+                    sentResult.drugIpd.fail += 1;
+                }
+            }
+        }
+        return ipdDrug;
+    }
+    catch (error) {
+        return false;
+    }
 }
 async function sendAdmission(row) {
     const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
@@ -735,7 +868,63 @@ async function sendAdmission(row) {
         D_UPDATE: row.d_update || d_update,
     };
     const saveResult = await referSending('/save-admission', data);
+    if (saveResult.statusCode == 200) {
+        sentResult.admission.success += 1;
+    }
+    else {
+        sentResult.admission.fail += 1;
+    }
     sentContent += '    -- AN ' + data.AN + ' ' + (saveResult.result || saveResult.message) + '\r';
+}
+async function getDiagnosisIpd(db, an) {
+    try {
+        const rows = await hismodel_1.default.getDiagnosisIpd(db, 'an', an);
+        sentContent += '  - diagnosis_ipd = ' + rows.length + '\r';
+        if (rows && rows.length) {
+            let r = [];
+            for (const row of rows) {
+                for (let fld in row) {
+                    row[fld.toLowerCase()] = row[fld];
+                }
+                if (row.diagcode && row.an) {
+                    r.push({
+                        HOSPCODE: row.hospcode,
+                        PID: row.pid || row.hn,
+                        AN: row.an,
+                        DATETIME_ADMIT: row.datetime_admit,
+                        WARDDIAG: row.warddiag || '',
+                        DIAGTYPE: row.diagtype || '',
+                        DIAGCODE: row.diagcode || '',
+                        DIAGNAME: row.diagname || '',
+                        CLINIC: row.clinic || '',
+                        PROVIDER: row.provider || row.dr || '',
+                        CODESET: row.codeset || '',
+                        D_UPDATE: row.d_update || '',
+                        CID: row.cid || '',
+                        ID: row.id || null,
+                        BR: row.br || null,
+                        AIS: row.ais || null,
+                        ncd_id: row.ncd_id || null
+                    });
+                }
+            }
+            if (r.length > 0) {
+                const saveResult = await referSending('/save-diagnosis-ipd', r);
+                sentContent += '    -- ' + an + ' ' + JSON.stringify(saveResult) + '\r';
+                if (saveResult.statusCode === 200) {
+                    sentResult.diagnosisIpd.success += 1;
+                }
+                else {
+                    sentResult.diagnosisIpd.fail += 1;
+                    console.log('save-diagnosis-ipd', an, saveResult.message || saveResult);
+                }
+            }
+        }
+        return rows;
+    }
+    catch (error) {
+        return false;
+    }
 }
 async function getProcedureIpd(db, an) {
     if (!an) {
@@ -893,6 +1082,30 @@ async function getNReferToken(apiKey, secretKey) {
         return error;
     }
 }
+async function getNReferIPD(bodyData = {}) {
+    const fixedUrl = 'https://nrefer.moph.go.th/ws';
+    const body = {
+        ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
+        ...bodyData,
+        processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
+        sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version, subVersion: crontabConfig.subVersion,
+        hisProvider: process.env.HIS_PROVIDER
+    };
+    const url = fixedUrl + '/v3/refer-history';
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + nReferToken,
+        'Source-Agent': 'HISConnect-' + (crontabConfig.version || 'x') + '-' + (crontabConfig.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+    };
+    try {
+        const { status, data } = await axios_1.default.post(url, body, { headers });
+        return data;
+    }
+    catch (error) {
+        console.log('referSending error ', error.message);
+        return error;
+    }
+}
 async function writeResult(file, content) {
     fs.writeFile(file, content, async function (err) {
         if (err) {
@@ -911,17 +1124,4 @@ async function writeResult(file, content) {
         }
     });
 }
-const router = (request, reply, dbConn, config = {}) => {
-    crontabConfig = config;
-    crontabConfig['client_ip'] = '127.0.0.1';
-    if (request) {
-        if (request.headers) {
-            crontabConfig['client_ip'] = request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || request.ip || request.raw['ip'] || crontabConfig['client_ip'];
-        }
-        else {
-            crontabConfig['client_ip'] = request.ip || crontabConfig['client_ip'];
-        }
-    }
-    return sendMoph(request, reply, dbConn);
-};
-module.exports = router;
+module.exports = { processSend, ipdChecking };

@@ -11,7 +11,8 @@ let pm2Name = 'unknown';
 let pm2List = [];
 const instanceId = process.env.NODE_APP_INSTANCE ? +process.env.NODE_APP_INSTANCE + 1 : null;
 let onProcess = {
-    sendNRefer: false, sendNReferIPD: false, sendISOnline: false
+    sendNRefer: false, sendNReferIPD: false, sendISOnline: false,
+    sendCupDataCenter: false
 };
 let lastProcess = {};
 async function cronjob(fastify) {
@@ -27,6 +28,7 @@ async function cronjob(fastify) {
     let timingSchedule = [];
     timingSchedule['isonline'] = { version: global.appDetail.version, apiSubVersion: global.appDetail.subVersion };
     timingSchedule['nrefer'] = { version: global.appDetail.version, apiSubVersion: global.appDetail.subVersion };
+    timingSchedule['cupDataCenter'] = { version: global.appDetail.version, apiSubVersion: global.appDetail.subVersion };
     timingSchedule['isonline'].autosend = +process.env.IS_AUTO_SEND === 1 || false;
     timingSchedule['isonline'].minute = process.env.IS_AUTO_SEND_EVERY_MINUTE ? parseInt(process.env.IS_AUTO_SEND_EVERY_MINUTE) : 0;
     timingSchedule['isonline'].hour = process.env.IS_AUTO_SEND_EVERY_HOUR ? parseInt(process.env.IS_AUTO_SEND_EVERY_HOUR) : 0;
@@ -44,6 +46,11 @@ async function cronjob(fastify) {
     if (timingSchedule['nrefer'].minute <= 0) {
         timingSchedule['nrefer'].autosend = false;
     }
+    timingSchedule['cupDataCenter'].autosend = +process.env.HIS_DATACENTER_ENABLE === 1 || false;
+    timingSchedule['cupDataCenter'].minute =
+        (process.env.HIS_DATACENTER_SEND_EVERY_MINUTE ? +process.env.HIS_DATACENTER_SEND_EVERY_MINUTE : 0) +
+            (process.env.HIS_DATACENTER_SEND_EVERY_HOUR ? +process.env.HIS_DATACENTER_SEND_EVERY_HOUR : 2) * 60;
+    timingSchedule['cupDataCenter'].minute = timingSchedule['cupDataCenter'].minute < 20 ? 20 : timingSchedule['cupDataCenter'].minute;
     const minuteSinceLastNight = (+moment().get('hour')) * 60 + (+moment().get('minute'));
     if (firstProcessPid === process.pid) {
         console.log(moment().format('HH:mm:ss'), " Start API for Hospcode", process.env.HOSPCODE);
@@ -53,6 +60,9 @@ async function cronjob(fastify) {
         }
         if (timingSchedule['isonline'].autosend) {
             console.log('crontab ISOnline start every', timingSchedule['isonline'].minute, ' (minute) from midnight.');
+        }
+        if (timingSchedule['cupDataCenter'].autosend) {
+            console.log('crontab Data Center start every', timingSchedule['cupDataCenter'].minute, ' (minute) from midnight.');
         }
     }
     cron.schedule(timingSch, async (req, res) => {

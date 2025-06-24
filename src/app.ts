@@ -1,17 +1,17 @@
-const fs = require('node:fs');
 // Check config file ====================================
+const fs = require('node:fs');
 checkConfigFile();
 
 import path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../config') });
+
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import fastify, { FastifyRequest } from 'fastify';
 import * as moment from 'moment';
-import cronjob from './nodecron';
+import cronjob from './nodecron.optimized';
 
 const serveStatic = require('serve-static');
 var crypto = require('crypto');
-
-require('dotenv').config({ path: path.join(__dirname, '../config') });
 
 import helmet = require('@fastify/helmet');
 
@@ -160,7 +160,6 @@ var options: any = {
 app.listen(options, (err) => {
   if (err) throw err;
   const instanceId = process.env.NODE_APP_INSTANCE || '0';
-  console.log("NODE App instance:", instanceId);
   console.info(`${moment().format('HH:mm:ss')} HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid}`);
 });
 
@@ -171,11 +170,29 @@ async function connectDB() {
   global.dbIs = dbConnection('ISONLINE');
   global.dbISOnline = global.dbIs;
 
+  const dbClient = process.env.HIS_DB_CLIENT;
   try {
-    const result = await global.dbHIS.raw('SELECT NOW() as date');
-    console.info(`   PID:${process.pid} >> HIS DB server connected, date on DB server: `, moment(result[0][0].date).format('YYYY-MM-DD HH:mm:ss'));
+    let sql = '';
+
+    switch (dbClient) {
+      case 'oracledb':
+        sql = 'SELECT CURRENT_TIMESTAMP AS "date" FROM dual';
+        break;
+      case 'mssql':
+        sql = 'SELECT SYSDATETIME() AS date';
+        break;
+      default:
+        sql = 'SELECT NOW() as date';
+    }
+
+    const result = await global.dbHIS.raw(sql);
+    let date =
+      result?.rows?.[0]?.date ??
+      result?.[0]?.date ??
+      result?.[0]?.[0]?.date;
+    console.info(`   ✅ PID:${process.pid} >> HIS DB server '${dbClient}' connected, date on DB server: `, moment(date).format('YYYY-MM-DD HH:mm:ss'));
   } catch (error) {
-    console.error(`   PID:${process.pid} >> HIS DB server connect error: `, error.message);
+    console.error(`   ❌ PID:${process.pid} >> HIS DB server '${dbClient}' connect error: `, error.message);
   }
 }
 

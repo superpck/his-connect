@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 let rootPrefix = process.env.ROUTE_PREFIX || '';
 rootPrefix = rootPrefix ? ('/' + rootPrefix) : '';
-const hisProvider = process.env.HIS_PROVIDER;
+const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 
 export default async function router(fastify: FastifyInstance) {
   fastify.register(require('./routes/index'), { prefix: "/" });
@@ -12,9 +12,6 @@ export default async function router(fastify: FastifyInstance) {
   fastify.register(require('./routes/refer/v3'), { prefix: `${rootPrefix}/refer` });
   fastify.register(require('./routes/refer/v3'), { prefix: `${rootPrefix}/refer/his` });
   fastify.register(require('./routes/refer/local'), { prefix: `${rootPrefix}/refer/local` });
-
-  // HDC Connect (รอประสาน สสจ.)
-  // fastify.register(require('./routes/hdc/index'), { prefix: `${rootPrefix}/hdc`, logger: true });
 
   // ISOnline service
   fastify.register(require('./routes/isonline/index'), { prefix: `${rootPrefix}/isonline`, logger: true });

@@ -4,7 +4,7 @@ import * as moment from 'moment';
 import * as _ from 'lodash';
 
 import hisModel from './hismodel';
-const hisProvider = process.env.HIS_PROVIDER;
+const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 
 import { Jwt } from './../../plugins/jwt';
 var jwt = new Jwt();
@@ -45,7 +45,7 @@ const router = (fastify, { }, next) => {
         version: global.appDetail.version,
         subVersion: global.appDetail.subVersion,
         his: loggedIn ? hisProvider : undefined,
-        hisProvider: hisProviderList.indexOf(process.env.HIS_PROVIDER) >= 0,
+        hisProvider: hisProviderList.indexOf(process.env.HIS_PROVIDER.toLowerCase()) >= 0,
         connection: connection,
         message: connection ? 'Success' : ('Fail:' + result)
       });

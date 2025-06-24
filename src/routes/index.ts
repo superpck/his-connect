@@ -7,10 +7,7 @@ var fs = require('fs');
 import { Jwt } from './../plugins/jwt';
 var jwt = new Jwt();
 
-const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb'
-  , 'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades'
-  , 'himpro', 'nemo', 'mypcu', 'emrsoft other'];
-const hisProvider = process.env.HIS_PROVIDER;
+const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 const resultText = './sent_result.txt';
 
 const router = (fastify, { }, next) => {

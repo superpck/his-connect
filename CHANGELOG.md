@@ -1,3 +1,9 @@
+# 3.8.5
+## Feature
+  - เพิ่มการตรวจสอบการทำงานของ API Service
+  - เพิ่มการส่งข้อมูล nRefer กรณี IPD
+  - เพิ่มการ connect oracleDB
+
 # 3.8.4
 ## Feature
   - nRefer: ปรับการ Get Provider council ใน JHCIS ให้ตรวจสอบตาม prename กรณีไม่ได้ระบุ council

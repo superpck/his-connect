@@ -24,7 +24,7 @@ import { Jwt } from './../../plugins/jwt';
 import moment = require('moment');
 var jwt = new Jwt();
 
-const provider = process.env.HIS_PROVIDER;
+const provider = process.env.HIS_PROVIDER.toLowerCase();
 let hisModel: any;
 
 switch (provider) {
@@ -105,7 +105,7 @@ const router = (fastify, { }, next) => {
         ok: result && result.length > 0,
         version: global.appDetail.version,
         subVersion: global.appDetail.subVersion,
-        hisProvider: hisProviderList.indexOf(process.env.HIS_PROVIDER) >= 0,
+        hisProvider: process.env.HIS_PROVIDER,
         connection: result && result.length > 0,
         message: result && result.length > 0 ? undefined : (result.message || result)
       });

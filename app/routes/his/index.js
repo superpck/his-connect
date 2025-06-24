@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const http_status_codes_1 = require("http-status-codes");
 const moment = require("moment");
 const hismodel_1 = require("./hismodel");
-const hisProvider = process.env.HIS_PROVIDER;
+const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 const jwt_1 = require("./../../plugins/jwt");
 var jwt = new jwt_1.Jwt();
 const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb',
@@ -37,7 +37,7 @@ const router = (fastify, {}, next) => {
                 version: global.appDetail.version,
                 subVersion: global.appDetail.subVersion,
                 his: loggedIn ? hisProvider : undefined,
-                hisProvider: hisProviderList.indexOf(process.env.HIS_PROVIDER) >= 0,
+                hisProvider: hisProviderList.indexOf(process.env.HIS_PROVIDER.toLowerCase()) >= 0,
                 connection: connection,
                 message: connection ? 'Success' : ('Fail:' + result)
             });

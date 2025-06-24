@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.HisEzhospModel = void 0;
+exports.HisEzhosp__Model = void 0;
 const moment = require("moment");
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
-class HisEzhospModel {
+class HisEzhosp__Model {
     check() {
         return true;
     }
@@ -82,7 +82,7 @@ class HisEzhospModel {
             .leftJoin('hospdata.refer_in', 'refer.vn', 'refer_in.vn')
             .select(db.raw(`"${hcode}" as hospcode`))
             .select(db.raw('concat(refer.refer_date, " " , refer.refer_time) as refer_date'))
-            .select('refer.refer_no as referid', 'refer.refer_hcode as hosp_destination', 'refer_in.refer as hospcode_origin', 'refer_in.refer_no as referid_origin', 'visit.hn', 'pt.no_card as cid', 'refer.vn as seq', 'ipd.an', 'pt.title as prename', 'pt.name as fname', 'pt.surname as lname', 'pt.birth as dob', 'pt.sex', 'refer.icd10 as dx', 'visit.dx as diaglast', 'vs.nurse_cc as chiefcomp', 'pi_dr as pi', 'pe_dr as pe', 'nurse_ph as ph', db.raw('IF(ipd.an IS NULL,null, concat(ipd.admite," ",ipd.time)) as datetime_admit'), db.raw(`IF(visit.dr > 0, CONCAT("ว",visit.dr),'') as provider`), `visit.dr`, 'refer.dr_request as request', 'refer.cause1 as causeout')
+            .select('refer.refer_no as referid', 'refer.refer_type as referout_type', 'refer.refer_hcode as hosp_destination', 'refer_in.refer as hospcode_origin', 'refer_in.refer_no as referid_origin', 'visit.hn', 'pt.no_card as cid', 'refer.vn as seq', 'ipd.an', 'pt.title as prename', 'pt.name as fname', 'pt.surname as lname', 'pt.birth as dob', 'pt.sex', 'refer.history_ill as PH', 'refer.current_ill as PI', 'refer.dr_request as REQUEST', 'visit.dx1 as ICD10', 'refer.dx as DIAGLAST', 'refer.dx', 'vs.nurse_cc as chiefcomp', 'pi_dr as pi', 'pe_dr as pe', 'nurse_ph as ph', db.raw('IF(ipd.an IS NULL,null, concat(ipd.admite," ",ipd.time)) as datetime_admit'), db.raw(`IF(visit.dr > 0, CONCAT("ว",visit.dr),'') as provider`), `visit.dr`, 'refer.dr_request as request', 'refer.cause1 as causeout')
             .where('refer.hcode', hospCode);
         if (visitNo) {
             sql.where(`refer.vn`, visitNo);
@@ -231,6 +231,7 @@ class HisEzhospModel {
         columnName = columnName === 'visitNo' ? 'result.vn' : columnName;
         columnName = columnName === 'pid' ? 'result.hn' : columnName;
         columnName = columnName === 'cid' ? 'result.no_card' : columnName;
+        columnName = columnName === 'an' ? 'result.an' : columnName;
         return db('hospdata.view_lab_result as result')
             .select(db.raw('"' + hcode + '" as hospcode'))
             .select(db.raw('"' + hcode + referID + '" as REFERID'))
@@ -340,15 +341,18 @@ class HisEzhospModel {
             .where({ an })
             .limit(maxLimit);
     }
-    getDrugIpd(db, an, hospCode = hisHospcode) {
-        return db('view_pharmacy_ipd_psctmc as drug')
-            .select(db.raw('"' + hcode + '" as hospcode'))
-            .select('hn as pid', 'an')
-            .select(db.raw('concat(admite, " " , timeadmit) as datetime_admit'))
-            .select('clinic_std as wardstay', 'drugname as dname', 'total as amount', 'unitsale as unit', 'dr_disc as provider', 'warning as caution', 'cid', 'lastupdate as d_update')
-            .where('an', an)
-            .where('odr_type', '1')
-            .limit(maxLimit);
+    async getDrugIpd(db, an, hospCode = hisHospcode) {
+        try {
+            return await db('pharmacy.view_supreme_prescriptiondetail as drug')
+                .select(db.raw('"' + hcode + '" as hospcode'), 'hn as pid', 'an', 'cid', db.raw("date_format(dateadm,'%Y-%m-%d %H:%i:%s') as DATETIME_ADMIT"), 'prioritycode as TYPEDRUG', 'ward_standard as WARDSTAY', 'orderitemcode as DID', 'orderitemname as DNAME', 'orderqty as AMOUNT', 'orderunitcode as UNIT', 'startdate as DATESTART', 'enddate as DATEFINISH', 'totalprice as DRUGPRICE', 'freetext2 as drug_usage', 'tmtcode as DID_TMT', 'tmtcode as tmt', 'tmtcode as DIDSTD', 'dr_disc as provider', 'lastmodified as D_UPDATE')
+                .where({ an, prioritycode: 'H' })
+                .where('orderqty', '>', 0)
+                .limit(1000);
+        }
+        catch (error) {
+            console.log('getDrugIpd error:', error?.status || '', error?.message || error);
+            throw new Error(error);
+        }
     }
     getAccident(db, visitNo, hospCode = hisHospcode) {
         return db('accident')
@@ -384,7 +388,9 @@ class HisEzhospModel {
                 , visit.clinic as clinic_refer, refer.refer_hcode as hosp_destination
                 , refer.sendto as destination_req, vs.cc as CHIEFCOMP
                 , vs.pi as PRESENTILLNESS, vs.pe AS PHYSICALEXAM
-                , vs.nurse_ph as PASTHISTORY, visit.dx1 as DIAGLAST
+                , refer.history_ill as PH, refer.current_ill as PI
+                , refer.dr_request as REQUEST, visit.dx1 as ICD10
+                , vs.nurse_ph as PASTHISTORY, refer.dx as DIAGLAST
                 , case when visit.dep=1 then 3 else 1 end as ptype
                 , case when refer.severity=5 then '1'
                     when refer.severity=4 then '2'
@@ -465,4 +471,4 @@ class HisEzhospModel {
             .limit(maxLimit);
     }
 }
-exports.HisEzhospModel = HisEzhospModel;
+exports.HisEzhosp__Model = HisEzhosp__Model;

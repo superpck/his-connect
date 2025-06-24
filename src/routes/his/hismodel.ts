@@ -1,5 +1,5 @@
 // ห้ามแก้ไข file นี้ //
-import { HisEzhospModel } from '../../models/his/his_ezhosp';
+import { HisIHospitalModel } from '../../models/his/his_ihospital';
 import { HisThiadesModel } from '../../models/his/his_thiades';
 import { HisHosxpv3Model } from '../../models/his/his_hosxpv3';
 import { HisHosxpv4Model } from '../../models/his/his_hosxpv4';
@@ -16,13 +16,13 @@ import { HisEmrSoftModel } from '../../models/his/his_emrsoft';
 import { HisHaosModel } from '../../models/his/his_haos';
 import { HisSsbSriHModel } from '../../models/his/his_ssb_srih';
 
-const hisProvider = process.env.HIS_PROVIDER;
+const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 
 let hisModel: any;
 switch (hisProvider) {
   case 'ihospital':
   case 'ezhosp':
-    hisModel = new HisEzhospModel();
+    hisModel = new HisIHospitalModel();
     break;
   case 'thiades':
     hisModel = new HisThiadesModel();

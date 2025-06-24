@@ -1,4 +1,5 @@
 import knex from 'knex';
+require('dotenv').config('/config');
 
 var timezone = 'Asia/Bangkok';
 var options = {
@@ -52,21 +53,19 @@ const dbConnection = (type = 'HIS') => {
         }
       }
     };
-    if (connection?.encrypt){
+    if (connection?.encrypt) {
       opt.connection.encrypt = connection.encrypt;
     }
   } else if (config.client == 'oracledb') {
+    process.env.NODE_ORACLEDB_DRIVER_MODE ||= process.env.DB_ORACLEDB_DRIVER_MODE || 'thin';
     opt = {
-      client: config.client,
-      caseSensitive: false,
+      client: 'oracledb',
       connection: {
-        connectString: `${connection.host}/${connection.schema}`,
+        connectString: `${connection.host}:${connection.port | 1521}/${connection.database}`,
         user: connection.user,
-        password: connection.password,
-        port: +connection.port,
-        externalAuth: false,
-        fetchAsString: ['DATE'],
-      }
+        password: connection.password
+      },
+      pool: { min: 0, max: 10 },
     };
   } else if (config.client == 'pg') {
     opt = {

@@ -3,7 +3,6 @@ import * as HttpStatus from 'http-status-codes';
 import * as moment from 'moment';
 var crypto = require('crypto');
 
-const hisProvider = process.env.HIS_PROVIDER;
 import hisModel from './../his/hismodel';
 import { PccModel } from '../../models/his/pcc-model';
 
@@ -31,7 +30,7 @@ const router = (fastify, { }, next) => {
       if (result && result.length) {
         reply.status(HttpStatus.OK).send({
           statusCode: HttpStatus.OK,
-          hisProvider: hisProvider, connection: true,
+          hisProvider: process.env.HIS_PROVIDER, connection: true,
           RequestKey: requestKeyVerified,
         });
       } else {

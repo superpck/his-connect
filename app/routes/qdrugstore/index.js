@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const HttpStatus = require("http-status-codes");
 const moment = require("moment");
 var crypto = require('crypto');
-const hisProvider = process.env.HIS_PROVIDER;
 const hismodel_1 = require("./../his/hismodel");
 const pcc_model_1 = require("../../models/his/pcc-model");
 const pccModel = new pcc_model_1.PccModel();
@@ -24,7 +23,7 @@ const router = (fastify, {}, next) => {
             if (result && result.length) {
                 reply.status(HttpStatus.OK).send({
                     statusCode: HttpStatus.OK,
-                    hisProvider: hisProvider, connection: true,
+                    hisProvider: process.env.HIS_PROVIDER, connection: true,
                     RequestKey: requestKeyVerified,
                 });
             }

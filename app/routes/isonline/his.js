@@ -24,7 +24,7 @@ const his_haos_model_1 = require("../../models/isonline/his_haos.model");
 const jwt_1 = require("./../../plugins/jwt");
 const moment = require("moment");
 var jwt = new jwt_1.Jwt();
-const provider = process.env.HIS_PROVIDER;
+const provider = process.env.HIS_PROVIDER.toLowerCase();
 let hisModel;
 switch (provider) {
     case 'ezhosp':
@@ -101,7 +101,7 @@ const router = (fastify, {}, next) => {
                 ok: result && result.length > 0,
                 version: global.appDetail.version,
                 subVersion: global.appDetail.subVersion,
-                hisProvider: hisProviderList.indexOf(process.env.HIS_PROVIDER) >= 0,
+                hisProvider: process.env.HIS_PROVIDER,
                 connection: result && result.length > 0,
                 message: result && result.length > 0 ? undefined : (result.message || result)
             });
