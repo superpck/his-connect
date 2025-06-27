@@ -282,7 +282,7 @@ async function getReferInIPDByDateDisc(db: any, sentResultResult: any) {
 }
 
 async function getReferInIPD(db: any, dateDisc: any, resultOnly: number, sentResultResult: any) {
-  if (!dateDisc || dateDisc>moment().format('YYYY-MM-DD')) {
+  if (!dateDisc || dateDisc > moment().format('YYYY-MM-DD')) {
     return null;
   }
   let ipdData: any = await hisModel.getAdmission(db, 'datedisc', dateDisc);
@@ -522,6 +522,7 @@ async function getService(db, visitNo, sentResult) {
         row[r.toLowerCase()] = row[r];
       }
       const data = {
+        ...row,
         HOSPCODE: row.hospcode,
         PID: row.pid || row.hn,
         SEQ: row.seq || row.vn || visitNo || '',

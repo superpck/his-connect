@@ -53,8 +53,7 @@ function getMyPM2Name(processes, myPid) {
 }
 function getFirstPidOfName(processes, name) {
     const matches = processes
-        .filter(p => p.name === name && p.pm2_env.status === 'online')
-        .sort((a, b) => a.pid - b.pid);
+        .filter(p => p.name === name && p.pm2_env.status === 'online');
     return matches[0]?.pid || process.pid;
 }
 function updateProcessState() {
@@ -65,7 +64,7 @@ function updateProcessState() {
     processState.pm2List = sameNameProcesses.map(p => p.pid);
     processState.firstProcessPid = getFirstPidOfName(processes, processState.pm2Name);
     processState.isFirstProcess = processState.firstProcessPid === myPid;
-    console.log(`${getTimestamp()} Process info: ${processState.pm2Name} (PID: ${myPid}), First PID: ${processState.firstProcessPid}, Is first? ${processState.isFirstProcess ? '✅ YES' : '❌ NO'}`);
+    console.log(`${instanceId}.${processState.pm2Name} (PID: ${myPid}), First PID: ${processState.firstProcessPid}, Is first? ${processState.isFirstProcess ? '✅ YES' : '❌ NO'}`);
 }
 function configureTimingSchedules() {
     const timingSchedule = {};
@@ -181,4 +180,3 @@ async function cronjob(fastify) {
     });
 }
 exports.default = cronjob;
-updateProcessState();

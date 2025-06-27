@@ -5,9 +5,20 @@ const moment = require("moment");
 const maxLimit = 250;
 let hisHospcode = process.env.HOSPCODE;
 const getHospcode = async () => {
-    let row = await global.dbHIS('opdconfig').select('hospitalcode').first();
-    hisHospcode = row ? row.hospitalcode : process.env.HOSPCODE;
-    console.log('hisHospcode v.4', hisHospcode);
+    try {
+        if (typeof global.dbHIS === 'function') {
+            let row = await global.dbHIS('opdconfig').select('hospitalcode').first();
+            hisHospcode = row ? row.hospitalcode : process.env.HOSPCODE;
+            console.log('hisHospcode v.4', hisHospcode);
+        }
+        else {
+            console.error('global.dbHIS is not a function. Using default HOSPCODE');
+        }
+    }
+    catch (error) {
+        console.error('Error in getHospcode:', error);
+        console.log('Using HOSPCODE from environment:', process.env.HOSPCODE);
+    }
 };
 class HisHosxpv4Model {
     constructor() {
@@ -244,6 +255,8 @@ class HisHosxpv4Model {
                 format(s.pulse,0) as PR,
                 format(s.rr,0) as RR,
                 s.o2sat, s.bw as weight, s.height,
+                'er.gcs_e', 'er.gcs_v',
+                'er.gcs_m', 'er.pupil_l as pupil_left', 'er.pupil_r as pupil_right',
                 (select case   
                     when (o.ovstost >='01' and o.ovstost <='14') then '2' 
                     when o.ovstost in ('98','99','61','62','63','00') then '1' 
@@ -276,6 +289,7 @@ class HisHosxpv4Model {
                 left join patient pt on pt.hn = o.hn
                 left join ovst_seq os on os.vn = o.vn 
                 left join doctor on o.doctor = doctor.code
+                LEFT JOIN er_nursing_detail as er ON er.vn = o.vn
 
             where ${columnName}=?
             `;

@@ -91,7 +91,7 @@ function getPM2Processes(): PM2Process[] {
   if (now - pm2Cache.lastUpdate < pm2Cache.ttl && pm2Cache.processes.length > 0) {
     return pm2Cache.processes;
   }
-  
+
   try {
     const output = execSync('pm2 jlist', { encoding: 'utf8' });
     pm2Cache.processes = JSON.parse(output);
@@ -116,8 +116,10 @@ function getMyPM2Name(processes: PM2Process[], myPid: number): string {
  */
 function getFirstPidOfName(processes: PM2Process[], name: string): number {
   const matches = processes
-    .filter(p => p.name === name && p.pm2_env.status === 'online')
-    .sort((a, b) => a.pid - b.pid);
+    .filter(p => p.name === name && p.pm2_env.status === 'online');
+  // const matches = processes
+  //   .filter(p => p.name === name && p.pm2_env.status === 'online')
+  //   .sort((a, b) => a.pid - b.pid);
   return matches[0]?.pid || process.pid;
 }
 
@@ -127,23 +129,23 @@ function getFirstPidOfName(processes: PM2Process[], name: string): number {
 function updateProcessState(): void {
   const processes = getPM2Processes();
   const myPid = process.pid;
-  
+
   // Set process name
   processState.pm2Name = getMyPM2Name(processes, myPid);
-  
+
   // Get all processes with the same name
-  const sameNameProcesses = processes.filter(p => 
+  const sameNameProcesses = processes.filter(p =>
     p.name === processState.pm2Name && p.pm2_env.status === 'online'
   );
-  
+
   // Update process list and first PID
   processState.pm2List = sameNameProcesses.map(p => p.pid);
   processState.firstProcessPid = getFirstPidOfName(processes, processState.pm2Name);
-  
   // Check if this is the first process
   processState.isFirstProcess = processState.firstProcessPid === myPid;
-  
-  console.log(`${getTimestamp()} Process info: ${processState.pm2Name} (PID: ${myPid}), First PID: ${processState.firstProcessPid}, Is first? ${processState.isFirstProcess ? '✅ YES' : '❌ NO'}`);
+
+  // console.log(moment().format('HH:mm:ss'), instanceId, process.pid, 'nodecron.optimized PM2 process list: ====> ', sameNameProcesses.map(p => p.pid), processState.pm2Name);
+  console.log(`${instanceId}.${processState.pm2Name} (PID: ${myPid}), First PID: ${processState.firstProcessPid}, Is first? ${processState.isFirstProcess ? '✅ YES' : '❌ NO'}`);
 }
 
 /**
@@ -151,7 +153,7 @@ function updateProcessState(): void {
  */
 function configureTimingSchedules(): TimingSchedules {
   const timingSchedule: TimingSchedules = {};
-  
+
   // Initialize all services with version info
   ['isonline', 'nrefer'].forEach(service => {
     timingSchedule[service] = {
@@ -161,7 +163,7 @@ function configureTimingSchedules(): TimingSchedules {
       minute: 0
     };
   });
-  
+
   // Configure IS-Online
   configureService(
     timingSchedule,
@@ -172,7 +174,7 @@ function configureTimingSchedules(): TimingSchedules {
     10,
     true
   );
-  
+
   // Configure nRefer
   configureService(
     timingSchedule,
@@ -183,7 +185,7 @@ function configureTimingSchedules(): TimingSchedules {
     5,
     false
   );
-  
+
   return timingSchedule;
 }
 
@@ -201,25 +203,25 @@ function configureService(
 ): void {
   // Set autosend flag
   timingSchedule[serviceName].autosend = +process.env[autoSendEnvVar] === 1 || false;
-  
+
   // Get minutes and hours from environment
-  timingSchedule[serviceName].minute = process.env[minuteEnvVar] ? 
+  timingSchedule[serviceName].minute = process.env[minuteEnvVar] ?
     parseInt(process.env[minuteEnvVar]) : 0;
-  timingSchedule[serviceName].hour = process.env[hourEnvVar] ? 
+  timingSchedule[serviceName].hour = process.env[hourEnvVar] ?
     parseInt(process.env[hourEnvVar]) : 0;
-  
+
   // Normalize hour if needed (0-23)
   if (normalizeHour && timingSchedule[serviceName].hour > 23) {
     timingSchedule[serviceName].hour = timingSchedule[serviceName].hour % 23;
   }
-  
+
   // Convert to total minutes
   timingSchedule[serviceName].minute += (timingSchedule[serviceName].hour || 0) * 60;
-  
+
   // Set minimum minutes
-  timingSchedule[serviceName].minute = 
+  timingSchedule[serviceName].minute =
     timingSchedule[serviceName].minute < minMinutes ? minMinutes : timingSchedule[serviceName].minute;
-  
+
   // Disable if invalid
   if (timingSchedule[serviceName].minute <= 0) {
     timingSchedule[serviceName].autosend = false;
@@ -244,7 +246,7 @@ async function runJob(jobName: string, jobFn: Function, ...args: any[]): Promise
   if (jobQueue[jobName]?.isRunning) {
     return; // Skip if already running
   }
-  
+
   try {
     jobQueue[jobName] = { isRunning: true };
     await jobFn(...args);
@@ -270,19 +272,19 @@ function logJobStatus(): void {
  * Run the auto-send process for a service
  */
 async function doAutoSend(
-  req: any, 
-  res: any, 
-  serviceName: string, 
+  req: any,
+  res: any,
+  serviceName: string,
   functionName: string,
   timingSchedule: TimingSchedules
 ): Promise<void> {
   if (!processState.isFirstProcess) return;
-  
+
   const now = moment().locale('th').format('HH:mm:ss');
   const db = serviceName === 'isonline' ? global.dbISOnline : global.dbHIS;
-  
+
   console.log(`${now} start cronjob '${serviceName}' on PID ${process.pid}`);
-  
+
   if (serviceName !== 'nrefer') {
     await require(functionName)(req, res, db, timingSchedule[serviceName]);
   }
@@ -301,37 +303,37 @@ async function getmophUrl(): Promise<void> {
 export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   // Initialize process state
   updateProcessState();
-  
+
   // Create cron schedule (run every minute)
   const secondNow = moment().seconds();
   const timingSch = `${secondNow} * * * * *`;
-  
+
   // Configure timing schedules
   const timingSchedule = configureTimingSchedules();
-  
+
   // Log startup information if this is the first process
   if (processState.isFirstProcess) {
     console.log(`${getTimestamp()} Start API for Hospcode ${process.env.HOSPCODE}`);
     logScheduledServices(timingSchedule);
   }
-  
+
   // Schedule cron job
   cron.schedule(timingSch, async (req: any, res: any) => {
     // Get current time info
     const minuteSinceLastNight = getMinutesSinceMidnight();
     const minuteNow = getCurrentMinute();
-    
+
     // Only run on the first process
     if (processState.isFirstProcess) {
       // Log job status on odd minutes
       if (minuteSinceLastNight % 2 === 1) {
         logJobStatus();
       }
-      
+
       // Run nRefer jobs if scheduled
-      if (timingSchedule['nrefer'].autosend && 
-          minuteSinceLastNight % timingSchedule['nrefer'].minute === 0) {
-        
+      if (timingSchedule['nrefer'].autosend &&
+        minuteSinceLastNight % timingSchedule['nrefer'].minute === 0) {
+
         // Run IPD checking at specific times
         if (moment().hour() % 2 === 0 && moment().minute() === 56) {
           runJob('sendNReferIPD', async () => {
@@ -341,21 +343,21 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
             });
           });
         }
-        
+
         // Run regular nRefer job
         runJob('sendNRefer', async () => {
           await referCrontab.processSend(req, res, global.dbHIS, timingSchedule['nrefer']);
         });
       }
-      
+
       // Run IS-Online job if scheduled
-      if (timingSchedule['isonline'].autosend && 
-          minuteSinceLastNight % timingSchedule['isonline'].minute === 0) {
+      if (timingSchedule['isonline'].autosend &&
+        minuteSinceLastNight % timingSchedule['isonline'].minute === 0) {
         runJob('sendISOnline', async () => {
           await doAutoSend(req, res, 'isonline', './routes/isonline/crontab', timingSchedule);
         });
       }
-      
+
       // Update MOPH URL at the top of each hour
       if (minuteNow === 60) {
         runJob('getmophUrl', getmophUrl);
@@ -365,4 +367,4 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
 }
 
 // Initialize process state on module load
-updateProcessState();
+// updateProcessState();

@@ -70,11 +70,14 @@ class HisHospitalOsModel {
                 WHEN '4' THEN '1'
                 WHEN '5' THEN '4'
                 ELSE 'N' END as cause_t,
-    t_accident.f_accident_symptom_eye_id as eye ,  
-              t_accident.f_accident_symptom_speak_id as verbal ,
-    t_accident.f_accident_symptom_movement_id as motor ,  
+                t_accident.f_accident_symptom_eye_id as gsc_e ,  
+                t_accident.f_accident_symptom_speak_id as gsc_v ,
+                t_accident.f_accident_symptom_movement_id as gsc_m ,  
+                t_accident.f_accident_symptom_eye_id as eye ,  
+                t_accident.f_accident_symptom_speak_id as verbal ,
+                t_accident.f_accident_symptom_movement_id as motor ,  
                 CASE WHEN t_accident.accident_accident_type IN ('V') THEN '1' 	WHEN t_accident.accident_accident_type IN ('00') THEN 'N' ELSE '2' END as cause ,
-    CASE WHEN t_accident.f_accident_place_id IN ('1') THEN '1'
+                CASE WHEN t_accident.f_accident_place_id IN ('1') THEN '1'
                            WHEN t_accident.f_accident_place_id IN ('2','3') THEN '7'
                            WHEN t_accident.f_accident_place_id IN ('4') THEN '6'
                            WHEN t_accident.f_accident_place_id IN ('5') THEN '4'

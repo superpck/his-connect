@@ -52,6 +52,8 @@ export class HisHosxppcuModel {
                 'opdscreen.vsttime as time',
                 'opdscreen.bps as bp_systolic', 'opdscreen.bpd as bp_diastolic',
                 'opdscreen.pulse as pr', 'opdscreen.rr', 'ovst.vstdate as hdate', 'ovst.vsttime as htime',
+                'er_nursing_detail.gcs_e', 'er_nursing_detail.gcs_v',
+                'er_nursing_detail.gcs_m',
                 'er_nursing_detail.gcs_e as eye', 'er_nursing_detail.gcs_v as verbal',
                 'er_nursing_detail.gcs_m as motor',
                 'er_nursing_detail.er_accident_type_id as cause',

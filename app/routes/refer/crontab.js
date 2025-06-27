@@ -472,6 +472,7 @@ async function getService(db, visitNo, sentResult) {
                 row[r.toLowerCase()] = row[r];
             }
             const data = {
+                ...row,
                 HOSPCODE: row.hospcode,
                 PID: row.pid || row.hn,
                 SEQ: row.seq || row.vn || visitNo || '',
