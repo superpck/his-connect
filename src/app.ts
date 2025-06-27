@@ -8,6 +8,7 @@ require('dotenv').config({ path: path.join(__dirname, '../config') });
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import fastify, { FastifyRequest } from 'fastify';
 import * as moment from 'moment';
+// import cronjob from './nodecron';
 import cronjob from './nodecron.optimized';
 
 const serveStatic = require('serve-static');

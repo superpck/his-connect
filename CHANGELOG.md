@@ -3,6 +3,7 @@
   - เพิ่มการตรวจสอบการทำงานของ API Service
   - เพิ่มการส่งข้อมูล nRefer กรณี IPD
   - เพิ่มการ connect oracleDB
+  - เพิ่มการ get ข้อมูล GCS, E,V,M, O2Sat, Pupill
 
 # 3.8.4
 ## Feature

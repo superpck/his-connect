@@ -34,33 +34,36 @@ class HisEzhospModel {
         return sql.select('no_card as cid', 'hn as pid', 'title as prename', 'name', 'name as fname', 'surname as lname', 'hn', 'birth', 'birth as dob', 'sex', 'marry_std as mstatus', 'blood as abogroup', 'address', 'moo', 'road', 'soi', 'add as addcode', 'tel', 'zip', 'occ_std as occupation', 'religion_std as religion', 'nation_std as nation', 'religion_std as religion', 'edu_std as education', 'tel as telephone', 'lastupdate as d_update');
     }
     getOpdService(db, hn, date, columnName = '', searchText = '') {
-        columnName = columnName == 'visitNo' ? 'vn' : columnName;
+        columnName = columnName == 'visitNo' ? 'visit.vn' : `visit.${columnName}`;
         let where = {};
         if (hn)
-            where['hn'] = hn;
+            where['visit.hn'] = hn;
         if (date)
-            where['date'] = date;
+            where['visit.date'] = date;
         if (columnName && searchText)
             where[columnName] = searchText;
-        return db('view_opd_visit')
-            .select('hn', 'vn as visitno', 'date', 'time', 'time_drug as time_end', 'pttype_std2 as pttype', 'insclass as payment', 'emg as triage', 'dep as clinic_local_code', 'dep_name as clinic_local_name', 'dep_standard as clinic', 'dr', 'bp as bp_systolic', 'bp1 as bp_diastolic', 'puls as pr', 'rr', 'fu as appoint', 'status as result', 'refer as referin')
+        return db('view_opd_visit as visit')
+            .leftJoin('hospdata.er_triage as triage', 'visit.vn', 'triage.vn')
+            .select('visit.hn', 'visit.vn as visitno', 'visit.date', 'visit.time', 'visit.time_drug as time_end', 'visit.pttype_std2 as pttype', 'visit.insclass as payment', 'visit.emg as triage', 'visit.dep as clinic_local_code', 'visit.dep_name as clinic_local_name', 'visit.dep_standard as clinic', 'visit.dr', 'visit.bp as bp_systolic', 'visit.bp1 as bp_diastolic', 'visit.puls as pr', 'visit.rr', 'visit.fu as appoint', 'triage.e as gcs_e', 'triage.v as gcs_v', 'triage.m as gcs_m', 'triage.gcs', 'triage.o2sat', 'visit.status as result', 'visit.refer as referin')
             .where(where)
-            .orderBy('date', 'desc')
+            .orderBy('visit.date', 'desc')
             .limit(maxLimit);
     }
     getOpdServiceByVN(db, vn, where = null) {
-        let sql = db('view_opd_visit');
+        let sql = db('view_opd_visit as visit')
+            .leftJoin('hospdata.er_triage as triage', 'visit.vn', 'triage.vn');
         if (typeof vn === 'string') {
-            sql.where('vn', vn);
+            sql.where('visit.vn', vn);
         }
         else {
-            sql.whereIn('vn', vn);
+            sql.whereIn('visit.vn', vn);
         }
         ;
         if (where) {
             sql.where(where);
         }
-        return sql.select('hn', 'vn as visitno', 'date', 'time', 'time_drug as time_end', 'pttype_std2 as pttype', 'insclass as payment', 'emg as triage', 'dep as clinic_local_code', 'dep_name as clinic_local_name', 'dep_standard as clinic', 'dr', 'bp as bp_systolic', 'bp1 as bp_diastolic', 'puls as pr', 'rr', 'fu as appoint', 'status as result', 'refer as referin')
+        return sql.select('visit.hn', 'visit.vn as visitno', 'visit.date', 'visit.time', 'visit.time_drug as time_end', 'visit.pttype_std2 as pttype', 'visit.insclass as payment', 'visit.emg as triage', 'visit.dep as clinic_local_code', 'visit.dep_name as clinic_local_name', 'visit.dep_standard as clinic', 'visit.dr', 'visit.bp as bp_systolic', 'visit.bp1 as bp_diastolic', 'visit.puls as pr', 'visit.rr', 'visit.fu as appoint', 'triage.e as gcs_e', 'triage.v as gcs_v', 'triage.m as gcs_m', 'triage.gcs', 'triage.o2sat', 'visit.status as result', 'visit.refer as referin')
+            .groupBy('visit.vn')
             .limit(maxLimit);
     }
     getDiagnosisOpd(knex, visitno) {

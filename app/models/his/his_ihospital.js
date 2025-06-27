@@ -128,13 +128,14 @@ class HisIHospitalModel {
     }
     getService(db, columnName, searchText, hospCode = hisHospcode) {
         columnName = columnName === 'visitNo' ? 'vn' : columnName;
-        columnName = columnName === 'date_serv' ? 'visit.date' : columnName;
+        columnName = columnName === 'date_serv' ? 'visit.date' : `visit.${columnName}`;
         return db('view_opd_visit as visit')
+            .leftJoin('hospdata.er_triage as triage', 'visit.vn', 'triage.vn')
             .select(db.raw('"' + hisHospcode + '" as hospcode'))
-            .select('hn as pid', 'hn', 'vn as seq', 'date as date_serv', 'hospmain as main', 'hospsub as hsub', 'refer as referinhosp', db.raw(' case when time="" or time="08:00" then time_opd else time end as time_serv '), db.raw('"1" as servplace'), 'nurse_cc as chiefcomp', 'pi_dr as presentillness', 'pe_dr as physicalexam', 'nurse_ph as pasthistory', 't as btemp', 'bp as sbp', 'bp1 as dbp', 'weigh as weight', 'high as height', 'puls as pr', 'rr', db.raw(`IF(dr > 0, CONCAT("ว",dr),'') as provider`), 'no_card as cid', 'pttype_std as instype', 'no_ptt as insid', db.raw('IF(period>1,2,1) AS intime'), 'cost as price', 'opd_result_hdc as typeout', db.raw('IF(hospmain=? OR `add`=?,1,2) AS location', [hcode, '4001']))
-            .select(db.raw('concat(date, " " , time) as d_update'))
+            .select('visit.hn as pid', 'visit.hn', 'visit.vn as seq', 'visit.date as date_serv', 'visit.hospmain as main', 'visit.hospsub as hsub', 'visit.refer as referinhosp', db.raw(' case when visit.time="" or visit.time="08:00" then visit.time_opd else visit.time end as time_serv '), db.raw('"1" as servplace'), 'visit.nurse_cc as chiefcomp', 'visit.pi_dr as presentillness', 'visit.pe_dr as physicalexam', 'visit.nurse_ph as pasthistory', 'visit.t as btemp', 'visit.bp as sbp', 'visit.bp1 as dbp', 'visit.weigh as weight', 'visit.high as height', 'visit.puls as pr', 'visit.rr', db.raw(`IF(visit.dr > 0, CONCAT("ว",visit.dr),'') as provider`), 'visit.no_card as cid', 'visit.pttype_std as instype', 'visit.no_ptt as insid', 'triage.e as gcs_e', 'triage.v as gcs_v', 'triage.m as gcs_m', 'triage.gcs', 'triage.o2sat', 'triage.pupil_lt as pupil_left', 'triage.pupil_rt as pupil_right', db.raw('IF(visit.period>1,2,1) AS intime'), 'visit.cost as price', 'visit.opd_result_hdc as typeout', db.raw('IF(visit.hospmain=? OR visit.`add`=?,1,2) AS location', [hcode, '4001']))
+            .select(db.raw('concat(visit.date, " " , visit.time) as d_update'))
             .where(columnName, searchText)
-            .orderBy('date', 'desc')
+            .orderBy('visit.date', 'desc')
             .limit(maxLimit);
     }
     getDiagnosisOpd(db, visitno, hospCode = hisHospcode) {
