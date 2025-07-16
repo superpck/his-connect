@@ -38,6 +38,7 @@ const dbConnection = (type = 'HIS') => {
     type = type.toUpperCase();
     const config = options[type];
     const connection = config.connection;
+    config.client = config.client ? config.client.toLowerCase() : 'mysql2';
     let opt = {};
     if (config.client == 'mssql') {
         opt = {
@@ -86,7 +87,6 @@ const dbConnection = (type = 'HIS') => {
         };
     }
     else {
-        config.client = config.client == 'mysql' ? 'mysql2' : config.client;
         opt = {
             client: config.client,
             connection: {
