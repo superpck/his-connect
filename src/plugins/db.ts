@@ -1,5 +1,4 @@
 import knex from 'knex';
-require('dotenv').config('/config');
 
 var timezone = 'Asia/Bangkok';
 var options = {
@@ -39,7 +38,7 @@ const dbConnection = (type = 'HIS') => {
   const config: any = options[type];
   const connection = config.connection;
   config.client = config.client? config.client.toLowerCase() : 'mysql2';
-  
+
   let opt: any = {};
   if (config.client == 'mssql') {
     opt = {
