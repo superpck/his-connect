@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const knex_1 = require("knex");
-require('dotenv').config('/config');
 var timezone = 'Asia/Bangkok';
 var options = {
     HIS: {
