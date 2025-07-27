@@ -1,8 +1,7 @@
 # 3.8.7
 ## Feature
-  - เพิ่ม path file config ในคำสั่ง dotenv
+  - เพิ่ม link file config ในคำสั่ง dotenv
   - Update package สำหรับเชื่อมฐานข้อมูล pgSQL และ oracleDB
-  - Update package อื่นๆ เพื่อปิดช่องโหว่ของระบบ
 
 # 3.8.6
 ## Feature
