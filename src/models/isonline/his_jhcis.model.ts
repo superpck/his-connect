@@ -15,8 +15,11 @@ export class HisJhcisModel {
             .where('table_schema', '=', dbName);
     }
 
-    testConnect(db: Knex) {
-        return db('person').select('pid as hn').limit(1)
+    async testConnect(db: Knex) {
+        const result = await global.dbHIS('j2_hospital').first();
+        const hospname = result?.HNAME || null;
+        const patient = await db('person').select('pid as hn').limit(1);
+        return { hospname, patient }
     }
 
     getPerson(knex: Knex, columnName, searchText) {

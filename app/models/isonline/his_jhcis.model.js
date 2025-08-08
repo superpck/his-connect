@@ -12,8 +12,11 @@ class HisJhcisModel {
             .select('table_name')
             .where('table_schema', '=', dbName);
     }
-    testConnect(db) {
-        return db('person').select('pid as hn').limit(1);
+    async testConnect(db) {
+        const result = await global.dbHIS('j2_hospital').first();
+        const hospname = result?.HNAME || null;
+        const patient = await db('person').select('pid as hn').limit(1);
+        return { hospname, patient };
     }
     getPerson(knex, columnName, searchText) {
         columnName = columnName === 'cid' ? 'idcard' : columnName;

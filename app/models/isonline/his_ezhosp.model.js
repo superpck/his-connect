@@ -19,8 +19,11 @@ class HisEzhospModel {
             .select('table_name')
             .where('table_schema', '=', dbname);
     }
-    testConnect(db) {
-        return db('hospdata.patient').select('hn').limit(1);
+    async testConnect(db) {
+        const result = await global.dbHIS('hospdata.sys_hospital').first();
+        const hospname = result?.hname || null;
+        const patient = await db('hospdata.patient').select('hn').limit(1);
+        return { hospname, patient };
     }
     getPerson(db, columnName, searchText) {
         columnName = columnName === 'cid' ? 'no_card' : columnName;

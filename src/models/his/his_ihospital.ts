@@ -9,8 +9,11 @@ export class HisIHospitalModel {
     return true;
   }
 
-  testConnect(db: Knex) {
-    return db('patient').select('hn').limit(1)
+  async testConnect(db: Knex) {
+    const result = await global.dbHIS('hospdata.sys_hospital').first();
+    const hospname = result?.hname || null;
+    const patient = await db('hospdata.patient').select('hn').limit(1);
+    return { hospname, patient }
   }
 
   // รหัสห้องตรวจ

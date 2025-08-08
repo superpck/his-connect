@@ -9,8 +9,11 @@ class HisHosxppcuModel {
             .select('table_name')
             .where('table_schema', '=', dbName);
     }
-    testConnect(db) {
-        return db('patient').select('hn').limit(1);
+    async testConnect(db) {
+        const result = await global.dbHIS('opdconfig').first();
+        const hospname = result?.hospitalcode || null;
+        const patient = await db('patient').select('hn').limit(1);
+        return { hospname, patient };
     }
     getPerson(db, columnName, searchText) {
         let sql = db('patient');

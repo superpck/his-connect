@@ -21,8 +21,11 @@ export class HisEzhospModel {
             .where('table_schema', '=', dbname);
     }
 
-    testConnect(db: Knex) {
-        return db('hospdata.patient').select('hn').limit(1)
+    async testConnect(db: Knex) {
+        const result = await global.dbHIS('hospdata.sys_hospital').first();
+        const hospname = result?.hname || null;
+        const patient = await db('hospdata.patient').select('hn').limit(1);
+        return { hospname, patient }
     }
 
     getPerson(db: Knex, columnName: string, searchText: any) {

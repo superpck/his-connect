@@ -5,23 +5,23 @@ const maxLimit = 250;
 const hn_len = +process.env.HN_LENGTH || 6;
 let hisHospcode = process.env.HOSPCODE;
 const getHospcode = async () => {
-  try {
-    if (typeof global.dbHIS === 'function') {
-      let row = await global.dbHIS('opdconfig').select('hospitalcode').first();
-      hisHospcode = row ? row.hospitalcode : process.env.HOSPCODE;
-      console.log('hisHospcode v.4', hisHospcode);
-    } else {
-      console.error('global.dbHIS is not a function. Using default HOSPCODE');
+    try {
+        if (typeof global.dbHIS === 'function') {
+            let row = await global.dbHIS('opdconfig').select('hospitalcode').first();
+            hisHospcode = row ? row.hospitalcode : process.env.HOSPCODE;
+            console.log('hisHospcode v.4', hisHospcode);
+        } else {
+            console.error('global.dbHIS is not a function. Using default HOSPCODE');
+        }
+    } catch (error) {
+        console.error('Error in getHospcode:', error);
+        // Fallback to environment variable
+        console.log('Using HOSPCODE from environment:', process.env.HOSPCODE);
     }
-  } catch (error) {
-    console.error('Error in getHospcode:', error);
-    // Fallback to environment variable
-    console.log('Using HOSPCODE from environment:', process.env.HOSPCODE);
-  }
 }
 
 export class HisHosxpv3Model {
-    constructor(){
+    constructor() {
         getHospcode();
     }
 
@@ -29,8 +29,11 @@ export class HisHosxpv3Model {
         return true;
     }
 
-    testConnect(db: Knex) {
-        return db('patient').select('hn').limit(1)
+    async testConnect(db: Knex) {
+        const result = await global.dbHIS('opdconfig').first();
+        const hospname = result?.hospitalcode || null;
+        const patient = await db('patient').select('hn').limit(1);
+        return { hospname, patient }
     }
 
     getTableName(db: Knex, dbName = process.env.HIS_DB_NAME) {
@@ -623,7 +626,7 @@ export class HisHosxpv3Model {
                 'lab_order.lab_items_name_ref as INVESTNAME',
                 'lab_order.lab_order_result as INVESTVALUE',
                 'lab_items.icode as ICDCM',
-                'lab_items.lab_items_sub_group_code as GROUPCODE', 
+                'lab_items.lab_items_sub_group_code as GROUPCODE',
                 'lab_items_sub_group.lab_items_sub_group_name as GROUPNAME')
             // .select(db.raw(`concat(lab_items.lab_items_unit, ' ', lab_order.lab_items_normal_value_ref) as UNIT`))
             .select(db.raw(`case when lab_order.lab_items_normal_value_ref then concat(lab_items.lab_items_unit,' (', lab_order.lab_items_normal_value_ref,')') else lab_items.lab_items_unit end  as UNIT`))
@@ -1403,7 +1406,7 @@ export class HisHosxpv3Model {
             .select('referin.refer_date')
             .count('referin.vn as cases')
             .whereBetween('referin.refer_date', [dateStart, dateEnd])
-            .where('referin.refer_hospcode','!=', hisHospcode)
+            .where('referin.refer_hospcode', '!=', hisHospcode)
             .whereNotNull('referin.refer_hospcode')
             .whereNotNull('referin.vn')
             .whereNotNull('ovst.vn')
