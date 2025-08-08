@@ -1,3 +1,7 @@
+# 3.8.8
+## Feature
+  - เพิ่มการกำหนด charset ใน db.ts (เฉพาะ mysql)
+
 # 3.8.7
 ## Feature
   - เพิ่ม path file config ในคำสั่ง dotenv

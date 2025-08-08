@@ -10,23 +10,23 @@ var options = {
       password: process.env.HIS_DB_PASSWORD,
       database: process.env.HIS_DB_NAME,
       port: +process.env.HIS_DB_PORT || 3306,
-      charset: process.env.HIS_DB_CHARSET || 'utf8',
+      charset: process.env.HIS_DB_CHARSET || null,
       schema: process.env.HIS_DB_SCHEMA || 'public',
       encrypt: process.env.HIS_DB_ENCRYPT || null,
       timezone
     }
   },
   ISONLINE: {
-    client: process.env.IS_DB_CLIENT || process.env.HIS_DB_CLIENT || 'mysql',
+    client: process.env.IS_DB_CLIENT || 'mysql',
     connection: {
-      host: process.env.IS_DB_HOST || process.env.HIS_DB_HOST,
-      user: process.env.IS_DB_USER || process.env.HIS_DB_USER,
-      password: process.env.IS_DB_PASSWORD || process.env.HIS_DB_PASSWORD,
+      host: process.env.IS_DB_HOST,
+      user: process.env.IS_DB_USER,
+      password: process.env.IS_DB_PASSWORD,
       database: process.env.IS_DB_NAME || 'isdb',
-      port: +process.env.IS_DB_PORT || +process.env.HIS_DB_PORT || 3306,
-      charset: process.env.IS_DB_CHARSET || process.env.HIS_DB_CHARSET || 'utf8',
-      schema: process.env.IS_DB_SCHEMA || process.env.HIS_DB_SCHEMA,
-      encrypt: process.env.IS_DB_ENCRYPT || process.env.HIS_DB_ENCRYPT || true,
+      port: +process.env.IS_DB_PORT || 3306,
+      charset: process.env.IS_DB_CHARSET || null,
+      schema: process.env.IS_DB_SCHEMA,
+      encrypt: process.env.IS_DB_ENCRYPT || true,
       timezone
     }
   }
@@ -36,8 +36,8 @@ const dbConnection = (type = 'HIS') => {
   type = type.toUpperCase();
 
   const config: any = options[type];
-  const connection = config.connection;
-  config.client = config.client? config.client.toLowerCase() : 'mysql2';
+  const connection: any = config.connection;
+  config.client = config.client ? config.client.toLowerCase() : 'mysql2';
 
   let opt: any = {};
   if (config.client == 'mssql') {
@@ -85,7 +85,6 @@ const dbConnection = (type = 'HIS') => {
       }
     };
   } else {
-    // config.client = config.client == 'mysql' ? 'mysql2' : config.client;
     opt = {
       client: config.client,
       connection: {
@@ -93,20 +92,18 @@ const dbConnection = (type = 'HIS') => {
         port: +connection.port,
         user: connection.user,
         password: connection.password,
-        database: connection.database,
-        // timezone
+        database: connection.database
       },
       pool: {
         min: 0,
-        max: 7,
-        // afterCreate: (conn, done) => {
-        //   conn.query('SET NAMES ' + connection.charset, (err) => {
-        //     done(err, conn);
-        //   });
-        // }
+        max: 7
       },
       debug: false,
     };
+
+    if (config.client.includes('mysql') && connection?.charset?.trim()) {
+      opt.connection.charset = connection.charset.trim();
+    }
   }
   return knex(opt);
 };
