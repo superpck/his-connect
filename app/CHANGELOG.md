@@ -2,7 +2,7 @@
 ## Feature
   - เพิ่ม path file config ในคำสั่ง dotenv
   - Update package สำหรับเชื่อมฐานข้อมูล pgSQL และ oracleDB
-  - Update package อื่นๆ เพื่อปิดช่องโหว่ของระบบ
+  - Update package อื่นๆ เพื่อปิดช่องโหว่ของระบบที่อาจจะเกิดขึ้นได้
 
 # 3.8.6
 ## Feature
