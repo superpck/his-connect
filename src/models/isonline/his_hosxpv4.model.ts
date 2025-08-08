@@ -10,8 +10,11 @@ export class HisHosxpv4Model {
 
     }
 
-    testConnect(db: Knex) {
-        return db('patient').select('hn').limit(1)
+    async testConnect(db: Knex) {
+        const result = await global.dbHIS('opdconfig').first();
+        const hospname = result?.hospitalcode || null;
+        const patient = await db('patient').select('hn').limit(1);
+        return { hospname, patient }
     }
 
     getPerson(db: Knex, columnName: string, searchText: any) {

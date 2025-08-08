@@ -100,20 +100,24 @@ const router = (fastify, { }, next) => {
   fastify.get('/alive', async (req: any, res: any) => {
     try {
       const result = await hisModel.testConnect(global.dbHIS);
+      let connection: any = { hisProvider: process.env.HIS_PROVIDER };
+      if (result && result.hospname) {
+        connection.hospname = result.hospname;
+      }
+      connection.connection = result && (result.patient || result.length > 0) ? true : false;
+
       res.send({
         statusCode: (result && result.length > 0) ? StatusCodes.OK : StatusCodes.NO_CONTENT,
         ok: result && result.length > 0,
         version: global.appDetail.version,
         subVersion: global.appDetail.subVersion,
-        hisProvider: process.env.HIS_PROVIDER,
-        connection: result && result.length > 0,
-        message: result && result.length > 0 ? undefined : (result.message || result)
+        ...connection
       });
     } catch (error) {
       console.log('alive fail', error.message);
       res.send({
         statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-        hisProvider: hisProviderList.indexOf(process.env.HIS_PROVIDER) >= 0,
+        hisProvider: process.env.HIS_PROVIDER,
         connection: false,
         message: error.message
       })

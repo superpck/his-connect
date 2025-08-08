@@ -16,8 +16,11 @@ class HisJhcisModel {
     check() {
         return true;
     }
-    testConnect(db) {
-        return db('person').select('pid').limit(1);
+    async testConnect(db) {
+        const result = await global.dbHIS('j2_hospital').first();
+        const hospname = result?.HNAME || null;
+        const patient = await db('person').select('pid as hn').limit(1);
+        return { hospname, patient };
     }
     getDepartment(db, depCode = '', depName = '') {
         let sql = db('lib_clinic');

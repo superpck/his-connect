@@ -36,7 +36,13 @@ const router = (fastify, { }, next) => {
     const loggedIn = decode && decode.api;
     try {
       const result = await hisModel.testConnect(global.dbHIS);
-      const connection = result && result.length ? true : false;
+      let connection: any = {
+        connection1: result && result.patient 
+      };
+      if (result && result.hospname) {
+        connection.hospname = result.hospname;
+      }
+      
       global.dbHIS.destroy;
       res.send({
         statusCode: connection ? StatusCodes.OK : StatusCodes.NO_CONTENT,
@@ -46,8 +52,8 @@ const router = (fastify, { }, next) => {
         subVersion: global.appDetail.subVersion,
         his: loggedIn ? hisProvider : undefined,
         hisProvider: hisProviderList.indexOf(process.env.HIS_PROVIDER.toLowerCase()) >= 0,
-        connection: connection,
-        message: connection ? 'Success' : ('Fail:' + result)
+        ...connection,
+        message: connection.connection ? 'Success' : ('Fail:' + result)
       });
     } catch (error) {
       console.log('alive fail', error.message);

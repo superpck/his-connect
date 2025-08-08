@@ -28,7 +28,12 @@ const router = (fastify, {}, next) => {
         const loggedIn = decode && decode.api;
         try {
             const result = await hismodel_1.default.testConnect(global.dbHIS);
-            const connection = result && result.length ? true : false;
+            let connection = {
+                connection1: result && result.patient
+            };
+            if (result && result.hospname) {
+                connection.hospname = result.hospname;
+            }
             global.dbHIS.destroy;
             res.send({
                 statusCode: connection ? http_status_codes_1.StatusCodes.OK : http_status_codes_1.StatusCodes.NO_CONTENT,
@@ -38,8 +43,8 @@ const router = (fastify, {}, next) => {
                 subVersion: global.appDetail.subVersion,
                 his: loggedIn ? hisProvider : undefined,
                 hisProvider: hisProviderList.indexOf(process.env.HIS_PROVIDER.toLowerCase()) >= 0,
-                connection: connection,
-                message: connection ? 'Success' : ('Fail:' + result)
+                ...connection,
+                message: connection.connection ? 'Success' : ('Fail:' + result)
             });
         }
         catch (error) {

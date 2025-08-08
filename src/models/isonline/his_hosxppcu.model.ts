@@ -9,8 +9,11 @@ export class HisHosxppcuModel {
             .where('table_schema', '=', dbName);
     }
 
-    testConnect(db: Knex) {
-        return db('patient').select('hn').limit(1)
+    async testConnect(db: Knex) {
+        const result = await global.dbHIS('opdconfig').first();
+        const hospname = result?.hospitalcode || null;
+        const patient = await db('patient').select('hn').limit(1);
+        return { hospname, patient }
     }
 
     getPerson(db: Knex, columnName: string, searchText: any) {
@@ -137,7 +140,7 @@ export class HisHosxppcuModel {
 
     getDiagnosisOpd(db: Knex, visitno) {
         return db('ovstdiag')
-            .select('hn','vn as visitno', 'icd10 as diagcode'
+            .select('hn', 'vn as visitno', 'icd10 as diagcode'
                 , 'diagtype as diag_type'
                 , 'update_datetime as d_update')
             .select(db.raw(`concat(vstdate,' ',vsttime) as date_serv`))
@@ -155,7 +158,7 @@ export class HisHosxppcuModel {
                 SELECT vn FROM ovstdiag as dx
                 WHERE dx.vstdate= ? AND LEFT(icd10,1) IN ('V','W','X','Y'))
                 AND LEFT(icd10,1) IN ('S','T','V','W','X','Y')
-            ORDER BY vn, diagtype, update_datetime LIMIT `+maxLimit;
+            ORDER BY vn, diagtype, update_datetime LIMIT `+ maxLimit;
 
         const result = await db.raw(sql, [date]);
         return result[0];

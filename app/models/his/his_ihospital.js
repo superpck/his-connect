@@ -9,8 +9,11 @@ class HisIHospitalModel {
     check() {
         return true;
     }
-    testConnect(db) {
-        return db('patient').select('hn').limit(1);
+    async testConnect(db) {
+        const result = await global.dbHIS('hospdata.sys_hospital').first();
+        const hospname = result?.hname || null;
+        const patient = await db('hospdata.patient').select('hn').limit(1);
+        return { hospname, patient };
     }
     getDepartment(db, depCode = '', depName = '') {
         let sql = db('lib_clinic');
