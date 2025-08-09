@@ -16,7 +16,7 @@ SSL_ENABLE=0
 SSL_KEY=public/ssl/localhost.key
 SSL_CRT=public/ssl/localhost.crt
 
-# valid db client type: mysql (version เก่า), mysql2 (version 5.1+), pg, mssql, oracledb
+# valid db client driver: mysql (version เก่า), mysql2 (mysql 5.5+, mariaDB 10+, percona 5.5+), pg, mssql, oracledb
 # valid HIS provider name: 
 #    iHospital, HOSxPv3, HOSxPv4, HOSxPpcu, infod, homc, ssb
 #    hospitalos, jhcis, kpstat, md, mkhospital, thiades, 
