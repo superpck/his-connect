@@ -9,10 +9,20 @@ class HisHosxpPcuModel {
         return true;
     }
     async testConnect(db) {
-        const result = await global.dbHIS('opdconfig').first();
+        let result;
+        result = await global.dbHIS('opdconfig').first();
         const hospname = result?.hospitalcode || null;
-        const patient = await db('patient').select('hn').limit(1);
-        return { hospname, patient };
+        result = await db('patient').select('hn').limit(1);
+        const connection = result && (result.patient || result.length > 0) ? true : false;
+        let charset = '';
+        if (process.env.HIS_DB_CLIENT.toLowerCase().includes('mysql')) {
+            result = await db('information_schema.SCHEMATA')
+                .select('DEFAULT_CHARACTER_SET_NAME')
+                .where('SCHEMA_NAME', process.env.HIS_DB_NAME)
+                .first();
+            charset = result?.DEFAULT_CHARACTER_SET_NAME || '';
+        }
+        return { hospname, connection, charset };
     }
     getTableName(db, dbName = process.env.HIS_DB_NAME) {
         return db('information_schema.tables')
