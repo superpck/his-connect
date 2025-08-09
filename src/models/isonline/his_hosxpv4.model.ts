@@ -11,20 +11,32 @@ export class HisHosxpv4Model {
     }
 
     async testConnect(db: Knex) {
-        const result = await global.dbHIS('opdconfig').first();
+        let result: any;
+        result = await global.dbHIS('opdconfig').first();
         const hospname = result?.hospitalcode || null;
-        const patient = await db('patient').select('hn').limit(1);
-        return { hospname, patient }
+
+        result = await db('patient').select('hn').limit(1);
+        const connection = result && (result.patient || result.length > 0) ? true : false;
+
+        let charset: any = '';
+        if (process.env.HIS_DB_CLIENT.includes('mysql')) {
+            result = await db('information_schema.SCHEMATA')
+                .select('DEFAULT_CHARACTER_SET_NAME')
+                .where('SCHEMA_NAME', process.env.HIS_DB_NAME)
+                .first();
+            charset = result?.DEFAULT_CHARACTER_SET_NAME || '';
+        }
+        return { hospname, connection, charset };
     }
 
     getPerson(db: Knex, columnName: string, searchText: any) {
         let sql = db('patient');
-        if (typeof searchText === 'string'){
+        if (typeof searchText === 'string') {
             sql.where(columnName, searchText);
         } else {
             sql.whereIn(columnName, searchText);
         }
-        return sql.leftJoin('nationality as nt1','patient.nationality','nt1.nationality')
+        return sql.leftJoin('nationality as nt1', 'patient.nationality', 'nt1.nationality')
             .leftJoin(`occupation`, 'occupation.occupation', 'patient.occupation')
             .select('patient.hn', 'patient.cid', 'patient.pname as prename',
                 'patient.fname', 'patient.lname', 'patient.occupation as occupa',
@@ -155,7 +167,7 @@ export class HisHosxpv4Model {
                 SELECT vn FROM ovstdiag as dx
                 WHERE dx.vstdate= ? AND LEFT(icd10,1) IN ('V','W','X','Y'))
                 AND LEFT(icd10,1) IN ('S','T','V','W','X','Y')
-            ORDER BY vn, diagtype, update_datetime LIMIT `+maxLimit;
+            ORDER BY vn, diagtype, update_datetime LIMIT `+ maxLimit;
 
         const result = await db.raw(sql, [date]);
         return result[0];

@@ -16,10 +16,22 @@ export class HisJhcisModel {
     }
 
     async testConnect(db: Knex) {
-        const result = await global.dbHIS('j2_hospital').first();
+        let result: any;
+        result = await global.dbHIS('j2_hospital').first();
         const hospname = result?.HNAME || null;
-        const patient = await db('person').select('pid as hn').limit(1);
-        return { hospname, patient }
+
+        result = await db('person').select('pid as hn').limit(1);
+        const connection = result && (result.patient || result.length > 0) ? true : false;
+
+        let charset: any = '';
+        if (process.env.HIS_DB_CLIENT.includes('mysql')) {
+            result = await db('information_schema.SCHEMATA')
+                .select('DEFAULT_CHARACTER_SET_NAME')
+                .where('SCHEMA_NAME', process.env.HIS_DB_NAME)
+                .first();
+            charset = result?.DEFAULT_CHARACTER_SET_NAME || '';
+        }
+        return { hospname, connection, charset };
     }
 
     getPerson(knex: Knex, columnName, searchText) {

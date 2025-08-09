@@ -22,11 +22,24 @@ export class HisEzhospModel {
     }
 
     async testConnect(db: Knex) {
-        const result = await global.dbHIS('hospdata.sys_hospital').first();
+        let result: any;
+        result = await global.dbHIS('hospdata.sys_hospital').first();
         const hospname = result?.hname || null;
-        const patient = await db('hospdata.patient').select('hn').limit(1);
-        return { hospname, patient }
+
+        result = await db('hospdata.patient').select('hn').limit(1);
+        const connection = result && (result.patient || result.length > 0) ? true : false;
+
+        let charset: any = '';
+        if (process.env.HIS_DB_CLIENT.includes('mysql')) {
+            result = await db('information_schema.SCHEMATA')
+                .select('DEFAULT_CHARACTER_SET_NAME')
+                .where('SCHEMA_NAME', process.env.HIS_DB_NAME)
+                .first();
+            charset = result?.DEFAULT_CHARACTER_SET_NAME || '';
+        }
+        return { hospname, connection, charset };
     }
+
 
     getPerson(db: Knex, columnName: string, searchText: any) {
         columnName = columnName === 'cid' ? 'no_card' : columnName;
