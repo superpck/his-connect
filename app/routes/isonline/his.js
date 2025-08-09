@@ -104,6 +104,7 @@ const router = (fastify, {}, next) => {
                 hisProvider: process.env.HIS_PROVIDER,
                 client: process.env.HIS_DB_CLIENT,
                 connection: result?.connection,
+                charset: result?.charset,
                 hospname: result?.hospname
             });
         }
