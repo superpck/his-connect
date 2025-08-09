@@ -2,6 +2,7 @@
 ## Feature
   - เพิ่มการกำหนด charset ใน db.ts (เฉพาะ mysql)
   - เพิ่มการแสดงชื่อหน่วยงานเมื่อตรวจสอบ alive
+  - เพิ่ม test HIS connect detail
 
 # 3.8.7
 ## Feature

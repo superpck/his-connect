@@ -20,10 +20,20 @@ class HisEzhospModel {
             .where('table_schema', '=', dbname);
     }
     async testConnect(db) {
-        const result = await global.dbHIS('hospdata.sys_hospital').first();
+        let result;
+        result = await global.dbHIS('hospdata.sys_hospital').first();
         const hospname = result?.hname || null;
-        const patient = await db('hospdata.patient').select('hn').limit(1);
-        return { hospname, patient };
+        result = await db('hospdata.patient').select('hn').limit(1);
+        const connection = result && (result.patient || result.length > 0) ? true : false;
+        let charset = '';
+        if (process.env.HIS_DB_CLIENT.includes('mysql')) {
+            result = await db('information_schema.SCHEMATA')
+                .select('DEFAULT_CHARACTER_SET_NAME')
+                .where('SCHEMA_NAME', process.env.HIS_DB_NAME)
+                .first();
+            charset = result?.DEFAULT_CHARACTER_SET_NAME || '';
+        }
+        return { hospname, connection, charset };
     }
     getPerson(db, columnName, searchText) {
         columnName = columnName === 'cid' ? 'no_card' : columnName;
