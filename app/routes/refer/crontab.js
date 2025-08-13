@@ -12,6 +12,7 @@ const resultText = 'sent_result.txt';
 const apiKey = process.env.NREFER_APIKEY || 'api-key';
 const secretKey = process.env.NREFER_SECRETKEY || 'secret-key';
 const backwardMonth = process.env.NREFER_DATA_BACKWARD_MONTH;
+const sendEveryMinute = Number(process.env.NREFER_AUTO_SEND_EVERY_MINUTE) || 5;
 let sentContent = '';
 let nReferToken = '';
 let sentResult = {};
@@ -57,18 +58,18 @@ async function sendMoph(req, reply, db) {
     const hourNow = +moment().get('hours');
     const minuteNow = +moment().get('minutes');
     if ((hourNow == 1 || hourNow == 8 || hourNow == 12 || hourNow == 18 || hourNow == 22)
-        && minuteNow - 1 < +process.env.NREFER_AUTO_SEND_EVERY_MINUTE) {
+        && minuteNow - 1 < sendEveryMinute) {
         const date = moment().subtract(1, 'days').format('YYYY-MM-DD');
         var [referOut, referResult] = await sendRefer(db, date);
     }
-    else if (hourNow == 4 && minuteNow > 48) {
+    else if (hourNow == 4 && minuteNow > (59 - sendEveryMinute)) {
         let oldDate = moment(dateNow).subtract(1, 'months').format('YYYY-MM-DD');
         while (oldDate < dateNow) {
             var [referOut, referResult] = await sendRefer(db, oldDate);
             oldDate = moment(oldDate).add(1, 'days').format('YYYY-MM-DD');
         }
     }
-    else if ([3, 14].indexOf(hourNow) >= 0 && minuteNow - 1 > +process.env.NREFER_AUTO_SEND_EVERY_MINUTE) {
+    else if ([3, 14].indexOf(hourNow) >= 0 && minuteNow - 1 > sendEveryMinute) {
         let oldDate = moment(dateNow).subtract(7, 'days').format('YYYY-MM-DD');
         while (oldDate < dateNow) {
             var [referOut, referResult] = await sendRefer(db, oldDate);
