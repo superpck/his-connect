@@ -115,8 +115,8 @@ const router = (fastify, { }, next) => {
         },
         nrefer: {
           autoSend: +process.env.NREFER_AUTO_SEND == 1,
-          minute: +process.env.NREFER_AUTO_SEND_EVERY_MINUTE,
-          hour: +process.env.NREFER_AUTO_SEND_EVERY_HOUR,
+          minute: +process.env.NREFER_AUTO_SEND_EVERY_MINUTE || 50,
+          hour: 0,
         },
         notifyChanel: process.env.NOTIFY_CHANNEL,
       }

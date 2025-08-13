@@ -170,7 +170,6 @@ function configureTimingSchedules(): TimingSchedules {
     'isonline',
     'IS_AUTO_SEND',
     'IS_AUTO_SEND_EVERY_MINUTE',
-    'IS_AUTO_SEND_EVERY_HOUR',
     10,
     true
   );
@@ -181,7 +180,6 @@ function configureTimingSchedules(): TimingSchedules {
     'nrefer',
     'NREFER_AUTO_SEND',
     'NREFER_AUTO_SEND_EVERY_MINUTE',
-    'NREFER_AUTO_SEND_EVERY_HOUR',
     5,
     false
   );
@@ -197,7 +195,6 @@ function configureService(
   serviceName: string,
   autoSendEnvVar: string,
   minuteEnvVar: string,
-  hourEnvVar: string,
   minMinutes: number,
   normalizeHour: boolean
 ): void {
@@ -207,8 +204,6 @@ function configureService(
   // Get minutes and hours from environment
   timingSchedule[serviceName].minute = process.env[minuteEnvVar] ?
     parseInt(process.env[minuteEnvVar]) : 0;
-  timingSchedule[serviceName].hour = process.env[hourEnvVar] ?
-    parseInt(process.env[hourEnvVar]) : 0;
 
   // Normalize hour if needed (0-23)
   if (normalizeHour && timingSchedule[serviceName].hour > 23) {
