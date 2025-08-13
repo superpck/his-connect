@@ -65,7 +65,6 @@ NREFER_APIKEY="กรุณาระบุ API Key"
 NREFER_SECRETKEY="กรุณาระบุ API Secret Key"
 NREFER_AUTO_SEND=1
 NREFER_AUTO_SEND_EVERY_MINUTE=15
-NREFER_AUTO_SEND_EVERY_HOUR=0
 
 # [Chat Config]
 NOTIFY_URL=https://nrefer.moph.go.th/apis/message

@@ -201,7 +201,6 @@ const router = (fastify, { }, next) => {
         NREFER_SECRETKEY: 'xxxxxxxx',
         NREFER_AUTO_SEND: 1,
         NREFER_AUTO_SEND_EVERY_MINUTE: 14,
-        NREFER_AUTO_SEND_EVERY_HOUR: 0,
       },
       NREFERLOCAL: {
         REFER_PROVIDER: 'thairefer',
@@ -227,7 +226,6 @@ const router = (fastify, { }, next) => {
         IS_DB_ENCRYPT: true,
         IS_AUTO_SEND: 1,
         IS_AUTO_SEND_EVERY_MINUTE: 6,
-        IS_AUTO_SEND_EVERY_HOUR: 0,
         IS_URL: 'http://ae.moph.go.th:3006',
         IS_MOPH_USER: '<from IS>',
         IS_MOPH_PASSWORD: '<from IS>'

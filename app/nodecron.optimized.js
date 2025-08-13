@@ -76,16 +76,14 @@ function configureTimingSchedules() {
             minute: 0
         };
     });
-    configureService(timingSchedule, 'isonline', 'IS_AUTO_SEND', 'IS_AUTO_SEND_EVERY_MINUTE', 'IS_AUTO_SEND_EVERY_HOUR', 10, true);
-    configureService(timingSchedule, 'nrefer', 'NREFER_AUTO_SEND', 'NREFER_AUTO_SEND_EVERY_MINUTE', 'NREFER_AUTO_SEND_EVERY_HOUR', 5, false);
+    configureService(timingSchedule, 'isonline', 'IS_AUTO_SEND', 'IS_AUTO_SEND_EVERY_MINUTE', 10, true);
+    configureService(timingSchedule, 'nrefer', 'NREFER_AUTO_SEND', 'NREFER_AUTO_SEND_EVERY_MINUTE', 5, false);
     return timingSchedule;
 }
-function configureService(timingSchedule, serviceName, autoSendEnvVar, minuteEnvVar, hourEnvVar, minMinutes, normalizeHour) {
+function configureService(timingSchedule, serviceName, autoSendEnvVar, minuteEnvVar, minMinutes, normalizeHour) {
     timingSchedule[serviceName].autosend = +process.env[autoSendEnvVar] === 1 || false;
     timingSchedule[serviceName].minute = process.env[minuteEnvVar] ?
         parseInt(process.env[minuteEnvVar]) : 0;
-    timingSchedule[serviceName].hour = process.env[hourEnvVar] ?
-        parseInt(process.env[hourEnvVar]) : 0;
     if (normalizeHour && timingSchedule[serviceName].hour > 23) {
         timingSchedule[serviceName].hour = timingSchedule[serviceName].hour % 23;
     }
