@@ -12,7 +12,7 @@ class HisHosxpv4Model {
     async testConnect(db) {
         let result;
         result = await global.dbHIS('opdconfig').first();
-        const hospname = result?.hospitalcode || null;
+        const hospname = result?.hospitalname || result?.hospitalcode || null;
         result = await db('patient').select('hn').limit(1);
         const connection = result && (result.patient || result.length > 0) ? true : false;
         let charset = '';
