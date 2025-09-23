@@ -664,6 +664,7 @@ export class HisHosxpv4Model {
                 'lab_head.form_name as lab_group',
                 'lab_order.lab_items_name_ref as INVESTNAME',
                 'lab_order.lab_order_result as INVESTVALUE',
+                // 'lab_order.lab_order_remark as INVESTRESULT',
                 'lab_items.icode as ICDCM',
                 'lab_items.lab_items_sub_group_code as GROUPCODE',
                 'lab_items_sub_group.lab_items_sub_group_name as GROUPNAME')

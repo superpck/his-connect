@@ -3,6 +3,7 @@
   - เพิ่มการกำหนด charset ใน db.ts (เฉพาะ mysql)
   - เพิ่มการแสดงชื่อหน่วยงานเมื่อตรวจสอบ alive
   - เพิ่ม test HIS connect detail
+  - Update package (2025.09.23-1)
 
 # 3.8.7
 ## Feature
