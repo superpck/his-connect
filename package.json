@@ -1,13 +1,13 @@
 {
   "name": "his-connect",
-  "version": "3.8.8",
-  "subVersion": "2025.09.23-1",
+  "version": "3.8.9",
+  "subVersion": "2025.10.11-1",
   "private": true,
   "license": "MIT",
   "scripts": {
     "start": "npx ts-node ./src/app.ts",
     "watch": "npx nodemon",
-    "build": "npx tsc"
+    "build": "rm -rf app && npx tsc"
   },
   "dependencies": {
     "@fastify/cors": "^11.1.0",

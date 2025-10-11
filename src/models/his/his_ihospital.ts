@@ -57,8 +57,9 @@ export class HisIHospitalModel {
       sql.where('isactive', 1)
     }
     return sql
-      .select('code as ward_code', 'ward as ward_name',
-        'standard as moph_code')
+      .select('code as wardcode', 'ward as wardname',
+        'standard as std_code', 'bed_nm as bed_normal', 'bed_sp as bed_special',
+        'ward_type', 'ward_typesub as ward_subtype')
       .limit(maxLimit);
   }
 
@@ -616,18 +617,6 @@ export class HisIHospitalModel {
       .groupBy('visit.vn')
       .limit(maxLimit);
   }
-  sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
-    return db('opd_visit as visit')
-      .select('visit.date')
-      .count('visit.vn as cases')
-      .whereBetween('visit.date', [dateStart, dateEnd])
-      .whereNotNull('visit.refer')
-      .where('visit.refer', '!=', hisHospcode)
-      .whereRaw('LENGTH(visit.refer)=5')
-      .whereNotNull('visit.vn')
-      .groupBy('visit.date');
-  }
-
   getProviderDr(db: Knex, drList: any[]) {
     return db('hdc.provider')
       .whereIn('REGISTERNO', drList)
@@ -645,5 +634,33 @@ export class HisIHospitalModel {
       .select(db.raw('"' + hcode + '" as hospcode'))
       .where(columnName, "=", searchNo)
       .limit(maxLimit);
+  }
+
+  // Report zone
+  sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
+    return db('opd_visit as visit')
+      .select('visit.date')
+      .count('visit.vn as cases')
+      .whereBetween('visit.date', [dateStart, dateEnd])
+      .whereNotNull('visit.refer')
+      .where('visit.refer', '!=', hisHospcode)
+      .whereRaw('LENGTH(visit.refer)=5')
+      .whereNotNull('visit.vn')
+      .groupBy('visit.date');
+  }
+
+  concurrentIPD(db: Knex, date: any) {
+    let sql = db('view_ipd_ipd as ip')
+      .leftJoin('lib_ward', 'ip.ward', 'lib_ward.code')
+      .select('ip.ward as wardcode', 'lib_ward.ward as wardname',
+        db.raw('sum(if(ip.admite = ?,1,0)) as new_case', [date]),
+        db.raw('sum(if(ip.admite = ?,1,0)) as discharge', [date]))
+      .count('* as cases')
+      .where('ip.admite', '<=', date)
+      .whereRaw('ip.ward is not null and ip.ward>0')
+      .andWhere(function () {
+        this.whereNull('ip.disc').orWhere('ip.disc', '>=', date);
+      });
+    return sql.groupBy('ip.ward').orderBy('ip.ward');
   }
 }

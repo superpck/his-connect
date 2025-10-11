@@ -6,6 +6,7 @@ var fastify = require('fastify');
 const moment = require("moment");
 const axios_1 = require("axios");
 const hismodel_1 = require("./../his/hismodel");
+const moph_refer_1 = require("../../middleware/moph-refer");
 var fs = require('fs');
 const hcode = process.env.HOSPCODE;
 const resultText = 'sent_result.txt';
@@ -319,7 +320,7 @@ async function sendReferOut(row, sentResult) {
             his: process.env.HIS_PROVIDER,
             typesave: 'autosent'
         };
-        const saveResult = await referSending('/save-refer-history', data);
+        const saveResult = await (0, moph_refer_1.sendingToMoph)('/save-refer-history', data);
         if (saveResult.statusCode == 200) {
             sentResult.referout.success += 1;
         }
@@ -360,7 +361,7 @@ async function sendReferIn(row, sentResult) {
             his: process.env.HIS_PROVIDER,
             typesave: 'autoreply'
         };
-        const saveResult = await referSending('/save-refer-result', data);
+        const saveResult = await (0, moph_refer_1.sendingToMoph)('/save-refer-result', data);
         if (saveResult.statusCode == 200) {
             sentResult.referresult.success += 1;
         }
@@ -407,7 +408,7 @@ async function getPerson(db, pid, sentResult) {
                 TYPEAREA: row.TYPEAREA || row.typearea,
                 D_UPDATE: row.D_UPDATE || row.d_update || d_update,
             };
-            const saveResult = await referSending('/save-person', person);
+            const saveResult = await (0, moph_refer_1.sendingToMoph)('/save-person', person);
             if (saveResult.statusCode === 200) {
                 sentResult.person.success += 1;
             }
@@ -445,7 +446,7 @@ async function getAddress(db, pid, sentResult) {
                     MOBILE: row.MOBILE || row.mobile || '',
                     D_UPDATE: row.D_UPDATE || row.d_update || d_update,
                 };
-                const saveResult = await referSending('/save-address', address);
+                const saveResult = await (0, moph_refer_1.sendingToMoph)('/save-address', address);
                 if (saveResult.statusCode === 200) {
                     sentResult.address.success += 1;
                 }
@@ -513,7 +514,7 @@ async function getService(db, visitNo, sentResult) {
                 PROVIDER: row.PROVIDER || row.provider || row.dr || row.DR || '',
                 D_UPDATE: row.D_UPDATE || row.d_update || d_update,
             };
-            const saveResult = await referSending('/save-service', data);
+            const saveResult = await (0, moph_refer_1.sendingToMoph)('/save-service', data);
             sentContent += '    -- SEQ ' + data.SEQ + ' ' + (saveResult.result || saveResult.message) + '\r';
             if (saveResult.statusCode === 200) {
                 sentResult.service.success += 1;
@@ -557,7 +558,7 @@ async function getDiagnosisOpd(db, visitNo, sentResult) {
                 CID: row.cid || ''
             });
         }
-        const saveResult = await referSending('/save-diagnosis-opd', r);
+        const saveResult = await (0, moph_refer_1.sendingToMoph)('/save-diagnosis-opd', r);
         sentContent += '    -- ' + visitNo + ' ' + JSON.stringify(saveResult) + '\r';
         if (saveResult.statusCode === 200) {
             sentResult.diagnosisOpd.success += 1;
@@ -593,7 +594,7 @@ async function getProcedureOpd(db, visitNo, sentResult) {
                 CID: row.cid || '',
             });
         }
-        const saveResult = await referSending('/save-procedure-opd', rowSave);
+        const saveResult = await (0, moph_refer_1.sendingToMoph)('/save-procedure-opd', rowSave);
         sentContent += '    -- ' + visitNo + ' ' + JSON.stringify(saveResult) + '\r';
         if (saveResult.statusCode === 200) {
             sentResult.procedureOpd.success += 1;
@@ -636,7 +637,7 @@ async function getDrugOpd(db, visitNo, sentResult) {
                 caution: r.caution
             });
         }
-        const saveResult = await referSending('/save-drug-opd', opdDrug);
+        const saveResult = await (0, moph_refer_1.sendingToMoph)('/save-drug-opd', opdDrug);
         sentContent += '    -- ' + visitNo + ' ' + JSON.stringify(saveResult) + '\r';
         if (saveResult.statusCode == 200) {
             sentResult.drugOpd.success += 1;
@@ -692,7 +693,7 @@ async function getLabResult(db, row, sentResult) {
                 });
             }
         }
-        const saveResult = await referSending('/save-investigation-refer', rowsSave);
+        const saveResult = await (0, moph_refer_1.sendingToMoph)('/save-investigation-refer', rowsSave);
         if (saveResult.statusCode === 200) {
             sentResult.investigationRefer.success += rowsSave.length;
         }
@@ -807,7 +808,7 @@ async function drugIPD(db, an) {
                 }
             }
             if (ipdDrug.length > 0) {
-                const saveResult = await referSending('/save-drug-ipd', ipdDrug);
+                const saveResult = await (0, moph_refer_1.sendingToMoph)('/save-drug-ipd', ipdDrug);
                 sentContent += '    -- ' + an + ' ' + JSON.stringify(saveResult) + '\r';
                 if (saveResult.statusCode == 200) {
                     sentResult.drugIpd.success += 1;
@@ -869,7 +870,7 @@ async function sendAdmission(row) {
         SUB: row.hsub || row.sub || '',
         D_UPDATE: row.d_update || d_update,
     };
-    const saveResult = await referSending('/save-admission', data);
+    const saveResult = await (0, moph_refer_1.sendingToMoph)('/save-admission', data);
     if (saveResult.statusCode == 200) {
         sentResult.admission.success += 1;
     }
@@ -911,7 +912,7 @@ async function getDiagnosisIpd(db, an) {
                 }
             }
             if (r.length > 0) {
-                const saveResult = await referSending('/save-diagnosis-ipd', r);
+                const saveResult = await (0, moph_refer_1.sendingToMoph)('/save-diagnosis-ipd', r);
                 sentContent += '    -- ' + an + ' ' + JSON.stringify(saveResult) + '\r';
                 if (saveResult.statusCode === 200) {
                     sentResult.diagnosisIpd.success += 1;
@@ -954,7 +955,7 @@ async function getProcedureIpd(db, an) {
                 CID: row.CID || row.cid || '',
             });
         }
-        const saveResult = await referSending('/save-procedure-ipd', rowSave);
+        const saveResult = await (0, moph_refer_1.sendingToMoph)('/save-procedure-ipd', rowSave);
         sentContent += '    -- ' + an + ' ' + JSON.stringify(saveResult) + '\r';
     }
     return rowSave;
@@ -1032,7 +1033,7 @@ async function getProvider(db, drList, sentResult) {
                 D_UPDATE: row.d_update || moment().format('YYYY-MM-DD HH:mm:ss')
             });
         }
-        const saveResult = await referSending('/save-provider', rowSave);
+        const saveResult = await (0, moph_refer_1.sendingToMoph)('/save-provider', rowSave);
         sentContent += '    -- save provider ', rowSave.length, JSON.stringify(saveResult) + '\r';
     }
     return rowSave;

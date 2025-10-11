@@ -16,6 +16,7 @@ const his_mypcu_1 = require("../../models/his/his_mypcu");
 const his_emrsoft_1 = require("../../models/his/his_emrsoft");
 const his_haos_1 = require("../../models/his/his_haos");
 const his_ssb_srih_1 = require("../../models/his/his_ssb_srih");
+console.log('HIS Provider:', process.env.HIS_PROVIDER);
 const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 let hisModel;
 switch (hisProvider) {

@@ -79,9 +79,12 @@ export class HisHosxpv3Model {
             sql.whereLike('name', `%${wardName}%`)
         }
         return sql
-            .select('ward as ward_code', 'name as ward_name',
-                `sss_code as moph_code`)
-            .orderBy('name')
+            .select('ward as wardcode', 'name as wardname',
+                `sss_code as std_code`,
+                db.raw('CASE WHEN spclty = "Y" THEN 0 ELSE bedcount END as bed_normal'),
+                db.raw('CASE WHEN spclty = "Y" THEN bedcount ELSE 0 END as bed_special'),
+            )
+            .orderBy('ward')
             .limit(maxLimit);
     }
 
@@ -136,18 +139,6 @@ export class HisHosxpv3Model {
             r.refer_date`;
         const result = await db.raw(sql, [filter, hisHospcode]);
         return result[0];
-    }
-    sumReferOut(db: Knex, dateStart: any, dateEnd: any) {
-        return db('referout as r')
-            .select('r.refer_date')
-            .count('r.vn as cases')
-            .whereNotNull('r.vn')
-            .whereBetween('r.refer_date', [dateStart, dateEnd])
-            .where('r.refer_hospcode', '!=', "")
-            .whereNotNull('r.refer_hospcode')
-            .where('r.refer_hospcode', '!=', hisHospcode)
-            .groupBy('r.refer_date')
-            .orderBy('r.refer_date');
     }
 
     async getPerson(db: Knex, columnName, searchText, hospCode = hisHospcode) {
@@ -1412,18 +1403,6 @@ export class HisHosxpv3Model {
             .whereNotNull('patient.hn')
             .limit(maxLimit);
     }
-    sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
-        return db('referin')
-            .leftJoin('ovst', 'referin.vn', 'ovst.vn')
-            .select('referin.refer_date')
-            .count('referin.vn as cases')
-            .whereBetween('referin.refer_date', [dateStart, dateEnd])
-            .where('referin.refer_hospcode', '!=', hisHospcode)
-            .whereNotNull('referin.refer_hospcode')
-            .whereNotNull('referin.vn')
-            .whereNotNull('ovst.vn')
-            .groupBy('referin.refer_date');
-    }
 
     async getProvider(db: Knex, columnName, searchNo, hospCode = hisHospcode) {
         columnName = columnName === 'licenseNo' ? 'd.code' : columnName;
@@ -1489,5 +1468,46 @@ export class HisHosxpv3Model {
             .select('*')
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
+    }
+
+    // Report Zone
+    sumReferOut(db: Knex, dateStart: any, dateEnd: any) {
+        return db('referout as r')
+            .select('r.refer_date')
+            .count('r.vn as cases')
+            .whereNotNull('r.vn')
+            .whereBetween('r.refer_date', [dateStart, dateEnd])
+            .where('r.refer_hospcode', '!=', "")
+            .whereNotNull('r.refer_hospcode')
+            .where('r.refer_hospcode', '!=', hisHospcode)
+            .groupBy('r.refer_date')
+            .orderBy('r.refer_date');
+    }
+
+    sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
+        return db('referin')
+            .leftJoin('ovst', 'referin.vn', 'ovst.vn')
+            .select('referin.refer_date')
+            .count('referin.vn as cases')
+            .whereBetween('referin.refer_date', [dateStart, dateEnd])
+            .where('referin.refer_hospcode', '!=', hisHospcode)
+            .whereNotNull('referin.refer_hospcode')
+            .whereNotNull('referin.vn')
+            .whereNotNull('ovst.vn')
+            .groupBy('referin.refer_date');
+    }
+    concurrentIPD(db: Knex, date: any) {
+        let sql = db('ipt')
+            .leftJoin('ward', 'ipt.ward', 'ward.ward')
+            .select('ipt.ward as wardcode', 'ward.name as wardname',
+                db.raw('sum(if(ipt.regdate = ?,1,0)) as new_case', [date]),
+                db.raw('sum(if(ipt.dchdate = ?,1,0)) as discharge', [date]))
+            .count('* as cases')
+            .where('ipt.regdate', '<=', date)
+            .whereRaw('ipt.ward is not null and ipt.ward!= ""')
+            .andWhere(function () {
+                this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', date);
+            });
+        return sql.groupBy('ipt.ward').orderBy('ipt.ward');
     }
 }

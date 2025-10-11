@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import * as moment from 'moment';
 import { execSync } from 'child_process';
+import { sendWardName, sendBedOccupancy } from "./task/moph-erp";
 
 // Type definitions for better type safety
 interface ServiceSchedule {
@@ -313,6 +314,8 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   }
 
   // Schedule cron job
+        // sendWardName();
+        // sendBedOccupancy();
   cron.schedule(timingSch, async (req: any, res: any) => {
     // Get current time info
     const minuteSinceLastNight = getMinutesSinceMidnight();
@@ -323,6 +326,11 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
       // Log job status on odd minutes
       if (minuteSinceLastNight % 2 === 1) {
         logJobStatus();
+      }
+
+      if (minuteSinceLastNight % 60 === 7) {
+        sendWardName();
+        sendBedOccupancy();
       }
 
       // Run nRefer jobs if scheduled
