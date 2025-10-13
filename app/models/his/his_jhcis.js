@@ -280,5 +280,20 @@ class HisJhcisModel {
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
     }
+    sumReferIn(db, dateStart, dateEnd) {
+        return [];
+    }
+    sumReferOut(db, dateStart, dateEnd) {
+        return [];
+    }
+    concurrentIPDByWard(db, date) {
+        return [];
+    }
+    concurrentIPDByClinic(db, date) {
+        return [];
+    }
+    sumOpdVisitByClinic(db, date) {
+        return [];
+    }
 }
 exports.HisJhcisModel = HisJhcisModel;

@@ -485,17 +485,35 @@ class HisIHospitalModel {
             .whereNotNull('visit.vn')
             .groupBy('visit.date');
     }
-    concurrentIPD(db, date) {
+    concurrentIPDByWard(db, date) {
         let sql = db('view_ipd_ipd as ip')
-            .leftJoin('lib_ward', 'ip.ward', 'lib_ward.code')
-            .select('ip.ward as wardcode', 'lib_ward.ward as wardname', db.raw('sum(if(ip.admite = ?,1,0)) as new_case', [date]), db.raw('sum(if(ip.admite = ?,1,0)) as discharge', [date]))
+            .select('ip.ward as wardcode', 'ward_name as wardname', db.raw('SUBSTRING(ip.ward_std,2,2) as clinic'), db.raw('sum(if(ip.admite = ?,1,0)) as new_case', [date]), db.raw('sum(if(ip.disc = ?,1,0)) as discharge', [date]), db.raw('sum(if(ip.refer IS NOT NULL AND ip.refer != "", 1,0)) as referin'), db.raw('sum(if(ip.disc = ?,adjrw,0)) as adjrw', [date]), db.raw('sum(if(LEFT(ip.stat_dsc,1) IN ("8","9"), 1,0)) as death'))
             .count('* as cases')
+            .sum('ip.pday as los')
             .where('ip.admite', '<=', date)
             .whereRaw('ip.ward is not null and ip.ward>0')
             .andWhere(function () {
             this.whereNull('ip.disc').orWhere('ip.disc', '>=', date);
         });
         return sql.groupBy('ip.ward').orderBy('ip.ward');
+    }
+    concurrentIPDByClinic(db, date) {
+        let sql = db('view_ipd_ipd as ip')
+            .select('clinic_hdc_code as cliniccode', 'clinic_hdc_name as clinicname', db.raw('sum(if(ip.admite = ?,1,0)) as new_case', [date]), db.raw('sum(if(ip.disc = ?,1,0)) as discharge', [date]), db.raw('sum(if(ip.refer IS NOT NULL AND ip.refer != "", 1,0)) as referin'), db.raw('sum(if(ip.disc = ?,adjrw,0)) as adjrw', [date]), db.raw('sum(if(LEFT(ip.stat_dsc,1) IN ("8","9"), 1,0)) as death'))
+            .count('* as cases')
+            .sum('ip.pday as los')
+            .where('ip.admite', '<=', date)
+            .andWhere(function () {
+            this.whereNull('ip.disc').orWhere('ip.disc', '>=', date);
+        });
+        return sql.groupBy('cliniccode').orderBy('cliniccode');
+    }
+    sumOpdVisitByClinic(db, date) {
+        let sql = db('view_opd_visit as visit')
+            .select('visit.date', db.raw('CASE WHEN clinic_std IS NULL OR clinic_std = "" THEN "99" ELSE SUBSTRING(visit.clinic_std, 2, 2) END as cliniccode'), 'visit.dxclinic_name as clinicname', db.raw('sum(if(visit.ipd_an IS NULL or visit.ipd_an="",0,1)) as admit'))
+            .count('* as cases')
+            .where('visit.date', date);
+        return sql.groupBy('cliniccode').orderBy('cliniccode');
     }
 }
 exports.HisIHospitalModel = HisIHospitalModel;

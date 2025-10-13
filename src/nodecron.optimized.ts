@@ -314,12 +314,11 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   }
 
   // Schedule cron job
-        // sendWardName();
-        // sendBedOccupancy();
+        // sendBedOccupancy('2025-10-01');
   cron.schedule(timingSch, async (req: any, res: any) => {
     // Get current time info
     const minuteSinceLastNight = getMinutesSinceMidnight();
-    const minuteNow = getCurrentMinute();
+    const minuteNow = moment().get('minute');
 
     // Only run on the first process
     if (processState.isFirstProcess) {
@@ -328,7 +327,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
         logJobStatus();
       }
 
-      if (minuteSinceLastNight % 60 === 7) {
+      if (minuteNow == 15) {
         sendWardName();
         sendBedOccupancy();
       }

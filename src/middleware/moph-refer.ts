@@ -52,9 +52,7 @@ export const getReferToken = async () => {
 }
 
 export const sendingToMoph = async (uri: string, dataArray: any) => {
-  if (!nReferToken) {
-    await getReferToken();
-  }
+  await getReferToken();
   if (!nReferToken) {
     return { status: 500, message: 'No nRefer token' };
   }

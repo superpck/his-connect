@@ -147,12 +147,12 @@ async function cronjob(fastify) {
     }
     cron.schedule(timingSch, async (req, res) => {
         const minuteSinceLastNight = getMinutesSinceMidnight();
-        const minuteNow = getCurrentMinute();
+        const minuteNow = moment().get('minute');
         if (processState.isFirstProcess) {
             if (minuteSinceLastNight % 2 === 1) {
                 logJobStatus();
             }
-            if (minuteSinceLastNight % 60 === 7) {
+            if (minuteNow == 15) {
                 (0, moph_erp_1.sendWardName)();
                 (0, moph_erp_1.sendBedOccupancy)();
             }
