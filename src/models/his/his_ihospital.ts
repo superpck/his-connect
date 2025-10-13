@@ -57,8 +57,9 @@ export class HisIHospitalModel {
       sql.where('isactive', 1)
     }
     return sql
-      .select('code as ward_code', 'ward as ward_name',
-        'standard as moph_code')
+      .select('code as wardcode', 'ward as wardname',
+        'standard as std_code', 'bed_nm as bed_normal', 'bed_sp as bed_special',
+        'ward_type', 'ward_typesub as ward_subtype')
       .limit(maxLimit);
   }
 
@@ -616,18 +617,6 @@ export class HisIHospitalModel {
       .groupBy('visit.vn')
       .limit(maxLimit);
   }
-  sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
-    return db('opd_visit as visit')
-      .select('visit.date')
-      .count('visit.vn as cases')
-      .whereBetween('visit.date', [dateStart, dateEnd])
-      .whereNotNull('visit.refer')
-      .where('visit.refer', '!=', hisHospcode)
-      .whereRaw('LENGTH(visit.refer)=5')
-      .whereNotNull('visit.vn')
-      .groupBy('visit.date');
-  }
-
   getProviderDr(db: Knex, drList: any[]) {
     return db('hdc.provider')
       .whereIn('REGISTERNO', drList)
@@ -645,5 +634,63 @@ export class HisIHospitalModel {
       .select(db.raw('"' + hcode + '" as hospcode'))
       .where(columnName, "=", searchNo)
       .limit(maxLimit);
+  }
+
+  // Report zone
+  sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
+    return db('opd_visit as visit')
+      .select('visit.date')
+      .count('visit.vn as cases')
+      .whereBetween('visit.date', [dateStart, dateEnd])
+      .whereNotNull('visit.refer')
+      .where('visit.refer', '!=', hisHospcode)
+      .whereRaw('LENGTH(visit.refer)=5')
+      .whereNotNull('visit.vn')
+      .groupBy('visit.date');
+  }
+
+  concurrentIPDByWard(db: Knex, date: any) {
+    let sql = db('view_ipd_ipd as ip')
+      .select('ip.ward as wardcode', 'ward_name as wardname',
+        db.raw('SUBSTRING(ip.ward_std,2,2) as clinic'),
+        db.raw('sum(if(ip.admite = ?,1,0)) as new_case', [date]),
+        db.raw('sum(if(ip.disc = ?,1,0)) as discharge', [date]),
+        db.raw('sum(if(ip.refer IS NOT NULL AND ip.refer != "", 1,0)) as referin'),
+        db.raw('sum(if(ip.disc = ?,adjrw,0)) as adjrw', [date]),
+        db.raw('sum(if(LEFT(ip.stat_dsc,1) IN ("8","9"), 1,0)) as death'))
+      .count('* as cases')
+      .sum('ip.pday as los')
+      .where('ip.admite', '<=', date)
+      .whereRaw('ip.ward is not null and ip.ward>0')
+      .andWhere(function () {
+        this.whereNull('ip.disc').orWhere('ip.disc', '>=', date);
+      });
+    return sql.groupBy('ip.ward').orderBy('ip.ward');
+  }
+  concurrentIPDByClinic(db: Knex, date: any) {
+    let sql = db('view_ipd_ipd as ip')
+      .select('clinic_hdc_code as cliniccode', 'clinic_hdc_name as clinicname',
+        db.raw('sum(if(ip.admite = ?,1,0)) as new_case', [date]),
+        db.raw('sum(if(ip.disc = ?,1,0)) as discharge', [date]),
+        db.raw('sum(if(ip.refer IS NOT NULL AND ip.refer != "", 1,0)) as referin'),
+        db.raw('sum(if(ip.disc = ?,adjrw,0)) as adjrw', [date]),
+        db.raw('sum(if(LEFT(ip.stat_dsc,1) IN ("8","9"), 1,0)) as death'))
+      .count('* as cases')
+      .sum('ip.pday as los')
+      .where('ip.admite', '<=', date)
+      .andWhere(function () {
+        this.whereNull('ip.disc').orWhere('ip.disc', '>=', date);
+      });
+    return sql.groupBy('cliniccode').orderBy('cliniccode');
+  }
+  sumOpdVisitByClinic(db: Knex, date: any) {
+    let sql = db('view_opd_visit as visit')
+      .select('visit.date',
+        db.raw('CASE WHEN clinic_std IS NULL OR clinic_std = "" THEN "99" ELSE SUBSTRING(visit.clinic_std, 2, 2) END as cliniccode'),
+        'visit.dxclinic_name as clinicname',
+        db.raw('sum(if(visit.ipd_an IS NULL or visit.ipd_an="",0,1)) as admit'))
+      .count('* as cases')
+      .where('visit.date', date);
+    return sql.groupBy('cliniccode').orderBy('cliniccode');
   }
 }

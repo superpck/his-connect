@@ -6,6 +6,7 @@ import * as moment from 'moment';
 import axios from 'axios';
 import hisModel from './../his/hismodel';
 import { Knex } from 'knex';
+import { sendingToMoph } from '../../middleware/moph-refer';
 var fs = require('fs');
 
 const hcode = process.env.HOSPCODE;
@@ -364,7 +365,8 @@ async function sendReferOut(row, sentResult) {
       typesave: 'autosent'
     }
 
-    const saveResult: any = await referSending('/save-refer-history', data);
+    const saveResult: any = await sendingToMoph('/save-refer-history', data)
+    // const saveResult1: any = await referSending('/save-refer-history', data);
     if (saveResult.statusCode == 200) {
       sentResult.referout.success += 1;
     } else {
@@ -409,7 +411,8 @@ async function sendReferIn(row, sentResult) {
       typesave: 'autoreply'
     };
 
-    const saveResult: any = await referSending('/save-refer-result', data);
+    const saveResult: any = await sendingToMoph('/save-refer-result', data)
+    // const saveResult: any = await referSending('/save-refer-result', data);
     if (saveResult.statusCode == 200) {
       sentResult.referresult.success += 1;
     } else {
@@ -457,7 +460,8 @@ async function getPerson(db, pid, sentResult) {
         D_UPDATE: row.D_UPDATE || row.d_update || d_update,
       }
 
-      const saveResult: any = await referSending('/save-person', person);
+      const saveResult: any = await sendingToMoph('/save-person', person)
+      // const saveResult: any = await referSending('/save-person', person);
       if (saveResult.statusCode === 200) {
         sentResult.person.success += 1;
       } else {
@@ -496,7 +500,8 @@ async function getAddress(db, pid, sentResult) {
           D_UPDATE: row.D_UPDATE || row.d_update || d_update,
         }
 
-        const saveResult: any = await referSending('/save-address', address);
+        const saveResult: any = await sendingToMoph('/save-address', address)
+        // const saveResult: any = await referSending('/save-address', address);
         if (saveResult.statusCode === 200) {
           sentResult.address.success += 1;
         } else {
@@ -564,7 +569,8 @@ async function getService(db, visitNo, sentResult) {
         D_UPDATE: row.D_UPDATE || row.d_update || d_update,
       }
 
-      const saveResult: any = await referSending('/save-service', data);
+      const saveResult: any = await sendingToMoph('/save-service', data)
+      // const saveResult: any = await referSending('/save-service', data);
       sentContent += '    -- SEQ ' + data.SEQ + ' ' + (saveResult.result || saveResult.message) + '\r';
       if (saveResult.statusCode === 200) {
         sentResult.service.success += 1;
@@ -612,7 +618,8 @@ async function getDiagnosisOpd(db, visitNo, sentResult) {
       });
     }
 
-    const saveResult: any = await referSending('/save-diagnosis-opd', r);
+    const saveResult: any = await sendingToMoph('/save-diagnosis-opd', r)
+    // const saveResult: any = await referSending('/save-diagnosis-opd', r);
     sentContent += '    -- ' + visitNo + ' ' + JSON.stringify(saveResult) + '\r';
     if (saveResult.statusCode === 200) {
       sentResult.diagnosisOpd.success += 1;
@@ -649,7 +656,8 @@ async function getProcedureOpd(db, visitNo, sentResult) {
         CID: row.cid || '',
       })
     }
-    const saveResult: any = await referSending('/save-procedure-opd', rowSave);
+    const saveResult: any = await sendingToMoph('/save-procedure-opd', rowSave)
+    // const saveResult: any = await referSending('/save-procedure-opd', rowSave);
     sentContent += '    -- ' + visitNo + ' ' + JSON.stringify(saveResult) + '\r';
     if (saveResult.statusCode === 200) {
       sentResult.procedureOpd.success += 1;
@@ -693,7 +701,8 @@ async function getDrugOpd(db, visitNo, sentResult) {
         caution: r.caution
       });
     }
-    const saveResult: any = await referSending('/save-drug-opd', opdDrug);
+    const saveResult: any = await sendingToMoph('/save-drug-opd', opdDrug)
+    // const saveResult: any = await referSending('/save-drug-opd', opdDrug);
     sentContent += '    -- ' + visitNo + ' ' + JSON.stringify(saveResult) + '\r';
     if (saveResult.statusCode == 200) {
       sentResult.drugOpd.success += 1;
@@ -752,7 +761,8 @@ async function getLabResult(db, row, sentResult) {
         });
       }
     }
-    const saveResult: any = await referSending('/save-investigation-refer', rowsSave);
+    const saveResult: any = await sendingToMoph('/save-investigation-refer', rowsSave);
+    // const saveResult: any = await referSending('/save-investigation-refer', rowsSave);
     if (saveResult.statusCode === 200) {
       sentResult.investigationRefer.success += rowsSave.length;
     } else {
@@ -873,7 +883,8 @@ async function drugIPD(db: Knex, an: string) {
       }
 
       if (ipdDrug.length > 0) {
-        const saveResult: any = await referSending('/save-drug-ipd', ipdDrug);
+        const saveResult: any = await sendingToMoph('/save-drug-ipd', ipdDrug);
+        // const saveResult: any = await referSending('/save-drug-ipd', ipdDrug);
         sentContent += '    -- ' + an + ' ' + JSON.stringify(saveResult) + '\r';
         if (saveResult.statusCode == 200) {
           sentResult.drugIpd.success += 1;
@@ -935,7 +946,8 @@ async function sendAdmission(row: any) {
     D_UPDATE: row.d_update || d_update,
   }
 
-  const saveResult: any = await referSending('/save-admission', data);
+  const saveResult: any = await sendingToMoph('/save-admission', data);
+  // const saveResult: any = await referSending('/save-admission', data);
   if (saveResult.statusCode == 200) {
     sentResult.admission.success += 1;
   } else {
@@ -977,7 +989,8 @@ async function getDiagnosisIpd(db: Knex, an: string) {
         }
       }
       if (r.length > 0) {
-        const saveResult: any = await referSending('/save-diagnosis-ipd', r);
+        const saveResult: any = await sendingToMoph('/save-diagnosis-ipd', r);
+        // const saveResult: any = await referSending('/save-diagnosis-ipd', r);
         sentContent += '    -- ' + an + ' ' + JSON.stringify(saveResult) + '\r';
         if (saveResult.statusCode === 200) {
           sentResult.diagnosisIpd.success += 1;
@@ -1019,7 +1032,8 @@ async function getProcedureIpd(db, an) {
         CID: row.CID || row.cid || '',
       })
     }
-    const saveResult = await referSending('/save-procedure-ipd', rowSave);
+    const saveResult: any = await sendingToMoph('/save-procedure-ipd', rowSave);
+    // const saveResult = await referSending('/save-procedure-ipd', rowSave);
     sentContent += '    -- ' + an + ' ' + JSON.stringify(saveResult) + '\r';
   }
   return rowSave;
@@ -1101,7 +1115,8 @@ async function getProvider(db: Knex, drList: any, sentResult: any) {
         D_UPDATE: row.d_update || moment().format('YYYY-MM-DD HH:mm:ss')
       });
     }
-    const saveResult = await referSending('/save-provider', rowSave);
+    const saveResult: any = await sendingToMoph('/save-provider', rowSave);
+    // const saveResult = await referSending('/save-provider', rowSave);
     // console.log('save-provider', saveResult);
     sentContent += '    -- save provider ', rowSave.length, JSON.stringify(saveResult) + '\r';
   }

@@ -1,7 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = cronjob;
 const moment = require("moment");
 const child_process_1 = require("child_process");
+const moph_erp_1 = require("./task/moph-erp");
 const shell = require("shelljs");
 const cron = require('node-cron');
 const referCrontab = require('./routes/refer/crontab');
@@ -146,10 +148,14 @@ async function cronjob(fastify) {
     }
     cron.schedule(timingSch, async (req, res) => {
         const minuteSinceLastNight = getMinutesSinceMidnight();
-        const minuteNow = getCurrentMinute();
+        const minuteNow = moment().get('minute');
         if (processState.isFirstProcess) {
             if (minuteSinceLastNight % 2 === 1) {
                 logJobStatus();
+            }
+            if (minuteNow == 15) {
+                (0, moph_erp_1.sendWardName)();
+                (0, moph_erp_1.sendBedOccupancy)();
             }
             if (timingSchedule['nrefer'].autosend &&
                 minuteSinceLastNight % timingSchedule['nrefer'].minute === 0) {
@@ -177,4 +183,3 @@ async function cronjob(fastify) {
         }
     });
 }
-exports.default = cronjob;

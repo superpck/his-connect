@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import * as moment from 'moment';
 import { execSync } from 'child_process';
+import { sendWardName, sendBedOccupancy } from "./task/moph-erp";
 
 // Type definitions for better type safety
 interface ServiceSchedule {
@@ -313,16 +314,22 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   }
 
   // Schedule cron job
+        // sendBedOccupancy('2025-10-01');
   cron.schedule(timingSch, async (req: any, res: any) => {
     // Get current time info
     const minuteSinceLastNight = getMinutesSinceMidnight();
-    const minuteNow = getCurrentMinute();
+    const minuteNow = moment().get('minute');
 
     // Only run on the first process
     if (processState.isFirstProcess) {
       // Log job status on odd minutes
       if (minuteSinceLastNight % 2 === 1) {
         logJobStatus();
+      }
+
+      if (minuteNow == 15) {
+        sendWardName();
+        sendBedOccupancy();
       }
 
       // Run nRefer jobs if scheduled
