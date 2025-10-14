@@ -9,21 +9,32 @@ const hisProvider = process.env.HIS_PROVIDER || '';
 const hospcode = process.env.HOSPCODE || '';
 
 export const sendBedOccupancy = async (date: any = null) => {
-  // if (moment().get('hour') == 3) {
-  //   date = moment().subtract(1, 'month').format('YYYY-MM-DD');
-  // }
   let currDate = moment().subtract(5, 'minutes').format('YYYY-MM-DD');
   date = date || currDate;
+
+  let dateOpd = date;
+  if (moment().get('hour') == 3) {  // ทุกๆ ตี 3 ให้ส่งข้อมูลย้อนหลัง 1 เดือน
+    dateOpd = moment().subtract(1, 'month').format('YYYY-MM-DD');
+  }
+
   let clinicResult = null, wardResult = null;
   let opdResult = null;
+
   do {
-    [clinicResult, wardResult, opdResult] = await Promise.all([
+    [clinicResult, wardResult] = await Promise.all([
       sendBedOccupancyByClinic(date),
       sendBedOccupancyByWard(date),
-      sendOpdVisitByClinic(date)
     ]);
     date = moment(date).add(1, 'day').format('YYYY-MM-DD');
   } while (date <= currDate);
+
+  do {
+    [opdResult] = await Promise.all([
+      sendOpdVisitByClinic(dateOpd)
+    ]);
+    dateOpd = moment(dateOpd).add(1, 'day').format('YYYY-MM-DD');
+  } while (dateOpd <= currDate);
+
   return { clinicResult, wardResult, opdResult };
 }
 
