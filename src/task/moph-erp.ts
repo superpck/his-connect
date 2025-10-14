@@ -9,10 +9,10 @@ const hisProvider = process.env.HIS_PROVIDER || '';
 const hospcode = process.env.HOSPCODE || '';
 
 export const sendBedOccupancy = async (date: any = null) => {
-  if (moment().get('hour') == 3) {
-    date = moment().subtract(1, 'month').format('YYYY-MM-DD');
-  }
-  let currDate = moment().subtract(1, 'hour').format('YYYY-MM-DD');
+  // if (moment().get('hour') == 3) {
+  //   date = moment().subtract(1, 'month').format('YYYY-MM-DD');
+  // }
+  let currDate = moment().subtract(5, 'minutes').format('YYYY-MM-DD');
   date = date || currDate;
   let clinicResult = null, wardResult = null;
   let opdResult = null;
