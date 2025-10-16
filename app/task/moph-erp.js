@@ -11,16 +11,24 @@ const hospcode = process.env.HOSPCODE || '';
 const sendBedOccupancy = async (date = null) => {
     let currDate = moment().subtract(5, 'minutes').format('YYYY-MM-DD');
     date = date || currDate;
-    let clinicResult = null, wardResult = null;
-    let opdResult = null;
+    let dateOpd = date;
+    if (moment().get('hour') == 3) {
+        dateOpd = moment().subtract(1, 'month').format('YYYY-MM-DD');
+    }
+    let clinicResult = null, wardResult = null, opdResult = null;
     do {
-        [clinicResult, wardResult, opdResult] = await Promise.all([
+        [clinicResult, wardResult] = await Promise.all([
             sendBedOccupancyByClinic(date),
             sendBedOccupancyByWard(date),
-            sendOpdVisitByClinic(date)
         ]);
         date = moment(date).add(1, 'day').format('YYYY-MM-DD');
     } while (date <= currDate);
+    do {
+        [opdResult] = await Promise.all([
+            sendOpdVisitByClinic(dateOpd)
+        ]);
+        dateOpd = moment(dateOpd).add(1, 'day').format('YYYY-MM-DD');
+    } while (dateOpd <= currDate);
     return { clinicResult, wardResult, opdResult };
 };
 exports.sendBedOccupancy = sendBedOccupancy;

@@ -152,7 +152,7 @@ async function cronjob(fastify) {
             if (minuteSinceLastNight % 2 === 1) {
                 logJobStatus();
             }
-            if (minuteNow == 15) {
+            if (minuteNow == 57) {
                 (0, moph_erp_1.sendWardName)();
                 (0, moph_erp_1.sendBedOccupancy)();
             }
