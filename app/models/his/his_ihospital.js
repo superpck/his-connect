@@ -486,11 +486,13 @@ class HisIHospitalModel {
             .groupBy('visit.date');
     }
     concurrentIPDByWard(db, date) {
+        const dateStart = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
         let sql = db('view_ipd_ipd as ip')
             .select('ip.ward as wardcode', 'ward_name as wardname', db.raw('SUBSTRING(ip.ward_std,2,2) as clinic'), db.raw('sum(if(ip.admite = ?,1,0)) as new_case', [date]), db.raw('sum(if(ip.disc = ?,1,0)) as discharge', [date]), db.raw('sum(if(ip.refer IS NOT NULL AND ip.refer != "", 1,0)) as referin'), db.raw('sum(if(ip.disc = ?,adjrw,0)) as adjrw', [date]), db.raw('sum(if(LEFT(ip.stat_dsc,1) IN ("8","9"), 1,0)) as death'))
             .count('* as cases')
             .sum('ip.pday as los')
             .where('ip.admite', '<=', date)
+            .where('ip.admite', '>', dateStart)
             .whereRaw('ip.ward is not null and ip.ward>0')
             .andWhere(function () {
             this.whereNull('ip.disc').orWhere('ip.disc', '>=', date);

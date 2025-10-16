@@ -650,6 +650,7 @@ export class HisIHospitalModel {
   }
 
   concurrentIPDByWard(db: Knex, date: any) {
+    const dateStart = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
     let sql = db('view_ipd_ipd as ip')
       .select('ip.ward as wardcode', 'ward_name as wardname',
         db.raw('SUBSTRING(ip.ward_std,2,2) as clinic'),
@@ -661,6 +662,7 @@ export class HisIHospitalModel {
       .count('* as cases')
       .sum('ip.pday as los')
       .where('ip.admite', '<=', date)
+      .where('ip.admite', '>', dateStart)   // Protect ไม่นับ admit เกิน 1 ปี
       .whereRaw('ip.ward is not null and ip.ward>0')
       .andWhere(function () {
         this.whereNull('ip.disc').orWhere('ip.disc', '>=', date);

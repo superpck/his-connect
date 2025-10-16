@@ -12,14 +12,12 @@ export const sendBedOccupancy = async (date: any = null) => {
   let currDate = moment().subtract(5, 'minutes').format('YYYY-MM-DD');
   date = date || currDate;
 
-  let dateOpd = date;
+  let dateOpd = date; // เฉพาะ OPD Visit
   if (moment().get('hour') == 3) {  // ทุกๆ ตี 3 ให้ส่งข้อมูลย้อนหลัง 1 เดือน
     dateOpd = moment().subtract(1, 'month').format('YYYY-MM-DD');
   }
 
-  let clinicResult = null, wardResult = null;
-  let opdResult = null;
-
+  let clinicResult = null, wardResult = null, opdResult = null;
   do {
     [clinicResult, wardResult] = await Promise.all([
       sendBedOccupancyByClinic(date),

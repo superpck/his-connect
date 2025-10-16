@@ -15,8 +15,7 @@ const sendBedOccupancy = async (date = null) => {
     if (moment().get('hour') == 3) {
         dateOpd = moment().subtract(1, 'month').format('YYYY-MM-DD');
     }
-    let clinicResult = null, wardResult = null;
-    let opdResult = null;
+    let clinicResult = null, wardResult = null, opdResult = null;
     do {
         [clinicResult, wardResult] = await Promise.all([
             sendBedOccupancyByClinic(date),
