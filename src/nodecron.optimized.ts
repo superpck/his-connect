@@ -327,7 +327,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
         logJobStatus();
       }
 
-      if (minuteNow == 57) {
+      if (minuteNow == 37) {
         sendWardName();
         sendBedOccupancy();
       }
