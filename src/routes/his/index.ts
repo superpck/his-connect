@@ -11,7 +11,7 @@ var jwt = new Jwt();
 
 const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb'
   , 'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades'
-  , 'himpro', 'nemo', 'mypcu', 'emrsoft', 'haos','other'];
+  , 'himpro', 'nemo', 'mypcu', 'emrsoft', 'haos', 'other'];
 
 const router = (fastify, { }, next) => {
   // =============================================================
@@ -37,12 +37,12 @@ const router = (fastify, { }, next) => {
     try {
       const result = await hisModel.testConnect(global.dbHIS);
       let connection: any = {
-        connection1: result && result.patient 
+        connection1: result && result.patient
       };
       if (result && result.hospname) {
         connection.hospname = result.hospname;
       }
-      
+
       global.dbHIS.destroy;
       res.send({
         statusCode: connection ? StatusCodes.OK : StatusCodes.NO_CONTENT,
@@ -50,6 +50,7 @@ const router = (fastify, { }, next) => {
         apiCode: global.appDetail.name,
         version: global.appDetail.version,
         subVersion: global.appDetail.subVersion,
+        apiStartTime: global.apiStartTime,
         his: loggedIn ? hisProvider : undefined,
         hisProvider: hisProviderList.indexOf(process.env.HIS_PROVIDER.toLowerCase()) >= 0,
         ...connection,
@@ -81,7 +82,7 @@ const router = (fastify, { }, next) => {
       if (rows && rows.length > 0) {
         let row = rows[0];
         let hn = row.hn || row.HN;
-        
+
         const referOut: any = await hisModel.getReferHistory(global.dbHIS, 'visitNo', visitNo, process.env.HOSPCODE);
         if (referOut && referOut.length > 0) {
           let refer_out = referOut;

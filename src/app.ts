@@ -64,6 +64,7 @@ app.register(require('@fastify/jwt'), {
 });
 
 // set MOPH Url =========================================
+global.apiStartTime = moment().format('YYYY-MM-DD HH:mm:ss');
 global.mophService = require('./routes/main/crontab')(global.mophService, {});
 global.firstProcessPid = 0;
 global.mophService = null;

@@ -106,6 +106,7 @@ const router = (fastify, { }, next) => {
         ok: result?.connection,
         version: global.appDetail.version,
         subVersion: global.appDetail.subVersion,
+        apiStartTime: global.apiStartTime,
         hisProvider: process.env.HIS_PROVIDER,
         client: process.env.HIS_DB_CLIENT,
         connection: result?.connection,
