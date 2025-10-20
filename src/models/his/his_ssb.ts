@@ -6,7 +6,7 @@ const hcode = process.env.HOSPCODE;
 const dbName = process.env.HIS_DB_NAME;
 const dbClient = process.env.HIS_DB_CLIENT;
 
-export class HisSsbSriHModel {
+export class HisSsbHModel {
     async getAdmission(knex, columnName, searchNo, hospCode = hcode) {
         columnName = columnName === 'visitNo' ? 'vn' : columnName;
         // return [];

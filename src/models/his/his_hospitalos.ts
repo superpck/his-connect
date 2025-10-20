@@ -18,7 +18,7 @@ const getHospcode = async () => {
         console.log('Using HOSPCODE from environment:', process.env.HOSPCODE);
     }
 }
-export class HisHosxpv4Model {
+export class HisHospitalOsModel {
     constructor() {
         getHospcode();
     }
