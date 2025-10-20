@@ -1,6 +1,7 @@
 # 3.8.10
 ## Feature
   - เพิ่มการ Update Alive
+  - เพิ่มการ Get Bed No
 
 # 3.8.9
 ## Feature

@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import * as moment from 'moment';
 import { execSync } from 'child_process';
-import { sendWardName, sendBedOccupancy, updateAlive } from "./task/moph-erp";
+import { sendWardName, sendBedNo, sendBedOccupancy, updateAlive } from "./task/moph-erp";
 
 // Type definitions for better type safety
 interface ServiceSchedule {
@@ -313,9 +313,12 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
     logScheduledServices(timingSchedule);
   }
 
+  // Initial tasks on first process
+  if (processState.isFirstProcess) {
+    // sendBedOccupancy('2025-10-01');
+    updateAlive();
+  }
   // Schedule cron job
-  // sendBedOccupancy('2025-10-01');
-  updateAlive();
   cron.schedule(timingSch, async (req: any, res: any) => {
     // Get current time info
     const minuteSinceLastNight = getMinutesSinceMidnight();
@@ -323,17 +326,19 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
 
     // Only run on the first process
     if (processState.isFirstProcess) {
-      // Log job status on odd minutes
       if (minuteSinceLastNight % 2 === 1) {
         logJobStatus();
       }
-
-      if (minuteNow == 57) {
-        sendWardName();
-        sendBedOccupancy();
-      }
       if (minuteNow % 17 == 0) {
         updateAlive();
+      }
+
+      if (minuteNow == 58) {
+        sendBedOccupancy();
+      }
+      if (moment().hour() % 4 === 0 && minuteNow == 37) {
+        sendWardName();
+        sendBedNo();
       }
 
       // Run nRefer jobs if scheduled

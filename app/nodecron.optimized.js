@@ -146,7 +146,9 @@ async function cronjob(fastify) {
         console.log(`${getTimestamp()} Start API for Hospcode ${process.env.HOSPCODE}`);
         logScheduledServices(timingSchedule);
     }
-    (0, moph_erp_1.updateAlive)();
+    if (processState.isFirstProcess) {
+        (0, moph_erp_1.updateAlive)();
+    }
     cron.schedule(timingSch, async (req, res) => {
         const minuteSinceLastNight = getMinutesSinceMidnight();
         const minuteNow = moment().get('minute');
@@ -154,12 +156,15 @@ async function cronjob(fastify) {
             if (minuteSinceLastNight % 2 === 1) {
                 logJobStatus();
             }
-            if (minuteNow == 57) {
-                (0, moph_erp_1.sendWardName)();
-                (0, moph_erp_1.sendBedOccupancy)();
-            }
             if (minuteNow % 17 == 0) {
                 (0, moph_erp_1.updateAlive)();
+            }
+            if (minuteNow == 58) {
+                (0, moph_erp_1.sendBedOccupancy)();
+            }
+            if (moment().hour() % 4 === 0 && minuteNow == 37) {
+                (0, moph_erp_1.sendWardName)();
+                (0, moph_erp_1.sendBedNo)();
             }
             if (timingSchedule['nrefer'].autosend &&
                 minuteSinceLastNight % timingSchedule['nrefer'].minute === 0) {

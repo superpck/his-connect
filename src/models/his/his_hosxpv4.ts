@@ -1633,6 +1633,22 @@ export class HisHosxpv4Model {
             .limit(maxLimit);
     }
 
+    // MOPH ERP
+    getBedNo(db: Knex, bedno: any = null) {
+        let sql = db('bedno')
+            .leftJoin('roomno', 'bedno.roomno', 'roomno.roomno')
+            .leftJoin('ward', 'roomno.ward', 'ward.ward')
+            .leftJoin('bedtype', 'bedno.bedtype', 'bedtype.bedtype')
+            .leftJoin('bed_status_type as status', 'bedno.bed_status_type_id', 'status.bed_status_type_id')
+            .select('bedno.bedno', 'bedno.bedtype', 'bedtype.name as bedtype_name', 'bedno.roomno',
+                'roomno.ward as wardcode', 'ward.name as wardname', 'bedno.export_code as std_code',
+                'bedno.bed_status_type_id', 'status.bed_status_type_name');
+        if (bedno) {
+            sql = sql.where('bedno.bedno', bedno);
+        }
+        return sql.orderBy('bedno.bedno');
+    }
+
     // Report Zone
     sumReferOut(db: Knex, dateStart: any, dateEnd: any) {
         return db('referout as r')
@@ -1692,7 +1708,7 @@ export class HisHosxpv4Model {
     sumOpdVisitByClinic(db: Knex, date: any) {
         let sql = db('ovst')
             .leftJoin('spclty', 'ovst.spclty', 'spclty.spclty')
-            .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode', 
+            .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode',
                 'spclty.name as clinicname',
                 db.raw('sum(if(an IS NULL or an="",0,1)) as admit'))
             .count('* as cases')

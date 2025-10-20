@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateAlive = exports.sendWardName = exports.sendBedOccupancy = void 0;
+exports.updateAlive = exports.sendBedNo = exports.sendWardName = exports.sendBedOccupancy = void 0;
 const moment = require("moment");
 const moph_refer_1 = require("../middleware/moph-refer");
 const hismodel_1 = require("./../routes/his/hismodel");
@@ -104,6 +104,28 @@ const sendWardName = async () => {
     }
 };
 exports.sendWardName = sendWardName;
+const sendBedNo = async () => {
+    try {
+        let rows = await hismodel_1.default.getBedNo(db);
+        if (rows && rows.length) {
+            rows = rows.map(v => {
+                return {
+                    ...v, hospcode: hospcode,
+                    hcode5: hospcode.length == 5 ? hospcode : null,
+                    hcode9: hospcode.length == 9 ? hospcode : null
+                };
+            });
+            const result = await (0, moph_refer_1.sendingToMoph)('/save-bed-no', rows);
+            console.log(moment().format('HH:mm:ss'), 'sendBedNo', result.status || '', result.message || '', rows.length);
+        }
+        return rows;
+    }
+    catch (error) {
+        console.log(moment().format('HH:mm:ss'), 'getBedNo error', error.message);
+        return [];
+    }
+};
+exports.sendBedNo = sendBedNo;
 const updateAlive = async () => {
     try {
         let data = {

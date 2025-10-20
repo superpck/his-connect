@@ -1470,6 +1470,22 @@ export class HisHosxpv3Model {
             .limit(maxLimit);
     }
 
+    // MOPH ERP
+    getBedNo(db: Knex, bedno: any = null) {
+        let sql = db('bedno')
+            .leftJoin('roomno', 'bedno.roomno', 'roomno.roomno')
+            .leftJoin('ward', 'roomno.ward', 'ward.ward')
+            .leftJoin('bedtype', 'bedno.bedtype', 'bedtype.bedtype')
+            .leftJoin('bed_status_type as status', 'bedno.bed_status_type_id', 'status.bed_status_type_id')
+            .select('bedno.bedno', 'bedno.bedtype', 'bedtype.name as bedtype_name', 'bedno.roomno',
+                'roomno.ward as wardcode', 'ward.name as wardname', 'bedno.export_code as std_code',
+                'bedno.bed_status_type_id', 'status.bed_status_type_name');
+        if (bedno) {
+            sql = sql.where('bedno.bedno', bedno);
+        }
+        return sql.orderBy('bedno.bedno');
+    }
+
     // Report Zone
     sumReferOut(db: Knex, dateStart: any, dateEnd: any) {
         return db('referout as r')
