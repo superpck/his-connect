@@ -1,7 +1,8 @@
 import moment = require("moment");
-import { sendingToMoph } from "../middleware/moph-refer";
+import { sendingToMoph, updateHISAlive } from "../middleware/moph-refer";
 import hisModel from './../routes/his/hismodel';
 import { Knex } from 'knex';
+const packageJson = require('../../package.json');
 
 const dbConnection = require('../plugins/db');
 let db: Knex = dbConnection('HIS');
@@ -106,6 +107,29 @@ export const sendWardName = async () => {
   }
 }
 
+export const updateAlive = async () => {
+  try {
+    let data = {
+      api_date: moment().format('YYYY-MM-DD HH:mm:ss'),
+      hospcode,
+      version: packageJson.version || '',
+      subversion: packageJson.subVersion || '',
+      port: process.env.PORT || 0,
+      his: hisProvider, ssl: process.env?.SSL_ENABLE || null,
+      /* 
+        `ip` varchar(30) DEFAULT NULL,
+        `ssl` tinyint unsigned DEFAULT NULL,
+        `dbconnect` tinyint unsigned DEFAULT NULL,
+      */
+    };
+    const result: any = await updateHISAlive(data);
+    console.log(moment().format('HH:mm:ss'), 'API Alive', result.status || '', result.message || '');
+    return result;
+  } catch (error) {
+    console.log(moment().format('HH:mm:ss'), 'API Alive error', error.message);
+    return [];
+  }
+}
 
 /*
 select * from visit_pttype where auth_code like 'EP%' and vn like '680922%';

@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendWardName = exports.sendBedOccupancy = void 0;
+exports.updateAlive = exports.sendWardName = exports.sendBedOccupancy = void 0;
 const moment = require("moment");
 const moph_refer_1 = require("../middleware/moph-refer");
 const hismodel_1 = require("./../routes/his/hismodel");
+const packageJson = require('../../package.json');
 const dbConnection = require('../plugins/db');
 let db = dbConnection('HIS');
 const hisProvider = process.env.HIS_PROVIDER || '';
@@ -103,3 +104,23 @@ const sendWardName = async () => {
     }
 };
 exports.sendWardName = sendWardName;
+const updateAlive = async () => {
+    try {
+        let data = {
+            api_date: moment().format('YYYY-MM-DD HH:mm:ss'),
+            hospcode,
+            version: packageJson.version || '',
+            subversion: packageJson.subVersion || '',
+            port: process.env.PORT || 0,
+            his: hisProvider, ssl: process.env?.SSL_ENABLE || null,
+        };
+        const result = await (0, moph_refer_1.updateHISAlive)(data);
+        console.log(moment().format('HH:mm:ss'), 'API Alive', result.status || '', result.message || '');
+        return result;
+    }
+    catch (error) {
+        console.log(moment().format('HH:mm:ss'), 'API Alive error', error.message);
+        return [];
+    }
+};
+exports.updateAlive = updateAlive;

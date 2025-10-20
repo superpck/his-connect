@@ -18,6 +18,7 @@ const router = (fastify, {}, next) => {
             apiName: global.appDetail.name,
             version: global.appDetail.version,
             subVersion: global.appDetail.subVersion,
+            apiStartTime: global.apiStartTime
         });
     });
     fastify.post('/', { preHandler: [fastify.authenticate] }, async (req, reply) => {

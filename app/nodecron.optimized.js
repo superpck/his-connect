@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = cronjob;
 const moment = require("moment");
 const child_process_1 = require("child_process");
 const moph_erp_1 = require("./task/moph-erp");
@@ -145,6 +146,7 @@ async function cronjob(fastify) {
         console.log(`${getTimestamp()} Start API for Hospcode ${process.env.HOSPCODE}`);
         logScheduledServices(timingSchedule);
     }
+    (0, moph_erp_1.updateAlive)();
     cron.schedule(timingSch, async (req, res) => {
         const minuteSinceLastNight = getMinutesSinceMidnight();
         const minuteNow = moment().get('minute');
@@ -155,6 +157,9 @@ async function cronjob(fastify) {
             if (minuteNow == 57) {
                 (0, moph_erp_1.sendWardName)();
                 (0, moph_erp_1.sendBedOccupancy)();
+            }
+            if (minuteNow % 17 == 0) {
+                (0, moph_erp_1.updateAlive)();
             }
             if (timingSchedule['nrefer'].autosend &&
                 minuteSinceLastNight % timingSchedule['nrefer'].minute === 0) {
@@ -182,4 +187,3 @@ async function cronjob(fastify) {
         }
     });
 }
-exports.default = cronjob;

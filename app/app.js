@@ -54,6 +54,7 @@ app.register(require('@fastify/view'), {
 app.register(require('@fastify/jwt'), {
     secret: process.env.SECRET_KEY
 });
+global.apiStartTime = moment().format('YYYY-MM-DD HH:mm:ss');
 global.mophService = require('./routes/main/crontab')(global.mophService, {});
 global.firstProcessPid = 0;
 global.mophService = null;

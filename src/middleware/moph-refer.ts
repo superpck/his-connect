@@ -1,8 +1,11 @@
 import axios from 'axios';
 import moment = require('moment');
+import { createHash } from 'crypto';
 
 const referAPIUrl = 'https://refer.moph.go.th/api/beta';
 // const referAPIUrl = process.env.NREFER_API_URL || 'https://refer.moph.go.th/api/his';
+const adminAPIUrl = process.env.ADMIN_API_URL || 'https://referlink.moph.go.th/api/admin';
+const erpAPIUrl = process.env.ERP_API_URL || 'https://referlink.moph.go.th/api/moph-erp';
 const hcode = process.env.HOSPCODE;
 const apiKey = process.env.NREFER_APIKEY || 'api-key';
 const secretKey = process.env.NREFER_SECRETKEY || 'secret-key';
@@ -71,6 +74,45 @@ export const sendingToMoph = async (uri: string, dataArray: any) => {
     'Authorization': 'Bearer ' + nReferToken,
     'Source-Agent': 'HISConnect-' + (crontabConfig.version || 'x') + '-' + (crontabConfig.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
   };
+  try {
+    const { status, data } = await axios.post(url, bodyData, { headers });
+    return { statusCode: status, ...data };
+  } catch (error) {
+    return error;
+  }
+}
+
+export const updateHISAlive = async (dataArray: any) => {
+  await getReferToken();
+  if (!nReferToken) {
+    return { status: 500, message: 'No nRefer token' };
+  }
+
+  const hashedApiKey = createHash('sha1')
+    .update((process.env.REQUEST_KEY || '')+(dataArray.hospcode || '')+(dataArray.his || '')+moment().format('YYYY-MM-DD HH:mm:ss'))
+    .digest('hex');
+  dataArray.apikey = hashedApiKey;
+
+  const bodyData = {
+    ip: crontabConfig['client_ip'] || '127.0.0.1',
+    hospcode: hcode, data: JSON.stringify(dataArray),
+    processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
+    sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version, subVersion: crontabConfig.subVersion,
+    hisProvider: process.env.HIS_PROVIDER
+  };
+
+  const url = erpAPIUrl + '/his-connect/update';
+  const headers = {
+    'Content-Type': 'application/json',
+    // 'Authorization': 'Bearer ' + nReferToken,
+    'Source-Agent': 'HISConnect-' +
+      (crontabConfig.version || 'x') + '-' +
+      (crontabConfig.subVersion || 'x') + '-' +
+      (process.env.HOSPCODE || 'hosp') + '-' +
+      moment().format('x') +
+      '-' + Math.random().toString(36).substring(2, 10),
+  };
+  console.log('updateHISAlive', url);
   try {
     const { status, data } = await axios.post(url, bodyData, { headers });
     return { statusCode: status, ...data };
