@@ -636,6 +636,11 @@ export class HisIHospitalModel {
       .limit(maxLimit);
   }
 
+  // MOPH ERP
+  getBedNo(db: Knex, bedno: any = null) {
+    return [];
+  }
+
   // Report zone
   sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
     return db('opd_visit as visit')

@@ -474,6 +474,9 @@ class HisIHospitalModel {
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
     }
+    getBedNo(db, bedno = null) {
+        return [];
+    }
     sumReferIn(db, dateStart, dateEnd) {
         return db('opd_visit as visit')
             .select('visit.date')

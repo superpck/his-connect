@@ -1376,6 +1376,18 @@ class HisHosxpv4Model {
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
     }
+    getBedNo(db, bedno = null) {
+        let sql = db('bedno')
+            .leftJoin('roomno', 'bedno.roomno', 'roomno.roomno')
+            .leftJoin('ward', 'roomno.ward', 'ward.ward')
+            .leftJoin('bedtype', 'bedno.bedtype', 'bedtype.bedtype')
+            .leftJoin('bed_status_type as status', 'bedno.bed_status_type_id', 'status.bed_status_type_id')
+            .select('bedno.bedno', 'bedno.bedtype', 'bedtype.name as bedtype_name', 'bedno.roomno', 'roomno.ward as wardcode', 'ward.name as wardname', 'bedno.export_code as std_code', 'bedno.bed_status_type_id', 'status.bed_status_type_name');
+        if (bedno) {
+            sql = sql.where('bedno.bedno', bedno);
+        }
+        return sql.orderBy('bedno.bedno');
+    }
     sumReferOut(db, dateStart, dateEnd) {
         return db('referout as r')
             .select('r.refer_date')
