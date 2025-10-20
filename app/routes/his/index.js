@@ -41,6 +41,7 @@ const router = (fastify, {}, next) => {
                 apiCode: global.appDetail.name,
                 version: global.appDetail.version,
                 subVersion: global.appDetail.subVersion,
+                apiStartTime: global.apiStartTime,
                 his: loggedIn ? hisProvider : undefined,
                 hisProvider: hisProviderList.indexOf(process.env.HIS_PROVIDER.toLowerCase()) >= 0,
                 ...connection,
