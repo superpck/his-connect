@@ -1,6 +1,8 @@
 import axios from 'axios';
 import moment = require('moment');
 import { createHash } from 'crypto';
+import { getIP } from './utils';
+import { get } from 'http';
 
 const referAPIUrl = 'https://refer.moph.go.th/api/beta';
 // const referAPIUrl = process.env.NREFER_API_URL || 'https://refer.moph.go.th/api/his';
@@ -115,6 +117,34 @@ export const updateHISAlive = async (dataArray: any) => {
   console.log('updateHISAlive', url);
   try {
     const { status, data } = await axios.post(url, bodyData, { headers });
+    return { statusCode: status, ...data };
+  } catch (error) {
+    return error;
+  }
+}
+
+export const checkAdminRequest = async () => {
+  const apiIp = getIP();
+  if (!apiIp || !apiIp.ip) {
+    return { status: 400, message: 'No API IP' };
+  }
+
+  await getReferToken();
+  if (!nReferToken) {
+    return { status: 500, message: 'No nRefer token' };
+  }
+
+  const url = referAPIUrl + '/his-connect/checkRequest/'+hcode;
+  const headers = {
+    'Content-Type': 'application/json',
+    'client-ip': apiIp.ip,
+    'provider': process.env.HIS_PROVIDER,
+    'Authorization': 'Bearer ' + nReferToken,
+    'Source-Agent': 'HISConnect-' + (crontabConfig.version || 'x') + '-' + (crontabConfig.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+  };
+  console.log('get request', url);
+  try {
+    const { status, data } = await axios.get(url, { headers });
     return { statusCode: status, ...data };
   } catch (error) {
     return error;

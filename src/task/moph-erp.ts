@@ -1,5 +1,5 @@
 import moment = require("moment");
-import { sendingToMoph, updateHISAlive } from "../middleware/moph-refer";
+import { sendingToMoph, updateHISAlive, checkAdminRequest } from "../middleware/moph-refer";
 import hisModel from './../routes/his/hismodel';
 import { Knex } from 'knex';
 import { getIP } from "../middleware/utils";
@@ -154,7 +154,17 @@ export const updateAlive = async () => {
   }
 }
 
-/*
-select * from visit_pttype where auth_code like 'EP%' and vn like '680922%';
-
-*/
+export const erpAdminRequest = async () => {
+  try {
+    const result: any = await checkAdminRequest();
+    if (result.status == 200 || result.statusCode == 200) {
+      console.log(moment().format('HH:mm:ss'), 'Admin request', result); 
+    } else {
+      console.log(moment().format('HH:mm:ss'), 'No admin request', result.status || '', result.message || '');
+    }
+    return result;
+  } catch (error) {
+    console.log(moment().format('HH:mm:ss'), 'API Alive error', error.message);
+    return [];
+  }
+}

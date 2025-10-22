@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateAlive = exports.sendBedNo = exports.sendWardName = exports.sendBedOccupancy = void 0;
+exports.erpAdminRequest = exports.updateAlive = exports.sendBedNo = exports.sendWardName = exports.sendBedOccupancy = void 0;
 const moment = require("moment");
 const moph_refer_1 = require("../middleware/moph-refer");
 const hismodel_1 = require("./../routes/his/hismodel");
@@ -149,3 +149,20 @@ const updateAlive = async () => {
     }
 };
 exports.updateAlive = updateAlive;
+const erpAdminRequest = async () => {
+    try {
+        const result = await (0, moph_refer_1.checkAdminRequest)();
+        if (result.status == 200 || result.statusCode == 200) {
+            console.log(moment().format('HH:mm:ss'), 'Admin request', result);
+        }
+        else {
+            console.log(moment().format('HH:mm:ss'), 'No admin request', result.status || '', result.message || '');
+        }
+        return result;
+    }
+    catch (error) {
+        console.log(moment().format('HH:mm:ss'), 'API Alive error', error.message);
+        return [];
+    }
+};
+exports.erpAdminRequest = erpAdminRequest;

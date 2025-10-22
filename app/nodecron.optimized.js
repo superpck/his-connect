@@ -148,6 +148,8 @@ async function cronjob(fastify) {
     }
     if (processState.isFirstProcess) {
         (0, moph_erp_1.updateAlive)();
+        (0, moph_erp_1.sendWardName)();
+        (0, moph_erp_1.sendBedNo)();
     }
     cron.schedule(timingSch, async (req, res) => {
         const minuteSinceLastNight = getMinutesSinceMidnight();
@@ -158,6 +160,9 @@ async function cronjob(fastify) {
             }
             if (minuteNow % 17 == 0) {
                 (0, moph_erp_1.updateAlive)();
+            }
+            if (minuteNow % 2 == 0) {
+                (0, moph_erp_1.erpAdminRequest)();
             }
             if (minuteNow == 58) {
                 (0, moph_erp_1.sendBedOccupancy)();
