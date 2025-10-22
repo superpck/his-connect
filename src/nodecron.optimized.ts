@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import * as moment from 'moment';
 import { execSync } from 'child_process';
-import { sendWardName, sendBedNo, sendBedOccupancy, updateAlive } from "./task/moph-erp";
+import { sendWardName, sendBedNo, sendBedOccupancy, updateAlive, erpAdminRequest } from "./task/moph-erp";
 
 // Type definitions for better type safety
 interface ServiceSchedule {
@@ -303,6 +303,8 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   // Create cron schedule (run every minute)
   const secondNow = moment().seconds();
   const timingSch = `${secondNow} * * * * *`;
+  let minuteRandom = Math.ceil(Math.random()*5) || 1;
+  minuteRandom += 10;
 
   // Configure timing schedules
   const timingSchedule = configureTimingSchedules();
@@ -317,9 +319,14 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   if (processState.isFirstProcess) {
     // sendBedOccupancy('2025-10-01');
     updateAlive();
+    sendWardName();
+    sendBedNo();
   }
   // Schedule cron job
+  let minuteCount = 0;
   cron.schedule(timingSch, async (req: any, res: any) => {
+    minuteCount++;
+
     // Get current time info
     const minuteSinceLastNight = getMinutesSinceMidnight();
     const minuteNow = moment().get('minute');
@@ -329,8 +336,12 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
       if (minuteSinceLastNight % 2 === 1) {
         logJobStatus();
       }
-      if (minuteNow % 17 == 0) {
+      if (minuteNow % minuteRandom == 0) {
         updateAlive();
+      }
+
+      if (minuteSinceLastNight % 2 == 0) {
+        erpAdminRequest();
       }
 
       if (minuteNow == 58) {

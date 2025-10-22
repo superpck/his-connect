@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateHISAlive = exports.sendingToMoph = exports.getReferToken = void 0;
+exports.updateAdminRequest = exports.checkAdminRequest = exports.updateHISAlive = exports.sendingToMoph = exports.getReferToken = void 0;
 const axios_1 = require("axios");
 const moment = require("moment");
 const crypto_1 = require("crypto");
+const utils_1 = require("./utils");
 const referAPIUrl = 'https://refer.moph.go.th/api/beta';
 const adminAPIUrl = process.env.ADMIN_API_URL || 'https://referlink.moph.go.th/api/admin';
 const erpAPIUrl = process.env.ERP_API_URL || 'https://referlink.moph.go.th/api/moph-erp';
@@ -89,24 +90,9 @@ const updateHISAlive = async (dataArray) => {
         .update((process.env.REQUEST_KEY || '') + (dataArray.hospcode || '') + (dataArray.his || '') + moment().format('YYYY-MM-DD HH:mm:ss'))
         .digest('hex');
     dataArray.apikey = hashedApiKey;
-    const bodyData = {
-        ip: crontabConfig['client_ip'] || '127.0.0.1',
-        hospcode: hcode, data: JSON.stringify(dataArray),
-        processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
-        sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version, subVersion: crontabConfig.subVersion,
-        hisProvider: process.env.HIS_PROVIDER
-    };
+    const bodyData = createPostData(dataArray);
     const url = erpAPIUrl + '/his-connect/update';
-    const headers = {
-        'Content-Type': 'application/json',
-        'Source-Agent': 'HISConnect-' +
-            (crontabConfig.version || 'x') + '-' +
-            (crontabConfig.subVersion || 'x') + '-' +
-            (process.env.HOSPCODE || 'hosp') + '-' +
-            moment().format('x') +
-            '-' + Math.random().toString(36).substring(2, 10),
-    };
-    console.log('updateHISAlive', url);
+    const headers = createHeaders();
     try {
         const { status, data } = await axios_1.default.post(url, bodyData, { headers });
         return { statusCode: status, ...data };
@@ -116,3 +102,78 @@ const updateHISAlive = async (dataArray) => {
     }
 };
 exports.updateHISAlive = updateHISAlive;
+const checkAdminRequest = async () => {
+    const apiIp = (0, utils_1.getIP)();
+    if (!apiIp || !apiIp.ip) {
+        return { status: 400, message: 'No API IP' };
+    }
+    await (0, exports.getReferToken)();
+    if (!nReferToken) {
+        return { status: 500, message: 'No nRefer token' };
+    }
+    const url = referAPIUrl + '/moph-erp/check-request/' + hcode;
+    const headers = {
+        'Content-Type': 'application/json',
+        'client-ip': apiIp.ip,
+        'provider': process.env.HIS_PROVIDER,
+        'Authorization': 'Bearer ' + nReferToken,
+        'Source-Agent': 'HISConnect-' + (crontabConfig.version || 'x') + '-' + (crontabConfig.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+    };
+    console.log('get request', url);
+    try {
+        const { status, data } = await axios_1.default.get(url, { headers });
+        return { statusCode: status, ...data };
+    }
+    catch (error) {
+        return error;
+    }
+};
+exports.checkAdminRequest = checkAdminRequest;
+const updateAdminRequest = async (data) => {
+    const apiIp = (0, utils_1.getIP)();
+    if (!apiIp || !apiIp.ip) {
+        return { status: 400, message: 'No API IP' };
+    }
+    await (0, exports.getReferToken)();
+    if (!nReferToken) {
+        return { status: 500, message: 'No nRefer token' };
+    }
+    const url = referAPIUrl + '/moph-erp/update-admin-request/' + hcode;
+    const postData = createPostData(data);
+    const headers = createHeaders(nReferToken);
+    try {
+        const { status, data } = await axios_1.default.post(url, postData, { headers });
+        return { statusCode: status, ...data };
+    }
+    catch (error) {
+        return error;
+    }
+};
+exports.updateAdminRequest = updateAdminRequest;
+function createPostData(dataArray) {
+    return {
+        ip: crontabConfig['client_ip'] || (0, utils_1.getIP)() || '127.0.0.1',
+        hospcode: hcode, data: JSON.stringify(dataArray),
+        processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
+        sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version, subVersion: crontabConfig.subVersion,
+        hisProvider: process.env.HIS_PROVIDER
+    };
+}
+function createHeaders(token = null) {
+    const apiIp = (0, utils_1.getIP)();
+    let headers = {
+        'client-ip': apiIp.ip,
+        'provider': process.env.HIS_PROVIDER,
+        'Content-Type': 'application/json',
+        'Source-Agent': 'HISConnect-' +
+            (crontabConfig.version || 'x') + '-' +
+            (crontabConfig.subVersion || 'x') + '-' +
+            (process.env.HOSPCODE || 'hosp') + '-' +
+            moment().format('x') + '-' +
+            Math.random().toString(36).substring(2, 10)
+    };
+    if (token) {
+        headers['Authorization'] = 'Bearer ' + token;
+    }
+    return headers;
+}

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import moment = require('moment');
 import { createHash } from 'crypto';
+import { getIP } from './utils';
 
 const referAPIUrl = 'https://refer.moph.go.th/api/beta';
 // const referAPIUrl = process.env.NREFER_API_URL || 'https://refer.moph.go.th/api/his';
@@ -89,34 +90,93 @@ export const updateHISAlive = async (dataArray: any) => {
   }
 
   const hashedApiKey = createHash('sha1')
-    .update((process.env.REQUEST_KEY || '')+(dataArray.hospcode || '')+(dataArray.his || '')+moment().format('YYYY-MM-DD HH:mm:ss'))
+    .update((process.env.REQUEST_KEY || '') + (dataArray.hospcode || '') + (dataArray.his || '') + moment().format('YYYY-MM-DD HH:mm:ss'))
     .digest('hex');
   dataArray.apikey = hashedApiKey;
 
-  const bodyData = {
-    ip: crontabConfig['client_ip'] || '127.0.0.1',
-    hospcode: hcode, data: JSON.stringify(dataArray),
-    processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
-    sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version, subVersion: crontabConfig.subVersion,
-    hisProvider: process.env.HIS_PROVIDER
-  };
-
+  const bodyData = createPostData(dataArray);
   const url = erpAPIUrl + '/his-connect/update';
-  const headers = {
-    'Content-Type': 'application/json',
-    // 'Authorization': 'Bearer ' + nReferToken,
-    'Source-Agent': 'HISConnect-' +
-      (crontabConfig.version || 'x') + '-' +
-      (crontabConfig.subVersion || 'x') + '-' +
-      (process.env.HOSPCODE || 'hosp') + '-' +
-      moment().format('x') +
-      '-' + Math.random().toString(36).substring(2, 10),
-  };
-  console.log('updateHISAlive', url);
+  const headers = createHeaders();
   try {
     const { status, data } = await axios.post(url, bodyData, { headers });
     return { statusCode: status, ...data };
   } catch (error) {
     return error;
   }
+}
+
+export const checkAdminRequest = async () => {
+  const apiIp = getIP();
+  if (!apiIp || !apiIp.ip) {
+    return { status: 400, message: 'No API IP' };
+  }
+
+  await getReferToken();
+  if (!nReferToken) {
+    return { status: 500, message: 'No nRefer token' };
+  }
+
+  const url = referAPIUrl + '/moph-erp/check-request/' + hcode;
+  const headers = {
+    'Content-Type': 'application/json',
+    'client-ip': apiIp.ip,
+    'provider': process.env.HIS_PROVIDER,
+    'Authorization': 'Bearer ' + nReferToken,
+    'Source-Agent': 'HISConnect-' + (crontabConfig.version || 'x') + '-' + (crontabConfig.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+  };
+  console.log('get request', url);
+  try {
+    const { status, data } = await axios.get(url, { headers });
+    return { statusCode: status, ...data };
+  } catch (error) {
+    return error;
+  }
+}
+export const updateAdminRequest = async (data: any) => {
+  const apiIp = getIP();
+  if (!apiIp || !apiIp.ip) {
+    return { status: 400, message: 'No API IP' };
+  }
+
+  await getReferToken();
+  if (!nReferToken) {
+    return { status: 500, message: 'No nRefer token' };
+  }
+  const url = referAPIUrl + '/moph-erp/update-admin-request/' + hcode;
+  const postData = createPostData(data);
+  const headers = createHeaders(nReferToken);
+  try {
+    const { status, data } = await axios.post(url, postData, { headers });
+    return { statusCode: status, ...data };
+  } catch (error) {
+    return error;
+  }
+}
+
+function createPostData(dataArray: any) {
+  return {
+    ip: crontabConfig['client_ip'] || getIP() || '127.0.0.1',
+    hospcode: hcode, data: JSON.stringify(dataArray),
+    processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
+    sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version, subVersion: crontabConfig.subVersion,
+    hisProvider: process.env.HIS_PROVIDER
+  };
+}
+function createHeaders(token: string = null) {
+  const apiIp = getIP();
+  let headers = {
+    'client-ip': apiIp.ip,
+    'provider': process.env.HIS_PROVIDER,
+    'Content-Type': 'application/json',
+    'Source-Agent': 'HISConnect-' +
+      (crontabConfig.version || 'x') + '-' +
+      (crontabConfig.subVersion || 'x') + '-' +
+      (process.env.HOSPCODE || 'hosp') + '-' +
+      moment().format('x') + '-' +
+      Math.random().toString(36).substring(2, 10)
+  };
+  if (token) {
+    headers['Authorization'] = 'Bearer ' + token;
+  }
+  return headers;
 }
