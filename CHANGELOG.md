@@ -1,6 +1,7 @@
 # 3.8.11
 ## Feature
   - เพิ่มการรับ Request จาก Admin
+  - แก้ไข SQL ให้รองรับหลาย vendor
 
 # 3.8.10
 ## Feature

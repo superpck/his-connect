@@ -963,12 +963,12 @@ class HisHosxpv3Model {
                 ,CASE WHEN d.strength IS NULL THEN d.name ELSE concat(d.name,' ',d.strength) END AS DNAME
                 ,m.orderdate AS DATESTART
                 ,m.offdate AS DATEFINISH
-                ,SUM(IF(o.qty IS NULL,0,o.qty)) as AMOUNT
+                ,SUM(CASE WHEN o.qty IS NULL THEN 0 ELSE o.qty END) AS AMOUNT
                 ,d.provis_medication_unit_code AS UNIT
                 ,d.packqty AS UNIT_PACKING
-                ,SUM(IF(d.unitprice IS NULL,0,d.unitprice)) as DRUGPRICE
-                ,IF(d.unitcost is null or d.unitcost=0, d.unitprice, d.unitcost) as DRUGCOST
-                ,provider(o.doctor,'doctor') PROVIDER
+                ,SUM(CASE WHEN d.unitprice IS NULL THEN 0 ELSE d.unitprice END) AS DRUGPRICE
+                ,IF(d.unitcost IS NULL OR d.unitcost=0, d.unitprice, d.unitcost) AS DRUGCOST
+                ,provider(o.doctor,'doctor') AS PROVIDER
                 ,CASE WHEN o.rxdate IS NULL THEN '' ELSE date_format(concat(o.rxdate,' ',o.rxtime),'%Y-%m-%d %H:%i:%s') END AS D_UPDATE
                 ,pt.cid as CID
             from ipt i
@@ -1357,7 +1357,7 @@ class HisHosxpv3Model {
     concurrentIPDByWard(db, date) {
         let sql = db('ipt')
             .leftJoin('ward', 'ipt.ward', 'ward.ward')
-            .select('ipt.ward as wardcode', 'ward.name as wardname', db.raw('? as date', [date]), db.raw('sum(if(ipt.regdate = ?,1,0)) as new_case', [date]), db.raw('sum(if(ipt.dchdate = ?,1,0)) as discharge', [date]), db.raw('sum(if(ipt.dchstts IN ("08","09"), 1,0)) as death'))
+            .select('ipt.ward as wardcode', 'ward.name as wardname', db.raw('? as date', [date]), db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death'))
             .count('* as cases')
             .where('ipt.regdate', '<=', date)
             .whereRaw('ipt.ward is not null and ipt.ward!= ""')
@@ -1369,7 +1369,7 @@ class HisHosxpv3Model {
     concurrentIPDByClinic(db, date) {
         let sql = db('ipt')
             .leftJoin('ipt_spclty as clinic', 'ipt.spclty', 'clinic.ipt_spclty')
-            .select('ipt.spclty as cliniccode', 'clinic.name as clinicname', db.raw('? as date', [date]), db.raw('sum(if(ipt.regdate = ?,1,0)) as new_case', [date]), db.raw('sum(if(ipt.dchdate = ?,1,0)) as discharge', [date]), db.raw('sum(if(ipt.dchstts IN ("08","09"), 1,0)) as death'))
+            .select('ipt.spclty as cliniccode', 'clinic.name as clinicname', db.raw('? as date', [date]), db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death'))
             .count('* as cases')
             .where('ipt.regdate', '<=', date)
             .andWhere(function () {
@@ -1380,7 +1380,7 @@ class HisHosxpv3Model {
     sumOpdVisitByClinic(db, date) {
         let sql = db('ovst')
             .leftJoin('spclty', 'ovst.spclty', 'spclty.spclty')
-            .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode', 'spclty.name as clinicname', db.raw('sum(if(an IS NULL or an="",0,1)) as admit'))
+            .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode', 'spclty.name as clinicname', db.raw('SUM(CASE WHEN an IS NULL or an="" THEN 0 ELSE 1 END) AS admit'))
             .count('* as cases')
             .where('ovst.vstdate', date);
         return sql.groupBy('spclty.nhso_code').orderBy('spclty.nhso_code');

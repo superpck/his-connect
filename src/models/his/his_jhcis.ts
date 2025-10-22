@@ -487,14 +487,6 @@ export class HisJhcisModel {
     }
     sumOpdVisitByClinic(db: Knex, date: any) {
         return [];
-        // let sql = db('view_opd_visit as visit')
-        //     .select('visit.date',
-        //         db.raw('CASE WHEN clinic_std IS NULL OR clinic_std = "" THEN "99" ELSE SUBSTRING(visit.clinic_std, 2, 2) END as cliniccode'),
-        //         'visit.dxclinic_name as clinicname',
-        //         db.raw('sum(if(visit.ipd_an IS NULL or visit.ipd_an="",0,1)) as admit'))
-        //     .count('* as cases')
-        //     .where('visit.date', date);
-        // return sql.groupBy('cliniccode').orderBy('cliniccode');
     }
 
 }

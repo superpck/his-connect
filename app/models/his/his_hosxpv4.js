@@ -1415,7 +1415,7 @@ class HisHosxpv4Model {
     concurrentIPDByWard(db, date) {
         let sql = db('ipt')
             .leftJoin('ward', 'ipt.ward', 'ward.ward')
-            .select('ipt.ward as wardcode', 'ward.name as wardname', db.raw('sum(if(ipt.regdate = ?,1,0)) as new_case', [date]), db.raw('sum(if(ipt.dchdate = ?,1,0)) as discharge', [date]), db.raw('sum(if(ipt.dchstts IN ("08","09"), 1,0)) as death'))
+            .select('ipt.ward as wardcode', 'ward.name as wardname', db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death'))
             .count('* as cases')
             .where('ipt.regdate', '<=', date)
             .whereRaw('ipt.ward is not null and ipt.ward!= ""')
@@ -1427,7 +1427,7 @@ class HisHosxpv4Model {
     concurrentIPDByClinic(db, date) {
         let sql = db('ipt')
             .leftJoin('ipt_spclty as clinic', 'ipt.spclty', 'clinic.ipt_spclty')
-            .select('ipt.spclty as cliniccode', 'clinic.name as clinicname', db.raw('sum(if(ipt.regdate = ?,1,0)) as new_case', [date]), db.raw('sum(if(ipt.dchdate = ?,1,0)) as discharge', [date]), db.raw('sum(if(ipt.dchstts IN ("08","09"), 1,0)) as death'))
+            .select('ipt.spclty as cliniccode', 'clinic.name as clinicname', db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death'))
             .count('* as cases')
             .where('ipt.regdate', '<=', date)
             .andWhere(function () {
@@ -1438,7 +1438,7 @@ class HisHosxpv4Model {
     sumOpdVisitByClinic(db, date) {
         let sql = db('ovst')
             .leftJoin('spclty', 'ovst.spclty', 'spclty.spclty')
-            .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode', 'spclty.name as clinicname', db.raw('sum(if(an IS NULL or an="",0,1)) as admit'))
+            .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode', 'spclty.name as clinicname', db.raw('SUM(CASE WHEN an IS NULL or an="" THEN 0 ELSE 1 END) AS admit'))
             .count('* as cases')
             .where('ovst.vstdate', date);
         return sql.groupBy('spclty.nhso_code').orderBy('spclty.nhso_code');

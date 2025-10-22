@@ -659,11 +659,11 @@ export class HisIHospitalModel {
     let sql = db('view_ipd_ipd as ip')
       .select('ip.ward as wardcode', 'ward_name as wardname',
         db.raw('SUBSTRING(ip.ward_std,2,2) as clinic'),
-        db.raw('sum(if(ip.admite = ?,1,0)) as new_case', [date]),
-        db.raw('sum(if(ip.disc = ?,1,0)) as discharge', [date]),
-        db.raw('sum(if(ip.refer IS NOT NULL AND ip.refer != "", 1,0)) as referin'),
-        db.raw('sum(if(ip.disc = ?,adjrw,0)) as adjrw', [date]),
-        db.raw('sum(if(LEFT(ip.stat_dsc,1) IN ("8","9"), 1,0)) as death'))
+        db.raw('SUM(CASE WHEN ip.admite = ? THEN 1 ELSE 0 END) AS new_case', [date]),
+        db.raw('SUM(CASE WHEN ip.disc = ? THEN 1 ELSE 0 END) AS discharge', [date]),
+        db.raw('SUM(CASE WHEN ip.refer IS NOT NULL AND ip.refer != "" THEN 1 ELSE 0 END) AS referin'),
+        db.raw('SUM(CASE WHEN ip.disc = ? THEN adjrw ELSE 0 END) AS adjrw', [date]),
+        db.raw('SUM(CASE WHEN LEFT(ip.stat_dsc,1) IN ("8","9") THEN 1 ELSE 0 END) AS death'))
       .count('* as cases')
       .sum('ip.pday as los')
       .where('ip.admite', '<=', date)
@@ -677,11 +677,11 @@ export class HisIHospitalModel {
   concurrentIPDByClinic(db: Knex, date: any) {
     let sql = db('view_ipd_ipd as ip')
       .select('clinic_hdc_code as cliniccode', 'clinic_hdc_name as clinicname',
-        db.raw('sum(if(ip.admite = ?,1,0)) as new_case', [date]),
-        db.raw('sum(if(ip.disc = ?,1,0)) as discharge', [date]),
-        db.raw('sum(if(ip.refer IS NOT NULL AND ip.refer != "", 1,0)) as referin'),
-        db.raw('sum(if(ip.disc = ?,adjrw,0)) as adjrw', [date]),
-        db.raw('sum(if(LEFT(ip.stat_dsc,1) IN ("8","9"), 1,0)) as death'))
+        db.raw('SUM(CASE WHEN ip.admite = ? THEN 1 ELSE 0 END) AS new_case', [date]),
+        db.raw('SUM(CASE WHEN ip.disc = ? THEN 1 ELSE 0 END) AS discharge', [date]),
+        db.raw('SUM(CASE WHEN ip.refer IS NOT NULL AND ip.refer != "" THEN 1 ELSE 0 END) AS referin'),
+        db.raw('SUM(CASE WHEN ip.disc = ? THEN adjrw ELSE 0 END) AS adjrw', [date]),
+        db.raw('SUM(CASE WHEN LEFT(ip.stat_dsc,1) IN ("8","9") THEN 1 ELSE 0 END) AS death'))
       .count('* as cases')
       .sum('ip.pday as los')
       .where('ip.admite', '<=', date)
@@ -695,7 +695,7 @@ export class HisIHospitalModel {
       .select('visit.date',
         db.raw('CASE WHEN clinic_std IS NULL OR clinic_std = "" THEN "99" ELSE SUBSTRING(visit.clinic_std, 2, 2) END as cliniccode'),
         'visit.dxclinic_name as clinicname',
-        db.raw('sum(if(visit.ipd_an IS NULL or visit.ipd_an="",0,1)) as admit'))
+        db.raw('SUM(CASE WHEN visit.ipd_an IS NULL OR visit.ipd_an = "" THEN 0 ELSE 1 END) AS admit'))
       .count('* as cases')
       .where('visit.date', date);
     return sql.groupBy('cliniccode').orderBy('cliniccode');
