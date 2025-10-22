@@ -1,5 +1,5 @@
 import moment = require("moment");
-import { sendingToMoph, updateHISAlive, checkAdminRequest } from "../middleware/moph-refer";
+import { sendingToMoph, updateHISAlive, checkAdminRequest, updateAdminRequest } from "../middleware/moph-refer";
 import hisModel from './../routes/his/hismodel';
 import { Knex } from 'knex';
 import { getIP } from "../middleware/utils";
@@ -100,8 +100,11 @@ export const sendWardName = async () => {
       });
       const result: any = await sendingToMoph('/save-ward', rows);
       console.log(moment().format('HH:mm:ss'), 'sendWardName', result.status || '', result.message || '', rows.length);
+      return result;
+    } else {
+      console.log(moment().format('HH:mm:ss'), 'sendWardName', 'No ward data');
+      return { statusCode: 200, message: 'No ward data' };
     }
-    return rows;
   } catch (error) {
     console.log(moment().format('HH:mm:ss'), 'getWard error', error.message);
     return [];
@@ -121,11 +124,13 @@ export const sendBedNo = async () => {
       });
       const result: any = await sendingToMoph('/save-bed-no', rows);
       console.log(moment().format('HH:mm:ss'), 'sendBedNo', result.status || '', result.message || '', rows.length);
+      return result;
+    } else {
+      return { statusCode: 200, message: 'No bed no data' };
     }
-    return rows;
   } catch (error) {
     console.log(moment().format('HH:mm:ss'), 'getBedNo error', error.message);
-    return [];
+    return { statusCode: error.status || 500, message: error.message || error };
   }
 }
 
@@ -159,7 +164,33 @@ export const erpAdminRequest = async () => {
   try {
     const result: any = await checkAdminRequest();
     if (result.status == 200 || result.statusCode == 200) {
-      console.log(moment().format('HH:mm:ss'), 'Admin request', result); 
+      const rows = result?.rows || result?.data || [];
+      let requestResult: any;
+      for (let req of rows) {
+        if (req.request_type == 'bed') {
+          requestResult = await sendBedNo();
+          console.log('ERP admin request get bed no.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+          await updateAdminRequest({
+            request_id: req.request_id,
+            status: requestResult.statusCode == 200 || requestResult.status == 200 ? 'success' : 'failed',
+            isactive: 0
+          });
+        } else if (req.request_type == 'ward') {
+          requestResult = await sendWardName();
+          console.log('ERP admin request get ward name.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+          await updateAdminRequest({
+            request_id: req.request_id,
+            status: requestResult.statusCode == 200 || requestResult.status == 200 ? 'success' : 'failed',
+            isactive: 0
+          });
+        } else if (req.request_type == 'alive') {
+          requestResult = await updateAlive();
+          console.log('ERP admin request send alive status.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+        } else if (req.request_type == 'occupancy') {
+          // requestResult = await sendBedOccupancy();
+          // console.log('erpAdminRequest occupancy', requestResult);
+        }
+      }
     } else {
       console.log(moment().format('HH:mm:ss'), 'No admin request', result.status || result?.statusCode || '', result?.data?.message || result?.message || '');
     }
