@@ -2,6 +2,7 @@
 ## Feature
   - เพิ่มการ Update Alive
   - เพิ่มการ Get Bed No
+  - เปลี่ยนการ get ip server ไปใช้ getIP() จากเดิมใช้ gateway
 
 # 3.8.9
 ## Feature

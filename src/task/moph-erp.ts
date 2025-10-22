@@ -2,6 +2,7 @@ import moment = require("moment");
 import { sendingToMoph, updateHISAlive } from "../middleware/moph-refer";
 import hisModel from './../routes/his/hismodel';
 import { Knex } from 'knex';
+import { getIP } from "../middleware/utils";
 const packageJson = require('../../package.json');
 
 const dbConnection = require('../plugins/db');
@@ -129,6 +130,7 @@ export const sendBedNo = async () => {
 }
 
 export const updateAlive = async () => {
+  const ipServer: any = getIP();
   try {
     let data = {
       api_date: moment().format('YYYY-MM-DD HH:mm:ss'),
@@ -136,9 +138,9 @@ export const updateAlive = async () => {
       version: packageJson.version || '',
       subversion: packageJson.subVersion || '',
       port: process.env.PORT || 0,
+      ip: ipServer.ip,
       his: hisProvider, ssl: process.env?.SSL_ENABLE || null,
       /* 
-        `ip` varchar(30) DEFAULT NULL,
         `ssl` tinyint unsigned DEFAULT NULL,
         `dbconnect` tinyint unsigned DEFAULT NULL,
       */
