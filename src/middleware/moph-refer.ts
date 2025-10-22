@@ -2,7 +2,6 @@ import axios from 'axios';
 import moment = require('moment');
 import { createHash } from 'crypto';
 import { getIP } from './utils';
-import { get } from 'http';
 
 const referAPIUrl = 'https://refer.moph.go.th/api/beta';
 // const referAPIUrl = process.env.NREFER_API_URL || 'https://refer.moph.go.th/api/his';
@@ -91,7 +90,7 @@ export const updateHISAlive = async (dataArray: any) => {
   }
 
   const hashedApiKey = createHash('sha1')
-    .update((process.env.REQUEST_KEY || '')+(dataArray.hospcode || '')+(dataArray.his || '')+moment().format('YYYY-MM-DD HH:mm:ss'))
+    .update((process.env.REQUEST_KEY || '') + (dataArray.hospcode || '') + (dataArray.his || '') + moment().format('YYYY-MM-DD HH:mm:ss'))
     .digest('hex');
   dataArray.apikey = hashedApiKey;
 
@@ -114,7 +113,6 @@ export const updateHISAlive = async (dataArray: any) => {
       moment().format('x') +
       '-' + Math.random().toString(36).substring(2, 10),
   };
-  console.log('updateHISAlive', url);
   try {
     const { status, data } = await axios.post(url, bodyData, { headers });
     return { statusCode: status, ...data };
@@ -134,7 +132,7 @@ export const checkAdminRequest = async () => {
     return { status: 500, message: 'No nRefer token' };
   }
 
-  const url = referAPIUrl + '/moph-erp/check-request/'+hcode;
+  const url = referAPIUrl + '/moph-erp/check-request/' + hcode;
   const headers = {
     'Content-Type': 'application/json',
     'client-ip': apiIp.ip,

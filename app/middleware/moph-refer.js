@@ -107,7 +107,6 @@ const updateHISAlive = async (dataArray) => {
             moment().format('x') +
             '-' + Math.random().toString(36).substring(2, 10),
     };
-    console.log('updateHISAlive', url);
     try {
         const { status, data } = await axios_1.default.post(url, bodyData, { headers });
         return { statusCode: status, ...data };

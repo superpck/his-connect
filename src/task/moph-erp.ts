@@ -133,7 +133,8 @@ export const updateAlive = async () => {
   const ipServer: any = getIP();
   try {
     let data = {
-      api_date: moment().format('YYYY-MM-DD HH:mm:ss'),
+      api_date: global.apiStartTime,
+      server_date: moment().format('YYYY-MM-DD HH:mm:ss'),
       hospcode,
       version: packageJson.version || '',
       subversion: packageJson.subVersion || '',
