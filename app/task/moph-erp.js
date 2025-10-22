@@ -4,6 +4,7 @@ exports.updateAlive = exports.sendBedNo = exports.sendWardName = exports.sendBed
 const moment = require("moment");
 const moph_refer_1 = require("../middleware/moph-refer");
 const hismodel_1 = require("./../routes/his/hismodel");
+const utils_1 = require("../middleware/utils");
 const packageJson = require('../../package.json');
 const dbConnection = require('../plugins/db');
 let db = dbConnection('HIS');
@@ -127,6 +128,7 @@ const sendBedNo = async () => {
 };
 exports.sendBedNo = sendBedNo;
 const updateAlive = async () => {
+    const ipServer = (0, utils_1.getIP)();
     try {
         let data = {
             api_date: moment().format('YYYY-MM-DD HH:mm:ss'),
@@ -134,6 +136,7 @@ const updateAlive = async () => {
             version: packageJson.version || '',
             subversion: packageJson.subVersion || '',
             port: process.env.PORT || 0,
+            ip: ipServer.ip,
             his: hisProvider, ssl: process.env?.SSL_ENABLE || null,
         };
         const result = await (0, moph_refer_1.updateHISAlive)(data);
