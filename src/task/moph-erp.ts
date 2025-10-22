@@ -160,7 +160,7 @@ export const erpAdminRequest = async () => {
     if (result.status == 200 || result.statusCode == 200) {
       console.log(moment().format('HH:mm:ss'), 'Admin request', result); 
     } else {
-      console.log(moment().format('HH:mm:ss'), 'No admin request', result.status || '', result.message || '');
+      console.log(moment().format('HH:mm:ss'), 'No admin request', result.status || result?.statusCode || '', result?.data?.message || result?.message || '');
     }
     return result;
   } catch (error) {

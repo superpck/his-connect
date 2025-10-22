@@ -1,3 +1,7 @@
+# 3.8.11
+## Feature
+  - เพิ่มการรับ Request จาก Admin
+
 # 3.8.10
 ## Feature
   - เพิ่มการ Update Alive

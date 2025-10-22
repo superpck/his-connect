@@ -156,7 +156,7 @@ const erpAdminRequest = async () => {
             console.log(moment().format('HH:mm:ss'), 'Admin request', result);
         }
         else {
-            console.log(moment().format('HH:mm:ss'), 'No admin request', result.status || '', result.message || '');
+            console.log(moment().format('HH:mm:ss'), 'No admin request', result.status || result?.statusCode || '', result?.data?.message || result?.message || '');
         }
         return result;
     }

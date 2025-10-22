@@ -126,7 +126,7 @@ const checkAdminRequest = async () => {
     if (!nReferToken) {
         return { status: 500, message: 'No nRefer token' };
     }
-    const url = referAPIUrl + '/his-connect/checkRequest/' + hcode;
+    const url = referAPIUrl + '/moph-erp/check-request/' + hcode;
     const headers = {
         'Content-Type': 'application/json',
         'client-ip': apiIp.ip,
