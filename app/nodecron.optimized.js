@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = cronjob;
 const moment = require("moment");
 const child_process_1 = require("child_process");
 const moph_erp_1 = require("./task/moph-erp");
@@ -201,3 +200,4 @@ async function cronjob(fastify) {
         }
     });
 }
+exports.default = cronjob;

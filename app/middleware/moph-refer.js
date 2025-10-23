@@ -119,7 +119,6 @@ const checkAdminRequest = async () => {
         'Authorization': 'Bearer ' + nReferToken,
         'Source-Agent': 'HISConnect-' + (crontabConfig.version || 'x') + '-' + (crontabConfig.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
     };
-    console.log('get request', url);
     try {
         const { status, data } = await axios_1.default.get(url, { headers });
         return { statusCode: status, ...data };
