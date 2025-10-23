@@ -1355,6 +1355,48 @@ class HisHosxpv3Model {
             .groupBy('referin.refer_date');
     }
     concurrentIPDByWard(db, date) {
+        const clientType = db.client.config.client;
+        let sql = db('ipt')
+            .leftJoin('ward', 'ipt.ward', 'ward.ward')
+            .select('ipt.ward as wardcode', 'ward.name as wardname');
+        const getDatetimeExpr = (dateCol, timeCol) => {
+            switch (clientType) {
+                case 'pg':
+                case 'postgres':
+                case 'postgresql':
+                    return db.raw(`${dateCol}::text || ' ' || ${timeCol}::text`);
+                case 'mssql':
+                    return db.raw(`CAST(${dateCol} AS VARCHAR) + ' ' + CAST(${timeCol} AS VARCHAR)`);
+                case 'oracledb':
+                    return db.raw(`${dateCol} || ' ' || ${timeCol}`);
+                default:
+                    return db.raw(`CONCAT(${dateCol}, ' ', ${timeCol})`);
+            }
+        };
+        let dischargeDate = date;
+        if (date.length === 10) {
+            date = moment(date).locale('TH').format('YYYY-MM-DD');
+            sql = sql.select(db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09']))
+                .count('* as cases')
+                .where('ipt.regdate', '<=', date)
+                .andWhere(function () {
+                this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', dischargeDate);
+            });
+        }
+        else {
+            const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+            const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
+            const regdatetime = getDatetimeExpr('ipt.regdate', 'ipt.regtime');
+            const dchdatetime = getDatetimeExpr('ipt.dchdate', 'ipt.dchtime');
+            sql = sql.select(db.raw(`SUM(CASE WHEN ${regdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? AND ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death`, [dateStart, dateEnd, '08', '09']), db.raw(`SUM(CASE WHEN ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS cases`, [dateStart, dateEnd]))
+                .whereRaw(`${regdatetime.sql} <= ?`, dateStart)
+                .whereRaw(`(ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ?)`, [dateStart, dateEnd]);
+        }
+        sql = sql.whereNotNull('ipt.ward')
+            .whereNot('ipt.ward', '');
+        return sql.groupBy('ipt.ward').orderBy('ipt.ward');
+    }
+    concurrentIPDByWard_old(db, date) {
         let sql = db('ipt')
             .leftJoin('ward', 'ipt.ward', 'ward.ward')
             .select('ipt.ward as wardcode', 'ward.name as wardname', db.raw('? as date', [date]), db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death'))
