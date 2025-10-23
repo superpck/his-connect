@@ -303,7 +303,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   // Create cron schedule (run every minute)
   const secondNow = moment().seconds();
   const timingSch = `${secondNow} * * * * *`;
-  let minuteRandom = Math.ceil(Math.random()*5) || 1;
+  let minuteRandom = Math.ceil(Math.random() * 5) || 1;
   minuteRandom += 10;
 
   // Configure timing schedules
@@ -321,6 +321,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
     updateAlive();
     sendWardName();
     sendBedNo();
+    // sendBedOccupancy();
   }
   // Schedule cron job
   let minuteCount = 0;

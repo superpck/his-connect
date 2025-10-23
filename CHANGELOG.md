@@ -4,6 +4,7 @@
   - แก้ไข SQL ให้รองรับหลาย vendor
   - ส่งค่าวันที่ API Server 
   - เพิ่มการรับ Request จาก admin
+  - ปรับ SQL สำหรับคงค้างพยาบาลใน HOSxP
 
 # 3.8.10
 ## Feature

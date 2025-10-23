@@ -10,12 +10,19 @@ const dbConnection = require('../plugins/db');
 let db = dbConnection('HIS');
 const hisProvider = process.env.HIS_PROVIDER || '';
 const hospcode = process.env.HOSPCODE || '';
-const sendBedOccupancy = async (date = null) => {
-    let currDate = moment().subtract(5, 'minutes').format('YYYY-MM-DD');
-    date = date || currDate;
+const sendBedOccupancy = async (dateProcess = null) => {
+    let whatUTC = Intl?.DateTimeFormat().resolvedOptions().timeZone || '';
+    let currDate;
+    if (whatUTC == 'UTC' || whatUTC == 'Etc/UTC') {
+        currDate = moment().locale('TH').add(7, 'hours').subtract(1, 'minutes').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+    }
+    else {
+        currDate = moment().locale('TH').subtract(1, 'minutes').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+    }
+    let date = dateProcess || currDate;
     let dateOpd = date;
     if (moment().get('hour') == 3) {
-        dateOpd = moment().subtract(1, 'month').format('YYYY-MM-DD');
+        dateOpd = moment().locale('TH').subtract(1, 'month').format('YYYY-MM-DD');
     }
     let clinicResult = null, wardResult = null, opdResult = null;
     do {

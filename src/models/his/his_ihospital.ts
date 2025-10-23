@@ -655,28 +655,92 @@ export class HisIHospitalModel {
   }
 
   concurrentIPDByWard(db: Knex, date: any) {
-    const dateStart = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
+    const dateAdmitLimit = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
     let sql = db('view_ipd_ipd as ip')
       .select('ip.ward as wardcode', 'ward_name as wardname',
-        db.raw('SUBSTRING(ip.ward_std,2,2) as clinic'),
+        db.raw('SUBSTRING(ip.ward_std,2,2) as clinic'));
+    if (date.length > 10) {
+      const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+      const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
+      sql = sql.select(
+        db.raw('SUM(CASE WHEN ip.dateadm BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case', [dateStart, dateEnd]),
+        db.raw('SUM(CASE WHEN ip.datedsc BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge', [dateStart, dateEnd]),
+        db.raw('SUM(CASE WHEN ip.refer IS NOT NULL AND ip.refer != "" THEN 1 ELSE 0 END) AS referin'),
+        db.raw('SUM(CASE WHEN ip.datedsc BETWEEN ? AND ? THEN adjrw ELSE 0 END) AS adjrw', [dateStart, dateEnd]),
+        db.raw('SUM(CASE WHEN ip.datedsc BETWEEN ? AND ? AND LEFT(ip.stat_dsc,1) IN ("8","9") THEN 1 ELSE 0 END) AS death', [dateStart, dateEnd]))
+        .count('* as cases')
+        .sum('ip.pday as los')
+        .whereRaw('ip.dateadm <= ?', [dateStart])
+        .whereRaw('(ip.disc IS NULL OR ip.datedsc BETWEEN ? AND ?)', [dateStart, dateEnd])
+        .andWhere(function () {
+          this.whereNull('ip.disc').orWhere('ip.disc', '>=', date);
+        });
+    } else {
+      date = moment(date).format('YYYY-MM-DD');
+      sql = sql.select(
         db.raw('SUM(CASE WHEN ip.admite = ? THEN 1 ELSE 0 END) AS new_case', [date]),
         db.raw('SUM(CASE WHEN ip.disc = ? THEN 1 ELSE 0 END) AS discharge', [date]),
         db.raw('SUM(CASE WHEN ip.refer IS NOT NULL AND ip.refer != "" THEN 1 ELSE 0 END) AS referin'),
         db.raw('SUM(CASE WHEN ip.disc = ? THEN adjrw ELSE 0 END) AS adjrw', [date]),
         db.raw('SUM(CASE WHEN LEFT(ip.stat_dsc,1) IN ("8","9") THEN 1 ELSE 0 END) AS death'))
-      .count('* as cases')
-      .sum('ip.pday as los')
-      .where('ip.admite', '<=', date)
-      .where('ip.admite', '>', dateStart)   // Protect ไม่นับ admit เกิน 1 ปี
+        .count('* as cases')
+        .sum('ip.pday as los')
+        .where('ip.admite', '<=', date)
+        .andWhere(function () {
+          this.whereNull('ip.disc').orWhere('ip.disc', '>=', date);
+        });
+    }
+    sql = sql.where('ip.admite', '>', dateAdmitLimit)   // Protect ไม่นับ admit เกิน 1 ปี
       .whereRaw('ip.ward is not null and ip.ward>0')
-      .andWhere(function () {
-        this.whereNull('ip.disc').orWhere('ip.disc', '>=', date);
-      });
+    // console.log(sql.groupBy('ip.ward').orderBy('ip.ward').toString());
     return sql.groupBy('ip.ward').orderBy('ip.ward');
   }
-  concurrentIPDByClinic(db: Knex, date: any) {
+  concurrentIPDByClinic_(db: Knex, date: any) {
+    const dateAdmitLimit = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
     let sql = db('view_ipd_ipd as ip')
-      .select('clinic_hdc_code as cliniccode', 'clinic_hdc_name as clinicname',
+      .select('clinic_hdc_code as cliniccode', 'clinic_hdc_name as clinicname');
+    if (date.length > 10) {
+      const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+      const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
+      sql = sql.select(
+        db.raw('SUM(CASE WHEN ip.dateadm BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case', [dateStart, dateEnd]),
+        db.raw('SUM(CASE WHEN ip.datedsc BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge', [dateStart, dateEnd]),
+        db.raw('SUM(CASE WHEN ip.refer IS NOT NULL AND ip.refer != "" THEN 1 ELSE 0 END) AS referin'),
+        db.raw('SUM(CASE WHEN ip.datedsc BETWEEN ? AND ? THEN adjrw ELSE 0 END) AS adjrw', [dateStart, dateEnd]),
+        db.raw('SUM(CASE WHEN ip.datedsc BETWEEN ? AND ? AND LEFT(ip.stat_dsc,1) IN ("8","9") THEN 1 ELSE 0 END) AS death', [dateStart, dateEnd]))
+        .count('* as cases')
+        .sum('ip.pday as los')
+        .whereRaw('ip.dateadm <= ?', [dateStart])
+        .whereRaw('(ip.disc IS NULL OR ip.datedsc BETWEEN ? AND ?)', [dateStart, dateEnd])
+        .andWhere(function () {
+          this.whereNull('ip.disc').orWhere('ip.disc', '>=', date);
+        });
+    } else {
+      date = moment(date).format('YYYY-MM-DD');
+      sql = sql.select(
+        db.raw('SUM(CASE WHEN ip.admite = ? THEN 1 ELSE 0 END) AS new_case', [date]),
+        db.raw('SUM(CASE WHEN ip.disc = ? THEN 1 ELSE 0 END) AS discharge', [date]),
+        db.raw('SUM(CASE WHEN ip.refer IS NOT NULL AND ip.refer != "" THEN 1 ELSE 0 END) AS referin'),
+        db.raw('SUM(CASE WHEN ip.disc = ? THEN adjrw ELSE 0 END) AS adjrw', [date]),
+        db.raw('SUM(CASE WHEN LEFT(ip.stat_dsc,1) IN ("8","9") THEN 1 ELSE 0 END) AS death'))
+        .count('* as cases')
+        .sum('ip.pday as los')
+        .where('ip.admite', '<=', date)
+        .andWhere(function () {
+          this.whereNull('ip.disc').orWhere('ip.disc', '>=', date);
+        });
+    }
+    sql = sql.where('ip.admite', '>', dateAdmitLimit);   // Protect ไม่นับ admit เกิน 1 ปี
+    console.log('concurrentIPDByClinic => ', sql.groupBy('cliniccode').orderBy('cliniccode').toString());
+    return sql.groupBy('cliniccode').orderBy('cliniccode');
+  }
+
+  concurrentIPDByClinic(db: Knex, date: any) {
+    const dateAdmitLimit = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
+    date = moment(date).format('YYYY-MM-DD');
+    let sql = db('view_ipd_ipd as ip')
+      .select('clinic_hdc_name as clinicname',
+        db.raw('CASE WHEN clinic_hdc_code IS NULL OR clinic_hdc_code=\'\' OR clinic_hdc_code=\'99\' THEN SUBSTRING(ward_std,2,2) ELSE clinic_hdc_code END AS cliniccode'),
         db.raw('SUM(CASE WHEN ip.admite = ? THEN 1 ELSE 0 END) AS new_case', [date]),
         db.raw('SUM(CASE WHEN ip.disc = ? THEN 1 ELSE 0 END) AS discharge', [date]),
         db.raw('SUM(CASE WHEN ip.refer IS NOT NULL AND ip.refer != "" THEN 1 ELSE 0 END) AS referin'),
@@ -684,10 +748,11 @@ export class HisIHospitalModel {
         db.raw('SUM(CASE WHEN LEFT(ip.stat_dsc,1) IN ("8","9") THEN 1 ELSE 0 END) AS death'))
       .count('* as cases')
       .sum('ip.pday as los')
-      .where('ip.admite', '<=', date)
+      .whereBetween('ip.admite', [dateAdmitLimit, date])  // Protect ไม่นับ admit เกิน 1 ปี
       .andWhere(function () {
         this.whereNull('ip.disc').orWhere('ip.disc', '>=', date);
       });
+    // console.log(sql.groupBy('cliniccode').orderBy('cliniccode').toString());
     return sql.groupBy('cliniccode').orderBy('cliniccode');
   }
   sumOpdVisitByClinic(db: Knex, date: any) {
