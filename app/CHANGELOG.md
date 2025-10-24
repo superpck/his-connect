@@ -5,7 +5,6 @@
   - ส่งค่าวันที่ API Server 
   - เพิ่มการรับ Request จาก admin
   - ปรับ SQL สำหรับคงค้างพยาบาลใน HOSxP
-  - เพิ่มการตรวจสอบ his provider เพื่อป้องกัน error toLowerCase()
 
 # 3.8.10
 ## Feature

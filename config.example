@@ -60,7 +60,7 @@ IS_MOPH_PASSWORD="??"
 NREFER_API_URL="https://refer.moph.go.th/api/his"
 NREFER_DATA_BACKWARD_MONTH=0
 
-#Key from https://nrefer.moph.go.th
+#Key from https://nrefer.moph.go.th หรือ MOPH ERP Admin
 NREFER_APIKEY="กรุณาระบุ API Key"
 NREFER_SECRETKEY="กรุณาระบุ API Secret Key"
 NREFER_AUTO_SEND=1
