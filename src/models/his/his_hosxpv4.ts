@@ -78,8 +78,8 @@ export class HisHosxpv4Model {
         }
         return sql
             .select('ward as wardcode', 'name as wardname',
-                `ward_export_code as std_code`,'bedcount as bed_normal',
-                db.raw('CASE WHEN ward_active = "Y" THEN 1 ELSE 0 END as isactive')
+                `ward_export_code as std_code`, 'bedcount as bed_normal',
+                db.raw("CASE WHEN ward_active ='Y' THEN 1 ELSE 0 END as isactive")
             )
             .orderBy('ward')
             .limit(maxLimit);
