@@ -11,8 +11,8 @@ const router = (fastify, {}, next) => {
     fastify.get('/sending-process/:?date', async (req, reply) => {
         const now = moment().locale('th').format('YYYY-MM-DD');
         const trust = req.headers.host.search('localhost|127.0.0.1') > -1;
-        const apiKey = process.env.NREFER_APIKEY;
-        const secretKey = process.env.NREFER_SECRETKEY;
+        const apiKey = process.env.NREFER_APIKEY || process.env.APIKEY;
+        const secretKey = process.env.NREFER_SECRETKEY || process.env.SECRETKEY;
         if (!trust || !apiKey || !secretKey) {
             reply.status(http_status_codes_1.StatusCodes.UNAUTHORIZED).send({ statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED) });
         }

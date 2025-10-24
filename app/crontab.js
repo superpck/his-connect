@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = cronjob;
 const moment = require("moment");
 const child_process_1 = require("child_process");
 var shell = require("shelljs");
@@ -116,7 +117,6 @@ async function cronjob(fastify) {
         global.mophService = await require('./routes/main/crontab')(global.mophService, {});
     }
 }
-exports.default = cronjob;
 async function firstPM2InstancePID() {
     try {
         var jlist = await shell.exec('pm2 jlist', { silent: true });

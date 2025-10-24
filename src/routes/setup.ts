@@ -199,6 +199,8 @@ const router = (fastify, { }, next) => {
         NREFER_API_URL: 'https://nrefer.moph.go.th/apis',
         NREFER_APIKEY: 'xxxxxxx',
         NREFER_SECRETKEY: 'xxxxxxxx',
+        APIKEY: 'xxxxxxx',
+        SECRETKEY: 'xxxxxxxx',
         NREFER_AUTO_SEND: 1,
         NREFER_AUTO_SEND_EVERY_MINUTE: 14,
       },

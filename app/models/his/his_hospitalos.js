@@ -34,7 +34,7 @@ class HisHospitalOsModel {
         result = await db('patient').select('hn').limit(1);
         const connection = result && (result.patient || result.length > 0) ? true : false;
         let charset = '';
-        if (process.env.HIS_DB_CLIENT.toLowerCase().includes('mysql')) {
+        if ((process.env.HIS_DB_CLIENT || 'mysql2').toLowerCase().includes('mysql')) {
             result = await db('information_schema.SCHEMATA')
                 .select('DEFAULT_CHARACTER_SET_NAME')
                 .where('SCHEMA_NAME', process.env.HIS_DB_NAME)
