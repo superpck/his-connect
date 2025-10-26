@@ -10,12 +10,12 @@ const getHospcode = async () => {
             hisHospcode = row ? row.hospitalcode : process.env.HOSPCODE;
             console.log('hisHospcode v.4', hisHospcode);
         } else {
-            console.error('global.dbHIS is not a function. Using default HOSPCODE');
+            console.log('Default HOSPCODE:', hisHospcode);
         }
     } catch (error) {
         console.error('Error in getHospcode:', error);
         // Fallback to environment variable
-        console.log('Using HOSPCODE from environment:', process.env.HOSPCODE);
+        console.log('Default HOSPCODE:', hisHospcode);
     }
 }
 export class HisHosxpv4Model {
@@ -63,7 +63,7 @@ export class HisHosxpv4Model {
         return sql
             .select('clinic as department_code', 'name as department_name',
                 `'-' as moph_code`)
-            .select(db.raw(`LOCATE('ฉุกเฉิน',name)>0,1,0) as emergency`))
+            .select(db.raw(`CASE WHEN LOCATE('ฉุกเฉิน', name) > 0 THEN 1 ELSE 0 END as emergency`))
             .orderBy('name')
             .limit(maxLimit);
     }
@@ -107,7 +107,7 @@ export class HisHosxpv4Model {
             .leftJoin('refer_vital_sign', 'r.referout_id', 'refer_vital_sign.referout_id')
             .leftJoin('opdscreen', 'r.vn', 'opdscreen.vn')
             .leftJoin('doctor', 'r.doctor', 'doctor.code')
-            .select(db.raw(`"${hisHospcode}" as hospcode`));
+            .select(db.raw(`'${hisHospcode}' as hospcode`));
         if (visitNo) {
             sql.where('r.vn', visitNo);
         } else {
@@ -137,7 +137,7 @@ export class HisHosxpv4Model {
             .orderBy('r.refer_date');
 
         // const sql1 = `
-        //     SELECT "${hisHospcode}" AS hospcode,
+        //     SELECT '${hisHospcode}' AS hospcode,
         //         concat(r.refer_date, ' ', r.refer_time) AS refer_date,
         //         r.refer_number AS referid,
         //         r.refer_hospcode AS hosp_destination,
@@ -164,7 +164,7 @@ export class HisHosxpv4Model {
         //         left join doctor on r.doctor = doctor.code
         //     WHERE
         //         {filterText} and r.vn is not null and r.refer_hospcode!='' and r.refer_hospcode is not null
-        //         and r.refer_hospcode != "${hisHospcode}"
+        //         and r.refer_hospcode != `${hisHospcode}`
         //     ORDER BY
         //         r.refer_date`;
         // const result = await db.raw(sql, [filter]);
@@ -177,7 +177,7 @@ export class HisHosxpv4Model {
         columnName = columnName == 'name' ? 'p.fname' : columnName;
         columnName = columnName == 'hid' ? 'h.house_id' : columnName;
         const sql = `
-            SELECT "${hisHospcode}" as HOSPCODE
+            SELECT '${hisHospcode}' as HOSPCODE
             ,h.house_id HID
             ,p.cid as CID
             ,p.pname as PRENAME
@@ -242,7 +242,7 @@ export class HisHosxpv4Model {
         //columnName => hn
         const sql = `
             SELECT
-                "${hisHospcode}" AS hospcode,
+                '${hisHospcode}' AS hospcode,
                 pt.cid,
                 pt.hn, pt.hn as pid,
                 IF (p.house_regist_type_id IN (1, 2),'1','2') addresstype,
@@ -282,7 +282,7 @@ export class HisHosxpv4Model {
         columnName = columnName === 'date_serv' ? 'o.vstdate' : columnName;
         const sql = `
             select 
-                "${hisHospcode}" as HOSPCODE,
+                '${hisHospcode}' as HOSPCODE,
                 pt.hn as PID, o.hn as HN, pt.CID, os.seq_id, os.vn as SEQ,
                 if(
                     o.vstdate  is null 
@@ -367,7 +367,7 @@ export class HisHosxpv4Model {
 
     async getDiagnosisOpd(db: Knex, visitNo, hospCode = hisHospcode) {
         const sql = `
-            SELECT "${hisHospcode}" AS HOSPCODE,
+            SELECT '${hisHospcode}' AS HOSPCODE,
                 pt.cid CID,
                 o.hn PID,
                 o.hn,
@@ -617,7 +617,7 @@ export class HisHosxpv4Model {
         columnName = columnName === 'visitNo' ? 'vn' : columnName;
         return db('lab_order as o')
             .leftJoin('lab_order_service as s', 'o.lab_order_number', 's.lab_order_number')
-            .select(db.raw(`"${hospCode}" as hospcode`))
+            .select(db.raw(`'${hospCode}' as hospcode`))
             .select('vn as visitno', 'lab.hn as hn', 'lab.an as an',
                 'lab.lab_no as request_id',
                 'lab.lab_code as LOCALCODE',
@@ -1505,14 +1505,14 @@ export class HisHosxpv4Model {
 
     getClinicalRefer(db, referNo, hospCode = hisHospcode) {
         return db('view_clinical_refer')
-            .select(db.raw(`"${hisHospcode}" as hospcode`))
+            .select(db.raw(`'${hisHospcode}' as hospcode`))
             .where('refer_no', "=", referNo)
             .limit(maxLimit);
     }
 
     getInvestigationRefer(db, referNo, hospCode = hisHospcode) {
         return db('view_investigation_refer')
-            .select(db.raw(`"${hisHospcode}" as hospcode`))
+            .select(db.raw(`'${hisHospcode}' as hospcode`))
             .where('refer_no', "=", referNo)
             .limit(maxLimit);
     }
@@ -1520,9 +1520,9 @@ export class HisHosxpv4Model {
     async getCareRefer(db: Knex, referNo, hospCode = hisHospcode) {
         const sql = `
             select 
-                "${hisHospcode}" as hospcode,
+                '${hisHospcode}' as hospcode,
                 ro.refer_number as referid,
-                concat("${hisHospcode}",ro.refer_number ) as referid_province,
+                concat('${hisHospcode}',ro.refer_number ) as referid_province,
                 '' as caretype,
                 if(
                     concat(ro.refer_date, ' ', ro.refer_time) is null 
@@ -1535,9 +1535,9 @@ export class HisHosxpv4Model {
             from
                 referout ro 
             where 
-                ro.refer_number = "${referNo}"
+                ro.refer_number = ?
             `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [referNo]);
         return result[0];
     }
 
@@ -1571,7 +1571,7 @@ export class HisHosxpv4Model {
         columnName = columnName === 'cid' ? 'd.cid' : columnName;
         const sql = `
             select 
-                "${hisHospcode}" as hospcode,
+                '${hisHospcode}' as hospcode,
                 d.code as provider,
                 d.licenseno as registerno,
                 d.council_code as council,
@@ -1594,9 +1594,8 @@ export class HisHosxpv4Model {
                 left join pname pn on pn.name = p.pname
                 left join provis_pname p2 on p2.provis_pname_code = pn.provis_code                
             where 
-                ${columnName}="${searchNo}"
-            `;
-        const result = await db.raw(sql);
+                ${columnName} = ?`;
+        const result = await db.raw(sql, [searchNo]);
         return result[0];
     }
     getProviderDr(db: Knex, drList: any[]) {
@@ -1605,7 +1604,7 @@ export class HisHosxpv4Model {
             .leftJoin('pname as pn', 'pn.name', 'p.pname')
             .leftJoin('provis_pname as p2', 'p2.provis_pname_code', 'pn.provis_code')
             .select(db.raw(`
-                "${hisHospcode}" as hospcode,
+                '${hisHospcode}' as hospcode,
                 d.code as provider,
                 d.licenseno as registerno,
                 d.council_code as council,

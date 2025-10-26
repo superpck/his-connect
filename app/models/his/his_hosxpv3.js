@@ -13,12 +13,12 @@ const getHospcode = async () => {
             console.log('hisHospcode v.4', hisHospcode);
         }
         else {
-            console.error('global.dbHIS is not a function. Using default HOSPCODE');
+            console.error('Default HOSPCODE:', hisHospcode);
         }
     }
     catch (error) {
         console.error('Error in getHospcode:', error);
-        console.log('Using HOSPCODE from environment:', process.env.HOSPCODE);
+        console.log('Default HOSPCODE:', hisHospcode);
     }
 };
 class HisHosxpv3Model {
@@ -59,7 +59,7 @@ class HisHosxpv3Model {
         }
         return sql
             .select('clinic as department_code', 'name as department_name', `'-' as moph_code`)
-            .select(db.raw(`LOCATE('ฉุกเฉิน',name)>0,1,0) as emergency`))
+            .select(db.raw(`CASE WHEN LOCATE('ฉุกเฉิน', name) > 0 THEN 1 ELSE 0 END as emergency`))
             .orderBy('name')
             .limit(maxLimit);
     }
@@ -72,7 +72,7 @@ class HisHosxpv3Model {
             sql.whereLike('name', `%${wardName}%`);
         }
         return sql
-            .select('ward as wardcode', 'name as wardname', `ward_export_code as std_code`, 'bedcount as bed_normal', db.raw('CASE WHEN ward_active = "Y" THEN 1 ELSE 0 END as isactive'))
+            .select('ward as wardcode', 'name as wardname', `ward_export_code as std_code`, 'bedcount as bed_normal', db.raw("CASE WHEN ward_active ='Y' THEN 1 ELSE 0 END as isactive"))
             .orderBy('ward')
             .limit(maxLimit);
     }
@@ -185,9 +185,9 @@ class HisHosxpv3Model {
             left join provis_religion r on r.code=p.religion
             left join education e on e.education=p.educate
             left join person_labor_type pl on person.person_labor_type_id=pl.person_labor_type_id
-            where ${columnName}="${searchText}"
+            where ${columnName} = ?
         `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [searchText]);
         return result[0];
     }
     async getAddress(db, columnName, searchText, hospCode = hisHospcode) {
@@ -219,9 +219,9 @@ class HisHosxpv3Model {
                 LEFT JOIN thaiaddress t ON t.addressid=v.address_id
                 LEFT JOIN person_address pa ON pa.person_id = p.person_id
 
-            where ${columnName}="${searchText}"
+            where ${columnName} = ?
         `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [searchText]);
         return result[0];
     }
     async getService(db, columnName, searchText, hospCode = hisHospcode) {
@@ -306,9 +306,9 @@ class HisHosxpv3Model {
                 left join doctor on o.doctor = doctor.code
                 LEFT JOIN er_nursing_detail as er ON er.vn = o.vn
             
-            where ${columnName}="${searchText}"
+            where ${columnName} = ?
             `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [searchText]);
         return result[0];
     }
     async getDiagnosisOpd(db, visitNo, hospCode = hisHospcode) {
@@ -339,10 +339,10 @@ class HisHosxpv3Model {
             LEFT JOIN spclty s ON s.spclty = o.spclty
             LEFT JOIN doctor d ON d. CODE = o.doctor
             WHERE
-                q.vn = "${visitNo}"
+                q.vn = ?
                 AND odx.icd10 REGEXP '[A-Z]'               
             `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [visitNo]);
         return result[0];
     }
     async getDiagnosisOpdAccident(db, dateStart, dateEnd, hospCode = hisHospcode) {
@@ -443,7 +443,7 @@ class HisHosxpv3Model {
                 h3.icd10tm  is not null  
                 and v.cid is not null 
                 and v.cid <>''
-                and os.vn = "${visitNo}"
+                and os.vn = ?
                 
             union all
                 
@@ -476,7 +476,7 @@ class HisHosxpv3Model {
                 e.icd9cm <>'' 
                 and v.cid is not null 
                 and v.cid <>''
-                and os.vn = "${visitNo}"
+                and os.vn = ?
                 
             union all
                 
@@ -509,9 +509,9 @@ class HisHosxpv3Model {
                 v.cid is not null 
                 and v.cid <>'' 
                 and e.icd10tm_operation_code is not null
-                and os.vn = "${visitNo}"
+                and os.vn = ?
             `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [visitNo, visitNo, visitNo]);
         return result[0];
     }
     async getChargeOpd(db, visitNo, hospCode = hisHospcode) {
@@ -559,7 +559,7 @@ class HisHosxpv3Model {
         columnName = columnName === 'visitNo' ? 'vn' : columnName;
         return db('lab_order as o')
             .leftJoin('lab_order_service as s', 'o.lab_order_number', 's.lab_order_number')
-            .select(db.raw(`"${hospCode}" as hospcode`))
+            .select(db.raw(`'${hospCode}' as hospcode`))
             .select('vn as visitno', 'lab.hn as hn', 'lab.an as an', 'lab.lab_no as request_id', 'lab.lab_code as LOCALCODE', 'lab.lab_name as INVESTNAME', 'lab.loinc as loinc', 'lab.icdcm as icdcm', 'lab.standard as cgd', 'lab.cost as cost', 'lab.lab_price as price', 'lab.date as DATETIME_REPORT')
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
@@ -852,7 +852,7 @@ class HisHosxpv3Model {
                 left join spclty on spclty.spclty=ipt.spclty  
                 left join ipt_oper_code ipc on ipc.ipt_oper_code=i.ipt_oper_code 
             where 
-                ipt.an="${an}"
+                ipt.an= ?
 
             union all
 
@@ -899,9 +899,9 @@ class HisHosxpv3Model {
                 left join person p on p.patient_hn = ipt.hn
                 left join spclty on spclty.spclty=ipt.spclty  
             where              
-                ipt.an="${an}"                  
+                ipt.an= ?                  
             `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [an, an]);
         return result[0];
     }
     async getChargeIpd(db, an, hospCode = hisHospcode) {
@@ -945,9 +945,9 @@ class HisHosxpv3Model {
             where 
                 (o.an <> ''or o.an is not null) 
                 and o.unitprice <> '0'
-                and ipt.an="${an}"                  
+                and ipt.an= ?               
             `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [an]);
         return result[0];
     }
     async getDrugIpd(db, an, hospCode = hisHospcode) {
@@ -980,14 +980,14 @@ class HisHosxpv3Model {
                 left join drugitems d on d.icode=o.icode
                 left join medplan_ipd m on m.an=o.an and m.icode=o.icode                    
             where                 
-                i.an="${an}"       
+                i.an= ?     
                 and d.icode is not null
                 and o.qty<>0
                 and o.sum_price>0
             group by i.an,o.icode,typedrug
             order by i.an,typedrug,o.icode      
             `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [an]);
         return result[0];
     }
     async getAccident(db, visitNo, hospCode = hisHospcode) {
@@ -1024,11 +1024,11 @@ class HisHosxpv3Model {
             LEFT JOIN person p ON p.patient_hn = pt.hn
             LEFT JOIN er_nursing_detail d ON er.vn = d.vn
             LEFT JOIN er_nursing_visit_type vt ON vt.visit_type = d.visit_type
-            LEFT JOIN accident_transport_type tt ON tt.accident_transport_type_id = d.accident_transport_type_id                   
-            where                 
-                q.vn = "${visitNo}"
+            LEFT JOIN accident_transport_type tt ON tt.accident_transport_type_id = d.accident_transport_type_id
+            where
+                q.vn = ?
             `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [visitNo]);
         return result[0];
     }
     async getDrugAllergy__(db, hn, hospCode = hisHospcode) {
@@ -1073,7 +1073,7 @@ class HisHosxpv3Model {
                 left join person p on oe.hn=p.patient_hn
                 
             where                 
-                oe.hn = "${hn}"
+                oe.hn = '${hn}'
             `;
         const result = await db.raw(sql);
         return result[0];
@@ -1230,7 +1230,7 @@ class HisHosxpv3Model {
             from
                 referout ro 
             where 
-                ro.refer_number = "${referNo}"
+                ro.refer_number = '${referNo}'
             `;
         const result = await db.raw(sql);
         return result[0];
@@ -1280,9 +1280,9 @@ class HisHosxpv3Model {
                 doctor d 
                 left join patient p on d.cid = p.cid
                 left join pname pn on pn.name = p.pname
-                left join provis_pname p2 on p2.provis_pname_code = pn.provis_code                
-            where 
-                ${columnName}="${searchNo}"
+                left join provis_pname p2 on p2.provis_pname_code = pn.provis_code
+            where
+                ${columnName}='${searchNo}'
             `;
         const result = await db.raw(sql);
         return result[0];
