@@ -3,8 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisHomCHModel = void 0;
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
-const dbName = process.env.HIS_DB_NAME;
-const dbClient = process.env.HIS_DB_CLIENT;
 class HisHomCHModel {
     async getAdmission(knex, columnName, searchNo, hospCode = hcode) {
         columnName = columnName === 'visitNo' ? 'vn' : columnName;

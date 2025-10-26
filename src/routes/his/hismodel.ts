@@ -20,6 +20,7 @@ import { HisMyPcuModel } from '../../models/his/his_mypcu';
 import { HisEmrSoftModel } from '../../models/his/his_emrsoft';
 import { HisHaosModel } from '../../models/his/his_haos';
 import { HisSsbSriHModel } from '../../models/his/his_ssb_srih';
+import { HisHomCHModel } from '../../models/his/his_homc';
 
 console.log('HIS Provider:', process.env.HIS_PROVIDER);
 const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
@@ -54,7 +55,7 @@ switch (hisProvider) {
     break;
   case 'infod':
   case 'homc':
-    // hisModel = new HisInfodModel();
+    hisModel = new HisHomCHModel();
     break;
   case 'hi':
     // hisModel = new HisHiModel();

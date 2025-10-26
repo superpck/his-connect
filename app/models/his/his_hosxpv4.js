@@ -58,7 +58,7 @@ class HisHosxpv4Model {
         }
         return sql
             .select('clinic as department_code', 'name as department_name', `'-' as moph_code`)
-            .select(db.raw(`LOCATE('ฉุกเฉิน',name)>0,1,0) as emergency`))
+            .select(db.raw(`CASE WHEN LOCATE('ฉุกเฉิน', name) > 0 THEN 1 ELSE 0 END as emergency`))
             .orderBy('name')
             .limit(maxLimit);
     }
@@ -71,7 +71,7 @@ class HisHosxpv4Model {
             sql.whereLike('name', `%${wardName}%`);
         }
         return sql
-            .select('ward as wardcode', 'name as wardname', `ward_export_code as std_code`, 'bedcount as bed_normal', db.raw('CASE WHEN ward_active = "Y" THEN 1 ELSE 0 END as isactive'))
+            .select('ward as wardcode', 'name as wardname', `ward_export_code as std_code`, 'bedcount as bed_normal', db.raw("CASE WHEN ward_active ='Y' THEN 1 ELSE 0 END as isactive"))
             .orderBy('ward')
             .limit(maxLimit);
     }
@@ -94,7 +94,7 @@ class HisHosxpv4Model {
             .leftJoin('refer_vital_sign', 'r.referout_id', 'refer_vital_sign.referout_id')
             .leftJoin('opdscreen', 'r.vn', 'opdscreen.vn')
             .leftJoin('doctor', 'r.doctor', 'doctor.code')
-            .select(db.raw(`"${hisHospcode}" as hospcode`));
+            .select(db.raw(`'${hisHospcode}' as hospcode`));
         if (visitNo) {
             sql.where('r.vn', visitNo);
         }
@@ -115,7 +115,7 @@ class HisHosxpv4Model {
         columnName = columnName == 'name' ? 'p.fname' : columnName;
         columnName = columnName == 'hid' ? 'h.house_id' : columnName;
         const sql = `
-            SELECT "${hisHospcode}" as HOSPCODE
+            SELECT '${hisHospcode}' as HOSPCODE
             ,h.house_id HID
             ,p.cid as CID
             ,p.pname as PRENAME
@@ -178,7 +178,7 @@ class HisHosxpv4Model {
     async getAddress(db, columnName, searchText, hospCode = hisHospcode) {
         const sql = `
             SELECT
-                "${hisHospcode}" AS hospcode,
+                '${hisHospcode}' AS hospcode,
                 pt.cid,
                 pt.hn, pt.hn as pid,
                 IF (p.house_regist_type_id IN (1, 2),'1','2') addresstype,
@@ -217,7 +217,7 @@ class HisHosxpv4Model {
         columnName = columnName === 'date_serv' ? 'o.vstdate' : columnName;
         const sql = `
             select 
-                "${hisHospcode}" as HOSPCODE,
+                '${hisHospcode}' as HOSPCODE,
                 pt.hn as PID, o.hn as HN, pt.CID, os.seq_id, os.vn as SEQ,
                 if(
                     o.vstdate  is null 
@@ -299,7 +299,7 @@ class HisHosxpv4Model {
     }
     async getDiagnosisOpd(db, visitNo, hospCode = hisHospcode) {
         const sql = `
-            SELECT "${hisHospcode}" AS HOSPCODE,
+            SELECT '${hisHospcode}' AS HOSPCODE,
                 pt.cid CID,
                 o.hn PID,
                 o.hn,
@@ -543,7 +543,7 @@ class HisHosxpv4Model {
         columnName = columnName === 'visitNo' ? 'vn' : columnName;
         return db('lab_order as o')
             .leftJoin('lab_order_service as s', 'o.lab_order_number', 's.lab_order_number')
-            .select(db.raw(`"${hospCode}" as hospcode`))
+            .select(db.raw(`'${hospCode}' as hospcode`))
             .select('vn as visitno', 'lab.hn as hn', 'lab.an as an', 'lab.lab_no as request_id', 'lab.lab_code as LOCALCODE', 'lab.lab_name as INVESTNAME', 'lab.loinc as loinc', 'lab.icdcm as icdcm', 'lab.standard as cgd', 'lab.cost as cost', 'lab.lab_price as price', 'lab.date as DATETIME_REPORT')
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
@@ -1260,22 +1260,22 @@ class HisHosxpv4Model {
     }
     getClinicalRefer(db, referNo, hospCode = hisHospcode) {
         return db('view_clinical_refer')
-            .select(db.raw(`"${hisHospcode}" as hospcode`))
+            .select(db.raw(`'${hisHospcode}' as hospcode`))
             .where('refer_no', "=", referNo)
             .limit(maxLimit);
     }
     getInvestigationRefer(db, referNo, hospCode = hisHospcode) {
         return db('view_investigation_refer')
-            .select(db.raw(`"${hisHospcode}" as hospcode`))
+            .select(db.raw(`'${hisHospcode}' as hospcode`))
             .where('refer_no', "=", referNo)
             .limit(maxLimit);
     }
     async getCareRefer(db, referNo, hospCode = hisHospcode) {
         const sql = `
             select 
-                "${hisHospcode}" as hospcode,
+                '${hisHospcode}' as hospcode,
                 ro.refer_number as referid,
-                concat("${hisHospcode}",ro.refer_number ) as referid_province,
+                concat('${hisHospcode}',ro.refer_number ) as referid_province,
                 '' as caretype,
                 if(
                     concat(ro.refer_date, ' ', ro.refer_time) is null 
@@ -1288,9 +1288,9 @@ class HisHosxpv4Model {
             from
                 referout ro 
             where 
-                ro.refer_number = "${referNo}"
+                ro.refer_number = ?
             `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [referNo]);
         return result[0];
     }
     getReferResult(db, visitDate, hospCode = hisHospcode) {
@@ -1317,7 +1317,7 @@ class HisHosxpv4Model {
         columnName = columnName === 'cid' ? 'd.cid' : columnName;
         const sql = `
             select 
-                "${hisHospcode}" as hospcode,
+                '${hisHospcode}' as hospcode,
                 d.code as provider,
                 d.licenseno as registerno,
                 d.council_code as council,
@@ -1340,9 +1340,8 @@ class HisHosxpv4Model {
                 left join pname pn on pn.name = p.pname
                 left join provis_pname p2 on p2.provis_pname_code = pn.provis_code                
             where 
-                ${columnName}="${searchNo}"
-            `;
-        const result = await db.raw(sql);
+                ${columnName} = ?`;
+        const result = await db.raw(sql, [searchNo]);
         return result[0];
     }
     getProviderDr(db, drList) {
@@ -1351,7 +1350,7 @@ class HisHosxpv4Model {
             .leftJoin('pname as pn', 'pn.name', 'p.pname')
             .leftJoin('provis_pname as p2', 'p2.provis_pname_code', 'pn.provis_code')
             .select(db.raw(`
-                "${hisHospcode}" as hospcode,
+                '${hisHospcode}' as hospcode,
                 d.code as provider,
                 d.licenseno as registerno,
                 d.council_code as council,
