@@ -12,12 +12,12 @@ const getHospcode = async () => {
             console.log('hisHospcode v.4', hisHospcode);
         }
         else {
-            console.error('global.dbHIS is not a function. Using default HOSPCODE');
+            console.log('Default HOSPCODE:', hisHospcode);
         }
     }
     catch (error) {
         console.error('Error in getHospcode:', error);
-        console.log('Using HOSPCODE from environment:', process.env.HOSPCODE);
+        console.log('Default HOSPCODE:', hisHospcode);
     }
 };
 class HisHosxpv4Model {
