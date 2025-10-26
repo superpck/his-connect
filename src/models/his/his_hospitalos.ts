@@ -69,9 +69,46 @@ export class HisHospitalOsModel {
     }
 
     getTableName(db: Knex, dbName = process.env.HIS_DB_NAME) {
-        return db('information_schema.tables')
-            .select('table_name')
-            .where('table_schema', '=', dbName);
+        const clientType = (db.client?.config?.client || '').toLowerCase();
+        const schemaName = process.env.HIS_DB_SCHEMA || 'public';
+        const dbUser = (process.env.HIS_DB_USER || '').toUpperCase();
+
+        if (clientType.includes('mysql')) {
+            return db('information_schema.tables')
+                .select('table_name')
+                .where('table_schema', dbName);
+        }
+
+        if (clientType.includes('pg')) {
+            return db('information_schema.tables')
+                .select('table_name')
+                .where('table_catalog', dbName)
+                .andWhere('table_schema', schemaName);
+        }
+
+        if (clientType.includes('mssql')) {
+            const query = db('INFORMATION_SCHEMA.TABLES')
+                .select('TABLE_NAME as table_name')
+                .where('TABLE_TYPE', 'BASE TABLE');
+
+            if (dbName) {
+                query.andWhere('TABLE_CATALOG', dbName);
+            }
+
+            return query;
+        }
+
+        if (clientType.includes('oracledb')) {
+            const query = db('ALL_TABLES').select('TABLE_NAME as table_name');
+
+            if (dbUser) {
+                query.where('OWNER', dbUser);
+            }
+
+            return query;
+        }
+
+        return db.select(db.raw('NULL as table_name')).whereRaw('1 = 0');
     }
 
     // รหัสห้องตรวจ
@@ -82,10 +119,21 @@ export class HisHospitalOsModel {
         } else if (depName) {
             sql.whereLike('name', `%${depName}%`)
         }
+        const clientType = (db.client?.config?.client || '').toLowerCase();
+        let emergencyExpr = "CASE WHEN LOCATE('ฉุกเฉิน', name) > 0 THEN 1 ELSE 0 END";
+
+        if (clientType.includes('pg')) {
+            emergencyExpr = "CASE WHEN POSITION('ฉุกเฉิน' IN name) > 0 THEN 1 ELSE 0 END";
+        } else if (clientType.includes('mssql')) {
+            emergencyExpr = "CASE WHEN CHARINDEX(N'ฉุกเฉิน', name) > 0 THEN 1 ELSE 0 END";
+        } else if (clientType.includes('oracledb')) {
+            emergencyExpr = "CASE WHEN INSTR(name, 'ฉุกเฉิน') > 0 THEN 1 ELSE 0 END";
+        }
+
         return sql
             .select('clinic as department_code', 'name as department_name',
                 `'-' as moph_code`)
-            .select(db.raw(`LOCATE('ฉุกเฉิน',name)>0,1,0) as emergency`))
+            .select(db.raw(`${emergencyExpr} as emergency`))
             .orderBy('name')
             .limit(maxLimit);
     }
@@ -100,9 +148,8 @@ export class HisHospitalOsModel {
         }
         return sql
             .select('ward as wardcode', 'name as wardname',
-                `sss_code as std_code`,
-                db.raw('CASE WHEN spclty = "Y" THEN 0 ELSE bedcount END as bed_normal'),
-                db.raw('CASE WHEN spclty = "Y" THEN bedcount ELSE 0 END as bed_special'),
+                `ward_export_code as std_code`, 'bedcount as bed_normal',
+                db.raw("CASE WHEN ward_active ='Y' THEN 1 ELSE 0 END as isactive")
             )
             .orderBy('ward')
             .limit(maxLimit);
