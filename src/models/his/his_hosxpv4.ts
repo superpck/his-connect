@@ -1642,7 +1642,15 @@ export class HisHosxpv4Model {
                 'roomno.ward as wardcode', 'ward.name as wardname', 'bedno.export_code as std_code',
                 'bedno.bed_status_type_id', 'status.bed_status_type_name',
                 db.raw("CASE WHEN ward.ward_active ='Y' THEN 1 ELSE 0 END as isactive"),
-                db.raw(`CASE WHEN LOCATE('พิเศษ', bedtype.name) > 0 THEN 'S' ELSE 'N' END as bed_type`)
+                db.raw(`
+                    CASE 
+                        WHEN POSITION('พิเศษ' IN bedtype.name) > 0 THEN 'S'
+                        WHEN POSITION('ICU' IN bedtype.name) > 0 THEN 'ICU'
+                        WHEN POSITION('ห้องคลอด' IN bedtype.name) > 0 OR POSITION('เตียงคลอด' IN bedtype.name) > 0 OR POSITION('รอคลอด' IN bedtype.name) > 0 THEN 'LR'
+                        WHEN POSITION('Home Ward' IN bedtype.name) > 0 THEN 'HW'
+                        ELSE 'N'
+                    END as bed_type
+                    `)
             );
         if (bedno) {
             sql = sql.where('bedno.bedno', bedno);

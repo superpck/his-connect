@@ -2,6 +2,7 @@
 ## Feature
   - แก้ไข SQL ให้รองรับหลาย vendor
   - เพิ่ม active ward
+  - เพิ่ตรวจสอบประเภทเตียง
 
 # 3.8.11
 ## Feature
