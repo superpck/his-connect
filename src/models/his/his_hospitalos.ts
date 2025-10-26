@@ -28,21 +28,43 @@ export class HisHospitalOsModel {
     }
 
     async testConnect(db: Knex) {
-        let result: any;
-        result = await global.dbHIS('opdconfig').first();
-        const hospname = result?.hospitalname || result?.hospitalcode || null;
+        const clientType = (db.client?.config?.client || '').toLowerCase();
 
-        result = await db('patient').select('hn').limit(1);
-        const connection = result && (result.patient || result.length > 0) ? true : false;
+        const opdConfig = await global.dbHIS('opdconfig').first();
+        const hospname = opdConfig?.hospitalname || opdConfig?.hospitalcode || null;
 
-        let charset: any = '';
-        if ((process.env.HIS_DB_CLIENT || 'mysql2').toLowerCase().includes('mysql')) {
-            result = await db('information_schema.SCHEMATA')
-                .select('DEFAULT_CHARACTER_SET_NAME')
-                .where('SCHEMA_NAME', process.env.HIS_DB_NAME)
-                .first();
-            charset = result?.DEFAULT_CHARACTER_SET_NAME || '';
+        const patientSample = await db('patient').select('hn').limit(1);
+        const connection = Array.isArray(patientSample) ? patientSample.length > 0 : !!patientSample;
+
+        let charset = '';
+        try {
+            if (clientType.includes('mysql')) {
+                const schema = await db('information_schema.SCHEMATA')
+                    .select('DEFAULT_CHARACTER_SET_NAME as charset')
+                    .where('SCHEMA_NAME', process.env.HIS_DB_NAME)
+                    .first();
+                charset = schema?.charset || '';
+            } else if (clientType.includes('pg')) {
+                const result = await db.raw(
+                    'SELECT pg_encoding_to_char(encoding) AS charset FROM pg_database LIMIT 1'
+                );
+                charset = result?.rows?.[0]?.charset || '';
+            } else if (clientType.includes('mssql')) {
+                const result = await db.raw(
+                    'SELECT collation_name AS charset FROM sys.databases WHERE name = ?',
+                    [process.env.HIS_DB_NAME]
+                );
+                charset = result?.recordset?.[0]?.charset || '';
+            } else if (clientType.includes('oracledb')) {
+                const result = await db.raw(
+                    "SELECT value AS charset FROM nls_database_parameters WHERE parameter = 'NLS_CHARACTERSET'"
+                );
+                charset = result?.rows?.[0]?.CHARSET || result?.rows?.[0]?.charset || '';
+            }
+        } catch (error) {
+            console.warn('testConnect: charset lookup failed', error);
         }
+
         return { hospname, connection, charset };
     }
 
