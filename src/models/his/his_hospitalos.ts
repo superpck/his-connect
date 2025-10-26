@@ -28,28 +28,87 @@ export class HisHospitalOsModel {
     }
 
     async testConnect(db: Knex) {
-        let result: any;
-        result = await global.dbHIS('opdconfig').first();
-        const hospname = result?.hospitalname || result?.hospitalcode || null;
+        const clientType = (db.client?.config?.client || '').toLowerCase();
 
-        result = await db('patient').select('hn').limit(1);
-        const connection = result && (result.patient || result.length > 0) ? true : false;
+        const opdConfig = await global.dbHIS('opdconfig').first();
+        const hospname = opdConfig?.hospitalname || opdConfig?.hospitalcode || null;
 
-        let charset: any = '';
-        if ((process.env.HIS_DB_CLIENT || 'mysql2').toLowerCase().includes('mysql')) {
-            result = await db('information_schema.SCHEMATA')
-                .select('DEFAULT_CHARACTER_SET_NAME')
-                .where('SCHEMA_NAME', process.env.HIS_DB_NAME)
-                .first();
-            charset = result?.DEFAULT_CHARACTER_SET_NAME || '';
+        const patientSample = await db('patient').select('hn').limit(1);
+        const connection = Array.isArray(patientSample) ? patientSample.length > 0 : !!patientSample;
+
+        let charset = '';
+        try {
+            if (clientType.includes('mysql')) {
+                const schema = await db('information_schema.SCHEMATA')
+                    .select('DEFAULT_CHARACTER_SET_NAME as charset')
+                    .where('SCHEMA_NAME', process.env.HIS_DB_NAME)
+                    .first();
+                charset = schema?.charset || '';
+            } else if (clientType.includes('pg')) {
+                const result = await db.raw(
+                    'SELECT pg_encoding_to_char(encoding) AS charset FROM pg_database LIMIT 1'
+                );
+                charset = result?.rows?.[0]?.charset || '';
+            } else if (clientType.includes('mssql')) {
+                const result = await db.raw(
+                    'SELECT collation_name AS charset FROM sys.databases WHERE name = ?',
+                    [process.env.HIS_DB_NAME]
+                );
+                charset = result?.recordset?.[0]?.charset || '';
+            } else if (clientType.includes('oracledb')) {
+                const result = await db.raw(
+                    "SELECT value AS charset FROM nls_database_parameters WHERE parameter = 'NLS_CHARACTERSET'"
+                );
+                charset = result?.rows?.[0]?.CHARSET || result?.rows?.[0]?.charset || '';
+            }
+        } catch (error) {
+            console.warn('testConnect: charset lookup failed', error);
         }
+
         return { hospname, connection, charset };
     }
 
     getTableName(db: Knex, dbName = process.env.HIS_DB_NAME) {
-        return db('information_schema.tables')
-            .select('table_name')
-            .where('table_schema', '=', dbName);
+        const clientType = (db.client?.config?.client || '').toLowerCase();
+        const schemaName = process.env.HIS_DB_SCHEMA || 'public';
+        const dbUser = (process.env.HIS_DB_USER || '').toUpperCase();
+
+        if (clientType.includes('mysql')) {
+            return db('information_schema.tables')
+                .select('table_name')
+                .where('table_schema', dbName);
+        }
+
+        if (clientType.includes('pg')) {
+            return db('information_schema.tables')
+                .select('table_name')
+                .where('table_catalog', dbName)
+                .andWhere('table_schema', schemaName);
+        }
+
+        if (clientType.includes('mssql')) {
+            const query = db('INFORMATION_SCHEMA.TABLES')
+                .select('TABLE_NAME as table_name')
+                .where('TABLE_TYPE', 'BASE TABLE');
+
+            if (dbName) {
+                query.andWhere('TABLE_CATALOG', dbName);
+            }
+
+            return query;
+        }
+
+        if (clientType.includes('oracledb')) {
+            const query = db('ALL_TABLES').select('TABLE_NAME as table_name');
+
+            if (dbUser) {
+                query.where('OWNER', dbUser);
+            }
+
+            return query;
+        }
+
+        return db.select(db.raw('NULL as table_name')).whereRaw('1 = 0');
     }
 
     // รหัสห้องตรวจ
@@ -60,10 +119,21 @@ export class HisHospitalOsModel {
         } else if (depName) {
             sql.whereLike('name', `%${depName}%`)
         }
+        const clientType = (db.client?.config?.client || '').toLowerCase();
+        let emergencyExpr = "CASE WHEN LOCATE('ฉุกเฉิน', name) > 0 THEN 1 ELSE 0 END";
+
+        if (clientType.includes('pg')) {
+            emergencyExpr = "CASE WHEN POSITION('ฉุกเฉิน' IN name) > 0 THEN 1 ELSE 0 END";
+        } else if (clientType.includes('mssql')) {
+            emergencyExpr = "CASE WHEN CHARINDEX(N'ฉุกเฉิน', name) > 0 THEN 1 ELSE 0 END";
+        } else if (clientType.includes('oracledb')) {
+            emergencyExpr = "CASE WHEN INSTR(name, 'ฉุกเฉิน') > 0 THEN 1 ELSE 0 END";
+        }
+
         return sql
             .select('clinic as department_code', 'name as department_name',
                 `'-' as moph_code`)
-            .select(db.raw(`LOCATE('ฉุกเฉิน',name)>0,1,0) as emergency`))
+            .select(db.raw(`${emergencyExpr} as emergency`))
             .orderBy('name')
             .limit(maxLimit);
     }
@@ -78,9 +148,8 @@ export class HisHospitalOsModel {
         }
         return sql
             .select('ward as wardcode', 'name as wardname',
-                `sss_code as std_code`,
-                db.raw('CASE WHEN spclty = "Y" THEN 0 ELSE bedcount END as bed_normal'),
-                db.raw('CASE WHEN spclty = "Y" THEN bedcount ELSE 0 END as bed_special'),
+                `ward_export_code as std_code`, 'bedcount as bed_normal',
+                db.raw("CASE WHEN ward_active ='Y' THEN 1 ELSE 0 END as isactive")
             )
             .orderBy('ward')
             .limit(maxLimit);
