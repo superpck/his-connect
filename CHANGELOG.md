@@ -1,3 +1,8 @@
+# 3.8.12
+## Feature
+  - แก้ไข SQL ให้รองรับหลาย vendor
+  - เพิ่ม active ward
+
 # 3.8.11
 ## Feature
   - เพิ่มการรับ Request จาก Admin
@@ -6,7 +11,6 @@
   - เพิ่มการรับ Request จาก admin
   - ปรับ SQL สำหรับคงค้างพยาบาลใน HOSxP
   - เพิ่มการตรวจสอบ his provider เพื่อป้องกัน error toLowerCase()
-  - เพิ่ม active ward
 
 # 3.8.10
 ## Feature
