@@ -163,10 +163,10 @@ export const updateAlive = async () => {
       */
     };
     const result: any = await updateHISAlive(data);
-    console.log(moment().format('HH:mm:ss'), 'API Alive', result.status || '', result.message || '');
+    console.log(moment().format('HH:mm:ss'), '✅ Sent API Alive status result', result.status || '', result.statusCode || 'x');
     return result;
   } catch (error) {
-    console.log(moment().format('HH:mm:ss'), 'API Alive error', error.message);
+    console.log(moment().format('HH:mm:ss'), '❌ Sent API Alive status error:', error?.status || error?.statusCode || '', error?.message || error || '');
     return [];
   }
 }
