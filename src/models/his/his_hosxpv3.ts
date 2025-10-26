@@ -1482,13 +1482,13 @@ export class HisHosxpv3Model {
                 db.raw("CASE WHEN ward.ward_active ='Y' THEN 1 ELSE 0 END as isactive"),
                 db.raw(`
                     CASE 
-                        WHEN POSITION('พิเศษ' IN bedtype.name) > 0 THEN 'S'
-                        WHEN POSITION('ICU' IN bedtype.name) > 0 THEN 'ICU'
-                        WHEN POSITION('ห้องคลอด' IN bedtype.name) > 0 OR POSITION('เตียงคลอด' IN bedtype.name) > 0 OR POSITION('รอคลอด' IN bedtype.name) > 0 THEN 'LR'
-                        WHEN POSITION('Home Ward' IN bedtype.name) > 0 THEN 'HW'
+                        WHEN LOWER(bedtype.name) LIKE '%พิเศษ%' THEN 'S'
+                        WHEN LOWER(bedtype.name) LIKE '%icu%' THEN 'ICU'
+                        WHEN LOWER(bedtype.name) LIKE '%ห้องคลอด%' OR LOWER(bedtype.name) LIKE '%รอคลอด%' THEN 'LR'
+                        WHEN LOWER(bedtype.name) LIKE '%Home Ward%' THEN 'HW'
                         ELSE 'N'
                     END as bed_type
-                    `)
+                `)
             );
         if (bedno) {
             sql = sql.where('bedno.bedno', bedno);
