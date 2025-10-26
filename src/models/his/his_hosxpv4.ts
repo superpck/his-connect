@@ -1640,7 +1640,10 @@ export class HisHosxpv4Model {
             .leftJoin('bed_status_type as status', 'bedno.bed_status_type_id', 'status.bed_status_type_id')
             .select('bedno.bedno', 'bedno.bedtype', 'bedtype.name as bedtype_name', 'bedno.roomno',
                 'roomno.ward as wardcode', 'ward.name as wardname', 'bedno.export_code as std_code',
-                'bedno.bed_status_type_id', 'status.bed_status_type_name');
+                'bedno.bed_status_type_id', 'status.bed_status_type_name',
+                db.raw("CASE WHEN ward.ward_active ='Y' THEN 1 ELSE 0 END as isactive"),
+                db.raw(`CASE WHEN LOCATE('พิเศษ', bedtype.name) > 0 THEN 'S' ELSE 'N' END as bed_type`)
+            );
         if (bedno) {
             sql = sql.where('bedno.bedno', bedno);
         }
