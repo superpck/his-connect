@@ -21,6 +21,7 @@ import { HisEmrSoftModel } from '../../models/his/his_emrsoft';
 import { HisHaosModel } from '../../models/his/his_haos';
 import { HisSsbSriHModel } from '../../models/his/his_ssb_srih';
 import { HisHomCHModel } from '../../models/his/his_homc';
+import { HisHospitalOsModel } from '../../models/his/his_hospitalos';
 
 console.log('HIS Provider:', process.env.HIS_PROVIDER);
 const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
@@ -70,7 +71,7 @@ switch (hisProvider) {
     hisModel = new HisMyPcuModel();
     break;
   case 'hospitalos':
-    // hisModel = new HisHospitalOsModel();
+    hisModel = new HisHospitalOsModel();
     break;
   case 'jhos':
     // hisModel = new HisJhosModel();
