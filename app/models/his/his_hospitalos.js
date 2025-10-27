@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisHospitalOsModel = void 0;
 const moment = require("moment");
+const dbName = process.env.HIS_DB_NAME;
 const maxLimit = 250;
 let hisHospcode = process.env.HOSPCODE;
 const getHospcode = async () => {
@@ -27,7 +28,15 @@ class HisHospitalOsModel {
     check() {
         return true;
     }
-    async testConnect(db) {
+    getTableName(knex) {
+        return knex('information_schema.tables')
+            .select('table_name')
+            .where('table_catalog', '=', dbName);
+    }
+    testConnect(db) {
+        return db('t_patient').select('patient_hn').limit(1);
+    }
+    async testConnect_(db) {
         const clientType = (db.client?.config?.client || '').toLowerCase();
         const opdConfig = await global.dbHIS('opdconfig').first();
         const hospname = opdConfig?.hospitalname || opdConfig?.hospitalcode || null;
@@ -60,7 +69,7 @@ class HisHospitalOsModel {
         }
         return { hospname, connection, charset };
     }
-    getTableName(db, dbName = process.env.HIS_DB_NAME) {
+    getTableName_(db, dbName = process.env.HIS_DB_NAME) {
         const clientType = (db.client?.config?.client || '').toLowerCase();
         const schemaName = process.env.HIS_DB_SCHEMA || 'public';
         const dbUser = (process.env.HIS_DB_USER || '').toUpperCase();

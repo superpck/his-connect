@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
 import * as moment from 'moment';
+const dbName = process.env.HIS_DB_NAME;
 
 const maxLimit = 250;
 let hisHospcode = process.env.HOSPCODE;
@@ -27,7 +28,18 @@ export class HisHospitalOsModel {
         return true;
     }
 
-    async testConnect(db: Knex) {
+    getTableName(knex: Knex) {
+        return knex('information_schema.tables')
+            .select('table_name')
+            .where('table_catalog', '=', dbName);
+
+    }
+
+    testConnect(db: Knex) {
+        return db('t_patient').select('patient_hn').limit(1)
+    }
+
+    async testConnect_(db: Knex) {
         const clientType = (db.client?.config?.client || '').toLowerCase();
 
         const opdConfig = await global.dbHIS('opdconfig').first();
@@ -68,7 +80,7 @@ export class HisHospitalOsModel {
         return { hospname, connection, charset };
     }
 
-    getTableName(db: Knex, dbName = process.env.HIS_DB_NAME) {
+    getTableName_(db: Knex, dbName = process.env.HIS_DB_NAME) {
         const clientType = (db.client?.config?.client || '').toLowerCase();
         const schemaName = process.env.HIS_DB_SCHEMA || 'public';
         const dbUser = (process.env.HIS_DB_USER || '').toUpperCase();
@@ -1761,7 +1773,7 @@ export class HisHospitalOsModel {
     sumOpdVisitByClinic(db: Knex, date: any) {
         let sql = db('ovst')
             .leftJoin('spclty', 'ovst.spclty', 'spclty.spclty')
-            .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode', 
+            .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode',
                 'spclty.name as clinicname',
                 db.raw('sum(if(an IS NULL or an="",0,1)) as admit'))
             .count('* as cases')
