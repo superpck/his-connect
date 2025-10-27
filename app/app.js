@@ -128,12 +128,12 @@ app.listen(options, (err) => {
     console.info(`${moment().format('HH:mm:ss')} HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid}`);
 });
 async function connectDB() {
-    const dbConnection = require('./plugins/db');
-    global.dbHIS = dbConnection('HIS');
-    global.dbIs = dbConnection('ISONLINE');
-    global.dbISOnline = global.dbIs;
     const dbClient = process.env.HIS_DB_CLIENT;
     try {
+        const dbConnection = require('./plugins/db');
+        global.dbHIS = dbConnection('HIS');
+        global.dbIs = dbConnection('ISONLINE');
+        global.dbISOnline = global.dbIs;
         let sql = '';
         switch (dbClient) {
             case 'oracledb':

@@ -167,13 +167,13 @@ app.listen(options, (err) => {
 
 // DB connection =========================================
 async function connectDB() {
-  const dbConnection = require('./plugins/db');
-  global.dbHIS = dbConnection('HIS');
-  global.dbIs = dbConnection('ISONLINE');
-  global.dbISOnline = global.dbIs;
-
   const dbClient = process.env.HIS_DB_CLIENT;
   try {
+    const dbConnection = require('./plugins/db');
+    global.dbHIS = dbConnection('HIS');
+    global.dbIs = dbConnection('ISONLINE');
+    global.dbISOnline = global.dbIs;
+
     let sql = '';
 
     switch (dbClient) {
