@@ -111,19 +111,6 @@ class HisHospitalOsModel {
             .orderBy('name')
             .limit(maxLimit);
     }
-    getWard(db, wardCode = '', wardName = '') {
-        let sql = db('ward');
-        if (wardCode) {
-            sql.where('ward', wardCode);
-        }
-        else if (wardName) {
-            sql.whereLike('name', `%${wardName}%`);
-        }
-        return sql
-            .select('ward as wardcode', 'name as wardname', `ward_export_code as std_code`, 'bedcount as bed_normal', db.raw("CASE WHEN ward_active ='Y' THEN 1 ELSE 0 END as isactive"))
-            .orderBy('ward')
-            .limit(maxLimit);
-    }
     getDr(db, drCode = '', drName = '') {
         let sql = db('doctor');
         if (drCode) {
@@ -1479,6 +1466,19 @@ class HisHospitalOsModel {
             .count('* as cases')
             .where('ovst.vstdate', date);
         return sql.groupBy('spclty.nhso_code').orderBy('spclty.nhso_code');
+    }
+    getWard(db, wardCode = '', wardName = '') {
+        let sql = db('b_visit_ward as ward');
+        if (wardCode) {
+            sql.where('visit_ward_number', wardCode);
+        }
+        else if (wardName) {
+            sql.whereLike('visit_ward_description', `%${wardName}%`);
+        }
+        return sql
+            .select('visit_ward_number as wardcode', 'visit_ward_description as wardname', 'visit_ward_active as isactive')
+            .orderBy('visit_ward_number')
+            .limit(maxLimit);
     }
 }
 exports.HisHospitalOsModel = HisHospitalOsModel;
