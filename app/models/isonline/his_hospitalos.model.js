@@ -10,6 +10,7 @@ class HisHospitalOsModel {
             .where('table_catalog', '=', dbName);
     }
     testConnect(db) {
+        console.log('PHER: Testing DB connection... from t_patient');
         return db('t_patient').select('patient_hn').limit(1);
     }
     getPerson(knex, columnName, searchText) {

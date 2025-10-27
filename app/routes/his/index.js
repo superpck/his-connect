@@ -28,6 +28,7 @@ const router = (fastify, {}, next) => {
         const loggedIn = decode && decode.api;
         try {
             const result = await hismodel_1.default.testConnect(global.dbHIS);
+            console.log('alive success', result);
             let connection = {
                 connection1: result && result.patient
             };

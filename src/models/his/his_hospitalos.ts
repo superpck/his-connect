@@ -36,7 +36,7 @@ export class HisHospitalOsModel {
     }
 
     async testConnect(db: Knex) {
-        console.log('Testing DB connection... from t_patient');
+        console.log('nRefer: Testing DB connection... from t_patient');
         return await db('t_patient').select('patient_hn').limit(1)
     }
 
