@@ -1811,7 +1811,6 @@ export class HisHospitalOsModel {
         if (bedno) {
             sql = sql.where('bedno', bedno);
         }
-        console.log(sql.toString());
         return sql.orderBy('bedno');
     }
 }
