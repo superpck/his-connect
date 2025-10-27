@@ -1512,7 +1512,7 @@ class HisHospitalOsModel {
         if (bedno) {
             sql = sql.where('bedno', bedno);
         }
-        console.log(sql.toSQL().toNative());
+        console.log(sql.toString());
         return sql.orderBy('bedno');
     }
 }
