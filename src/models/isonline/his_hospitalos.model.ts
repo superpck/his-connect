@@ -10,9 +10,13 @@ export class HisHospitalOsModel {
 
     }
 
-    testConnect(db: Knex) {
-        console.log('PHER: Testing DB connection... from t_patient');
-        return db('t_patient').select('patient_hn').limit(1)
+    async testConnect(db: Knex) {
+        try {
+            console.log('PHER: Testing DB connection... from t_patient');
+            return db('t_patient').select('patient_hn').limit(1)
+        } catch (error) {
+            throw new Error(error);
+        }
     }
 
     getPerson(knex: Knex, columnName, searchText) {
@@ -53,9 +57,9 @@ export class HisHospitalOsModel {
         //if (date) where['opdscreen.vstdate'] = date;
         if (columnName && searchText) where[columnName] = searchText;
         return knex('t_visit')
-        .leftJoin(`t_accident`, 't_accident.t_visit_id', 't_visit.t_visit_id')
-        .leftJoin(`t_visit_vital_sign`, 't_visit_vital_sign.t_visit_id', 't_visit.t_visit_id')
-        .leftJoin('t_visit_service','t_visit_service.t_visit_id','t_visit.t_visit_id')
+            .leftJoin(`t_accident`, 't_accident.t_visit_id', 't_visit.t_visit_id')
+            .leftJoin(`t_visit_vital_sign`, 't_visit_vital_sign.t_visit_id', 't_visit.t_visit_id')
+            .leftJoin('t_visit_service', 't_visit_service.t_visit_id', 't_visit.t_visit_id')
 
             .select('t_visit.visit_hn as hn', 't_visit.visit_vn as visitno ', 't_accident.accident_time as time')
             .select(knex.raw(` concat(to_number(substr(t_accident.accident_date,1,4),'9999')-543 ,'-',substr(t_accident.accident_date,6),' ',t_accident.accident_time,':00') as adate ,
@@ -155,7 +159,7 @@ export class HisHospitalOsModel {
       WHEN t_visit.f_visit_ipd_discharge_type_id in ('8','9') THEN '5'
       WHEN t_visit.f_visit_ipd_discharge_type_id in ('5','6') THEN '6' ELSE '' END AS staward
       `
-                           
+
             ))
             //.select(knex.raw("CONCAT(`vstdate`,`vsttime`) as hdate"))            
             .where(where)

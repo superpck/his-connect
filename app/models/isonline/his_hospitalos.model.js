@@ -9,9 +9,14 @@ class HisHospitalOsModel {
             .select('table_name')
             .where('table_catalog', '=', dbName);
     }
-    testConnect(db) {
-        console.log('PHER: Testing DB connection... from t_patient');
-        return db('t_patient').select('patient_hn').limit(1);
+    async testConnect(db) {
+        try {
+            console.log('PHER: Testing DB connection... from t_patient');
+            return db('t_patient').select('patient_hn').limit(1);
+        }
+        catch (error) {
+            throw new Error(error);
+        }
     }
     getPerson(knex, columnName, searchText) {
         columnName = columnName == 'hn' ? 'patient.patient_hn' : columnName;
