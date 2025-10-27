@@ -33,8 +33,9 @@ class HisHospitalOsModel {
             .select('table_name')
             .where('table_catalog', '=', dbName);
     }
-    testConnect(db) {
-        return db('t_patient').select('patient_hn').limit(1);
+    async testConnect(db) {
+        console.log('Testing DB connection... from t_patient');
+        return await db('t_patient').select('patient_hn').limit(1);
     }
     async testConnect_(db) {
         const clientType = (db.client?.config?.client || '').toLowerCase();
