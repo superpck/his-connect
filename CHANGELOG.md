@@ -4,6 +4,7 @@
   - เพิ่ม active ward
   - เพิ่มตรวจสอบประเภทเตียง
   - เพิ่มข้อความ status alive
+  - เพิ่มการแสดง error message ใน API Alive
 
 # 3.8.11
 ## Feature

@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = cronjob;
 const moment = require("moment");
 const child_process_1 = require("child_process");
 var shell = require("shelljs");
@@ -117,6 +116,7 @@ async function cronjob(fastify) {
         global.mophService = await require('./routes/main/crontab')(global.mophService, {});
     }
 }
+exports.default = cronjob;
 async function firstPM2InstancePID() {
     try {
         var jlist = await shell.exec('pm2 jlist', { silent: true });
@@ -171,4 +171,4 @@ const myPid = process.pid;
 const PM2List = getPM2ProcessList();
 pm2Name = getMyPM2Name(PM2List, myPid) || 'unknown';
 firstProcessPid = getFirstPidOfName(PM2List, pm2Name);
-console.log(`✅ This process name: ${pm2Name}, PID: ${myPid}, First PID: ${firstProcessPid}. Is first process? ${myPid === firstProcessPid ? '✅ YES' : '❌ NO'}`);
+console.log(`✅ This process name: ${pm2Name}, PID: ${myPid}, First PID: ${firstProcessPid}. Is first process? ${myPid === firstProcessPid ? 'YES' : 'NO'}`);

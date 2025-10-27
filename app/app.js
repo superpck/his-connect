@@ -149,7 +149,7 @@ async function connectDB() {
         let date = result?.rows?.[0]?.date ??
             result?.[0]?.date ??
             result?.[0]?.[0]?.date;
-        console.info(`   ✅ PID:${process.pid} >> HIS DB server '${dbClient}' connected, date on DB server: `, moment(date).format('YYYY-MM-DD HH:mm:ss'));
+        console.info(`   🔗 PID:${process.pid} >> HIS DB server '${dbClient}' connected, date on DB server: `, moment(date).format('YYYY-MM-DD HH:mm:ss'));
     }
     catch (error) {
         console.error(`   ❌ PID:${process.pid} >> HIS DB server '${dbClient}' connect error: `, error.message);

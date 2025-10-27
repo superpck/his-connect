@@ -163,7 +163,12 @@ export const updateAlive = async () => {
       */
     };
     const result: any = await updateHISAlive(data);
-    console.log(moment().format('HH:mm:ss'), '✅ Sent API Alive status result', result.status || '', result.statusCode || 'x');
+    const status = result.status == 200 || result.statusCode == 200 ? true : false;
+    if (status) {
+      console.log(moment().format('HH:mm:ss'), '✅ Sent API Alive status result', result.status || '', result.statusCode || '', result?.message || '');
+    } else {
+      console.log(moment().format('HH:mm:ss'), '❌ Sent API Alive status result', result.status || '', result.statusCode || '', result?.message || '');
+    }
     return result;
   } catch (error) {
     console.log(moment().format('HH:mm:ss'), '❌ Sent API Alive status error:', error?.status || error?.statusCode || '', error?.message || error || '');
