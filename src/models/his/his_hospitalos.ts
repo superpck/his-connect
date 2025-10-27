@@ -1750,7 +1750,9 @@ export class HisHospitalOsModel {
     }
 
 
-    // ผ่านการ Verify แล้ว
+    // ผ่านการ Verify แล้ว ==============================================
+
+    // MOPH ERP
     getWard(db: Knex, wardCode: string = '', wardName: string = '') {
         let sql = db('b_visit_ward as ward');
         if (wardCode) {
@@ -1763,5 +1765,52 @@ export class HisHospitalOsModel {
                 'visit_ward_active as isactive')
             .orderBy('visit_ward_number')
             .limit(maxLimit);
+    }
+    getBedNo(db: Knex, bedno: any = null) {
+        const clientType = (db.client?.config?.client || '').toLowerCase();
+        const createQueryConcat = (wardCode: string, bedNumber: string): any => {
+            switch (clientType) {
+                case 'pg':
+                case 'postgres':
+                case 'postgresql':
+                    return db.raw(`${wardCode}::text || '-' || ${bedNumber}::text`);
+                case 'mssql':
+                    return db.raw(`CAST(${wardCode} AS VARCHAR) + '-' + CAST(${bedNumber} AS VARCHAR)`);
+                case 'oracledb':
+                    return db.raw(`${wardCode} || '-' || ${bedNumber}`);
+                default:
+                    return db.raw(`CONCAT(${wardCode}, '-', ${bedNumber})`);
+            }
+        };
+        const BedNnumberSql = createQueryConcat('ward.visit_ward_number', 'bed.bed_number');
+        /*
+        , (ward.visit_ward_number:: text || '-' || bed.bed_number::text) as bedno
+        , bed.b_visit_ward_id , ward.visit_ward_active 
+        , ward.visit_ward_number as wardcode, ward.visit_ward_description as wardname
+        , room.room_number as roomno, room.description as roomname
+        */
+
+        let sql = db('b_visit_bed as bed')
+            .leftJoin('b_visit_room as room', 'bed.b_visit_room_id', 'room.b_visit_room_id')
+            .leftJoin('b_visit_ward as ward', 'bed.b_visit_ward_id', 'ward.b_visit_ward_id')
+            .select('bed.bed_number', 'bed.active as isactive',
+                db.raw(`${BedNnumberSql} as bedno`),
+                'bed.b_visit_ward_id', 'ward.visit_ward_active',
+                'ward.visit_ward_number as wardcode', 'ward.visit_ward_description as wardname',
+                'room.room_number as roomno',
+                db.raw(`
+                        CASE 
+                            WHEN LOWER(ward.visit_ward_description) LIKE '%icu%' OR LOWER(ward.visit_ward_description) LIKE '%ไอซียู%' THEN 'ICU'
+                            WHEN LOWER(ward.visit_ward_description) LIKE '%ห้องคลอด%' OR LOWER(ward.visit_ward_description) LIKE '%รอคลอด%' THEN 'LR'
+                            WHEN LOWER(ward.visit_ward_description) LIKE '%พิเศษ%' THEN 'S'
+                            WHEN LOWER(ward.visit_ward_description) LIKE '%Home Ward%' THEN 'HW'
+                            ELSE 'N'
+                        END as bed_type
+                    `)
+            );
+        if (bedno) {
+            sql = sql.where('bedno', bedno);
+        }
+        return sql.orderBy('bedno');
     }
 }
