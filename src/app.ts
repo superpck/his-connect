@@ -187,30 +187,19 @@ async function connectDB() {
         sql = 'SELECT NOW() as date';
     }
 
-    // console.log(sql);
     const result = await global.dbHIS.raw(sql);
-    // console.log('DB connection test result:', result[0]);
-    // console.log('DB connection test result:', result.message || result[0]);
-    // let date =
-    //   result?.rows?.[0]?.date ??
-    //   result?.[0]?.date ??
-    //   result?.[0]?.[0]?.date;
     let date;
     if (dbClient === 'pg' || dbClient === 'postgres' || dbClient === 'postgresql') {
       // PostgreSQL returns { rows: [...] }
-      console.log('DB connection test result (pg):', result.rows?.[0]);
       date = result.rows?.[0]?.date;
     } else if (dbClient === 'mssql') {
       // MSSQL returns { recordset: [...] }
-      console.log('DB connection test result (mssql):', result.recordset?.[0]);
       date = result.recordset?.[0]?.date;
     } else if (dbClient === 'oracledb') {
       // Oracle returns [[row], metadata]
-      console.log('DB connection test result (oracle):', result[0]?.[0]);
       date = result[0]?.[0]?.date;
     } else {
       // MySQL returns [rows, fields]
-      console.log('DB connection test result (mysql):', result[0]?.[0]);
       date = result[0]?.[0]?.date;
     }
 
