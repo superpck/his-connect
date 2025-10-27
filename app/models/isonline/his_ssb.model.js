@@ -3,14 +3,22 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisSsbModel = void 0;
 const dbName = process.env.HIS_DB_NAME;
 const maxLimit = 100;
+let hospcode = process.env.HOSPCODE;
 class HisSsbModel {
     getTableName(knex) {
         return knex('information_schema.tables')
             .select('TABLE_NAME')
             .where('TABLE_CATALOG', '=', dbName);
     }
-    testConnect(db) {
-        return db('VW_IS_PERSON').select('hn').limit(1);
+    async testConnect(db) {
+        try {
+            let result = await db('VW_IS_PERSON').select('hn').first();
+            const connection = result && result?.hn ? true : false;
+            return { connection };
+        }
+        catch (error) {
+            throw new Error(error);
+        }
     }
     getPerson(knex, columnName, searchText) {
         return knex('VW_IS_PERSON')

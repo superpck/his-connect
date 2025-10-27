@@ -10,8 +10,16 @@ class HisInfodModel {
             .select('TABLE_NAME')
             .where('TABLE_CATALOG', '=', dbName);
     }
-    testConnect(db) {
-        return db('VW_IS_PERSON').select('hn').limit(1);
+    async testConnect(db) {
+        try {
+            const result = await db('VW_IS_PERSON').select('hn')
+                .orderBy('hn', 'desc').first();
+            const connection = result && result?.hn ? true : false;
+            return { connection };
+        }
+        catch (error) {
+            throw new Error(error);
+        }
     }
     async getPerson(db, columnName, searchText) {
         columnName = columnName == 'hn' ? "ltrim(PT.hn)" : columnName;

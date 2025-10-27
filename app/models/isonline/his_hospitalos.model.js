@@ -16,7 +16,6 @@ class HisHospitalOsModel {
             let result = await db('b_site').first();
             const hospname = result?.site_full_name || null;
             hospcode = result?.b_visit_office_id || hospcode;
-            console.log('PHER: Testing DB connection... from t_patient');
             result = await db('t_patient').select('patient_hn').first();
             const connection = result && (result.patient_hn) ? true : false;
             let charset = '';

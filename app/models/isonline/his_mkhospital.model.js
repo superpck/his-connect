@@ -19,8 +19,16 @@ class HisMkhospitalModel {
             .select('table_name')
             .where('table_schema', '=', dbname);
     }
-    testConnect(db) {
-        return db('patient').select('hn').limit(1);
+    async testConnect(db) {
+        try {
+            const result = await db('patient').select('hn').limit(1)
+                .orderBy('hn', 'desc').first();
+            const connection = result && result?.hn ? true : false;
+            return { connection };
+        }
+        catch (error) {
+            throw new Error(error);
+        }
     }
     getPerson(knex, columnName, searchText) {
         columnName = columnName === 'cid' ? 'no_card' : columnName;

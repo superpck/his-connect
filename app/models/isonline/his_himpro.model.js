@@ -4,6 +4,17 @@ exports.HisHimproModel = void 0;
 const dbName = process.env.HIS_DB_NAME;
 const maxLimit = 250;
 class HisHimproModel {
+    async testConnect(db) {
+        try {
+            const result = await db('patient').select('hn')
+                .orderBy('hn', 'desc').first();
+            const connection = result && result?.hn ? true : false;
+            return { connection };
+        }
+        catch (error) {
+            throw new Error(error);
+        }
+    }
     getTableName(knex) {
         return knex('information_schema.tables')
             .select('table_name')
