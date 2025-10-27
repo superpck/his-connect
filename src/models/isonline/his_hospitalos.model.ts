@@ -13,7 +13,7 @@ export class HisHospitalOsModel {
     async testConnect(db: Knex) {
         try {
             console.log('PHER: Testing DB connection... from t_patient');
-            const result = await db('t_patient').select('patient_hn').limit(1);
+            const result = await db('t_patient').select('patient_hn').first();
             console.log('PHER: Test DB connection success.', result);
             return result;
         } catch (error) {
