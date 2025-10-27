@@ -12,6 +12,8 @@ class HisHospitalOsModel {
     }
     async testConnect(db) {
         try {
+            const hosp = await db('b_site').first();
+            console.log('PHER: Test DB connection success.', hosp);
             console.log('PHER: Testing DB connection... from t_patient');
             const result = await db('t_patient').select('patient_hn').first();
             const connection = result && (result.patient_hn) ? true : false;
