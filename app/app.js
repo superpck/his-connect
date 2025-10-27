@@ -135,6 +135,16 @@ async function connectDB() {
         global.dbIs = dbConnection('ISONLINE');
         global.dbISOnline = global.dbIs;
         let sql = '';
+        switch (dbClient) {
+            case 'oracledb':
+                sql = 'SELECT CURRENT_TIMESTAMP AS "date" FROM dual';
+                break;
+            case 'mssql':
+                sql = 'SELECT SYSDATETIME() AS date';
+                break;
+            default:
+                sql = 'SELECT NOW() as date';
+        }
         const result = await global.dbHIS.raw(sql);
         let date;
         if (dbClient === 'pg' || dbClient === 'postgres' || dbClient === 'postgresql') {
@@ -153,8 +163,6 @@ async function connectDB() {
             console.log('DB connection test result (mysql):', result[0]?.[0]);
             date = result[0]?.[0]?.date;
         }
-        console.log('DB connection test result:', result[0]);
-        console.log('DB connection test result:', result.message || result[0]);
         console.info(`   🔗 PID:${process.pid} >> HIS DB server '${dbClient}' connected, date on DB server: `, moment(date).format('YYYY-MM-DD HH:mm:ss'));
     }
     catch (error) {
