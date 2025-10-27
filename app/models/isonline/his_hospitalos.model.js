@@ -12,13 +12,26 @@ class HisHospitalOsModel {
     }
     async testConnect(db) {
         try {
-            const hosp = await db('b_site').first();
-            console.log('PHER: Test DB connection success.', hosp);
+            const clientType = (db.client?.config?.client || '').toLowerCase();
+            let result = await db('b_site').first();
+            const hospname = result?.site_full_name || null;
+            hospcode = result?.b_visit_office_id || hospcode;
             console.log('PHER: Testing DB connection... from t_patient');
-            const result = await db('t_patient').select('patient_hn').first();
+            result = await db('t_patient').select('patient_hn').first();
             const connection = result && (result.patient_hn) ? true : false;
-            console.log('PHER: Test DB connection success.', result);
-            return { connection };
+            let charset = '';
+            if (clientType.includes('mysql')) {
+                const schema = await db('information_schema.SCHEMATA')
+                    .select('DEFAULT_CHARACTER_SET_NAME as charset')
+                    .where('SCHEMA_NAME', process.env.HIS_DB_NAME)
+                    .first();
+                charset = schema?.charset || '';
+            }
+            else if (clientType.includes('pg')) {
+                const result = await db.raw('SELECT pg_encoding_to_char(encoding) AS charset FROM pg_database LIMIT 1');
+                charset = result?.rows?.[0]?.charset || '';
+            }
+            return { connection, hospname, charset };
         }
         catch (error) {
             throw new Error(error);
