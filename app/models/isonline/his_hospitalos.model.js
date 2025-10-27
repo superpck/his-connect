@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisHospitalOsModel = void 0;
 const dbName = process.env.HIS_DB_NAME;
 const maxLimit = 100;
+let hospcode = process.env.HOSPCODE;
 class HisHospitalOsModel {
     getTableName(knex) {
         return knex('information_schema.tables')
@@ -13,8 +14,9 @@ class HisHospitalOsModel {
         try {
             console.log('PHER: Testing DB connection... from t_patient');
             const result = await db('t_patient').select('patient_hn').first();
+            const connection = result && (result.patient_hn) ? true : false;
             console.log('PHER: Test DB connection success.', result);
-            return result;
+            return { connection };
         }
         catch (error) {
             throw new Error(error);

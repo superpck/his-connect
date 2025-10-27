@@ -4,24 +4,8 @@ const dbName = process.env.HIS_DB_NAME;
 
 const maxLimit = 250;
 let hisHospcode = process.env.HOSPCODE;
-const getHospcode = async () => {
-    try {
-        if (typeof global.dbHIS === 'function') {
-            let row = await global.dbHIS('opdconfig').select('hospitalcode').first();
-            hisHospcode = row ? row.hospitalcode : process.env.HOSPCODE;
-            console.log('hisHospcode v.4', hisHospcode);
-        } else {
-            console.error('global.dbHIS is not a function. Using default HOSPCODE');
-        }
-    } catch (error) {
-        console.error('Error in getHospcode:', error);
-        // Fallback to environment variable
-        console.log('Using HOSPCODE from environment:', process.env.HOSPCODE);
-    }
-}
 export class HisHospitalOsModel {
     constructor() {
-        getHospcode();
     }
 
     check() {

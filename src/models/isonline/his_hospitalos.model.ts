@@ -1,6 +1,7 @@
 import { Knex } from 'knex';
 const dbName = process.env.HIS_DB_NAME;
 const maxLimit = 100;
+let hospcode = process.env.HOSPCODE;
 
 export class HisHospitalOsModel {
     getTableName(knex: Knex) {
@@ -14,8 +15,9 @@ export class HisHospitalOsModel {
         try {
             console.log('PHER: Testing DB connection... from t_patient');
             const result = await db('t_patient').select('patient_hn').first();
+            const connection = result && (result.patient_hn) ? true : false;
             console.log('PHER: Test DB connection success.', result);
-            return result;
+            return { connection };
         } catch (error) {
             throw new Error(error);
         }
