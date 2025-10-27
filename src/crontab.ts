@@ -200,4 +200,4 @@ pm2Name = getMyPM2Name(PM2List, myPid) || 'unknown';
 
 firstProcessPid = getFirstPidOfName(PM2List, pm2Name);
 
-console.log(`✅ This process name: ${pm2Name}, PID: ${myPid}, First PID: ${firstProcessPid}. Is first process? ${myPid === firstProcessPid ? '✅ YES' : '❌ NO'}`);
+console.log(`✅ This process name: ${pm2Name}, PID: ${myPid}, First PID: ${firstProcessPid}. Is first process? ${myPid === firstProcessPid ? 'YES' : 'NO'}`);

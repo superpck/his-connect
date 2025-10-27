@@ -155,7 +155,13 @@ const updateAlive = async () => {
             his: hisProvider, ssl: process.env?.SSL_ENABLE || null,
         };
         const result = await (0, moph_refer_1.updateHISAlive)(data);
-        console.log(moment().format('HH:mm:ss'), '✅ Sent API Alive status result', result.status || '', result.statusCode || 'x');
+        const status = result.status == 200 || result.statusCode == 200 ? true : false;
+        if (status) {
+            console.log(moment().format('HH:mm:ss'), '✅ Sent API Alive status result', result.status || '', result.statusCode || '', result?.message || '');
+        }
+        else {
+            console.log(moment().format('HH:mm:ss'), '❌ Sent API Alive status result', result.status || '', result.statusCode || '', result?.message || '');
+        }
         return result;
     }
     catch (error) {

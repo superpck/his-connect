@@ -146,7 +146,7 @@ function updateProcessState(): void {
   processState.isFirstProcess = processState.firstProcessPid === myPid;
 
   // console.log(moment().format('HH:mm:ss'), instanceId, process.pid, 'nodecron.optimized PM2 process list: ====> ', sameNameProcesses.map(p => p.pid), processState.pm2Name);
-  console.log(`${instanceId}.${processState.pm2Name} (PID: ${myPid}), First PID: ${processState.firstProcessPid}, Is first? ${processState.isFirstProcess ? '✅ YES' : '❌ NO'}`);
+  console.log(`   ⬜ Instance: ${instanceId}.${processState.pm2Name} (PID: ${myPid}), First PID: ${processState.firstProcessPid}`);
 }
 
 /**

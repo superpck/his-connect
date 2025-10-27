@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = cronjob;
 const moment = require("moment");
 const child_process_1 = require("child_process");
 const moph_erp_1 = require("./task/moph-erp");
@@ -66,7 +65,7 @@ function updateProcessState() {
     processState.pm2List = sameNameProcesses.map(p => p.pid);
     processState.firstProcessPid = getFirstPidOfName(processes, processState.pm2Name);
     processState.isFirstProcess = processState.firstProcessPid === myPid;
-    console.log(`${instanceId}.${processState.pm2Name} (PID: ${myPid}), First PID: ${processState.firstProcessPid}, Is first? ${processState.isFirstProcess ? '✅ YES' : '❌ NO'}`);
+    console.log(`   ⬜ Instance: ${instanceId}.${processState.pm2Name} (PID: ${myPid}), First PID: ${processState.firstProcessPid}`);
 }
 function configureTimingSchedules() {
     const timingSchedule = {};
@@ -201,3 +200,4 @@ async function cronjob(fastify) {
         }
     });
 }
+exports.default = cronjob;
