@@ -76,6 +76,7 @@ const dbConnection = (type = 'HIS') => {
         port: +connection.port,
         user: connection.user,
         password: connection.password,
+        searchPath: [connection.schema || 'public'],
         database: connection.database
         // timezone
       },
