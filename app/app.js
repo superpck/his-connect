@@ -148,19 +148,15 @@ async function connectDB() {
         const result = await global.dbHIS.raw(sql);
         let date;
         if (dbClient === 'pg' || dbClient === 'postgres' || dbClient === 'postgresql') {
-            console.log('DB connection test result (pg):', result.rows?.[0]);
             date = result.rows?.[0]?.date;
         }
         else if (dbClient === 'mssql') {
-            console.log('DB connection test result (mssql):', result.recordset?.[0]);
             date = result.recordset?.[0]?.date;
         }
         else if (dbClient === 'oracledb') {
-            console.log('DB connection test result (oracle):', result[0]?.[0]);
             date = result[0]?.[0]?.date;
         }
         else {
-            console.log('DB connection test result (mysql):', result[0]?.[0]);
             date = result[0]?.[0]?.date;
         }
         console.info(`   🔗 PID:${process.pid} >> HIS DB server '${dbClient}' connected, date on DB server: `, moment(date).format('YYYY-MM-DD HH:mm:ss'));
