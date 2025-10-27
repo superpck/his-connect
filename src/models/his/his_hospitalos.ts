@@ -1,33 +1,30 @@
 import { Knex } from 'knex';
 import * as moment from 'moment';
+const dbName = process.env.HIS_DB_NAME;
 
 const maxLimit = 250;
 let hisHospcode = process.env.HOSPCODE;
-const getHospcode = async () => {
-    try {
-        if (typeof global.dbHIS === 'function') {
-            let row = await global.dbHIS('opdconfig').select('hospitalcode').first();
-            hisHospcode = row ? row.hospitalcode : process.env.HOSPCODE;
-            console.log('hisHospcode v.4', hisHospcode);
-        } else {
-            console.error('global.dbHIS is not a function. Using default HOSPCODE');
-        }
-    } catch (error) {
-        console.error('Error in getHospcode:', error);
-        // Fallback to environment variable
-        console.log('Using HOSPCODE from environment:', process.env.HOSPCODE);
-    }
-}
 export class HisHospitalOsModel {
     constructor() {
-        getHospcode();
     }
 
     check() {
         return true;
     }
 
+    getTableName(knex: Knex) {
+        return knex('information_schema.tables')
+            .select('table_name')
+            .where('table_catalog', '=', dbName);
+
+    }
+
     async testConnect(db: Knex) {
+        console.log('nRefer: Testing DB connection... from t_patient');
+        return await db('t_patient').select('patient_hn').limit(1)
+    }
+
+    async testConnect_(db: Knex) {
         const clientType = (db.client?.config?.client || '').toLowerCase();
 
         const opdConfig = await global.dbHIS('opdconfig').first();
@@ -68,7 +65,7 @@ export class HisHospitalOsModel {
         return { hospname, connection, charset };
     }
 
-    getTableName(db: Knex, dbName = process.env.HIS_DB_NAME) {
+    getTableName_(db: Knex, dbName = process.env.HIS_DB_NAME) {
         const clientType = (db.client?.config?.client || '').toLowerCase();
         const schemaName = process.env.HIS_DB_SCHEMA || 'public';
         const dbUser = (process.env.HIS_DB_USER || '').toUpperCase();
@@ -135,23 +132,6 @@ export class HisHospitalOsModel {
                 `'-' as moph_code`)
             .select(db.raw(`${emergencyExpr} as emergency`))
             .orderBy('name')
-            .limit(maxLimit);
-    }
-
-    // รหัส Ward
-    getWard(db: Knex, wardCode: string = '', wardName: string = '') {
-        let sql = db('ward');
-        if (wardCode) {
-            sql.where('ward', wardCode);
-        } else if (wardName) {
-            sql.whereLike('name', `%${wardName}%`)
-        }
-        return sql
-            .select('ward as wardcode', 'name as wardname',
-                `ward_export_code as std_code`, 'bedcount as bed_normal',
-                db.raw("CASE WHEN ward_active ='Y' THEN 1 ELSE 0 END as isactive")
-            )
-            .orderBy('ward')
             .limit(maxLimit);
     }
 
@@ -1761,11 +1741,76 @@ export class HisHospitalOsModel {
     sumOpdVisitByClinic(db: Knex, date: any) {
         let sql = db('ovst')
             .leftJoin('spclty', 'ovst.spclty', 'spclty.spclty')
-            .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode', 
+            .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode',
                 'spclty.name as clinicname',
                 db.raw('sum(if(an IS NULL or an="",0,1)) as admit'))
             .count('* as cases')
             .where('ovst.vstdate', date);
         return sql.groupBy('spclty.nhso_code').orderBy('spclty.nhso_code');
+    }
+
+
+    // ผ่านการ Verify แล้ว ==============================================
+
+    // MOPH ERP
+    getWard(db: Knex, wardCode: string = '', wardName: string = '') {
+        let sql = db('b_visit_ward as ward');
+        if (wardCode) {
+            sql.where('visit_ward_number', wardCode);
+        } else if (wardName) {
+            sql.whereLike('visit_ward_description', `%${wardName}%`)
+        }
+        return sql
+            .select('visit_ward_number as wardcode', 'visit_ward_description as wardname',
+                'visit_ward_active as isactive')
+            .orderBy('visit_ward_number')
+            .limit(maxLimit);
+    }
+    getBedNo(db: Knex, bedno: any = null) {
+        const clientType = (db.client?.config?.client || '').toLowerCase();
+        const createQueryConcat = (wardCode: string, bedNumber: string): any => {
+            switch (clientType) {
+                case 'pg':
+                case 'postgres':
+                case 'postgresql':
+                    return db.raw(`${wardCode}::text || '-' || ${bedNumber}::text`);
+                case 'mssql':
+                    return db.raw(`CAST(${wardCode} AS VARCHAR) + '-' + CAST(${bedNumber} AS VARCHAR)`);
+                case 'oracledb':
+                    return db.raw(`${wardCode} || '-' || ${bedNumber}`);
+                default:
+                    return db.raw(`CONCAT(${wardCode}, '-', ${bedNumber})`);
+            }
+        };
+        const BedNnumberSql = createQueryConcat('ward.visit_ward_number', 'bed.bed_number');
+        /*
+        , (ward.visit_ward_number:: text || '-' || bed.bed_number::text) as bedno
+        , bed.b_visit_ward_id , ward.visit_ward_active 
+        , ward.visit_ward_number as wardcode, ward.visit_ward_description as wardname
+        , room.room_number as roomno, room.description as roomname
+        */
+
+        let sql = db('b_visit_bed as bed')
+            .leftJoin('b_visit_room as room', 'bed.b_visit_room_id', 'room.b_visit_room_id')
+            .leftJoin('b_visit_ward as ward', 'bed.b_visit_ward_id', 'ward.b_visit_ward_id')
+            .select('bed.bed_number', 'bed.active as isactive',
+                db.raw(`${BedNnumberSql} as bedno`),
+                'bed.b_visit_ward_id', 'ward.visit_ward_active',
+                'ward.visit_ward_number as wardcode', 'ward.visit_ward_description as wardname',
+                'room.room_number as roomno',
+                db.raw(`
+                        CASE 
+                            WHEN LOWER(ward.visit_ward_description) LIKE '%icu%' OR LOWER(ward.visit_ward_description) LIKE '%ไอซียู%' THEN 'ICU'
+                            WHEN LOWER(ward.visit_ward_description) LIKE '%ห้องคลอด%' OR LOWER(ward.visit_ward_description) LIKE '%รอคลอด%' THEN 'LR'
+                            WHEN LOWER(ward.visit_ward_description) LIKE '%พิเศษ%' THEN 'S'
+                            WHEN LOWER(ward.visit_ward_description) LIKE '%Home Ward%' THEN 'HW'
+                            ELSE 'N'
+                        END as bed_type
+                    `)
+            ).where({'bed.active': '1', 'ward.visit_ward_active': '1'});
+        if (bedno) {
+            sql = sql.where('bedno', bedno);
+        }
+        return sql.orderBy('bedno');
     }
 }

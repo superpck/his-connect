@@ -1,7 +1,7 @@
 import { Knex } from 'knex';
-import * as moment from 'moment';
 const dbName = process.env.HIS_DB_NAME;
 const maxLimit = 100;
+let hospcode = process.env.HOSPCODE;
 
 export class HisHospitalOsModel {
     getTableName(knex: Knex) {
@@ -11,8 +11,33 @@ export class HisHospitalOsModel {
 
     }
 
-    testConnect(db: Knex) {
-        return db('t_patient').select('patient_hn').limit(1)
+    async testConnect(db: Knex) {
+        try {
+            const clientType = (db.client?.config?.client || '').toLowerCase();
+            let result = await db('b_site').first();
+            const hospname = result?.site_full_name || null;
+            hospcode = result?.b_visit_office_id || hospcode;
+
+            result = await db('t_patient').select('patient_hn').first();
+            const connection = result && (result.patient_hn) ? true : false;
+
+            let charset = '';
+            if (clientType.includes('mysql')) {
+                const schema = await db('information_schema.SCHEMATA')
+                    .select('DEFAULT_CHARACTER_SET_NAME as charset')
+                    .where('SCHEMA_NAME', process.env.HIS_DB_NAME)
+                    .first();
+                charset = schema?.charset || '';
+            } else if (clientType.includes('pg')) {
+                const result = await db.raw(
+                    'SELECT pg_encoding_to_char(encoding) AS charset FROM pg_database LIMIT 1'
+                );
+                charset = result?.rows?.[0]?.charset || '';
+            }
+            return { connection, hospname, charset };
+        } catch (error) {
+            throw new Error(error);
+        }
     }
 
     getPerson(knex: Knex, columnName, searchText) {
@@ -53,9 +78,9 @@ export class HisHospitalOsModel {
         //if (date) where['opdscreen.vstdate'] = date;
         if (columnName && searchText) where[columnName] = searchText;
         return knex('t_visit')
-        .leftJoin(`t_accident`, 't_accident.t_visit_id', 't_visit.t_visit_id')
-        .leftJoin(`t_visit_vital_sign`, 't_visit_vital_sign.t_visit_id', 't_visit.t_visit_id')
-        .leftJoin('t_visit_service','t_visit_service.t_visit_id','t_visit.t_visit_id')
+            .leftJoin(`t_accident`, 't_accident.t_visit_id', 't_visit.t_visit_id')
+            .leftJoin(`t_visit_vital_sign`, 't_visit_vital_sign.t_visit_id', 't_visit.t_visit_id')
+            .leftJoin('t_visit_service', 't_visit_service.t_visit_id', 't_visit.t_visit_id')
 
             .select('t_visit.visit_hn as hn', 't_visit.visit_vn as visitno ', 't_accident.accident_time as time')
             .select(knex.raw(` concat(to_number(substr(t_accident.accident_date,1,4),'9999')-543 ,'-',substr(t_accident.accident_date,6),' ',t_accident.accident_time,':00') as adate ,
@@ -155,7 +180,7 @@ export class HisHospitalOsModel {
       WHEN t_visit.f_visit_ipd_discharge_type_id in ('8','9') THEN '5'
       WHEN t_visit.f_visit_ipd_discharge_type_id in ('5','6') THEN '6' ELSE '' END AS staward
       `
-                           
+
             ))
             //.select(knex.raw("CONCAT(`vstdate`,`vsttime`) as hdate"))            
             .where(where)

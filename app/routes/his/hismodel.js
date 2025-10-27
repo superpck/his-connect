@@ -17,6 +17,7 @@ const his_emrsoft_1 = require("../../models/his/his_emrsoft");
 const his_haos_1 = require("../../models/his/his_haos");
 const his_ssb_srih_1 = require("../../models/his/his_ssb_srih");
 const his_homc_1 = require("../../models/his/his_homc");
+const his_hospitalos_1 = require("../../models/his/his_hospitalos");
 console.log('HIS Provider:', process.env.HIS_PROVIDER);
 const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 let hisModel;
@@ -62,6 +63,7 @@ switch (hisProvider) {
         hisModel = new his_mypcu_1.HisMyPcuModel();
         break;
     case 'hospitalos':
+        hisModel = new his_hospitalos_1.HisHospitalOsModel();
         break;
     case 'jhos':
         break;

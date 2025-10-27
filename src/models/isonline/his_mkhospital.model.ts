@@ -21,8 +21,15 @@ export class HisMkhospitalModel {
             .where('table_schema', '=', dbname);
     }
 
-    testConnect(db: Knex) {
-        return db('patient').select('hn').limit(1)
+    async testConnect(db: Knex) {
+        try {
+            const result = await db('patient').select('hn').limit(1)
+                .orderBy('hn', 'desc').first();
+            const connection = result && result?.hn ? true : false;
+            return { connection };
+        } catch (error) {
+            throw new Error(error);
+        }
     }
 
     getPerson(knex: Knex, columnName, searchText) {

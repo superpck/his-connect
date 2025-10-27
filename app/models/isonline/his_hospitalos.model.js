@@ -3,14 +3,38 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisHospitalOsModel = void 0;
 const dbName = process.env.HIS_DB_NAME;
 const maxLimit = 100;
+let hospcode = process.env.HOSPCODE;
 class HisHospitalOsModel {
     getTableName(knex) {
         return knex('information_schema.tables')
             .select('table_name')
             .where('table_catalog', '=', dbName);
     }
-    testConnect(db) {
-        return db('t_patient').select('patient_hn').limit(1);
+    async testConnect(db) {
+        try {
+            const clientType = (db.client?.config?.client || '').toLowerCase();
+            let result = await db('b_site').first();
+            const hospname = result?.site_full_name || null;
+            hospcode = result?.b_visit_office_id || hospcode;
+            result = await db('t_patient').select('patient_hn').first();
+            const connection = result && (result.patient_hn) ? true : false;
+            let charset = '';
+            if (clientType.includes('mysql')) {
+                const schema = await db('information_schema.SCHEMATA')
+                    .select('DEFAULT_CHARACTER_SET_NAME as charset')
+                    .where('SCHEMA_NAME', process.env.HIS_DB_NAME)
+                    .first();
+                charset = schema?.charset || '';
+            }
+            else if (clientType.includes('pg')) {
+                const result = await db.raw('SELECT pg_encoding_to_char(encoding) AS charset FROM pg_database LIMIT 1');
+                charset = result?.rows?.[0]?.charset || '';
+            }
+            return { connection, hospname, charset };
+        }
+        catch (error) {
+            throw new Error(error);
+        }
     }
     getPerson(knex, columnName, searchText) {
         columnName = columnName == 'hn' ? 'patient.patient_hn' : columnName;

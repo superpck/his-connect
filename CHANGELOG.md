@@ -1,3 +1,7 @@
+# 3.8.13
+## Feature
+  - แก้ไข SQL สำหรับ HospitalOS กรณี return 204 และ 413
+
 # 3.8.12
 ## Feature
   - แก้ไข SQL ให้รองรับหลาย vendor
@@ -5,6 +9,7 @@
   - เพิ่มตรวจสอบประเภทเตียง
   - เพิ่มข้อความ status alive
   - เพิ่มการแสดง error message ใน API Alive
+  - ปรับการทดสอบการเชื่อม DB
 
 # 3.8.11
 ## Feature

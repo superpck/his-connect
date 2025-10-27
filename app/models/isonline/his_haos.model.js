@@ -9,8 +9,16 @@ class HisHaosModel {
             .select('table_name')
             .where('table_catalog', '=', dbName);
     }
-    testConnect(db) {
-        return db('patient').select('hn').limit(1);
+    async testConnect(db) {
+        try {
+            const result = await db('patient').select('hn').limit(1)
+                .orderBy('hn', 'desc').first();
+            const connection = result && result?.hn ? true : false;
+            return { connection };
+        }
+        catch (error) {
+            throw new Error(error);
+        }
     }
     getPerson(db, columnName, searchText) {
         let sql = db('patient');

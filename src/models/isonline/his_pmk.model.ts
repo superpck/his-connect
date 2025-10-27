@@ -17,8 +17,15 @@ export class HisPmkModel {
         }
     }
 
-    testConnect(db: Knex) {
-        return db('PATIENTS').select('HN as hn').limit(1)
+    async testConnect(db: Knex) {
+        try {
+            const result = await db('PATIENTS').select('HN as hn')
+                .orderBy('HN','desc').first();
+            const connection = result && result?.hn ? true : false;
+            return { connection };
+        } catch (error) {
+            throw new Error(error);
+        }
     }
 
     getPerson(db: Knex, columnName, searchText) {

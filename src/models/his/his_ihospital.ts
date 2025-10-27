@@ -53,13 +53,11 @@ export class HisIHospitalModel {
       sql.where('code', wardCode);
     } else if (wardName) {
       sql.whereLike('ward', `%${wardName}%`)
-    } else {
-      sql.where('isactive', 1)
     }
     return sql
       .select('code as wardcode', 'ward as wardname',
         'standard as std_code', 'bed_nm as bed_normal', 'bed_sp as bed_special',
-        'ward_type', 'ward_typesub as ward_subtype')
+        'ward_type', 'ward_typesub as ward_subtype','isactive')
       .limit(maxLimit);
   }
 

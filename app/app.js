@@ -128,12 +128,12 @@ app.listen(options, (err) => {
     console.info(`${moment().format('HH:mm:ss')} HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid}`);
 });
 async function connectDB() {
-    const dbConnection = require('./plugins/db');
-    global.dbHIS = dbConnection('HIS');
-    global.dbIs = dbConnection('ISONLINE');
-    global.dbISOnline = global.dbIs;
     const dbClient = process.env.HIS_DB_CLIENT;
     try {
+        const dbConnection = require('./plugins/db');
+        global.dbHIS = dbConnection('HIS');
+        global.dbIs = dbConnection('ISONLINE');
+        global.dbISOnline = global.dbIs;
         let sql = '';
         switch (dbClient) {
             case 'oracledb':
@@ -146,9 +146,19 @@ async function connectDB() {
                 sql = 'SELECT NOW() as date';
         }
         const result = await global.dbHIS.raw(sql);
-        let date = result?.rows?.[0]?.date ??
-            result?.[0]?.date ??
-            result?.[0]?.[0]?.date;
+        let date;
+        if (dbClient === 'pg' || dbClient === 'postgres' || dbClient === 'postgresql') {
+            date = result.rows?.[0]?.date;
+        }
+        else if (dbClient === 'mssql') {
+            date = result.recordset?.[0]?.date;
+        }
+        else if (dbClient === 'oracledb') {
+            date = result[0]?.[0]?.date;
+        }
+        else {
+            date = result[0]?.[0]?.date;
+        }
         console.info(`   🔗 PID:${process.pid} >> HIS DB server '${dbClient}' connected, date on DB server: `, moment(date).format('YYYY-MM-DD HH:mm:ss'));
     }
     catch (error) {

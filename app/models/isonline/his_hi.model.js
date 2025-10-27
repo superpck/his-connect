@@ -9,8 +9,16 @@ class HisHiModel {
             .select('table_name')
             .where('table_schema', '=', dbName);
     }
-    testConnect(db) {
-        return db('hi.pt').select('hn').limit(1);
+    async testConnect(db) {
+        try {
+            const result = await db('hi.pt').select('hn')
+                .orderBy('hn', 'desc').first();
+            const connection = result && result?.hn ? true : false;
+            return { connection };
+        }
+        catch (error) {
+            throw new Error(error);
+        }
     }
     getPerson(knex, columnName, searchText) {
         return knex('hi.pt')
