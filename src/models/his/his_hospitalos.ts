@@ -1807,7 +1807,7 @@ export class HisHospitalOsModel {
                             ELSE 'N'
                         END as bed_type
                     `)
-            ).where('bed.active', '1');
+            ).where({'bed.active': '1', 'ward.visit_ward_active': '1'});
         if (bedno) {
             sql = sql.where('bedno', bedno);
         }
