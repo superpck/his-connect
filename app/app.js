@@ -146,6 +146,7 @@ async function connectDB() {
                 sql = 'SELECT NOW() as date';
         }
         const result = await global.dbHIS.raw(sql);
+        console.log('DB connection test result:', result);
         let date = result?.rows?.[0]?.date ??
             result?.[0]?.date ??
             result?.[0]?.[0]?.date;
