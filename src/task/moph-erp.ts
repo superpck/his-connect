@@ -188,7 +188,7 @@ export const erpAdminRequest = async () => {
           console.log('ERP admin request get bed no.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
           await updateAdminRequest({
             request_id: req.request_id,
-            status: requestResult.statusCode == 200 || requestResult.status == 200 ? 'success' : 'failed',
+            status: requestResult.statusCode == 200 || requestResult.status == 200 ? 'success' : `failed ${requestResult.status || requestResult.statusCode || ''}`,
             isactive: 0
           });
         } else if (req.request_type == 'ward') {
@@ -196,7 +196,7 @@ export const erpAdminRequest = async () => {
           console.log('ERP admin request get ward name.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
           await updateAdminRequest({
             request_id: req.request_id,
-            status: requestResult.statusCode == 200 || requestResult.status == 200 ? 'success' : 'failed',
+            status: requestResult.statusCode == 200 || requestResult.status == 200 ? 'success' : `failed ${requestResult.status || requestResult.statusCode || ''}`,
             isactive: 0
           });
         } else if (req.request_type == 'alive') {

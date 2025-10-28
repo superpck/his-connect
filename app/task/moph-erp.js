@@ -182,7 +182,7 @@ const erpAdminRequest = async () => {
                     console.log('ERP admin request get bed no.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
                     await (0, moph_refer_1.updateAdminRequest)({
                         request_id: req.request_id,
-                        status: requestResult.statusCode == 200 || requestResult.status == 200 ? 'success' : 'failed',
+                        status: requestResult.statusCode == 200 || requestResult.status == 200 ? 'success' : `failed ${requestResult.status || requestResult.statusCode || ''}`,
                         isactive: 0
                     });
                 }
@@ -191,7 +191,7 @@ const erpAdminRequest = async () => {
                     console.log('ERP admin request get ward name.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
                     await (0, moph_refer_1.updateAdminRequest)({
                         request_id: req.request_id,
-                        status: requestResult.statusCode == 200 || requestResult.status == 200 ? 'success' : 'failed',
+                        status: requestResult.statusCode == 200 || requestResult.status == 200 ? 'success' : `failed ${requestResult.status || requestResult.statusCode || ''}`,
                         isactive: 0
                     });
                 }
