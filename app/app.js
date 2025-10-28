@@ -17,7 +17,7 @@ if (process.env.SSL_ENABLE && process.env.SSL_ENABLE == '1' && process.env.SSL_K
         logger: {
             level: 'error',
         },
-        bodyLimit: 5 * 1048576,
+        bodyLimit: 20 * 1024 * 1024,
         http2: true,
         https: {
             key: fs.readFileSync(process.env.SSL_KEY),
@@ -30,7 +30,7 @@ else {
         logger: {
             level: 'error',
         },
-        bodyLimit: 5 * 1048576,
+        bodyLimit: 20 * 1024 * 1024,
         connectionTimeout: 10000
     };
 }
