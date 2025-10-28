@@ -22,9 +22,11 @@ import { HisHaosModel } from '../../models/his/his_haos';
 import { HisSsbSriHModel } from '../../models/his/his_ssb_srih';
 import { HisHomCHModel } from '../../models/his/his_homc';
 import { HisHospitalOsModel } from '../../models/his/his_hospitalos';
+import { HisHimproModel } from '../../models/isonline/his_himpro.model';
+import { HisHiModel } from '../../models/isonline/his_hi.model';
 
 console.log('HIS Provider:', process.env.HIS_PROVIDER);
-const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
+const hisProvider = (process.env.HIS_PROVIDER || 'unknown-his').toLowerCase();
 
 let hisModel: any;
 switch (hisProvider) {
@@ -59,10 +61,10 @@ switch (hisProvider) {
     hisModel = new HisHomCHModel();
     break;
   case 'hi':
-    // hisModel = new HisHiModel();
+    hisModel = new HisHiModel();
     break;
   case 'himpro':
-    // hisModel = new HisHimproModel();
+    hisModel = new HisHimproModel();
     break;
   case 'jhcis':
     hisModel = new HisJhcisModel();
