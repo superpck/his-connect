@@ -1580,13 +1580,14 @@ export class HisHosxpv4Model {
                 db.raw(`
                     CASE 
                         WHEN LOWER(bedtype.name) LIKE '%พิเศษ%' THEN 'S'
-                        WHEN LOWER(bedtype.name) LIKE '%icu%' THEN 'ICU'
+                        WHEN LOWER(bedtype.name) LIKE '%icu%' OR bedtype.name LIKE '%ไอซียู%' THEN 'ICU'
                         WHEN LOWER(bedtype.name) LIKE '%ห้องคลอด%' OR LOWER(bedtype.name) LIKE '%รอคลอด%' THEN 'LR'
                         WHEN LOWER(bedtype.name) LIKE '%Home Ward%' THEN 'HW'
                         ELSE 'N'
                     END as bed_type
                 `)
-            );
+            )
+            .where('ward.ward_active', 'Y');
         if (bedno) {
             sql = sql.where('bedno.bedno', bedno);
         }

@@ -1,6 +1,7 @@
 # 3.8.13
 ## Feature
   - แก้ไข SQL สำหรับ HospitalOS กรณี return 204 และ 413
+  - เพิ่มการกรอง bedno ให้ select เฉพาะ ward active
 
 # 3.8.12
 ## Feature
