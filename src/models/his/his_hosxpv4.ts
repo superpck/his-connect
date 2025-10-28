@@ -102,73 +102,8 @@ export class HisHosxpv4Model {
 
     //select รายชื่อเพื่อแสดงทะเบียน refer
     getReferOut(db: Knex, date: any, hospCode = hisHospcode, visitNo: string = null) {
-        let sql = db('referout as r').innerJoin('patient as pt', 'pt.hn', 'r.hn')
-            .leftJoin('an_stat', 'r.vn', 'an_stat.vn')
-            .leftJoin('refer_vital_sign', 'r.referout_id', 'refer_vital_sign.referout_id')
-            .leftJoin('opdscreen', 'r.vn', 'opdscreen.vn')
-            .leftJoin('doctor', 'r.doctor', 'doctor.code')
-            .select(db.raw(`'${hisHospcode}' as hospcode`));
-        if (visitNo) {
-            sql.where('r.vn', visitNo);
-        } else {
-            sql.where('r.refer_date', date);
-        }
-        return sql.select(db.raw(`concat(r.refer_date, ' ', r.refer_time) AS refer_date`),
-            'r.refer_number AS referid', 'r.refer_hospcode AS hosp_destination',
-            'r.hn AS PID', 'r.hn AS hn', 'pt.cid AS CID', 'r.vn', 'r.vn as SEQ',
-            'an_stat.an as AN', 'pt.pname AS prename', 'pt.fname AS fname',
-            'pt.lname', 'pt.birthday AS dob',
-            'pt.sex', 'r.referout_emergency_type_id as EMERGENCY',
-            'r.doctor as dr', 'doctor.licenseno as provider',
-            'r.request_text as REQUEST',
-            'r.pdx AS dx',
-            'refer_vital_sign.cc',
-            db.raw('CASE WHEN r.pmh then r.pmh else opdscreen.pmh end as PH'),
-            db.raw('CASE WHEN r.hpi then r.hpi else opdscreen.hpi end as PI'),
-            db.raw('CASE WHEN refer_vital_sign.pe then refer_vital_sign.pe else r.treatment_text end as PHYSICALEXAM'),
-            db.raw('CASE WHEN refer_vital_sign.pre_diagnosis THEN refer_vital_sign.pre_diagnosis ELSE r.pre_diagnosis END as diaglast'),
-            db.raw('IF((SELECT count(an) as cc from an_stat WHERE an =r.vn) = 1,r.vn,null) as an'),
-            `r.accept_point as clinic`)
-            .whereNotNull('r.vn')
-            .where('r.refer_hospcode', '!=', "")
-            .whereNotNull('r.refer_hospcode')
-            .where('r.refer_hospcode', '!=', hisHospcode)
-            .groupBy('r.referout_id') // กรณี refer_vital_sign มีหลาย row
-            .orderBy('r.refer_date');
-
-        // const sql1 = `
-        //     SELECT '${hisHospcode}' AS hospcode,
-        //         concat(r.refer_date, ' ', r.refer_time) AS refer_date,
-        //         r.refer_number AS referid,
-        //         r.refer_hospcode AS hosp_destination,
-        //         r.hn AS PID, r.hn AS hn, pt.cid AS CID, r.vn, r.vn as SEQ,
-        //         an_stat.an as AN, pt.pname AS prename,
-        //         pt.fname AS fname,
-        //         pt.lname AS lname,
-        //         pt.birthday AS dob,
-        //         pt.sex AS sex, r.referout_emergency_type_id as EMERGENCY, 
-        //         r.doctor as dr, doctor.licenseno as provider, 
-        //         r.request_text as REQUEST,
-        //         r.pdx AS dx, r.pre_diagnosis AS DIAGFIRST,
-        //         case when r.pmh then r.pmh else opdscreen.pmh end as PH,
-        //         case when r.hpi then r.hpi else opdscreen.hpi end as PI,
-        //         r.treatment_text as PHYSICALEXAM,
-        //         r.pre_diagnosis as DISGLAST,
-        //         IF((SELECT count(an) as cc from an_stat WHERE an =r.vn) = 1,r.vn,null) as an,
-        //         r.accept_point as clinic
-        //     FROM
-        //         referout r
-        //         INNER JOIN patient pt ON pt.hn = r.hn
-        //         left join an_stat on r.vn=an_stat.vn
-        //         left join opdscreen on r.vn=opdscreen.vn
-        //         left join doctor on r.doctor = doctor.code
-        //     WHERE
-        //         {filterText} and r.vn is not null and r.refer_hospcode!='' and r.refer_hospcode is not null
-        //         and r.refer_hospcode != `${hisHospcode}`
-        //     ORDER BY
-        //         r.refer_date`;
-        // const result = await db.raw(sql, [filter]);
-        // return result[0];
+        // รอปรับ Source ให้ mathch กับ DB
+        return [];
     }
 
     async getPerson(db: Knex, columnName, searchText, hospCode = hisHospcode) {
@@ -1773,7 +1708,7 @@ export class HisHosxpv4Model {
 
         sql = sql.where('ipt.regdate', '<=', date)
             .whereRaw('ipt.ward is not null and ipt.ward!= ""');
-        return sql.groupBy('ipt.ward').orderBy('ipt.ward');
+        return sql.groupBy(['ipt.ward', 'ward.name']).orderBy('ipt.ward');
     }
     concurrentIPDByClinic(db: Knex, date: any) {
         date = moment(date).format('YYYY-MM-DD');
