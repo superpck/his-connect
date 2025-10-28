@@ -18,8 +18,10 @@ const his_haos_1 = require("../../models/his/his_haos");
 const his_ssb_srih_1 = require("../../models/his/his_ssb_srih");
 const his_homc_1 = require("../../models/his/his_homc");
 const his_hospitalos_1 = require("../../models/his/his_hospitalos");
+const his_himpro_model_1 = require("../../models/isonline/his_himpro.model");
+const his_hi_model_1 = require("../../models/isonline/his_hi.model");
 console.log('HIS Provider:', process.env.HIS_PROVIDER);
-const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
+const hisProvider = (process.env.HIS_PROVIDER || 'unknown-his').toLowerCase();
 let hisModel;
 switch (hisProvider) {
     case 'ihospital':
@@ -53,8 +55,10 @@ switch (hisProvider) {
         hisModel = new his_homc_1.HisHomCHModel();
         break;
     case 'hi':
+        hisModel = new his_hi_model_1.HisHiModel();
         break;
     case 'himpro':
+        hisModel = new his_himpro_model_1.HisHimproModel();
         break;
     case 'jhcis':
         hisModel = new his_jhcis_1.HisJhcisModel();
