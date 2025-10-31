@@ -1,5 +1,4 @@
 # [Hospital]
-API_LEVEL=hospital
 HOSPCODE=00000
 
 # [API]
@@ -7,9 +6,6 @@ PORT=3004
 HOST=0.0.0.0
 ROUTE_PREFIX=
 START_TOOL=pm2
-PM2_NAME=his-connect
-PM2_INSTANCE=2
-AUTO_RESTART=1
 
 # [HTTPS]
 SSL_ENABLE=0
@@ -20,7 +16,7 @@ SSL_CRT=public/ssl/localhost.crt
 # valid HIS provider name: 
 #    iHospital, HOSxPv3, HOSxPv4, HOSxPpcu, infod, homc, ssb
 #    hospitalos, jhcis, kpstat, md, mkhospital, thiades, 
-#    himpro, nemo, mypcu, emrsoft, haos other
+#    hi, himpro, mitnet, EPIS, nemo, mypcu, emrsoft, haos
 
 # [HIS DB]
 HIS_PROVIDER=HOSxPv3
@@ -65,11 +61,6 @@ NREFER_APIKEY="กรุณาระบุ API Key"
 NREFER_SECRETKEY="กรุณาระบุ API Secret Key"
 NREFER_AUTO_SEND=1
 NREFER_AUTO_SEND_EVERY_MINUTE=15
-
-# [Chat Config]
-NOTIFY_URL=https://nrefer.moph.go.th/apis/message
-NOTIFY_TOKEN="$nRefer@MoPH$"
-NOTIFY_CHANNEL="nRefer@<กรุณาระบุ hcode>"
 
 # [JWT]
 REQUEST_KEY="<ใส่อะไรก็ได้ที่จำได้_10_ถึง_16_ตัว>"

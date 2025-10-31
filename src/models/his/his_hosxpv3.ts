@@ -1470,6 +1470,12 @@ export class HisHosxpv3Model {
     }
 
     // MOPH ERP
+    countBedNo(db: Knex) {
+        return db('bedno').count('bedno.bedno as total_bed')
+            .leftJoin('roomno', 'bedno.roomno', 'roomno.roomno')
+            .leftJoin('ward', 'roomno.ward', 'ward.ward')
+            .where('ward.ward_active', 'Y').first();
+    }
     getBedNo(db: Knex, bedno: any = null) {
         let sql = db('bedno')
             .leftJoin('roomno', 'bedno.roomno', 'roomno.roomno')

@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.HisModel = void 0;
+exports.HisMitnetModel = void 0;
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
-class HisModel {
+class HisMitnetModel {
     check() {
         return true;
     }
@@ -144,4 +144,4 @@ class HisModel {
         return [];
     }
 }
-exports.HisModel = HisModel;
+exports.HisMitnetModel = HisMitnetModel;
