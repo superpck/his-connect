@@ -1,8 +1,8 @@
 # HIS Connection API สำหรับ nRefer, ISOnline, และ PHER Plus
 
 ## 1.การติดตั้ง
- - ติดตั้งด้วย NodeJS [เอกสารขั้นตอนการติดตั้ง API](https://connect.moph.go.th/pher-plus/#/main/api-installation)
- - ติดตั้งด้วย Docker [HIS Connect Docker](https://hub.docker.com/r/superpck/his-connect)
+ - คู่มือการติดตั้งด้วย NodeJS [เอกสารขั้นตอนการติดตั้ง API](https://connect.moph.go.th/pher-plus/#/main/api-installation)
+ - Link สำหรับการติดตั้งด้วย Docker [HIS Connect Docker](https://hub.docker.com/r/superpck/his-connect)
 
 ## 1.1 SSB (ตัวอย่าง รพ.สระบุรี) สร้าง VIEW สำหรับดึงข้อมูล
 ```
