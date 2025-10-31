@@ -1480,6 +1480,11 @@ class HisHospitalOsModel {
             .orderBy('visit_ward_number')
             .limit(maxLimit);
     }
+    countBedNo(db) {
+        return db('b_visit_bed as bed').count('bed.bed_number as total_bed')
+            .leftJoin('b_visit_ward as ward', 'bed.b_visit_ward_id', 'ward.b_visit_ward_id')
+            .where({ 'bed.active': '1', 'ward.visit_ward_active': '1' }).first();
+    }
     getBedNo(db, bedno = null) {
         const clientType = (db.client?.config?.client || '').toLowerCase();
         const createQueryConcat = (wardCode, bedNumber) => {

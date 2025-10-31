@@ -117,23 +117,38 @@ const sendWardName = async () => {
 };
 exports.sendWardName = sendWardName;
 const sendBedNo = async () => {
+    let result;
+    let countBed = 0;
     try {
-        let rows = await hismodel_1.default.getBedNo(db);
-        if (rows && rows.length) {
-            rows = rows.map(v => {
-                return {
-                    ...v, hospcode: hospcode,
-                    hcode5: hospcode.length == 5 ? hospcode : null,
-                    hcode9: hospcode.length == 9 ? hospcode : null
-                };
-            });
-            const result = await (0, moph_refer_1.sendingToMoph)('/save-bed-no', rows);
-            console.log(moment().format('HH:mm:ss'), 'sendBedNo', result.status || '', result.message || '', rows.length);
-            return result;
+        if (typeof hismodel_1.default.countBedNo === 'function') {
+            result = await hismodel_1.default.countBedNo(db);
+            countBed = result?.total_bed || 0;
         }
-        else {
-            return { statusCode: 200, message: 'No bed no data' };
-        }
+        let error = '';
+        let times = 0;
+        let startRow = countBed < 500 ? -1 : 0;
+        const limitRow = 500;
+        let sentResult = [];
+        do {
+            let rows = await hismodel_1.default.getBedNo(db, null, startRow, limitRow);
+            if (rows && rows.length) {
+                rows = rows.map(v => {
+                    return {
+                        ...v, hospcode: hospcode,
+                        hcode5: hospcode.length == 5 ? hospcode : null,
+                        hcode9: hospcode.length == 9 ? hospcode : null
+                    };
+                });
+                result = await (0, moph_refer_1.sendingToMoph)('/save-bed-no', rows);
+                if (result?.status != 200 && result?.statusCode != 200) {
+                    error = result?.message || result?.status || result?.statusCode || null;
+                }
+                sentResult.push({ startRow, limitRow, rows: rows.length, result });
+            }
+            startRow += limitRow;
+            times++;
+        } while (startRow < countBed && countBed != 0);
+        console.log(moment().format('HH:mm:ss'), `sendBedNo ${countBed} rows (${times})`, error);
     }
     catch (error) {
         console.log(moment().format('HH:mm:ss'), 'getBedNo error', error.message);
@@ -214,3 +229,5 @@ const erpAdminRequest = async () => {
     }
 };
 exports.erpAdminRequest = erpAdminRequest;
+function getCode9(hcode = hospcode) {
+}

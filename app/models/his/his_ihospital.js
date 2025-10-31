@@ -471,8 +471,29 @@ class HisIHospitalModel {
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
     }
-    getBedNo(db, bedno = null) {
-        return [];
+    countBedNo(db) {
+        return db('app_nis.bed').count('* as total_bed').first();
+    }
+    async getBedNo(db, bedno = null, start = -1, limit = 1000) {
+        let query = db('app_nis.bed');
+        if (start >= 0) {
+            query = query.offset(start).limit(limit);
+        }
+        query = query.select('bed_id', 'ward_code as wardcode', 'bed_name', db.raw(`CONCAT(ward_code, '-',bed_number) as bed_no`), 'room as roomno', 'bed_status as isactive', db.raw(`
+            CASE 
+                WHEN std_type = 2 THEN 'ICU'
+                WHEN std_type = 3 THEN 'SEMIICU'
+                WHEN std_type = 4 THEN 'STROKE'
+                WHEN bed_type = 2 THEN 'S'
+                WHEN bed_type = 5 THEN 'CLIP'
+                ELSE 'N'
+            END as bed_type
+        `))
+            .where('bed_status', 1);
+        if (bedno) {
+            query = query.whereRaw(`CONCAT(ward_code, '-',bed_number) = ?`, bedno);
+        }
+        return await query;
     }
     sumReferIn(db, dateStart, dateEnd) {
         return db('opd_visit as visit')

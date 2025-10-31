@@ -123,22 +123,39 @@ export const sendWardName = async () => {
 }
 
 export const sendBedNo = async () => {
+  let result: any;
+  let countBed = 0;
   try {
-    let rows: any = await hisModel.getBedNo(db);
-    if (rows && rows.length) {
-      rows = rows.map(v => {
-        return {
-          ...v, hospcode: hospcode,
-          hcode5: hospcode.length == 5 ? hospcode : null,
-          hcode9: hospcode.length == 9 ? hospcode : null
-        };
-      });
-      const result: any = await sendingToMoph('/save-bed-no', rows);
-      console.log(moment().format('HH:mm:ss'), 'sendBedNo', result.status || '', result.message || '', rows.length);
-      return result;
-    } else {
-      return { statusCode: 200, message: 'No bed no data' };
+    if (typeof hisModel.countBedNo === 'function') {
+      result = await hisModel.countBedNo(db);
+      countBed = result?.total_bed || 0;
     }
+
+    let error = '';
+    let times = 0;
+    let startRow = countBed < 500 ? -1 : 0; // น้อยกว่า 500 แถว ส่งครั้งเดียว
+    const limitRow = 500;
+    let sentResult = [];
+    do {
+      let rows: any = await hisModel.getBedNo(db, null, startRow, limitRow);
+      if (rows && rows.length) {
+        rows = rows.map(v => {
+          return {
+            ...v, hospcode: hospcode,
+            hcode5: hospcode.length == 5 ? hospcode : null,
+            hcode9: hospcode.length == 9 ? hospcode : null
+          };
+        });
+        result = await sendingToMoph('/save-bed-no', rows);
+        if (result?.status != 200 && result?.statusCode != 200) {
+          error = result?.message || result?.status || result?.statusCode || null;
+        }
+        sentResult.push({ startRow, limitRow, rows: rows.length, result });
+      }
+      startRow += limitRow;
+      times++;
+    } while (startRow < countBed && countBed != 0);
+    console.log(moment().format('HH:mm:ss'), `sendBedNo ${countBed} rows (${times})`, error);
   } catch (error) {
     console.log(moment().format('HH:mm:ss'), 'getBedNo error', error.message);
     return { statusCode: error.status || 500, message: error.message || error };
@@ -215,4 +232,8 @@ export const erpAdminRequest = async () => {
     console.log(moment().format('HH:mm:ss'), 'API Alive error', error.message);
     return [];
   }
+}
+
+function getCode9(hcode: string = hospcode) {
+
 }

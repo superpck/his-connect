@@ -2,6 +2,8 @@
 ## Feature
   - แก้ไข SQL สำหรับ HospitalOS กรณี return 204 และ 413
   - เพิ่มการกรอง bedno ให้ select เฉพาะ ward active
+  - เพิ่มการตรวจสอบทะเบียนเตียง เพื่อส่งครั้งละ 500
+  - เพิ่ม model ว่างๆ สำหรับ HI, HimPro, Mitnet, E-PIS
 
 # 3.8.12
 ## Feature

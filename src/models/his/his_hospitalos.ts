@@ -1766,6 +1766,12 @@ export class HisHospitalOsModel {
             .orderBy('visit_ward_number')
             .limit(maxLimit);
     }
+
+    countBedNo(db: Knex) {
+        return db('b_visit_bed as bed').count('bed.bed_number as total_bed')
+            .leftJoin('b_visit_ward as ward', 'bed.b_visit_ward_id', 'ward.b_visit_ward_id')
+            .where({ 'bed.active': '1', 'ward.visit_ward_active': '1' }).first();
+    }
     getBedNo(db: Knex, bedno: any = null) {
         const clientType = (db.client?.config?.client || '').toLowerCase();
         const createQueryConcat = (wardCode: string, bedNumber: string): any => {
@@ -1783,13 +1789,6 @@ export class HisHospitalOsModel {
             }
         };
         const BedNnumberSql = createQueryConcat('ward.visit_ward_number', 'bed.bed_number');
-        /*
-        , (ward.visit_ward_number:: text || '-' || bed.bed_number::text) as bedno
-        , bed.b_visit_ward_id , ward.visit_ward_active 
-        , ward.visit_ward_number as wardcode, ward.visit_ward_description as wardname
-        , room.room_number as roomno, room.description as roomname
-        */
-
         let sql = db('b_visit_bed as bed')
             .leftJoin('b_visit_room as room', 'bed.b_visit_room_id', 'room.b_visit_room_id')
             .leftJoin('b_visit_ward as ward', 'bed.b_visit_ward_id', 'ward.b_visit_ward_id')
@@ -1807,7 +1806,7 @@ export class HisHospitalOsModel {
                             ELSE 'N'
                         END as bed_type
                     `)
-            ).where({'bed.active': '1', 'ward.visit_ward_active': '1'});
+            ).where({ 'bed.active': '1', 'ward.visit_ward_active': '1' });
         if (bedno) {
             sql = sql.where('bedno', bedno);
         }

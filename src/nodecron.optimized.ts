@@ -317,12 +317,11 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
 
   // Initial tasks on first process
   if (processState.isFirstProcess) {
-    // sendBedOccupancy('2025-10-01');
     updateAlive();
     sendWardName();
     sendBedNo();
-    // sendBedOccupancy();
   }
+  
   // Schedule cron job
   let minuteCount = 0;
   cron.schedule(timingSch, async (req: any, res: any) => {

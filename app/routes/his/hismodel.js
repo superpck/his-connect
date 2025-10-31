@@ -9,7 +9,6 @@ const his_jhcis_1 = require("../../models/his/his_jhcis");
 const his_md_1 = require("../../models/his/his_md");
 const his_kpstat_1 = require("../../models/his/his_kpstat");
 const his_mkhospital_1 = require("../../models/his/his_mkhospital");
-const his_1 = require("../../models/his/his");
 const his_nemo_1 = require("../../models/his/his_nemo");
 const his_pmk_1 = require("../../models/his/his_pmk");
 const his_mypcu_1 = require("../../models/his/his_mypcu");
@@ -18,8 +17,11 @@ const his_haos_1 = require("../../models/his/his_haos");
 const his_ssb_srih_1 = require("../../models/his/his_ssb_srih");
 const his_homc_1 = require("../../models/his/his_homc");
 const his_hospitalos_1 = require("../../models/his/his_hospitalos");
-const his_himpro_model_1 = require("../../models/isonline/his_himpro.model");
-const his_hi_model_1 = require("../../models/isonline/his_hi.model");
+const his_mitnet_1 = require("../../models/his/his_mitnet");
+const his_1 = require("../../models/his/his");
+const his_hi_1 = require("../../models/his/his_hi");
+const his_himpro_1 = require("../../models/his/his_himpro");
+const his_epis_1 = require("../../models/his/his_epis");
 console.log('HIS Provider:', process.env.HIS_PROVIDER);
 const hisProvider = (process.env.HIS_PROVIDER || 'unknown-his').toLowerCase();
 let hisModel;
@@ -55,10 +57,10 @@ switch (hisProvider) {
         hisModel = new his_homc_1.HisHomCHModel();
         break;
     case 'hi':
-        hisModel = new his_hi_model_1.HisHiModel();
+        hisModel = new his_hi_1.HisHiModel();
         break;
     case 'himpro':
-        hisModel = new his_himpro_model_1.HisHimproModel();
+        hisModel = new his_himpro_1.HisHimproModel();
         break;
     case 'jhcis':
         hisModel = new his_jhcis_1.HisJhcisModel();
@@ -86,6 +88,12 @@ switch (hisProvider) {
     case 'spdc':
     case 'kpstat':
         hisModel = new his_kpstat_1.HisKpstatModel();
+        break;
+    case 'mitnet':
+        hisModel = new his_mitnet_1.HisMitnetModel();
+        break;
+    case 'epis':
+        hisModel = new his_epis_1.HisEPisModel();
         break;
     default:
         hisModel = new his_1.HisModel();

@@ -13,7 +13,6 @@ import { HisJhcisModel } from '../../models/his/his_jhcis';
 import { HisMdModel } from '../../models/his/his_md';
 import { HisKpstatModel } from '../../models/his/his_kpstat';
 import { HisMkhospitalModel } from '../../models/his/his_mkhospital';
-import { HisModel } from '../../models/his/his';
 import { HisNemoModel } from '../../models/his/his_nemo';
 import { HisPmkModel } from '../../models/his/his_pmk';
 import { HisMyPcuModel } from '../../models/his/his_mypcu';
@@ -22,8 +21,11 @@ import { HisHaosModel } from '../../models/his/his_haos';
 import { HisSsbSriHModel } from '../../models/his/his_ssb_srih';
 import { HisHomCHModel } from '../../models/his/his_homc';
 import { HisHospitalOsModel } from '../../models/his/his_hospitalos';
-import { HisHimproModel } from '../../models/isonline/his_himpro.model';
-import { HisHiModel } from '../../models/isonline/his_hi.model';
+import { HisMitnetModel } from '../../models/his/his_mitnet';
+import { HisModel } from '../../models/his/his';
+import { HisHiModel } from '../../models/his/his_hi';
+import { HisHimproModel } from '../../models/his/his_himpro';
+import { HisEPisModel } from '../../models/his/his_epis';
 
 console.log('HIS Provider:', process.env.HIS_PROVIDER);
 const hisProvider = (process.env.HIS_PROVIDER || 'unknown-his').toLowerCase();
@@ -93,6 +95,12 @@ switch (hisProvider) {
   case 'spdc':
   case 'kpstat':
     hisModel = new HisKpstatModel();
+    break;
+  case 'mitnet':
+    hisModel = new HisMitnetModel();
+    break;
+  case 'epis':
+    hisModel = new HisEPisModel();
     break;
   default:
     hisModel = new HisModel();

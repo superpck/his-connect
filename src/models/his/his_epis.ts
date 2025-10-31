@@ -3,7 +3,7 @@ const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
 
-export class HisModel {
+export class HisEPisModel {
   check() {
     return true;
   }
