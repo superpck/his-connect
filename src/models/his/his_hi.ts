@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
 const maxLimit = 250;
+const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
 
 export class HisHiModel {
@@ -188,13 +189,13 @@ export class HisHiModel {
         db.raw(`ltrim(substring(iptadm.bedno, 2, 20)) as bedno`)
         , db.raw(`ifnull(iptadm.bedtype, '-') as bedtype`)
         , db.raw(`ifnull(bedtype.namebedtyp,'-') as bedtype_name`)
-        , '1 as roomno'
+        , `'-' as roomno`
         , 'ipt.ward as wardcode'
         , 'idpm.nameidpm as wardname'
         , 'idpm.is_active as isactive'
         , db.raw(`ifnull(bedtype.type_code, 'N') as bed_type`)
         , db.raw(`if(length(idpm.export_code) = 6, idpm.export_code, concat(idpm.export_code,bedtype.export_code)) as std_code`)
-        , '1 as bed_status_type_id'
+        , `'1' as bed_status_type_id`
         , `'active' as bed_status_type_name`
       );
   }
