@@ -43,7 +43,7 @@ class HisIHospitalModel {
             .limit(maxLimit);
     }
     getWard(db, wardCode = '', wardName = '') {
-        let sql = db('lib_ward');
+        let sql = db('lib_ward').where('code', '!=', 0);
         if (wardCode) {
             sql.where('code', wardCode);
         }
@@ -479,17 +479,17 @@ class HisIHospitalModel {
         if (start >= 0) {
             query = query.offset(start).limit(limit);
         }
-        query = query.select('bed_id', 'ward_code as wardcode', 'bed_name', db.raw(`CONCAT(ward_code, '-',bed_number) as bed_no`), 'room as roomno', 'bed_status as isactive', db.raw(`
+        query = query.select('bed_id', 'ward_code as wardcode', 'bed_name', db.raw(`CONCAT(ward_code, '-',bed_number) as bedno`), 'room as roomno', 'bed_status as isactive', db.raw(`
             CASE 
                 WHEN std_type = 2 THEN 'ICU'
                 WHEN std_type = 3 THEN 'SEMIICU'
                 WHEN std_type = 4 THEN 'STROKE'
                 WHEN bed_type = 2 THEN 'S'
                 WHEN bed_type = 5 THEN 'CLIP'
+                WHEN bed_name LIKE '%รอคลอด%' THEN 'LR'
                 ELSE 'N'
             END as bed_type
-        `))
-            .where('bed_status', 1);
+        `)).where('bed_status', 1);
         if (bedno) {
             query = query.whereRaw(`CONCAT(ward_code, '-',bed_number) = ?`, bedno);
         }
