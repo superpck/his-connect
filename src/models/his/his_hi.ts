@@ -9,7 +9,8 @@ export class HisHiModel {
   }
 
   async testConnect(db: Knex) {
-    return { connection: true };
+    const patient = await db('ipt').first();
+    return { connection: patient ? true : false };
   }
 
   // รหัสห้องตรวจ
@@ -23,10 +24,10 @@ export class HisHiModel {
     if (wardCode) {
       sql.where('idpm', wardCode);
     } else if (wardName) {
-      sql.whereLike('idpmname', `%${wardName}%`)
+      sql.whereLike('nameidpm', `%${wardName}%`)
     }
     return sql
-      .select('idpm as wardcode', 'idpmname as wardname',
+      .select('idpm as wardcode', 'nameidpm as wardname',
         `export_code as std_code`, 'bed_std as bed_normal',
         'is_active as isactive'
       )
@@ -188,14 +189,13 @@ export class HisHiModel {
         db.raw(`ltrim(substring(iptadm.bedno, 2, 20)) as bedno`)
         , db.raw(`ifnull(iptadm.bedtype, '-') as bedtype`)
         , db.raw(`ifnull(bedtype.namebedtyp,'-') as bedtype_name`)
-        , '1 as roomno'
+        , db.raw(`'-' as roomno`)
         , 'ipt.ward as wardcode'
         , 'idpm.nameidpm as wardname'
         , 'idpm.is_active as isactive'
         , db.raw(`ifnull(bedtype.type_code, 'N') as bed_type`)
         , db.raw(`if(length(idpm.export_code) = 6, idpm.export_code, concat(idpm.export_code,bedtype.export_code)) as std_code`)
-        , '1 as bed_status_type_id'
-        , `'active' as bed_status_type_name`
+        , db.raw(`'1' as bed_status_type_id, 'active' as bed_status_type_name`)
       );
   }
 
