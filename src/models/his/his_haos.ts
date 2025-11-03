@@ -9,10 +9,11 @@ export class HisHaosModel {
         return true;
     }
 
-    testConnect(db: Knex) {
-        return db('patient').select('hn').limit(1)
+    async testConnect(db: Knex) {
+        const patient = await db('patient').first();
+        return { connection: patient ? true : false };
     }
-
+ 
     getTableName(db: Knex, dbName = process.env.HIS_DB_NAME) {
         return db('information_schema.tables')
             .select('table_name')
