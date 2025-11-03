@@ -8,7 +8,8 @@ export class HisHiModel {
   }
 
   async testConnect(db: Knex) {
-    return { connection: true };
+    const patient = await db('ipt').first();
+    return { connection: patient ? true : false };
   }
 
   // รหัสห้องตรวจ
