@@ -28,9 +28,11 @@ export class HisHiModel {
     }
     return sql
       .select('idpm as wardcode', 'nameidpm as wardname',
-        `export_code as std_code`, 'bed_std as bed_normal',
+        `export_code as std_code`, 'bed_normal', 'bed_sp', 'bed_icu',
         'is_active as isactive'
       )
+      .where(db.raw(`is_active = '1'`))
+      .andWhere(db.raw(`idpm <> ''`))
       .orderBy('idpm')
       .limit(maxLimit);
   }
@@ -189,13 +191,12 @@ export class HisHiModel {
         db.raw(`ltrim(substring(iptadm.bedno, 2, 20)) as bedno`)
         , db.raw(`ifnull(iptadm.bedtype, '-') as bedtype`)
         , db.raw(`ifnull(bedtype.namebedtyp,'-') as bedtype_name`)
-        , db.raw(`'-' as roomno`)
+        , `'-' as roomno`
         , 'ipt.ward as wardcode'
         , 'idpm.nameidpm as wardname'
         , 'idpm.is_active as isactive'
         , db.raw(`ifnull(bedtype.type_code, 'N') as bed_type`)
-        , db.raw(`if(length(idpm.export_code) = 6, idpm.export_code, concat(idpm.export_code,bedtype.export_code)) as std_code`)
-        , db.raw(`'1' as bed_status_type_id, 'active' as bed_status_type_name`)
+        , db.raw(`if(bedtype.export_code is null, idpm.export_code, concat(substr(idpm.export_code,1,3),bedtype.export_code)) as std_code`)
       );
   }
 
@@ -219,14 +220,15 @@ export class HisHiModel {
         db.raw(`count(case when dchdate = ? then an end) as discharge`, [date]),
         db.raw(`count(case when dchstts in (8,9) then an end) as death`),
         db.raw(`
-      count(
-        case 
-          when rgtdate <= ? 
-          and (dchdate > ? or dchdate = '0000-00-00') 
-          then an 
-        end
-      ) as cases
-    `, [date, date])
+            count(
+              case 
+                when rgtdate <= ? 
+                and (dchdate > ? or dchdate = '0000-00-00') 
+                then an 
+              end
+            ) as cases
+    `, [date, date]),
+        db.raw(`sum(timestampdiff(day, rgtdate, ?) + 1) as los`, [date])
       )
       .groupBy('ipt.ward');
   }
@@ -245,20 +247,21 @@ export class HisHiModel {
         db.raw(`count(case when dchdate = ? then an end) as discharge`, [date]),
         db.raw(`count(case when dchstts in (8,9) then an end) as death`),
         db.raw(`
-      count(
-        case 
-          when rgtdate <= ? 
-          and (dchdate > ? or dchdate = '0000-00-00') 
-          then an 
-        end
-      ) as cases
-    `, [date, date])
+          count(
+            case 
+              when rgtdate <= ? 
+              and (dchdate > ? or dchdate = '0000-00-00') 
+              then an 
+            end
+          ) as cases
+        `, [date, date]),
+        db.raw(`sum(timestampdiff(day, rgtdate, ?) + 1) as los`, [date])
       )
       .groupBy('ipt.dept');
   }
 
   concurrentIPDByClinic(db: Knex, date: any) {
-        return db('ipt')
+    return db('ipt')
       .leftJoin('spclty', 'ipt.dept', 'spclty.spclty')
       .where('ipt.rgtdate', '<=', date)
       .andWhere(function () {
@@ -272,18 +275,32 @@ export class HisHiModel {
         db.raw(`count(case when dchdate = ? then an end) as discharge`, [date]),
         db.raw(`count(case when dchstts in (8,9) then an end) as death`),
         db.raw(`
-      count(
-        case 
-          when rgtdate <= ? 
-          and (dchdate > ? or dchdate = '0000-00-00') 
-          then an 
-        end
-      ) as cases
-    `, [date, date])
+          count(
+            case 
+              when rgtdate <= ? 
+              and (dchdate > ? or dchdate = '0000-00-00') 
+              then an 
+            end
+          ) as cases
+        `, [date, date]),
+        db.raw(`sum(timestampdiff(day, rgtdate, ?) + 1) as los`, [date])
       )
       .groupBy('ipt.dept');
   }
   sumOpdVisitByClinic(db: Knex, date: any) {
-    return [];
+    return db('ovst as visit')
+      .innerJoin('cln', 'visit.cln', 'cln.cln')
+      .innerJoin('spclty as spec', 'cln.specialty', 'spec.spclty')
+      .where(db.raw('date(visit.vstdttm)'), date)
+      .select('cln.specialty as cliniccode', 'spec.namespclty as clinicname',
+        db.raw(`COUNT(visit.vn) as cases`),
+        db.raw(`COUNT(
+          CASE 
+            WHEN visit.an > 0 THEN visit.an  
+          END
+        ) AS admit`)
+      )
+      .groupBy('cln.specialty')
+      .orderBy('cln.specialty');
   }
 }
