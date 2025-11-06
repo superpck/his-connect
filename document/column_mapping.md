@@ -403,14 +403,48 @@
 | `COUNT(referin.vn)` | `cases` | จำนวนผู้ป่วย refer in |
 
 ## concurrentIPDByWard
-คอลัมน์หลัก: `wardcode`, `wardname`, `new_case`, `discharge`, `death`, `cases` (ค่ารวมคงอยู่)
+คอลัมน์:
+| column | type | describe |
+| --- | --- | --- |
+| hospcode | string | รหสัสถานพยาบาล |
+| date | datetime | เวลาที่ประมวลผล |
+| wardcode | string | local code |
+| wardname | string | local name |
+| code_std | string | รหัสตามมาตรฐาน กบรส. |
+| cases | number | คงค้างพยาบาลทั้งหมด (รวม discharge) |
+| new_case | number | รับใหม่ในเวลา |
+| discharge | number | จำหน่ายในเวลา |
+| death | number | เสียชีวิตในเวลา |
+| icu | number | จำนวน case icu |
+| semi | number | จำนวน case semi-icu |
+| homeward | number | จำนวน case homeward |
+| clip | number | จำนวนเด็กแรกเกิด |
 
 ## concurrentIPDByClinic
-คอลัมน์หลัก: `cliniccode`, `clinicname`, `new_case`, `discharge`, `death`, `cases`
+คอลัมน์:
+| column | type | describe |
+| --- | --- | --- |
+| hospcode | string | รหสัสถานพยาบาล |
+| date | datetime | เวลาที่ประมวลผล |
+| cliniccode | string | code ตาม HDC |
+| clinicname | string | name ตาม HDC |
+| cases | number | คงค้างพยาบาลทั้งหมด (รวม discharge) |
+| new_case | number | รับใหม่ในเวลา |
+| discharge | number | จำหน่ายในเวลา |
+| death | number | เสียชีวิตในเวลา |
+| icu | number | จำนวน case icu |
+| semi | number | จำนวน case semi-icu |
+| homeward | number | จำนวน case homeward |
+| clip | number | จำนวนเด็กแรกเกิด |
 
 ## sumOpdVisitByClinic
-คอลัมน์: `date`, `cliniccode`, `clinicname`, `admit`, `cases`
-
-## concurrentIPDByWard_old
-คอลัมน์เหมือน `concurrentIPDByWard` (เวอร์ชันเดิมก่อนรองรับหลายฐานข้อมูล)
+คอลัมน์:
+| column | type | describe |
+| --- | --- | --- |
+| hospcode | string | รหสัสถานพยาบาล |
+| date | datetime | เวลาที่ประมวลผล |
+| cliniccode | string | code ตาม HDC |
+| clinicname | string | name ตาม HDC |
+| cases | number | OPD visit (ไม่รวมไม่รอตรวจ ไม่มาตามนัด) |
+| admit | number | จำนวนสั่ง Admission |
 
