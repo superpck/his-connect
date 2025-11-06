@@ -384,7 +384,7 @@
 | hospcode | string | รหสัสถานพยาบาล |
 | wardcode | string | local code |
 | wardname | string | local name |
-| code_std | string | รหัสตามมาตรฐาน กบรส. |
+| std_code | string | รหัสตามมาตรฐาน กบรส. |
 | bed_normal | number | จำนวนเตียงสามัญ |
 | bed_special | number | จำนวนเตียงพิเศษ |
 | bed_icu | number | จำนวนเตียง ICU |
@@ -398,17 +398,14 @@
 ## getBedNo
 | column | type | describe |
 | --- | --- | --- |
-| `bedno.bedno` | `bedno` | หมายเลขเตียง |
-| `bedno.bedtype` | `bedtype` | รหัสประเภทเตียง |
-| `bedtype.name` | `bedtype_name` | ชื่อประเภทเตียง |
-| `bedno.roomno` | `roomno` | เลขห้อง |
-| `roomno.ward` | `wardcode` | รหัสวอร์ด |
-| `ward.name` | `wardname` | ชื่อวอร์ด |
-| `bedno.export_code` | `std_code` | รหัสส่งออก |
-| `bedno.bed_status_type_id` | `bed_status_type_id` | รหัสสถานะเตียง |
-| `status.bed_status_type_name` | `bed_status_type_name` | ชื่อสถานะเตียง |
-| `CASE WHEN ward.ward_active = 'Y' THEN 1 ELSE 0 END` | `isactive` | สถานะใช้งานวอร์ด |
-| เงื่อนไขชื่อเตียง | `bed_type` | จัดกลุ่มเตียง (N/S/ICU/LR/HW) |
+| bedno | string | หมายเลขเตียง |
+| bedtype | string | รหัสประเภทเตียง |
+| bedtype_name | string | ชื่อเตียง |
+| roomno | string | เลขห้อง |
+| wardcode | string | รหัสวอร์ด |
+| wardname | string | ชื่อวอร์ด |
+| std_code | string | รหัสตามมาตรฐาน กบรส. |
+| bed_type | string | จัดกลุ่มเตียง (N/S/ICU/LR/HW) กรณีไม่สามารถระบุ std_code |
 | isactive | 0, 1 | 1=ใช้งาน |
 
 ## concurrentIPDByWard
@@ -419,7 +416,7 @@
 | date | datetime | เวลาที่ประมวลผล |
 | wardcode | string | local code |
 | wardname | string | local name |
-| code_std | string | รหัสตามมาตรฐาน กบรส. |
+| std_code | string | รหัสตามมาตรฐาน กบรส. |
 | cases | number | คงค้างพยาบาลทั้งหมด (รวม discharge) |
 | new_case | number | รับใหม่ในเวลา |
 | discharge | number | จำหน่ายในเวลา |
