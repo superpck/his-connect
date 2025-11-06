@@ -26,15 +26,6 @@
 | ค่าคงที่ `'-'` | `moph_code` | ค่า placeholder สำหรับรหัสมาตรฐาน |
 | `CASE WHEN LOCATE('ฉุกเฉิน', name) > 0 THEN 1 ELSE 0 END` | `emergency` | Flag ห้องฉุกเฉิน (1=ใช่, 0=ไม่ใช่) |
 
-## getWard
-| Source / Expression | Output Column | หมายเหตุ |
-| --- | --- | --- |
-| `ward.ward` | `wardcode` | รหัสวอร์ด |
-| `ward.name` | `wardname` | ชื่อวอร์ด |
-| `ward.ward_export_code` | `std_code` | รหัสมาตรฐาน (export code) |
-| `ward.bedcount` | `bed_normal` | จำนวนเตียงปกติ |
-| `CASE WHEN ward_active = 'Y' THEN 1 ELSE 0 END` | `isactive` | สถานะการใช้งานวอร์ด |
-
 ## getDr
 | Source / Expression | Output Column | หมายเหตุ |
 | --- | --- | --- |
@@ -401,6 +392,23 @@
 | --- | --- | --- |
 | `referin.refer_date` | `refer_date` | วันที่รับ refer in |
 | `COUNT(referin.vn)` | `cases` | จำนวนผู้ป่วย refer in |
+
+## getWard
+| column | type | describe |
+| --- | --- | --- |
+| hospcode | string | รหสัสถานพยาบาล |
+| wardcode | string | local code |
+| wardname | string | local name |
+| code_std | string | รหัสตามมาตรฐาน กบรส. |
+| bed_normal | number | จำนวนเตียงสามัญ |
+| bed_special | number | จำนวนเตียงพิเศษ |
+| bed_icu | number | จำนวนเตียง ICU |
+| bed_semi | number | จำนวนเตียง Semi ICU |
+| bed_extra | number | จำนวนเตียงเสริม |
+| lr | number | จำนวนเตียงรอคลอด |
+| clip | number | จำนวน Clip เด็ก |
+| homeward | number | จำนวนเตียง homeward |
+| isactive | 0, 1 | 1=ใช้งาน |
 
 ## concurrentIPDByWard
 คอลัมน์:
