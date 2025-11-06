@@ -366,21 +366,6 @@
 ## getData
 ส่งออก: `hospcode` (ค่าคงที่) และทุกคอลัมน์จากตารางที่ระบุ (`select *`)
 
-## getBedNo
-| Source / Expression | Output Column | หมายเหตุ |
-| --- | --- | --- |
-| `bedno.bedno` | `bedno` | หมายเลขเตียง |
-| `bedno.bedtype` | `bedtype` | รหัสประเภทเตียง |
-| `bedtype.name` | `bedtype_name` | ชื่อประเภทเตียง |
-| `bedno.roomno` | `roomno` | เลขห้อง |
-| `roomno.ward` | `wardcode` | รหัสวอร์ด |
-| `ward.name` | `wardname` | ชื่อวอร์ด |
-| `bedno.export_code` | `std_code` | รหัสส่งออก |
-| `bedno.bed_status_type_id` | `bed_status_type_id` | รหัสสถานะเตียง |
-| `status.bed_status_type_name` | `bed_status_type_name` | ชื่อสถานะเตียง |
-| `CASE WHEN ward.ward_active = 'Y' THEN 1 ELSE 0 END` | `isactive` | สถานะใช้งานวอร์ด |
-| เงื่อนไขชื่อเตียง | `bed_type` | จัดกลุ่มเตียง (N/S/ICU/LR/HW) |
-
 ## sumReferOut
 | Source / Expression | Output Column | หมายเหตุ |
 | --- | --- | --- |
@@ -410,6 +395,22 @@
 | homeward | number | จำนวนเตียง homeward |
 | isactive | 0, 1 | 1=ใช้งาน |
 
+## getBedNo
+| column | type | describe |
+| --- | --- | --- |
+| `bedno.bedno` | `bedno` | หมายเลขเตียง |
+| `bedno.bedtype` | `bedtype` | รหัสประเภทเตียง |
+| `bedtype.name` | `bedtype_name` | ชื่อประเภทเตียง |
+| `bedno.roomno` | `roomno` | เลขห้อง |
+| `roomno.ward` | `wardcode` | รหัสวอร์ด |
+| `ward.name` | `wardname` | ชื่อวอร์ด |
+| `bedno.export_code` | `std_code` | รหัสส่งออก |
+| `bedno.bed_status_type_id` | `bed_status_type_id` | รหัสสถานะเตียง |
+| `status.bed_status_type_name` | `bed_status_type_name` | ชื่อสถานะเตียง |
+| `CASE WHEN ward.ward_active = 'Y' THEN 1 ELSE 0 END` | `isactive` | สถานะใช้งานวอร์ด |
+| เงื่อนไขชื่อเตียง | `bed_type` | จัดกลุ่มเตียง (N/S/ICU/LR/HW) |
+| isactive | 0, 1 | 1=ใช้งาน |
+
 ## concurrentIPDByWard
 คอลัมน์:
 | column | type | describe |
@@ -427,6 +428,12 @@
 | semi | number | จำนวน case semi-icu |
 | homeward | number | จำนวน case homeward |
 | clip | number | จำนวนเด็กแรกเกิด |
+
+ตัวอย่าง filter
+ข้อมูลวันที่ 1 ตุลาคม 2568 เวลา 12:00
+dateStart = '2025-10-01 12:00:00'
+dateEnd = '2025-10-01 12:59:59'
+WHERE dateAdmit <= dateStart AND (dateDisc IS NULL OR dateDisc >= dateEnd)
 
 ## concurrentIPDByClinic
 คอลัมน์:
