@@ -4,7 +4,8 @@
   - เพิ่มการกรอง bedno ให้ select เฉพาะ ward active
   - เพิ่มการตรวจสอบทะเบียนเตียง เพื่อส่งครั้งละ 500
   - เพิ่ม model ว่างๆ สำหรับ HI, HimPro, Mitnet, E-PIS
-  - ปรับ Source HIS HI
+  - ปรับ Source HIS: HI
+  - เพิ่ม source HIS: MIT Net
   
 # 3.8.12
 ## Feature

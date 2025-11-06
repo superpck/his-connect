@@ -9,16 +9,48 @@ class HisMitnetModel {
         return true;
     }
     async testConnect(db) {
-        return { connection: true };
+        const row = await db('concurrentIPDByWard').first();
+        return { connection: row ? true : false };
     }
     getDepartment(db, depCode = '', depName = '') {
-        return [];
+        let sql = db('getDepartment');
+        if (depCode) {
+            sql.where('depcode', depCode);
+        }
+        else if (depName) {
+            sql.whereLike('depname', `%${depName}%`);
+        }
+        return sql
+            .select('*')
+            .orderBy('depcode')
+            .limit(maxLimit);
     }
     getWard(db, wardCode = '', wardName = '') {
-        return [];
+        let sql = db('getWard');
+        if (wardCode) {
+            sql.where('wardcode', wardCode);
+        }
+        else if (wardName) {
+            sql.whereLike('wardname', `%${wardName}%`);
+        }
+        return sql
+            .select('*')
+            .orderBy('wardcode')
+            .where('isactive', "1")
+            .limit(maxLimit);
     }
     getDr(db, code, license_no) {
-        return [];
+        let sql = db('getDr');
+        if (code) {
+            sql.where('code', code);
+        }
+        else if (license_no) {
+            sql.where('license_no', license_no);
+        }
+        return sql
+            .select('*')
+            .orderBy('code')
+            .limit(maxLimit);
     }
     async getPerson1(db, columnName, searchText) {
         return [];
@@ -123,25 +155,40 @@ class HisMitnetModel {
         return [];
     }
     countBedNo(db) {
-        return { total_bed: 0 };
+        return db('getWard')
+            .sum('getward.bed_normal as total_bed')
+            .where('getWard.isactive', '1');
     }
     async getBedNo(db, bedno = null, start = -1, limit = 1000) {
-        return [];
+        let sql = db('getbedno')
+            .select('*')
+            .where('getbedno.isactive', '1');
+        if (bedno) {
+            sql = sql.where('getbedno.bedno', bedno);
+        }
+        return sql.orderBy('getbedno.bedno');
     }
     sumReferIn(db, dateStart, dateEnd) {
         return [];
     }
     concurrentIPDByWard(db, date) {
-        return [];
+        return db('concurrentIPDByWard')
+            .select('*')
+            .orderBy('concurrentIPDByWard.wardcode');
     }
     concurrentIPDByClinic_(db, date) {
         return [];
     }
     concurrentIPDByClinic(db, date) {
-        return [];
+        return db('concurrentIPDByClinic')
+            .select('*')
+            .orderBy('concurrentIPDByClinic.cliniccode');
     }
     sumOpdVisitByClinic(db, date) {
-        return [];
+        return db('OpdVisitByClinic')
+            .select('*')
+            .where('OpdVisitByClinic.date', date)
+            .orderBy('OpdVisitByClinic.cliniccode');
     }
 }
 exports.HisMitnetModel = HisMitnetModel;
