@@ -214,6 +214,7 @@ export class HisHiModel {
     const noDate = '0000-00-00';
     return db('ipt')
       .innerJoin('idpm', 'ipt.ward', 'idpm.idpm')
+      .innerJoin('iptadm', 'ipt.an', 'iptadm.an')
       .leftJoin('bedtype', 'iptadm.bedtype', 'bedtype.bedtype')
       .where(db.raw(`concat(ipt.rgtdate,' ',time(ipt.rgttime*100)) <= ?`, [dateEnd]))
       .andWhere('ipt.rgtdate', '>=', dateAdmitLimit)
@@ -236,15 +237,15 @@ export class HisHiModel {
               end
             ) as cases
     `, [dateEnd, dateStart, noDate]),
-        db.raw(`count(case when bedtype.type_code = 'N' then an end) as normal`),
-        db.raw(`count(case when bedtype.type_code = 'S' then an end) as special`),
-        db.raw(`count(case when bedtype.type_code = 'ICU' then an end) as icu`),
-        db.raw(`count(case when bedtype.type_code = 'SEMI' then an end) as semi`),
-        db.raw(`count(case when bedtype.type_code = 'HW' then an end) as homeward`),
-        db.raw(`count(case when bedtype.type_code = 'IMC' then an end) as imc`),
-        db.raw(`count(case when bedtype.type_code = 'LR' then an end) as lr`),
-        db.raw(`count(case when bedtype.type_code = 'STROKE' then an end) as stroke`),
-        db.raw(`count(case when bedtype.type_code = 'BURN' then an end) as burn`),
+        db.raw(`count(case when bedtype.type_code = 'N' then ipt.an end) as normal`),
+        db.raw(`count(case when bedtype.type_code = 'S' then ipt.an end) as special`),
+        db.raw(`count(case when bedtype.type_code = 'ICU' then ipt.an end) as icu`),
+        db.raw(`count(case when bedtype.type_code = 'SEMI' then ipt.an end) as semi`),
+        db.raw(`count(case when bedtype.type_code = 'HW' then ipt.an end) as homeward`),
+        db.raw(`count(case when bedtype.type_code = 'IMC' then ipt.an end) as imc`),
+        db.raw(`count(case when bedtype.type_code = 'LR' then ipt.an end) as lr`),
+        db.raw(`count(case when bedtype.type_code = 'STROKE' then ipt.an end) as stroke`),
+        db.raw(`count(case when bedtype.type_code = 'BURN' then ipt.an end) as burn`),
       )
       .groupBy('ipt.ward');
   }
@@ -286,6 +287,7 @@ export class HisHiModel {
     const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
     const noDate = '0000-00-00';
     return db('ipt')
+      .innerJoin('iptadm', 'ipt.an', 'iptadm.an')
       .leftJoin('spclty', 'ipt.dept', 'spclty.spclty')
       .where(db.raw(`concat(ipt.rgtdate,' ',time(ipt.rgttime*100)) <= ?`, [dateEnd]))
       .andWhere('ipt.rgtdate', '>=', dateAdmitLimit)
@@ -308,15 +310,15 @@ export class HisHiModel {
               end
             ) as cases
     `, [dateEnd, dateStart, noDate]),
-        db.raw(`count(case when bedtype.type_code = 'N' then an end) as normal`),
-        db.raw(`count(case when bedtype.type_code = 'S' then an end) as special`),
-        db.raw(`count(case when bedtype.type_code = 'ICU' then an end) as icu`),
-        db.raw(`count(case when bedtype.type_code = 'SEMI' then an end) as semi`),
-        db.raw(`count(case when bedtype.type_code = 'HW' then an end) as homeward`),
-        db.raw(`count(case when bedtype.type_code = 'IMC' then an end) as imc`),
-        db.raw(`count(case when bedtype.type_code = 'LR' then an end) as lr`),
-        db.raw(`count(case when bedtype.type_code = 'STROKE' then an end) as stroke`),
-        db.raw(`count(case when bedtype.type_code = 'BURN' then an end) as burn`),
+        db.raw(`count(case when bedtype.type_code = 'N' then ipt.an end) as normal`),
+        db.raw(`count(case when bedtype.type_code = 'S' then ipt.an end) as special`),
+        db.raw(`count(case when bedtype.type_code = 'ICU' then ipt.an end) as icu`),
+        db.raw(`count(case when bedtype.type_code = 'SEMI' then ipt.an end) as semi`),
+        db.raw(`count(case when bedtype.type_code = 'HW' then ipt.an end) as homeward`),
+        db.raw(`count(case when bedtype.type_code = 'IMC' then ipt.an end) as imc`),
+        db.raw(`count(case when bedtype.type_code = 'LR' then ipt.an end) as lr`),
+        db.raw(`count(case when bedtype.type_code = 'STROKE' then ipt.an end) as stroke`),
+        db.raw(`count(case when bedtype.type_code = 'BURN' then ipt.an end) as burn`),
 
       )
       .groupBy('ipt.dept');
