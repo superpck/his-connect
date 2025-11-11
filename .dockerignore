@@ -2,3 +2,53 @@ node_modules
 npm-debug.log
 Dockerfile
 .dockerignore
+
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation and markdown (except CHANGELOG.md)
+README.md
+*.md
+!CHANGELOG.md
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage
+.nyc_output
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+
+# Build artifacts from host
+dist
+build
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Misc
+tmp
+temp
+.cache

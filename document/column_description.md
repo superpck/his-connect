@@ -1,10 +1,99 @@
-# Column Mapping (HisHosxpv4Model)
+# Column Description
 
-คู่มือนี้สรุปความสัมพันธ์ระหว่างคอลัมน์ต้นทางในฐานข้อมูล/นิพจน์ที่ใช้ในแต่ละฟังก์ชันของ `HisHosxpv4Model` กับคอลัมน์ที่ถูกส่งออกให้ผู้ใช้งาน พร้อมคำอธิบายสั้น ๆ เพื่อช่วยตรวจสอบความถูกต้องของข้อมูลที่แลกเปลี่ยนกับระบบภายนอก
+คู่มือนี้สรุปความสัมพันธ์ระหว่างคอลัมน์ต้นทางในฐานข้อมูล/นิพจน์ที่ใช้ในแต่ละฟังก์ชัน กับคอลัมน์ที่ถูกส่งออกให้ผู้ใช้งาน พร้อมคำอธิบายสั้น ๆ เพื่อช่วยตรวจสอบความถูกต้องของข้อมูลที่แลกเปลี่ยนกับระบบภายนอก
 
 > หมายเหตุ
 > - หากฟังก์ชันดึงข้อมูลผ่านวิวหรือตารางที่มีการเลือกทุกคอลัมน์ (`select *`) จะระบุเป็นข้อความไว้แทนตารางรายละเอียด
 > - นิพจน์ที่เป็นค่าคงที่หรือคำนวณจะอธิบายสั้น ๆ ในคอลัมน์ “หมายเหตุ”
+
+
+## getWard
+| column | type | describe |
+| --- | --- | --- |
+| hospcode | string | รหสัสถานพยาบาล |
+| wardcode | string | local code |
+| wardname | string | local name |
+| std_code | string | รหัสตามมาตรฐาน กบรส. |
+| bed_normal | number | จำนวนเตียงสามัญ |
+| bed_special | number | จำนวนเตียงพิเศษ |
+| bed_icu | number | จำนวนเตียง ICU |
+| bed_semi | number | จำนวนเตียง Semi ICU |
+| bed_stroke | number | จำนวนเตียง Stroke |
+| bed_burn | number | จำนวนเตียง Semi Burn |
+| bed_minithanyaruk | number | จำนวนเตียงมินิธนารักษ์ |
+| bed_extra | number | จำนวนเตียงเสริม |
+| lr | number | จำนวนเตียงรอคลอด |
+| clip | number | จำนวน Clip เด็ก |
+| homeward | number | จำนวนเตียง homeward |
+| isactive | 0, 1 | 1=ใช้งาน |
+
+## getBedNo
+| column | type | describe |
+| --- | --- | --- |
+| bedno | string | หมายเลขเตียง |
+| bedtype | string | รหัสประเภทเตียง |
+| bedtype_name | string | ชื่อเตียง |
+| roomno | string | เลขห้อง |
+| wardcode | string | รหัสวอร์ด |
+| wardname | string | ชื่อวอร์ด |
+| std_code | string | รหัสตามมาตรฐาน กบรส. |
+| bed_type | string | จัดกลุ่มเตียง (N/S/ICU/LR/HW) กรณีไม่สามารถระบุ std_code |
+| isactive | 0, 1 | 1=ใช้งาน |
+
+## concurrentIPDByWard
+คอลัมน์:
+| column | type | describe |
+| --- | --- | --- |
+| hospcode | string | รหสัสถานพยาบาล |
+| date | datetime | เวลาที่ประมวลผล |
+| wardcode | string | local code |
+| wardname | string | local name |
+| std_code | string | รหัสตามมาตรฐาน กบรส. |
+| cases | number | คงค้างพยาบาลทั้งหมด (รวม discharge ในเวลา) |
+| new_case | number | รับใหม่ในเวลา |
+| discharge | number | จำหน่ายในเวลา |
+| death | number | เสียชีวิตในเวลา |
+| icu | number | จำนวน case icu |
+| semi | number | จำนวน case semi-icu |
+| homeward | number | จำนวน case homeward |
+| clip | number | จำนวนเด็กแรกเกิด |
+
+ตัวอย่าง filter
+| ข้อมูลวันที่ 1 ตุลาคม 2568 เวลา 12:00
+| dateStart = '2025-10-01 12:00:00'
+| dateEnd = '2025-10-01 12:59:59'
+| WHERE dateAdmit <= dateStart AND (dateDisc IS NULL OR dateDisc >= dateEnd)
+
+## concurrentIPDByClinic
+คอลัมน์:
+| column | type | describe |
+| --- | --- | --- |
+| hospcode | string | รหสัสถานพยาบาล |
+| date | datetime | เวลาที่ประมวลผล |
+| cliniccode | string | code ตาม HDC |
+| clinicname | string | name ตาม HDC |
+| cases | number | คงค้างพยาบาลทั้งหมด (รวม discharge) |
+| new_case | number | รับใหม่ในเวลา |
+| discharge | number | จำหน่ายในเวลา |
+| death | number | เสียชีวิตในเวลา |
+| icu | number | จำนวน case icu |
+| semi | number | จำนวน case semi-icu |
+| homeward | number | จำนวน case homeward |
+| clip | number | จำนวนเด็กแรกเกิด |
+
+## sumOpdVisitByClinic
+คอลัมน์:
+| column | type | describe |
+| --- | --- | --- |
+| hospcode | string | รหสัสถานพยาบาล |
+| date | datetime | เวลาที่ประมวลผล |
+| cliniccode | string | code ตาม HDC |
+| clinicname | string | name ตาม HDC |
+| cases | number | OPD visit (ไม่รวมไม่รอตรวจ ไม่มาตามนัด) |
+| admit | number | จำนวนสั่ง Admission |
+
+
+
 
 ## testConnect
 | Source / Expression | Output Column | หมายเหตุ |
@@ -25,15 +114,6 @@
 | `clinic.name` | `department_name` | ชื่อห้องตรวจ |
 | ค่าคงที่ `'-'` | `moph_code` | ค่า placeholder สำหรับรหัสมาตรฐาน |
 | `CASE WHEN LOCATE('ฉุกเฉิน', name) > 0 THEN 1 ELSE 0 END` | `emergency` | Flag ห้องฉุกเฉิน (1=ใช่, 0=ไม่ใช่) |
-
-## getWard
-| Source / Expression | Output Column | หมายเหตุ |
-| --- | --- | --- |
-| `ward.ward` | `wardcode` | รหัสวอร์ด |
-| `ward.name` | `wardname` | ชื่อวอร์ด |
-| `ward.ward_export_code` | `std_code` | รหัสมาตรฐาน (export code) |
-| `ward.bedcount` | `bed_normal` | จำนวนเตียงปกติ |
-| `CASE WHEN ward_active = 'Y' THEN 1 ELSE 0 END` | `isactive` | สถานะการใช้งานวอร์ด |
 
 ## getDr
 | Source / Expression | Output Column | หมายเหตุ |
@@ -375,21 +455,6 @@
 ## getData
 ส่งออก: `hospcode` (ค่าคงที่) และทุกคอลัมน์จากตารางที่ระบุ (`select *`)
 
-## getBedNo
-| Source / Expression | Output Column | หมายเหตุ |
-| --- | --- | --- |
-| `bedno.bedno` | `bedno` | หมายเลขเตียง |
-| `bedno.bedtype` | `bedtype` | รหัสประเภทเตียง |
-| `bedtype.name` | `bedtype_name` | ชื่อประเภทเตียง |
-| `bedno.roomno` | `roomno` | เลขห้อง |
-| `roomno.ward` | `wardcode` | รหัสวอร์ด |
-| `ward.name` | `wardname` | ชื่อวอร์ด |
-| `bedno.export_code` | `std_code` | รหัสส่งออก |
-| `bedno.bed_status_type_id` | `bed_status_type_id` | รหัสสถานะเตียง |
-| `status.bed_status_type_name` | `bed_status_type_name` | ชื่อสถานะเตียง |
-| `CASE WHEN ward.ward_active = 'Y' THEN 1 ELSE 0 END` | `isactive` | สถานะใช้งานวอร์ด |
-| เงื่อนไขชื่อเตียง | `bed_type` | จัดกลุ่มเตียง (N/S/ICU/LR/HW) |
-
 ## sumReferOut
 | Source / Expression | Output Column | หมายเหตุ |
 | --- | --- | --- |
@@ -401,16 +466,4 @@
 | --- | --- | --- |
 | `referin.refer_date` | `refer_date` | วันที่รับ refer in |
 | `COUNT(referin.vn)` | `cases` | จำนวนผู้ป่วย refer in |
-
-## concurrentIPDByWard
-คอลัมน์หลัก: `wardcode`, `wardname`, `new_case`, `discharge`, `death`, `cases` (ค่ารวมคงอยู่)
-
-## concurrentIPDByClinic
-คอลัมน์หลัก: `cliniccode`, `clinicname`, `new_case`, `discharge`, `death`, `cases`
-
-## sumOpdVisitByClinic
-คอลัมน์: `date`, `cliniccode`, `clinicname`, `admit`, `cases`
-
-## concurrentIPDByWard_old
-คอลัมน์เหมือน `concurrentIPDByWard` (เวอร์ชันเดิมก่อนรองรับหลายฐานข้อมูล)
 

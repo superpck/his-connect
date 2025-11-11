@@ -8,8 +8,9 @@ class HisHaosModel {
     check() {
         return true;
     }
-    testConnect(db) {
-        return db('patient').select('hn').limit(1);
+    async testConnect(db) {
+        const patient = await db('patient').first();
+        return { connection: patient ? true : false };
     }
     getTableName(db, dbName = process.env.HIS_DB_NAME) {
         return db('information_schema.tables')

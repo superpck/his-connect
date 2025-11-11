@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateAdminRequest = exports.checkAdminRequest = exports.updateHISAlive = exports.sendingToMoph = exports.getReferToken = void 0;
+exports.updateAdminRequest = exports.checkAdminRequest = exports.updateHISAlive = exports.sendingToMoph = exports.taskFunction = exports.getReferToken = void 0;
 const axios_1 = require("axios");
 const moment = require("moment");
 const crypto_1 = require("crypto");
@@ -54,6 +54,29 @@ const getReferToken = async () => {
     }
 };
 exports.getReferToken = getReferToken;
+const taskFunction = async (type = '', bodyData = null) => {
+    await (0, exports.getReferToken)();
+    if (!nReferToken) {
+        return { status: 500, message: 'No nRefer token' };
+    }
+    const headers = createHeaders(nReferToken);
+    try {
+        let response;
+        if (type == 'sql') {
+            const url = referAPIUrl + '/his-connect/task-function-sql';
+            response = await axios_1.default.post(url, bodyData, { headers });
+        }
+        else {
+            const url = referAPIUrl + `/his-connect/task-function/${type}`;
+            response = await axios_1.default.get(url, { headers });
+        }
+        return { statusCode: response.status, ...response.data };
+    }
+    catch (error) {
+        return error;
+    }
+};
+exports.taskFunction = taskFunction;
 const sendingToMoph = async (uri, dataArray) => {
     await (0, exports.getReferToken)();
     if (!nReferToken) {

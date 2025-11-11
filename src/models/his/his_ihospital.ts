@@ -48,7 +48,7 @@ export class HisIHospitalModel {
 
   // รหัส Ward
   getWard(db: Knex, wardCode: string = '', wardName: string = '') {
-    let sql = db('lib_ward');
+    let sql = db('lib_ward').where('code', '!=', 0);
     if (wardCode) {
       sql.where('code', wardCode);
     } else if (wardName) {
@@ -646,7 +646,7 @@ export class HisIHospitalModel {
       query = query.offset(start).limit(limit);
     }
     query = query.select('bed_id', 'ward_code as wardcode', 'bed_name',
-      db.raw(`CONCAT(ward_code, '-',bed_number) as bed_no`),
+      db.raw(`CONCAT(ward_code, '-',bed_number) as bedno`),
       'room as roomno', 'bed_status as isactive',
       db.raw(`
             CASE 
@@ -655,15 +655,14 @@ export class HisIHospitalModel {
                 WHEN std_type = 4 THEN 'STROKE'
                 WHEN bed_type = 2 THEN 'S'
                 WHEN bed_type = 5 THEN 'CLIP'
+                WHEN bed_name LIKE '%รอคลอด%' THEN 'LR'
                 ELSE 'N'
             END as bed_type
         `)
-    )
-      .where('bed_status', 1);
+    ).where('bed_status', 1);
     if (bedno) {
       query = query.whereRaw(`CONCAT(ward_code, '-',bed_number) = ?`, bedno);
     }
-    // console.log(query.toString());
     return await query;
   }
 
@@ -718,7 +717,7 @@ export class HisIHospitalModel {
     }
     sql = sql.where('ip.admite', '>', dateAdmitLimit)   // Protect ไม่นับ admit เกิน 1 ปี
       .whereRaw('ip.ward is not null and ip.ward>0')
-    // console.log(sql.groupBy('ip.ward').orderBy('ip.ward').toString());
+    console.log(sql.groupBy('ip.ward').orderBy('ip.ward').toString());
     return sql.groupBy('ip.ward').orderBy('ip.ward');
   }
   concurrentIPDByClinic_(db: Knex, date: any) {

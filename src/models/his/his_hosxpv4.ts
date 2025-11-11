@@ -102,7 +102,44 @@ export class HisHosxpv4Model {
 
     //select รายชื่อเพื่อแสดงทะเบียน refer
     getReferOut(db: Knex, date: any, hospCode = hisHospcode, visitNo: string = null) {
-        // รอปรับ Source ให้ mathch กับ DB
+        // รอปรับ Source ให้ mathch กับ DB เนื่องจาก HIS v.4 pg ใช้คนละ command
+        /*
+                const filter = visitNo ? visitNo : date;
+                const filterText = visitNo ? 'r.vn =?' : 'r.refer_date =?';
+        
+                const sql = `
+                SELECT (SELECT hospitalcode FROM opdconfig ) AS hospcode,
+                    concat(r.refer_date, ' ', r.refer_time) AS refer_date,
+                    r.refer_number AS referid,
+                    case when r.refer_hospcode then r.refer_hospcode else r.hospcode end AS hosp_destination,
+                    r.hn AS PID, r.hn AS hn, pt.cid AS CID, r.vn, r.vn as SEQ,
+                    an_stat.an as AN, pt.pname AS prename,
+                    pt.fname AS fname, r.doctor as dr, doctor.licenseno as provider,
+                    pt.lname AS lname,
+                    pt.birthday AS dob,
+                    pt.sex AS sex, r.referout_emergency_type_id as EMERGENCY, 
+                    r.request_text as REQUEST,
+                    r.pdx AS dx,
+                    case when r.pmh then r.pmh else opdscreen.pmh end as PH,
+                    case when r.hpi then r.hpi else opdscreen.hpi end as PI,
+                    r.treatment_text as PHYSICALEXAM,
+                    r.pre_diagnosis as DIAGLAST,
+                    IF((SELECT count(an) as cc from an_stat WHERE an =r.vn) = 1,r.vn,null) as an
+                FROM
+                    referout r
+                    INNER JOIN patient pt ON pt.hn = r.hn
+                    left join an_stat on r.vn=an_stat.vn
+                    left join opdscreen on r.vn=opdscreen.vn
+                    left join doctor on r.doctor = doctor.code
+                WHERE
+                    ${filterText} and r.vn is not null and r.refer_hospcode!='' and r.refer_hospcode is not null
+                    and r.refer_hospcode != ?
+                ORDER BY
+                    r.refer_date`;
+                const result = await db.raw(sql, [filter, hisHospcode]);
+                return result[0];
+            }
+        */
         return [];
     }
 
@@ -1566,6 +1603,33 @@ export class HisHosxpv4Model {
             .limit(maxLimit);
     }
 
+    // Report Zone
+    sumReferOut(db: Knex, dateStart: any, dateEnd: any) {
+        return db('referout as r')
+            .select('r.refer_date')
+            .count('r.vn as cases')
+            .whereNotNull('r.vn')
+            .whereBetween('r.refer_date', [dateStart, dateEnd])
+            .where('r.refer_hospcode', '!=', "")
+            .whereNotNull('r.refer_hospcode')
+            .where('r.refer_hospcode', '!=', hisHospcode)
+            .groupBy('r.refer_date')
+            .orderBy('r.refer_date');
+    }
+
+    sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
+        return db('referin')
+            .leftJoin('ovst', 'referin.vn', 'ovst.vn')
+            .select('referin.refer_date')
+            .count('referin.vn as cases')
+            .whereBetween('referin.refer_date', [dateStart, dateEnd])
+            .where('referin.refer_hospcode', '!=', hisHospcode)
+            .whereNotNull('referin.refer_hospcode')
+            .whereNotNull('referin.vn')
+            .whereNotNull('ovst.vn')
+            .groupBy('referin.refer_date');
+    }
+
     // MOPH ERP
     countBedNo(db: Knex) {
         return db('bedno').count('bedno.bedno as total_bed')
@@ -1601,32 +1665,6 @@ export class HisHosxpv4Model {
         return sql.orderBy('bedno.bedno');
     }
 
-    // Report Zone
-    sumReferOut(db: Knex, dateStart: any, dateEnd: any) {
-        return db('referout as r')
-            .select('r.refer_date')
-            .count('r.vn as cases')
-            .whereNotNull('r.vn')
-            .whereBetween('r.refer_date', [dateStart, dateEnd])
-            .where('r.refer_hospcode', '!=', "")
-            .whereNotNull('r.refer_hospcode')
-            .where('r.refer_hospcode', '!=', hisHospcode)
-            .groupBy('r.refer_date')
-            .orderBy('r.refer_date');
-    }
-
-    sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
-        return db('referin')
-            .leftJoin('ovst', 'referin.vn', 'ovst.vn')
-            .select('referin.refer_date')
-            .count('referin.vn as cases')
-            .whereBetween('referin.refer_date', [dateStart, dateEnd])
-            .where('referin.refer_hospcode', '!=', hisHospcode)
-            .whereNotNull('referin.refer_hospcode')
-            .whereNotNull('referin.vn')
-            .whereNotNull('ovst.vn')
-            .groupBy('referin.refer_date');
-    }
     concurrentIPDByWard(db: Knex, date: any) {
         const clientType = db.client.config.client;
         let sql = db('ipt')
@@ -1686,38 +1724,6 @@ export class HisHosxpv4Model {
         return sql.groupBy('ipt.ward').orderBy('ipt.ward');
     }
 
-    concurrentIPDByWard_old(db: Knex, date: any) {
-        let sql = db('ipt')
-            .leftJoin('ward', 'ipt.ward', 'ward.ward')
-            .select('ipt.ward as wardcode', 'ward.name as wardname');
-
-        let dischargeDate = date;
-        if (date.length === 10) {       // Process ย้อนหลัง ส่งมาเฉพาะวันที่
-            date = moment(date).format('YYYY-MM-DD');
-            sql = sql.select(
-                db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]),
-                db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]),
-                db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death')
-            )
-                .count('* as cases')
-                .andWhere(function () {
-                    this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', dischargeDate);
-                });
-        } else {    // date ที่ส่งมามีเวลา
-            const dateStart = moment(date).startOf('hour').format('YYYY-MM-DD HH:mm:ss');
-            const dateEnd = moment(date).endOf('hour').format('YYYY-MM-DD HH:mm:ss');
-            sql = sql.select(
-                db.raw('SUM(CASE WHEN CONCAT(ipt.regdate, " ", ipt.regtime) BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case', [dateStart, dateEnd]),
-                db.raw('SUM(CASE WHEN CONCAT(ipt.dchdate, " ", ipt.dchtime) BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge', [dateStart, dateEnd]),
-                db.raw('SUM(CASE WHEN CONCAT(ipt.dchdate, " ", ipt.dchtime) BETWEEN ? AND ? AND ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death', [dateStart, dateEnd]),
-                db.raw('SUM(CASE WHEN ipt.dchdate IS NULL OR CONCAT(ipt.dchdate, " ", ipt.dchtime) BETWEEN ? AND ? THEN 1 ELSE 0 END) AS cases', [dateStart, dateEnd]))
-                .whereRaw('(ipt.dchdate IS NULL OR CONCAT(ipt.dchdate, " ", ipt.dchtime) BETWEEN ? AND ?)', [dateStart, dateEnd]);
-        }
-
-        sql = sql.where('ipt.regdate', '<=', date)
-            .whereRaw('ipt.ward is not null and ipt.ward!= ""');
-        return sql.groupBy(['ipt.ward', 'ward.name']).orderBy('ipt.ward');
-    }
     concurrentIPDByClinic(db: Knex, date: any) {
         date = moment(date).format('YYYY-MM-DD');
         let sql = db('ipt')

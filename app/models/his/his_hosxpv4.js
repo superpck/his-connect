@@ -1357,6 +1357,30 @@ class HisHosxpv4Model {
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
     }
+    sumReferOut(db, dateStart, dateEnd) {
+        return db('referout as r')
+            .select('r.refer_date')
+            .count('r.vn as cases')
+            .whereNotNull('r.vn')
+            .whereBetween('r.refer_date', [dateStart, dateEnd])
+            .where('r.refer_hospcode', '!=', "")
+            .whereNotNull('r.refer_hospcode')
+            .where('r.refer_hospcode', '!=', hisHospcode)
+            .groupBy('r.refer_date')
+            .orderBy('r.refer_date');
+    }
+    sumReferIn(db, dateStart, dateEnd) {
+        return db('referin')
+            .leftJoin('ovst', 'referin.vn', 'ovst.vn')
+            .select('referin.refer_date')
+            .count('referin.vn as cases')
+            .whereBetween('referin.refer_date', [dateStart, dateEnd])
+            .where('referin.refer_hospcode', '!=', hisHospcode)
+            .whereNotNull('referin.refer_hospcode')
+            .whereNotNull('referin.vn')
+            .whereNotNull('ovst.vn')
+            .groupBy('referin.refer_date');
+    }
     countBedNo(db) {
         return db('bedno').count('bedno.bedno as total_bed')
             .leftJoin('roomno', 'bedno.roomno', 'roomno.roomno')
@@ -1383,30 +1407,6 @@ class HisHosxpv4Model {
             sql = sql.where('bedno.bedno', bedno);
         }
         return sql.orderBy('bedno.bedno');
-    }
-    sumReferOut(db, dateStart, dateEnd) {
-        return db('referout as r')
-            .select('r.refer_date')
-            .count('r.vn as cases')
-            .whereNotNull('r.vn')
-            .whereBetween('r.refer_date', [dateStart, dateEnd])
-            .where('r.refer_hospcode', '!=', "")
-            .whereNotNull('r.refer_hospcode')
-            .where('r.refer_hospcode', '!=', hisHospcode)
-            .groupBy('r.refer_date')
-            .orderBy('r.refer_date');
-    }
-    sumReferIn(db, dateStart, dateEnd) {
-        return db('referin')
-            .leftJoin('ovst', 'referin.vn', 'ovst.vn')
-            .select('referin.refer_date')
-            .count('referin.vn as cases')
-            .whereBetween('referin.refer_date', [dateStart, dateEnd])
-            .where('referin.refer_hospcode', '!=', hisHospcode)
-            .whereNotNull('referin.refer_hospcode')
-            .whereNotNull('referin.vn')
-            .whereNotNull('ovst.vn')
-            .groupBy('referin.refer_date');
     }
     concurrentIPDByWard(db, date) {
         const clientType = db.client.config.client;
@@ -1449,29 +1449,6 @@ class HisHosxpv4Model {
         sql = sql.whereNotNull('ipt.ward')
             .whereNot('ipt.ward', '');
         return sql.groupBy('ipt.ward').orderBy('ipt.ward');
-    }
-    concurrentIPDByWard_old(db, date) {
-        let sql = db('ipt')
-            .leftJoin('ward', 'ipt.ward', 'ward.ward')
-            .select('ipt.ward as wardcode', 'ward.name as wardname');
-        let dischargeDate = date;
-        if (date.length === 10) {
-            date = moment(date).format('YYYY-MM-DD');
-            sql = sql.select(db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death'))
-                .count('* as cases')
-                .andWhere(function () {
-                this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', dischargeDate);
-            });
-        }
-        else {
-            const dateStart = moment(date).startOf('hour').format('YYYY-MM-DD HH:mm:ss');
-            const dateEnd = moment(date).endOf('hour').format('YYYY-MM-DD HH:mm:ss');
-            sql = sql.select(db.raw('SUM(CASE WHEN CONCAT(ipt.regdate, " ", ipt.regtime) BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case', [dateStart, dateEnd]), db.raw('SUM(CASE WHEN CONCAT(ipt.dchdate, " ", ipt.dchtime) BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge', [dateStart, dateEnd]), db.raw('SUM(CASE WHEN CONCAT(ipt.dchdate, " ", ipt.dchtime) BETWEEN ? AND ? AND ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death', [dateStart, dateEnd]), db.raw('SUM(CASE WHEN ipt.dchdate IS NULL OR CONCAT(ipt.dchdate, " ", ipt.dchtime) BETWEEN ? AND ? THEN 1 ELSE 0 END) AS cases', [dateStart, dateEnd]))
-                .whereRaw('(ipt.dchdate IS NULL OR CONCAT(ipt.dchdate, " ", ipt.dchtime) BETWEEN ? AND ?)', [dateStart, dateEnd]);
-        }
-        sql = sql.where('ipt.regdate', '<=', date)
-            .whereRaw('ipt.ward is not null and ipt.ward!= ""');
-        return sql.groupBy(['ipt.ward', 'ward.name']).orderBy('ipt.ward');
     }
     concurrentIPDByClinic(db, date) {
         date = moment(date).format('YYYY-MM-DD');

@@ -9,22 +9,51 @@ export class HisMitnetModel {
   }
 
   async testConnect(db: Knex) {
-    return { connection: true };
+    const row = await db('concurrentIPDByWard').first();
+    return { connection: row ? true : false };
   }
 
   // รหัสห้องตรวจ
   getDepartment(db: Knex, depCode: string = '', depName: string = '') {
-    return [];
+  	let sql = db('getDepartment');
+    if (depCode) {
+       sql.where('depcode', depCode);
+    } else if (depName) {
+       sql.whereLike('depname', `%${depName}%`);
+    }
+    return sql
+        .select('*')
+        .orderBy('depcode')
+        .limit(maxLimit);
   }
-
+  
   // รหัส Ward
   getWard(db: Knex, wardCode: string = '', wardName: string = '') {
-    return [];
+    let sql = db('getWard');
+    if (wardCode) {
+       sql.where('wardcode', wardCode);
+    } else if (wardName) {
+       sql.whereLike('wardname', `%${wardName}%`);
+    }
+    return sql
+        .select('*')
+        .orderBy('wardcode')
+		.where('isactive', "1")
+        .limit(maxLimit);
   }
 
   // รายละเอียดแพทย์
   getDr(db: Knex, code: string, license_no: string) {
-    return [];
+    let sql = db('getDr');
+    if (code) {
+       sql.where('code', code);
+    } else if (license_no) {
+		sql.where('license_no', license_no);
+    }
+    return sql
+        .select('*')
+        .orderBy('code')
+        .limit(maxLimit);
   }
 
   async getPerson1(db: Knex, columnName, searchText) {
@@ -159,11 +188,19 @@ export class HisMitnetModel {
 
   // MOPH ERP
   countBedNo(db: Knex) {
-    return { total_bed: 0 };
+     return db('getWard')
+		.sum('getward.bed_normal as total_bed')
+        .where('getWard.isactive', '1');
   }
 
   async getBedNo(db: Knex, bedno: any = null, start = -1, limit: number = 1000) {
-    return [];
+    let sql = db('getbedno')
+    .select('*')
+    .where('getbedno.isactive', '1');
+    if (bedno) {
+      sql = sql.where('getbedno.bedno', bedno);
+    }
+    return sql.orderBy('getbedno.bedno');
   }
 
   // Report zone
@@ -172,15 +209,23 @@ export class HisMitnetModel {
   }
 
   concurrentIPDByWard(db: Knex, date: any) {
-    return [];
+    return db('concurrentIPDByWard')
+		.select('*')
+		.orderBy('concurrentIPDByWard.wardcode');
   }
   concurrentIPDByClinic_(db: Knex, date: any) {
     return [];
   }
   concurrentIPDByClinic(db: Knex, date: any) {
-    return [];
+    return db('concurrentIPDByClinic')
+		.select('*')
+		.orderBy('concurrentIPDByClinic.cliniccode');
+  
   }
   sumOpdVisitByClinic(db: Knex, date: any) {
-    return [];
+	return db('OpdVisitByClinic')
+		.select('*')
+        .where('OpdVisitByClinic.date', date)
+		.orderBy('OpdVisitByClinic.cliniccode');
   }
 }

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.erpAdminRequest = exports.updateAlive = exports.sendBedNo = exports.sendWardName = exports.sendBedOccupancy = void 0;
+exports.erpAdminRequest = exports.updateAlive = exports.sendBedNo = exports.sendWardName = exports.mophErpProcessTask = exports.sendBedOccupancy = void 0;
 const moment = require("moment");
 const moph_refer_1 = require("../middleware/moph-refer");
 const hismodel_1 = require("./../routes/his/hismodel");
@@ -9,6 +9,7 @@ const packageJson = require('../../package.json');
 const dbConnection = require('../plugins/db');
 let db = dbConnection('HIS');
 const hisProvider = process.env.HIS_PROVIDER || '';
+const hisVersion = process.env.HIS_VERSION || '';
 const hospcode = process.env.HOSPCODE || '';
 const sendBedOccupancy = async (dateProcess = null) => {
     let whatUTC = Intl?.DateTimeFormat().resolvedOptions().timeZone || '';
@@ -94,6 +95,40 @@ const sendOpdVisitByClinic = async (date) => {
         return false;
     }
 };
+const mophErpProcessTask = async () => {
+    let result = await (0, moph_refer_1.taskFunction)('MOPH-ERP');
+    result = await (0, moph_refer_1.taskFunction)('sql', {
+        function_name: 'getWard',
+        his_name: hisProvider, his_version: hisVersion || ''
+    });
+    console.log('taskFunction', result);
+    if (result?.statusCode == 200 && result?.row?.sql_string) {
+        const sqlString = result.row.sql_string?.trim();
+        console.log('get ward sql:', sqlString);
+        if (sqlString) {
+            try {
+                let rows;
+                const whereVariables = normalizeSqlWhereVariable(result.row?.sql_where_variable);
+                if (/^db\s*\(/.test(sqlString)) {
+                    let queryBuilder = new Function('db', '"use strict"; return (' + sqlString + ');')(db);
+                    queryBuilder = applyWhereToBuilder(queryBuilder, whereVariables);
+                    console.log('queryBuilder 1:', queryBuilder.toSQL().toNative());
+                    rows = await queryBuilder;
+                }
+                else {
+                    const { sql, bindings } = appendWhereClause(sqlString, whereVariables);
+                    console.log('queryBuilder 2:', db.raw(sql, bindings).toSQL().toNative());
+                    rows = bindings.length ? await db.raw(sql, bindings) : await db.raw(sqlString);
+                }
+                console.log(Array.isArray(rows) ? rows.length : rows);
+            }
+            catch (error) {
+                console.error('execute sql_string error', error.message);
+            }
+        }
+    }
+};
+exports.mophErpProcessTask = mophErpProcessTask;
 const sendWardName = async () => {
     try {
         let rows = await hismodel_1.default.getWard(db);
@@ -197,7 +232,7 @@ const erpAdminRequest = async () => {
                     console.log('ERP admin request get bed no.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
                     await (0, moph_refer_1.updateAdminRequest)({
                         request_id: req.request_id,
-                        status: requestResult.statusCode == 200 || requestResult.status == 200 ? 'success' : `failed ${requestResult.status || requestResult.statusCode || ''}`,
+                        status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
                         isactive: 0
                     });
                 }
@@ -206,7 +241,7 @@ const erpAdminRequest = async () => {
                     console.log('ERP admin request get ward name.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
                     await (0, moph_refer_1.updateAdminRequest)({
                         request_id: req.request_id,
-                        status: requestResult.statusCode == 200 || requestResult.status == 200 ? 'success' : `failed ${requestResult.status || requestResult.statusCode || ''}`,
+                        status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
                         isactive: 0
                     });
                 }
@@ -224,10 +259,62 @@ const erpAdminRequest = async () => {
         return result;
     }
     catch (error) {
-        console.log(moment().format('HH:mm:ss'), 'API Alive error', error.message);
+        console.log(moment().format('HH:mm:ss'), 'Admin Request error', error.message);
         return [];
     }
 };
 exports.erpAdminRequest = erpAdminRequest;
 function getCode9(hcode = hospcode) {
+}
+function normalizeSqlWhereVariable(input) {
+    if (!input) {
+        return {};
+    }
+    if (typeof input === 'string') {
+        try {
+            const parsed = JSON.parse(input);
+            return typeof parsed === 'object' && parsed ? parsed : {};
+        }
+        catch (_error) {
+            return {};
+        }
+    }
+    if (typeof input === 'object') {
+        return input;
+    }
+    return {};
+}
+function applyWhereToBuilder(queryBuilder, whereVariables) {
+    if (!queryBuilder || typeof queryBuilder.where !== 'function') {
+        return queryBuilder;
+    }
+    Object.entries(whereVariables).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === '') {
+            return;
+        }
+        const column = toSnakeCase(key);
+        queryBuilder.where(column, value);
+    });
+    return queryBuilder;
+}
+function appendWhereClause(sqlString, whereVariables) {
+    const activeFilters = Object.entries(whereVariables).filter(([_, value]) => value !== undefined && value !== null && value !== '');
+    if (!activeFilters.length) {
+        return { sql: sqlString, bindings: [] };
+    }
+    const hasWhere = /\bwhere\b/i.test(sqlString);
+    const bindings = [];
+    const conditions = activeFilters.map(([key, value]) => {
+        bindings.push(value);
+        return `${toSnakeCase(key)} = ?`;
+    });
+    const clause = conditions.join(' AND ');
+    const separator = hasWhere ? ' AND ' : ' WHERE ';
+    return { sql: sqlString + separator + clause, bindings };
+}
+function toSnakeCase(value) {
+    if (!value) {
+        return value;
+    }
+    return value.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
 }
