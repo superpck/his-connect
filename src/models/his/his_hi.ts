@@ -225,15 +225,15 @@ export class HisHiModel {
       .select(
         'ipt.ward as wardcode',
         'idpm.nameidpm as wardname',
-        db.raw(`count(case when concat(rgtdate,' ',time(rgttime*100)) between ?  and ? then an end) as new_case`, [dateStart, dateEnd]),
-        db.raw(`count(case when concat(dchdate,' ',time(dchtime*100)) between ?  and ? then an end) as discharge`, [dateStart, dateEnd]),
-        db.raw(`count(case when dchstts in (8,9) and concat(dchdate,' ',time(dchtime*100)) between ?  and ? then an end) as death`, [dateStart, dateEnd]),
+        db.raw(`count(case when concat(rgtdate,' ',time(rgttime*100)) between ?  and ? then ipt.an end) as new_case`, [dateStart, dateEnd]),
+        db.raw(`count(case when concat(dchdate,' ',time(dchtime*100)) between ?  and ? then ipt.an end) as discharge`, [dateStart, dateEnd]),
+        db.raw(`count(case when dchstts in (8,9) and concat(dchdate,' ',time(dchtime*100)) between ?  and ? then ipt.an end) as death`, [dateStart, dateEnd]),
         db.raw(`
             count(
               case 
                 when concat(rgtdate,' ',time(rgttime*100)) <= ? 
                 and (concat(dchdate,' ',time(dchtime*100)) > ? or dchdate = ?) 
-                then an 
+                then ipt.an 
               end
             ) as cases
     `, [dateEnd, dateStart, noDate]),
@@ -249,38 +249,7 @@ export class HisHiModel {
       )
       .groupBy('ipt.ward');
   }
-  /* Not Used
-  concurrentIPDByClinic_(db: Knex, date: any) {
-    const dateAdmitLimit = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
-    const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
-    const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
-    return db('ipt')
-      .leftJoin('spclty', 'ipt.dept', 'spclty.spclty')
-      .where(db.raw(`concat(ipt.rgtdate,' ',time(ipt.rgttime*100)) <= ?`, [dateEnd]))
-      .andWhere('ipt.rgtdate', '>=', dateAdmitLimit)
-      .andWhere(function () {
-        this.where(db.raw(`concat(ipt.dchdate,' ',time(ipt.dchtime*100)) >= ?`, [dateStart]))
-          .orWhere('ipt.dchdate', '0000-00-00');
-      })
-      .select(
-        'ipt.ward as wardcode',
-        'idpm.nameidpm as wardname',
-        db.raw(`count(case when concat(rgtdate,' ',time(rgttime*100)) between ?  and ? then an end) as new_case`, [dateStart, dateEnd]),
-        db.raw(`count(case when concat(dchdate,' ',time(dchtime*100)) between ?  and ? then an end) as discharge`, [dateStart, dateEnd]),
-        db.raw(`count(case when dchstts in (8,9) and concat(dchdate,' ',time(dchtime*100)) between ?  and ? then an end) as death`, [dateStart, dateEnd]),
-        db.raw(`
-            count(
-              case 
-                when concat(rgtdate,' ',time(rgttime*100)) <= ? 
-                and (concat(dchdate,' ',time(dchtime*100)) > ? or dchdate = '0000-00-00') 
-                then an 
-              end
-            ) as cases
-    `, [dateEnd, dateStart]),
-      )
-      .groupBy('ipt.dept');
-  }
-  */
+
   concurrentIPDByClinic(db: Knex, date: any) {
     const dateAdmitLimit = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
     const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
@@ -298,15 +267,15 @@ export class HisHiModel {
       .select(
         'ipt.ward as wardcode',
         'idpm.nameidpm as wardname',
-        db.raw(`count(case when concat(rgtdate,' ',time(rgttime*100)) between ?  and ? then an end) as new_case`, [dateStart, dateEnd]),
-        db.raw(`count(case when concat(dchdate,' ',time(dchtime*100)) between ?  and ? then an end) as discharge`, [dateStart, dateEnd]),
-        db.raw(`count(case when dchstts in (8,9) and concat(dchdate,' ',time(dchtime*100)) between ?  and ? then an end) as death`, [dateStart, dateEnd]),
+        db.raw(`count(case when concat(rgtdate,' ',time(rgttime*100)) between ?  and ? then ipt.an end) as new_case`, [dateStart, dateEnd]),
+        db.raw(`count(case when concat(dchdate,' ',time(dchtime*100)) between ?  and ? then ipt.an end) as discharge`, [dateStart, dateEnd]),
+        db.raw(`count(case when dchstts in (8,9) and concat(dchdate,' ',time(dchtime*100)) between ?  and ? then ipt.an end) as death`, [dateStart, dateEnd]),
         db.raw(`
             count(
               case 
                 when concat(rgtdate,' ',time(rgttime*100)) <= ? 
                 and (concat(dchdate,' ',time(dchtime*100)) > ? or dchdate = ?) 
-                then an 
+                then ipt.an 
               end
             ) as cases
     `, [dateEnd, dateStart, noDate]),
