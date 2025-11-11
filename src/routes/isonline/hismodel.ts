@@ -1,5 +1,4 @@
 // ห้ามแก้ไข file นี้ //
-import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import { HisModel } from './../../models/isonline/his.model';
 import { HisEzhospModel } from './../../models/isonline/his_ezhosp.model';
 import { HisHosxpv3Model } from './../../models/isonline/his_hosxpv3.model';
