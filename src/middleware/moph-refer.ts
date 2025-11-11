@@ -55,6 +55,27 @@ export const getReferToken = async () => {
   }
 }
 
+export const taskFunction = async (type = '', bodyData: any = null) => {
+  await getReferToken();
+  if (!nReferToken) {
+    return { status: 500, message: 'No nRefer token' };
+  }
+  const headers = createHeaders(nReferToken);
+  try {
+    let response: any;
+    if (type == 'sql') {
+      const url = referAPIUrl + '/his-connect/task-function-sql';
+      response = await axios.post(url, bodyData, { headers });
+    } else {
+      const url = referAPIUrl + `/his-connect/task-function/${type}`;
+      response = await axios.get(url, { headers });
+    }
+    return { statusCode: response.status, ...response.data };
+  } catch (error) {
+    return error;
+  }
+}
+
 export const sendingToMoph = async (uri: string, dataArray: any) => {
   await getReferToken();
   if (!nReferToken) {

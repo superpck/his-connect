@@ -18,6 +18,9 @@
 | bed_special | number | จำนวนเตียงพิเศษ |
 | bed_icu | number | จำนวนเตียง ICU |
 | bed_semi | number | จำนวนเตียง Semi ICU |
+| bed_stroke | number | จำนวนเตียง Stroke |
+| bed_burn | number | จำนวนเตียง Semi Burn |
+| bed_minithanyaruk | number | จำนวนเตียงมินิธนารักษ์ |
 | bed_extra | number | จำนวนเตียงเสริม |
 | lr | number | จำนวนเตียงรอคลอด |
 | clip | number | จำนวน Clip เด็ก |
