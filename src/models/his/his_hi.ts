@@ -30,7 +30,7 @@ export class HisHiModel {
     }
     return sql
       .select('idpm as wardcode', 'nameidpm as wardname',
-        `export_code as std_code`, 'bed_normal', 'bed_sp as bed_special', 'bed_icu',
+        `export_code as std_code`, 'bed_normal', 'bed_sp as bed_special', 'bed_icu','bed_extra',
         'is_active as isactive'
       )
       .where(db.raw(`idpm <> ''`))
