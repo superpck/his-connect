@@ -29,14 +29,14 @@
 ## getBedNo
 | column | type | describe |
 | --- | --- | --- |
-| bedno | string | หมายเลขเตียง |
+| bedno * | string | หมายเลขเตียง |
 | bedtype | string | จัดกลุ่มเตียง (ยกเลิกให้ใช้ std_code แทน) |
 | bedtype_name | string | ชื่อเตียง |
 | roomno | string | เลขห้อง |
-| wardcode | string | รหัสวอร์ด |
+| wardcode * | string | รหัสวอร์ด |
 | wardname | string | ชื่อวอร์ด |
-| std_code | string | รหัสตามมาตรฐาน กบรส. |
-| isactive | 0, 1 | 1=ใช้งาน |
+| std_code * | string | รหัสตามมาตรฐาน กบรส. |
+| isactive * | 0, 1 | 1=ใช้งาน |
 
 ## concurrentIPDByWard
 คอลัมน์:
@@ -45,7 +45,6 @@
 | hospcode | string | รหสัสถานพยาบาล |
 | date | datetime | เวลาที่ประมวลผล |
 | wardcode | string | local code |
-| wardname | string | local name |
 | std_code | string | รหัสตามมาตรฐาน กบรส. |
 | cases | number | คงค้างพยาบาลทั้งหมด (รวม discharge ในเวลา) |
 | new_case | number | รับใหม่ในเวลา |
@@ -78,7 +77,6 @@
 | hospcode | string | รหสัสถานพยาบาล |
 | date | datetime | เวลาที่ประมวลผล |
 | cliniccode | string | code ตาม HDC |
-| clinicname | string | name ตาม HDC |
 | cases | number | คงค้างพยาบาลทั้งหมด (รวม discharge) |
 | new_case | number | รับใหม่ในเวลา |
 | discharge | number | จำหน่ายในเวลา |

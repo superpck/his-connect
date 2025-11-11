@@ -185,6 +185,7 @@ class HisHiModel {
         const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
         const noDate = '0000-00-00';
         return db('ipt')
+            .innerJoin('iptadm', 'ipt.an', 'iptadm.an')
             .leftJoin('spclty', 'ipt.dept', 'spclty.spclty')
             .where(db.raw(`concat(ipt.rgtdate,' ',time(ipt.rgttime*100)) <= ?`, [dateEnd]))
             .andWhere('ipt.rgtdate', '>=', dateAdmitLimit)
