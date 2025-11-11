@@ -26,6 +26,7 @@ import { HisModel } from '../../models/his/his';
 import { HisHiModel } from '../../models/his/his_hi';
 import { HisHimproModel } from '../../models/his/his_himpro';
 import { HisEPisModel } from '../../models/his/his_epis';
+import { HisMBaseModel } from '../../models/his/his_mbase';
 
 console.log('HIS Provider:', process.env.HIS_PROVIDER);
 const hisProvider = (process.env.HIS_PROVIDER || 'unknown-his').toLowerCase();
@@ -101,6 +102,9 @@ switch (hisProvider) {
     break;
   case 'epis':
     hisModel = new HisEPisModel();
+    break;
+  case 'mbase':
+    hisModel = new HisMBaseModel();
     break;
   default:
     hisModel = new HisModel();

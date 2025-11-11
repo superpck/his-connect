@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisHiModel = void 0;
+const moment = require("moment");
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
@@ -153,11 +154,13 @@ class HisHiModel {
         return [];
     }
     concurrentIPDByWard(db, date) {
+        const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
         return db('ipt')
             .innerJoin('idpm', 'ipt.ward', 'idpm.idpm')
-            .where('ipt.rgtdate', '<=', date)
+            .where('ipt.rgtdate', '<=', dateStart)
             .andWhere(function () {
-            this.where('ipt.dchdate', '>=', date)
+            this.where('ipt.dchdate', '>=', dateEnd)
                 .orWhere('ipt.dchdate', '0000-00-00');
         })
             .select('ipt.ward as wardcode', 'idpm.nameidpm as wardname', db.raw(`count(case when rgtdate = ? then an end) as new_case`, [date]), db.raw(`count(case when dchdate = ? then an end) as discharge`, [date]), db.raw(`count(case when dchstts in (8,9) then an end) as death`), db.raw(`
@@ -171,31 +174,14 @@ class HisHiModel {
     `, [date, date]), db.raw(`sum(timestampdiff(day, rgtdate, ?) + 1) as los`, [date]))
             .groupBy('ipt.ward');
     }
-    concurrentIPDByClinic_(db, date) {
-        return db('ipt')
-            .leftJoin('spclty', 'ipt.dept', 'spclty.spclty')
-            .where('ipt.rgtdate', '<=', date)
-            .andWhere(function () {
-            this.where('ipt.dchdate', '>=', date)
-                .orWhere('ipt.dchdate', '0000-00-00');
-        })
-            .select('ipt.dept as cliniccode', 'spclty.name as clinicname', db.raw(`count(case when rgtdate = ? then an end) as new_case`, [date]), db.raw(`count(case when dchdate = ? then an end) as discharge`, [date]), db.raw(`count(case when dchstts in (8,9) then an end) as death`), db.raw(`
-          count(
-            case 
-              when rgtdate <= ? 
-              and (dchdate > ? or dchdate = '0000-00-00') 
-              then an 
-            end
-          ) as cases
-        `, [date, date]), db.raw(`sum(timestampdiff(day, rgtdate, ?) + 1) as los`, [date]))
-            .groupBy('ipt.dept');
-    }
     concurrentIPDByClinic(db, date) {
+        const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
         return db('ipt')
             .leftJoin('spclty', 'ipt.dept', 'spclty.spclty')
-            .where('ipt.rgtdate', '<=', date)
+            .where('ipt.rgtdate', '<=', dateStart)
             .andWhere(function () {
-            this.where('ipt.dchdate', '>=', date)
+            this.where('ipt.dchdate', '>=', dateEnd)
                 .orWhere('ipt.dchdate', '0000-00-00');
         })
             .select('ipt.dept as cliniccode', 'spclty.namespclty as clinicname', db.raw(`count(case when rgtdate = ? then an end) as new_case`, [date]), db.raw(`count(case when dchdate = ? then an end) as discharge`, [date]), db.raw(`count(case when dchstts in (8,9) then an end) as death`), db.raw(`
