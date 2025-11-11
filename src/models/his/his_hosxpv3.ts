@@ -1476,7 +1476,7 @@ export class HisHosxpv3Model {
             .leftJoin('ward', 'roomno.ward', 'ward.ward')
             .where('ward.ward_active', 'Y').first();
     }
-    getBedNo(db: Knex, bedno: any = null) {
+    async getBedNo(db: Knex, bedno: any = null, start = -1, limit: number = 1000) {
         let sql = db('bedno')
             .leftJoin('roomno', 'bedno.roomno', 'roomno.roomno')
             .leftJoin('ward', 'roomno.ward', 'ward.ward')
@@ -1498,6 +1498,9 @@ export class HisHosxpv3Model {
             );
         if (bedno) {
             sql = sql.where('bedno.bedno', bedno);
+        }
+        if (start >= 0) {
+            sql = sql.offset(start).limit(limit);
         }
         return sql.orderBy('bedno.bedno');
     }
