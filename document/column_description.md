@@ -18,8 +18,8 @@
 | bed_special | number | จำนวนเตียงพิเศษ |
 | bed_icu | number | จำนวนเตียง ICU |
 | bed_semi | number | จำนวนเตียง Semi ICU |
-| bed_stroke | number | จำนวนเตียง Stroke |
-| bed_burn | number | จำนวนเตียง Semi Burn |
+| bed_stroke | number | จำนวนเตียง Stroke unit |
+| bed_burn | number | จำนวนเตียง Burn unit |
 | bed_minithanyaruk | number | จำนวนเตียงมินิธนารักษ์ |
 | bed_extra | number | จำนวนเตียงเสริม |
 | lr | number | จำนวนเตียงรอคลอด |
@@ -59,13 +59,16 @@
 | imc | number | จำนวน case IMC/Palliative |
 | lr | number | จำนวน รอคลอด |
 | clip | number | จำนวนเด็กแรกเกิด |
+| minithanyaruk | number | จำนวน case minithanyaruk |
 | homeward | number | จำนวน case homeward |
 
 ตัวอย่าง filter
-| ข้อมูลวันที่ 1 ตุลาคม 2568 เวลา 12:00
-| dateStart = '2025-10-01 12:00:00'
-| dateEnd = '2025-10-01 12:59:59'
-| WHERE dateAdmit <= dateStart AND (dateDisc IS NULL OR dateDisc >= dateEnd)
+``
+ ข้อมูลวันที่ 1 ตุลาคม 2568 เวลา 12:00
+ dateStart = '2025-10-01 12:00:00'
+ dateEnd = '2025-10-01 12:59:59'
+ WHERE dateAdmit <= dateStart AND (dateDisc IS NULL OR dateDisc >= dateEnd)
+``
 
 ## concurrentIPDByClinic
 คอลัมน์:
