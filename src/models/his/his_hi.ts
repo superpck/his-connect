@@ -185,7 +185,11 @@ export class HisHiModel {
 
   async getBedNo(db: Knex, bedno: any = null, start = -1, limit: number = 1000) {
     const noDate = '0000-00-00';
-    return db('ipt')
+    let sql = db('ipt');
+    if (start >= 0) {
+      sql = sql.offset(start).limit(limit);
+    }
+    return sql
       .leftJoin('idpm', 'ipt.ward', 'idpm.idpm')
       .leftJoin('iptadm', 'ipt.an', 'iptadm.an')
       .leftJoin('bedtype', 'iptadm.bedtype', 'bedtype.bedtype')
@@ -200,6 +204,7 @@ export class HisHiModel {
         , db.raw(`ifnull(bedtype.type_code, 'N') as bed_type`)
         , db.raw(`if(bedtype.export_code is null, idpm.export_code, concat(substr(idpm.export_code,1,3),bedtype.export_code)) as std_code`)
       );
+    // return []
   }
 
   // Report zone
