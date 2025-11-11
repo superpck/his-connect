@@ -717,7 +717,7 @@ export class HisIHospitalModel {
     }
     sql = sql.where('ip.admite', '>', dateAdmitLimit)   // Protect ไม่นับ admit เกิน 1 ปี
       .whereRaw('ip.ward is not null and ip.ward>0')
-    // console.log(sql.groupBy('ip.ward').orderBy('ip.ward').toString());
+    console.log(sql.groupBy('ip.ward').orderBy('ip.ward').toString());
     return sql.groupBy('ip.ward').orderBy('ip.ward');
   }
   concurrentIPDByClinic_(db: Knex, date: any) {

@@ -1,4 +1,4 @@
-# Column Mapping (HisHosxpv4Model)
+# Column Description
 
 คู่มือนี้สรุปความสัมพันธ์ระหว่างคอลัมน์ต้นทางในฐานข้อมูล/นิพจน์ที่ใช้ในแต่ละฟังก์ชัน กับคอลัมน์ที่ถูกส่งออกให้ผู้ใช้งาน พร้อมคำอธิบายสั้น ๆ เพื่อช่วยตรวจสอบความถูกต้องของข้อมูลที่แลกเปลี่ยนกับระบบภายนอก
 
@@ -18,6 +18,9 @@
 | bed_special | number | จำนวนเตียงพิเศษ |
 | bed_icu | number | จำนวนเตียง ICU |
 | bed_semi | number | จำนวนเตียง Semi ICU |
+| bed_stroke | number | จำนวนเตียง Stroke |
+| bed_burn | number | จำนวนเตียง Semi Burn |
+| bed_minithanyaruk | number | จำนวนเตียงมินิธนารักษ์ |
 | bed_extra | number | จำนวนเตียงเสริม |
 | lr | number | จำนวนเตียงรอคลอด |
 | clip | number | จำนวน Clip เด็ก |
