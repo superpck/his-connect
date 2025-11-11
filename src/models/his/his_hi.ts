@@ -181,17 +181,35 @@ export class HisHiModel {
     // return { total_bed: 0 };
   }
 
+  // async getBedNo(db: Knex, bedno: any = null, start = -1, limit: number = 1000) {
+  //   return db('ipt')
+  //     .leftJoin('idpm', 'ipt.ward', 'idpm.idpm')
+  //     .leftJoin('iptadm', 'ipt.an', 'iptadm.an')
+  //     .leftJoin('bedtype', 'iptadm.bedtype', 'bedtype.bedtype')
+  //     .where('dchdate', '0000-00-00')
+  //     .select(
+  //       db.raw(`ltrim(substring(iptadm.bedno, 2, 20)) as bedno`)
+  //       , db.raw(`ifnull(iptadm.bedtype, '-') as bedtype`)
+  //       , db.raw(`ifnull(bedtype.namebedtyp,'-') as bedtype_name`)
+  //       , `'-' as roomno`
+  //       , 'ipt.ward as wardcode'
+  //       , 'idpm.nameidpm as wardname'
+  //       , 'idpm.is_active as isactive'
+  //       , db.raw(`ifnull(bedtype.type_code, 'N') as bed_type`)
+  //       , db.raw(`if(bedtype.export_code is null, idpm.export_code, concat(substr(idpm.export_code,1,3),bedtype.export_code)) as std_code`)
+  //     );
+  // }
   async getBedNo(db: Knex, bedno: any = null, start = -1, limit: number = 1000) {
     return db('ipt')
       .leftJoin('idpm', 'ipt.ward', 'idpm.idpm')
       .leftJoin('iptadm', 'ipt.an', 'iptadm.an')
       .leftJoin('bedtype', 'iptadm.bedtype', 'bedtype.bedtype')
-      .where('dchdate', '0000-00-00')
+      .whereRaw("(dchdate=? OR dschdate IS NULL)", ['0000-00-00'])
       .select(
         db.raw(`ltrim(substring(iptadm.bedno, 2, 20)) as bedno`)
         , db.raw(`ifnull(iptadm.bedtype, '-') as bedtype`)
         , db.raw(`ifnull(bedtype.namebedtyp,'-') as bedtype_name`)
-        , `'-' as roomno`
+        , db.raw(`'-' as roomno`)
         , 'ipt.ward as wardcode'
         , 'idpm.nameidpm as wardname'
         , 'idpm.is_active as isactive'
