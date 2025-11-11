@@ -6,7 +6,6 @@
 > - หากฟังก์ชันดึงข้อมูลผ่านวิวหรือตารางที่มีการเลือกทุกคอลัมน์ (`select *`) จะระบุเป็นข้อความไว้แทนตารางรายละเอียด
 > - นิพจน์ที่เป็นค่าคงที่หรือคำนวณจะอธิบายสั้น ๆ ในคอลัมน์ “หมายเหตุ”
 
-
 ## getWard
 | column | type | describe |
 | --- | --- | --- |
@@ -31,7 +30,7 @@
 | column | type | describe |
 | --- | --- | --- |
 | bedno | string | หมายเลขเตียง |
-| bedtype | string | จัดกลุ่มเตียง (N/S/ICU/LR/HW) กรณีไม่สามารถระบุ std_code |
+| bedtype | string | จัดกลุ่มเตียง (ยกเลิกให้ใช้ std_code แทน) |
 | bedtype_name | string | ชื่อเตียง |
 | roomno | string | เลขห้อง |
 | wardcode | string | รหัสวอร์ด |
@@ -52,6 +51,8 @@
 | new_case | number | รับใหม่ในเวลา |
 | discharge | number | จำหน่ายในเวลา |
 | death | number | เสียชีวิตในเวลา |
+| normal | number | จำนวสามัญ |
+| special | number | จำนวนพิเศษ |
 | icu | number | จำนวน case icu |
 | semi | number | จำนวน case semi-icu |
 | stroke | number | จำนวน case stroke |
@@ -63,12 +64,12 @@
 | homeward | number | จำนวน case homeward |
 
 ตัวอย่าง filter
-``
- ข้อมูลวันที่ 1 ตุลาคม 2568 เวลา 12:00
- dateStart = '2025-10-01 12:00:00'
- dateEnd = '2025-10-01 12:59:59'
- WHERE dateAdmit <= dateStart AND (dateDisc IS NULL OR dateDisc >= dateEnd)
-``
+```
+ - ข้อมูลวันที่ 1 ตุลาคม 2568 เวลา 12:00
+ - dateStart = '2025-10-01 12:00:00'
+ - dateEnd = '2025-10-01 12:59:59'
+ - WHERE dateAdmit <= dateStart AND (dateDisc IS NULL OR dateDisc >= dateEnd)
+```
 
 ## concurrentIPDByClinic
 คอลัมน์:

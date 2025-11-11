@@ -87,9 +87,15 @@ switch (provider) {
   case 'haos':
     hisModel = new HisHaosModel();
     break;
+  case 'mitnet':
+    hisModel = new HisMitnetModel();
+    break;
   default:
     hisModel = new HisModel();
 }
+
+import hisReferModel from './../his/hismodel';
+import { HisMitnetModel } from '../../models/his/his_mitnet';
 
 const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb'
   , 'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades'
@@ -98,8 +104,15 @@ const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod',
 const router = (fastify, { }, next) => {
 
   fastify.get('/alive', async (req: any, res: any) => {
+    let result: any;
     try {
-      const result = await hisModel.testConnect(global.dbHIS);
+      result = await hisReferModel.testConnect(global.dbHIS);
+    } catch (error) {
+    }
+    try {
+      if (!result || !result.connection) {
+        result = await hisModel.testConnect(global.dbHIS);
+      }
 
       res.send({
         statusCode: result?.connection ? StatusCodes.OK : StatusCodes.NO_CONTENT,

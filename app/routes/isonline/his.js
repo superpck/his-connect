@@ -86,16 +86,29 @@ switch (provider) {
     case 'haos':
         hisModel = new his_haos_model_1.HisHaosModel();
         break;
+    case 'mitnet':
+        hisModel = new his_mitnet_1.HisMitnetModel();
+        break;
     default:
         hisModel = new his_model_1.HisModel();
 }
+const hismodel_1 = require("./../his/hismodel");
+const his_mitnet_1 = require("../../models/his/his_mitnet");
 const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb',
     'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades',
     'himpro', 'nemo', 'mypcu', 'emrsoft', 'haos', 'other'];
 const router = (fastify, {}, next) => {
     fastify.get('/alive', async (req, res) => {
+        let result;
         try {
-            const result = await hisModel.testConnect(global.dbHIS);
+            result = await hismodel_1.default.testConnect(global.dbHIS);
+        }
+        catch (error) {
+        }
+        try {
+            if (!result || !result.connection) {
+                result = await hisModel.testConnect(global.dbHIS);
+            }
             res.send({
                 statusCode: result?.connection ? http_status_codes_1.StatusCodes.OK : http_status_codes_1.StatusCodes.NO_CONTENT,
                 ok: result?.connection,

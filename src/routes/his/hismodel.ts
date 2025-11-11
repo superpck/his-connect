@@ -1,9 +1,4 @@
 // ห้ามแก้ไข file นี้ //
-// import path = require('path');
-// console.log(__dirname, path.join(__dirname, '../../../config'));
-// require('dotenv').config({ path: path.join(__dirname, '../config') });
-// require('dotenv').config({ path: '/config' });
-
 import { HisIHospitalModel } from '../../models/his/his_ihospital';
 import { HisThiadesModel } from '../../models/his/his_thiades';
 import { HisHosxpv3Model } from '../../models/his/his_hosxpv3';
