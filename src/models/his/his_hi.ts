@@ -199,7 +199,10 @@ export class HisHiModel {
         , 'idpm.is_active as isactive'
         , db.raw(`ifnull(bedtype.type_code, 'N') as bed_type`)
         , db.raw(`if(bedtype.export_code is null, idpm.export_code, concat(substr(idpm.export_code,1,3),bedtype.export_code)) as std_code`)
-      );
+      )
+      .limit(limit)
+      .offset(start);
+    // return []
   }
 
   // Report zone
