@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.HisHimproModel = void 0;
+exports.HisMBaseModel = void 0;
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
-class HisHimproModel {
+class HisMBaseModel {
     check() {
         return true;
     }
@@ -141,4 +141,4 @@ class HisHimproModel {
         return [];
     }
 }
-exports.HisHimproModel = HisHimproModel;
+exports.HisMBaseModel = HisMBaseModel;

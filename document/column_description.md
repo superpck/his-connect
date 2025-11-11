@@ -31,13 +31,12 @@
 | column | type | describe |
 | --- | --- | --- |
 | bedno | string | หมายเลขเตียง |
-| bedtype | string | รหัสประเภทเตียง |
+| bedtype | string | จัดกลุ่มเตียง (N/S/ICU/LR/HW) กรณีไม่สามารถระบุ std_code |
 | bedtype_name | string | ชื่อเตียง |
 | roomno | string | เลขห้อง |
 | wardcode | string | รหัสวอร์ด |
 | wardname | string | ชื่อวอร์ด |
 | std_code | string | รหัสตามมาตรฐาน กบรส. |
-| bed_type | string | จัดกลุ่มเตียง (N/S/ICU/LR/HW) กรณีไม่สามารถระบุ std_code |
 | isactive | 0, 1 | 1=ใช้งาน |
 
 ## concurrentIPDByWard
@@ -55,8 +54,12 @@
 | death | number | เสียชีวิตในเวลา |
 | icu | number | จำนวน case icu |
 | semi | number | จำนวน case semi-icu |
-| homeward | number | จำนวน case homeward |
+| stroke | number | จำนวน case stroke |
+| burn | number | จำนวน case burn |
+| imc | number | จำนวน case IMC/Palliative |
+| lr | number | จำนวน รอคลอด |
 | clip | number | จำนวนเด็กแรกเกิด |
+| homeward | number | จำนวน case homeward |
 
 ตัวอย่าง filter
 | ข้อมูลวันที่ 1 ตุลาคม 2568 เวลา 12:00

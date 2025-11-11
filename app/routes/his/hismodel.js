@@ -22,6 +22,7 @@ const his_1 = require("../../models/his/his");
 const his_hi_1 = require("../../models/his/his_hi");
 const his_himpro_1 = require("../../models/his/his_himpro");
 const his_epis_1 = require("../../models/his/his_epis");
+const his_mbase_1 = require("../../models/his/his_mbase");
 console.log('HIS Provider:', process.env.HIS_PROVIDER);
 const hisProvider = (process.env.HIS_PROVIDER || 'unknown-his').toLowerCase();
 let hisModel;
@@ -94,6 +95,9 @@ switch (hisProvider) {
         break;
     case 'epis':
         hisModel = new his_epis_1.HisEPisModel();
+        break;
+    case 'mbase':
+        hisModel = new his_mbase_1.HisMBaseModel();
         break;
     default:
         hisModel = new his_1.HisModel();
