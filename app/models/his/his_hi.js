@@ -213,12 +213,12 @@ class HisHiModel {
         return db('ovst as visit')
             .innerJoin('cln', 'visit.cln', 'cln.cln')
             .innerJoin('spclty as spec', 'cln.specialty', 'spec.spclty')
-            .where(db.raw('date(visit.vstdttm) as date'))
             .select('cln.specialty as cliniccode', 'spec.namespclty as clinicname', db.raw(`COUNT(visit.vn) as cases`), db.raw(`COUNT(
           CASE 
             WHEN visit.an > 0 THEN visit.an  
           END
         ) AS admit`))
+            .whereRaw('date(visit.vstdttm) = ?', [date])
             .groupBy('cln.specialty')
             .orderBy('cln.specialty');
     }
