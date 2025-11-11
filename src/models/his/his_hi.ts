@@ -1,4 +1,6 @@
 import { Knex } from 'knex';
+import * as moment from 'moment';
+
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
@@ -28,11 +30,10 @@ export class HisHiModel {
     }
     return sql
       .select('idpm as wardcode', 'nameidpm as wardname',
-        `export_code as std_code`, 'bed_normal', 'bed_sp as bed_special', 'bed_icu as icu',
+        `export_code as std_code`, 'bed_normal', 'bed_sp as bed_special', 'bed_icu',
         'is_active as isactive'
       )
-      .where(db.raw(`is_active = '1'`))
-      .andWhere(db.raw(`idpm <> ''`))
+      .where(db.raw(`idpm <> ''`))
       .orderBy('idpm')
       .limit(maxLimit);
   }
@@ -174,24 +175,25 @@ export class HisHiModel {
 
   // MOPH ERP
   countBedNo(db: Knex) {
+    const noDate = '0000-00-00';
     return db('ipt')
-      .where('dchdate', '0000-00-00')
+      .where('dchdate', noDate)
       .count('an as total_bed')
       .first();
     // return { total_bed: 0 };
   }
 
   async getBedNo(db: Knex, bedno: any = null, start = -1, limit: number = 1000) {
+    const noDate = '0000-00-00';
     return db('ipt')
       .leftJoin('idpm', 'ipt.ward', 'idpm.idpm')
       .leftJoin('iptadm', 'ipt.an', 'iptadm.an')
       .leftJoin('bedtype', 'iptadm.bedtype', 'bedtype.bedtype')
-      .where('dchdate', '0000-00-00')
+      .whereRaw('dchdate = ? or dchdate is null', [noDate])
       .select(
         db.raw(`ltrim(substring(iptadm.bedno, 2, 20)) as bedno`)
         , db.raw(`ifnull(iptadm.bedtype, '-') as bedtype`)
         , db.raw(`ifnull(bedtype.namebedtyp,'-') as bedtype_name`)
-        , db.raw(`'-' as roomno`)
         , 'ipt.ward as wardcode'
         , 'idpm.nameidpm as wardname'
         , 'idpm.is_active as isactive'
@@ -206,84 +208,116 @@ export class HisHiModel {
   }
 
   concurrentIPDByWard(db: Knex, date: any) {
+    const dateAdmitLimit = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
+    const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+    const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
+    const noDate = '0000-00-00';
     return db('ipt')
       .innerJoin('idpm', 'ipt.ward', 'idpm.idpm')
-      .where('ipt.rgtdate', '<=', date)
+      .leftJoin('bedtype', 'iptadm.bedtype', 'bedtype.bedtype')
+      .where(db.raw(`concat(ipt.rgtdate,' ',time(ipt.rgttime*100)) <= ?`, [dateEnd]))
+      .andWhere('ipt.rgtdate', '>=', dateAdmitLimit)
       .andWhere(function () {
-        this.where('ipt.dchdate', '>=', date)
+        this.where(db.raw(`concat(ipt.dchdate,' ',time(ipt.dchtime*100)) >= ?`, [dateStart]))
+          .orWhere('ipt.dchdate', noDate);
+      })
+      .select(
+        'ipt.ward as wardcode',
+        'idpm.nameidpm as wardname',
+        db.raw(`count(case when concat(rgtdate,' ',time(rgttime*100)) between ?  and ? then an end) as new_case`, [dateStart, dateEnd]),
+        db.raw(`count(case when concat(dchdate,' ',time(dchtime*100)) between ?  and ? then an end) as discharge`, [dateStart, dateEnd]),
+        db.raw(`count(case when dchstts in (8,9) and concat(dchdate,' ',time(dchtime*100)) between ?  and ? then an end) as death`, [dateStart, dateEnd]),
+        db.raw(`
+            count(
+              case 
+                when concat(rgtdate,' ',time(rgttime*100)) <= ? 
+                and (concat(dchdate,' ',time(dchtime*100)) > ? or dchdate = ?) 
+                then an 
+              end
+            ) as cases
+    `, [dateEnd, dateStart, noDate]),
+        db.raw(`count(case when bedtype.type_code = 'N' then an end) as normal`),
+        db.raw(`count(case when bedtype.type_code = 'S' then an end) as special`),
+        db.raw(`count(case when bedtype.type_code = 'ICU' then an end) as icu`),
+        db.raw(`count(case when bedtype.type_code = 'SEMI' then an end) as semi`),
+        db.raw(`count(case when bedtype.type_code = 'HW' then an end) as homeward`),
+        db.raw(`count(case when bedtype.type_code = 'IMC' then an end) as imc`),
+        db.raw(`count(case when bedtype.type_code = 'LR' then an end) as lr`),
+        db.raw(`count(case when bedtype.type_code = 'STROKE' then an end) as stroke`),
+        db.raw(`count(case when bedtype.type_code = 'BURN' then an end) as burn`),
+      )
+      .groupBy('ipt.ward');
+  }
+  /* Not Used
+  concurrentIPDByClinic_(db: Knex, date: any) {
+    const dateAdmitLimit = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
+    const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+    const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
+    return db('ipt')
+      .leftJoin('spclty', 'ipt.dept', 'spclty.spclty')
+      .where(db.raw(`concat(ipt.rgtdate,' ',time(ipt.rgttime*100)) <= ?`, [dateEnd]))
+      .andWhere('ipt.rgtdate', '>=', dateAdmitLimit)
+      .andWhere(function () {
+        this.where(db.raw(`concat(ipt.dchdate,' ',time(ipt.dchtime*100)) >= ?`, [dateStart]))
           .orWhere('ipt.dchdate', '0000-00-00');
       })
       .select(
         'ipt.ward as wardcode',
         'idpm.nameidpm as wardname',
-        db.raw(`count(case when rgtdate = ? then an end) as new_case`, [date]),
-        db.raw(`count(case when dchdate = ? then an end) as discharge`, [date]),
-        db.raw(`count(case when dchstts in (8,9) then an end) as death`),
+        db.raw(`count(case when concat(rgtdate,' ',time(rgttime*100)) between ?  and ? then an end) as new_case`, [dateStart, dateEnd]),
+        db.raw(`count(case when concat(dchdate,' ',time(dchtime*100)) between ?  and ? then an end) as discharge`, [dateStart, dateEnd]),
+        db.raw(`count(case when dchstts in (8,9) and concat(dchdate,' ',time(dchtime*100)) between ?  and ? then an end) as death`, [dateStart, dateEnd]),
         db.raw(`
             count(
               case 
-                when rgtdate <= ? 
-                and (dchdate > ? or dchdate = '0000-00-00') 
+                when concat(rgtdate,' ',time(rgttime*100)) <= ? 
+                and (concat(dchdate,' ',time(dchtime*100)) > ? or dchdate = '0000-00-00') 
                 then an 
               end
             ) as cases
-    `, [date, date]),
-        db.raw(`sum(timestampdiff(day, rgtdate, ?) + 1) as los`, [date])
-      )
-      .groupBy('ipt.ward');
-  }
-  concurrentIPDByClinic_(db: Knex, date: any) {
-    return db('ipt')
-      .leftJoin('spclty', 'ipt.dept', 'spclty.spclty')
-      .where('ipt.rgtdate', '<=', date)
-      .andWhere(function () {
-        this.where('ipt.dchdate', '>=', date)
-          .orWhere('ipt.dchdate', '0000-00-00');
-      })
-      .select(
-        'ipt.dept as cliniccode',
-        'spclty.name as clinicname',
-        db.raw(`count(case when rgtdate = ? then an end) as new_case`, [date]),
-        db.raw(`count(case when dchdate = ? then an end) as discharge`, [date]),
-        db.raw(`count(case when dchstts in (8,9) then an end) as death`),
-        db.raw(`
-          count(
-            case 
-              when rgtdate <= ? 
-              and (dchdate > ? or dchdate = '0000-00-00') 
-              then an 
-            end
-          ) as cases
-        `, [date, date]),
-        db.raw(`sum(timestampdiff(day, rgtdate, ?) + 1) as los`, [date])
+    `, [dateEnd, dateStart]),
       )
       .groupBy('ipt.dept');
   }
-
+  */
   concurrentIPDByClinic(db: Knex, date: any) {
+    const dateAdmitLimit = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
+    const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+    const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
+    const noDate = '0000-00-00';
     return db('ipt')
       .leftJoin('spclty', 'ipt.dept', 'spclty.spclty')
-      .where('ipt.rgtdate', '<=', date)
+      .where(db.raw(`concat(ipt.rgtdate,' ',time(ipt.rgttime*100)) <= ?`, [dateEnd]))
+      .andWhere('ipt.rgtdate', '>=', dateAdmitLimit)
       .andWhere(function () {
-        this.where('ipt.dchdate', '>=', date)
-          .orWhere('ipt.dchdate', '0000-00-00');
+        this.where(db.raw(`concat(ipt.dchdate,' ',time(ipt.dchtime*100)) >= ?`, [dateStart]))
+          .orWhere('ipt.dchdate', noDate);
       })
       .select(
-        'ipt.dept as cliniccode',
-        'spclty.namespclty as clinicname',
-        db.raw(`count(case when rgtdate = ? then an end) as new_case`, [date]),
-        db.raw(`count(case when dchdate = ? then an end) as discharge`, [date]),
-        db.raw(`count(case when dchstts in (8,9) then an end) as death`),
+        'ipt.ward as wardcode',
+        'idpm.nameidpm as wardname',
+        db.raw(`count(case when concat(rgtdate,' ',time(rgttime*100)) between ?  and ? then an end) as new_case`, [dateStart, dateEnd]),
+        db.raw(`count(case when concat(dchdate,' ',time(dchtime*100)) between ?  and ? then an end) as discharge`, [dateStart, dateEnd]),
+        db.raw(`count(case when dchstts in (8,9) and concat(dchdate,' ',time(dchtime*100)) between ?  and ? then an end) as death`, [dateStart, dateEnd]),
         db.raw(`
-          count(
-            case 
-              when rgtdate <= ? 
-              and (dchdate > ? or dchdate = '0000-00-00') 
-              then an 
-            end
-          ) as cases
-        `, [date, date]),
-        db.raw(`sum(timestampdiff(day, rgtdate, ?) + 1) as los`, [date])
+            count(
+              case 
+                when concat(rgtdate,' ',time(rgttime*100)) <= ? 
+                and (concat(dchdate,' ',time(dchtime*100)) > ? or dchdate = ?) 
+                then an 
+              end
+            ) as cases
+    `, [dateEnd, dateStart, noDate]),
+        db.raw(`count(case when bedtype.type_code = 'N' then an end) as normal`),
+        db.raw(`count(case when bedtype.type_code = 'S' then an end) as special`),
+        db.raw(`count(case when bedtype.type_code = 'ICU' then an end) as icu`),
+        db.raw(`count(case when bedtype.type_code = 'SEMI' then an end) as semi`),
+        db.raw(`count(case when bedtype.type_code = 'HW' then an end) as homeward`),
+        db.raw(`count(case when bedtype.type_code = 'IMC' then an end) as imc`),
+        db.raw(`count(case when bedtype.type_code = 'LR' then an end) as lr`),
+        db.raw(`count(case when bedtype.type_code = 'STROKE' then an end) as stroke`),
+        db.raw(`count(case when bedtype.type_code = 'BURN' then an end) as burn`),
+
       )
       .groupBy('ipt.dept');
   }
@@ -293,13 +327,13 @@ export class HisHiModel {
       .innerJoin('spclty as spec', 'cln.specialty', 'spec.spclty')
       .where(db.raw(`date(visit.vstdttm) = ?`, [date]))
       .select('cln.specialty as cliniccode', 'spec.namespclty as clinicname',
-        db.raw(`COUNT(visit.vn) as cases`),
         db.raw(`COUNT(
           CASE 
             WHEN visit.an > 0 THEN visit.an  
           END
         ) AS admit`)
       )
+      .count('visit.vn as cases')
       .groupBy('cln.specialty')
       .orderBy('cln.specialty');
   }
