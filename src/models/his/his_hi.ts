@@ -28,7 +28,7 @@ export class HisHiModel {
     }
     return sql
       .select('idpm as wardcode', 'nameidpm as wardname',
-        `export_code as std_code`, 'bed_normal', 'bed_sp', 'bed_icu',
+        `export_code as std_code`, 'bed_normal', 'bed_sp as bed_special', 'bed_icu',
         'is_active as isactive'
       )
       .where(db.raw(`is_active = '1'`))
@@ -191,7 +191,7 @@ export class HisHiModel {
         db.raw(`ltrim(substring(iptadm.bedno, 2, 20)) as bedno`)
         , db.raw(`ifnull(iptadm.bedtype, '-') as bedtype`)
         , db.raw(`ifnull(bedtype.namebedtyp,'-') as bedtype_name`)
-        , `'-' as roomno`
+        , db.raw(`'-' as roomno`)
         , 'ipt.ward as wardcode'
         , 'idpm.nameidpm as wardname'
         , 'idpm.is_active as isactive'
@@ -291,7 +291,7 @@ export class HisHiModel {
     return db('ovst as visit')
       .innerJoin('cln', 'visit.cln', 'cln.cln')
       .innerJoin('spclty as spec', 'cln.specialty', 'spec.spclty')
-      .where(db.raw('date(visit.vstdttm)'), date)
+      .where(db.raw(`date(visit.vstdttm) = ?`, [date]))
       .select('cln.specialty as cliniccode', 'spec.namespclty as clinicname',
         db.raw(`COUNT(visit.vn) as cases`),
         db.raw(`COUNT(
