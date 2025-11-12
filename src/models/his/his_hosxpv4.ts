@@ -1519,7 +1519,7 @@ export class HisHosxpv4Model {
             .leftJoin('patient', 'referin.hn', 'patient.hn')
             .leftJoin('ovst', 'referin.vn', 'ovst.vn')
             .leftJoin('refer_reply', 'referin.vn', 'refer_reply.vn')
-            .select(db.raw(`'${hisHospcode}' as HOSPCODE`))
+            .select(db.raw(`? as HOSPCODE`, [hisHospcode]))
             .select('referin.refer_hospcode as HOSP_SOURCE',
                 'patient.cid as CID_IN',
                 'referin.hn as PID_IN', 'referin.vn as SEQ_IN', 'referin.docno as REFERID',
@@ -1531,7 +1531,7 @@ export class HisHosxpv4Model {
             .select(db.raw(`'' as AN_IN, concat(referin.refer_hospcode,referin.referin_number) as REFERID_PROVINCE`))
             .select(db.raw(`concat(ovst.vstdate, ' ',ovst.vsttime) as DATETIME_IN, '1' as REFER_RESULT`))
             .select(db.raw(`concat(ovst.vstdate, ' ',ovst.vsttime) as D_UPDATE`))
-            .where(db.raw(`(referin.refer_date='${visitDate}' or referin.date_in='${visitDate}')`))
+            .where(db.raw(`(referin.refer_date=? or referin.date_in=?)`,[visitDate, visitDate]))
             .where(db.raw('length(referin.refer_hospcode)=5'))
             .whereNotNull('referin.vn')
             .whereNotNull('patient.hn')
