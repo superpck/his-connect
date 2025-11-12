@@ -194,16 +194,15 @@ export class HisHiModel {
       .leftJoin('iptadm', 'ipt.an', 'iptadm.an')
       .leftJoin('bedtype', 'iptadm.bedtype', 'bedtype.bedtype')
       .whereRaw('dchdate = ? or dchdate is null', [noDate])
-      .andWhere(db.raw(`idpm.idpm <> '' and idpm.idpm is not null`))
+      .andWhere(db.raw(`ipt.ward <> ''`))
       .select(
         db.raw(`${hcode} as hospcode`)
-        ,db.raw(`ifnull(nullif(ltrim(substring(iptadm.bedno, 2, 20)), ''), 'ไม่ระบุเตียง') as bedno`)
-        , db.raw(`ifnull(iptadm.bedtype, '-') as bedtype`)
+        ,db.raw(`ifnull(if(ltrim(substring(iptadm.bedno, 2, 20) = '', 'ไม่ระบุเตียง', ltrim(substring(iptadm.bedno, 2, 20)), 'ไม่ระบุเตียง') as bedno`)
+        , db.raw(`ifnull(bedtype.type_code, 'N') as bedtype`)
         , db.raw(`ifnull(bedtype.namebedtyp,'-') as bedtype_name`)
         , 'ipt.ward as wardcode'
         , 'idpm.nameidpm as wardname'
         , 'idpm.is_active as isactive'
-        , db.raw(`ifnull(bedtype.type_code, 'N') as bed_type`)
         , db.raw(`if(bedtype.export_code is null, idpm.export_code, concat(substr(idpm.export_code,1,3),bedtype.export_code)) as std_code`)
       );
     // return []
@@ -229,7 +228,7 @@ export class HisHiModel {
         this.where(db.raw(`concat(ipt.dchdate,' ',time(ipt.dchtime*100)) >= ?`, [dateStart]))
           .orWhere('ipt.dchdate', noDate);
       })
-      .andWhere(db.raw(`idpm.idpm <> '' and idpm.idpm is not null`))
+      .andWhere(db.raw(`ipt.ward <> ''`))
       .select(
         db.raw(`${hcode} as hospcode`),
         'ipt.ward as wardcode',
@@ -274,7 +273,7 @@ export class HisHiModel {
         this.where(db.raw(`concat(ipt.dchdate,' ',time(ipt.dchtime*100)) >= ?`, [dateStart]))
           .orWhere('ipt.dchdate', noDate);
       })
-      .andWhere(db.raw(`idpm.idpm <> '' and idpm.idpm is not null`))
+      .andWhere(db.raw(`ipt.ward <> ''`))
       .select(
         db.raw(`${hcode} as hospcode`),
         'ipt.ward as wardcode',
