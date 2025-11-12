@@ -1496,7 +1496,8 @@ export class HisHosxpv3Model {
             .groupBy('referin.refer_date');
     }
 
-    // MOPH ERP
+    // MOPH ERP ========================================================
+
     countBedNo(db: Knex) {
         return db('bedno').count('bedno.bedno as total_bed')
             .leftJoin('roomno', 'bedno.roomno', 'roomno.roomno')
@@ -1512,7 +1513,7 @@ export class HisHosxpv3Model {
             .select('bedno.bedno', 'bedno.bedtype', 'bedtype.name as bedtype_name', 'bedno.roomno',
                 'roomno.ward as wardcode', 'ward.name as wardname', 'bedno.export_code as std_code',
                 'bedno.bed_status_type_id', 'status.bed_status_type_name',
-                db.raw("CASE WHEN ward.ward_active !='Y' OR bedno.is_available !='Y' THEN 0 ELSE 1 END as isactive"),
+                db.raw("CASE WHEN ward.ward_active !='Y' OR status.is_available !='Y' THEN 0 ELSE 1 END as isactive"),
                 db.raw(`
                     CASE 
                         WHEN LOWER(bedtype.name) LIKE '%พิเศษ%' THEN 'S'

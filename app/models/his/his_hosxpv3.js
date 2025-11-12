@@ -1354,7 +1354,7 @@ class HisHosxpv3Model {
             .leftJoin('ward', 'roomno.ward', 'ward.ward')
             .leftJoin('bedtype', 'bedno.bedtype', 'bedtype.bedtype')
             .leftJoin('bed_status_type as status', 'bedno.bed_status_type_id', 'status.bed_status_type_id')
-            .select('bedno.bedno', 'bedno.bedtype', 'bedtype.name as bedtype_name', 'bedno.roomno', 'roomno.ward as wardcode', 'ward.name as wardname', 'bedno.export_code as std_code', 'bedno.bed_status_type_id', 'status.bed_status_type_name', db.raw("CASE WHEN ward.ward_active !='Y' OR bedno.is_available !='Y' THEN 0 ELSE 1 END as isactive"), db.raw(`
+            .select('bedno.bedno', 'bedno.bedtype', 'bedtype.name as bedtype_name', 'bedno.roomno', 'roomno.ward as wardcode', 'ward.name as wardname', 'bedno.export_code as std_code', 'bedno.bed_status_type_id', 'status.bed_status_type_name', db.raw("CASE WHEN ward.ward_active !='Y' OR status.is_available !='Y' THEN 0 ELSE 1 END as isactive"), db.raw(`
                     CASE 
                         WHEN LOWER(bedtype.name) LIKE '%พิเศษ%' THEN 'S'
                         WHEN LOWER(bedtype.name) LIKE '%icu%' THEN 'ICU'
