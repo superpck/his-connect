@@ -194,8 +194,10 @@ export class HisHiModel {
       .leftJoin('iptadm', 'ipt.an', 'iptadm.an')
       .leftJoin('bedtype', 'iptadm.bedtype', 'bedtype.bedtype')
       .whereRaw('dchdate = ? or dchdate is null', [noDate])
+      .andWhere(db.raw(`idpm.idpm <> '' and idpm.idpm is not null`))
       .select(
-        db.raw(`ltrim(substring(iptadm.bedno, 2, 20)) as bedno`)
+        db.raw(`${hcode} as hospcode`)
+        ,db.raw(`ifnull(nullif(ltrim(substring(iptadm.bedno, 2, 20)), ''), 'ไม่ระบุเตียง') as bedno`)
         , db.raw(`ifnull(iptadm.bedtype, '-') as bedtype`)
         , db.raw(`ifnull(bedtype.namebedtyp,'-') as bedtype_name`)
         , 'ipt.ward as wardcode'
@@ -227,7 +229,9 @@ export class HisHiModel {
         this.where(db.raw(`concat(ipt.dchdate,' ',time(ipt.dchtime*100)) >= ?`, [dateStart]))
           .orWhere('ipt.dchdate', noDate);
       })
+      .andWhere(db.raw(`idpm.idpm <> '' and idpm.idpm is not null`))
       .select(
+        db.raw(`${hcode} as hospcode`),
         'ipt.ward as wardcode',
         'idpm.nameidpm as wardname',
         db.raw(`count(case when concat(rgtdate,' ',time(rgttime*100)) between ?  and ? then ipt.an end) as new_case`, [dateStart, dateEnd]),
@@ -270,7 +274,9 @@ export class HisHiModel {
         this.where(db.raw(`concat(ipt.dchdate,' ',time(ipt.dchtime*100)) >= ?`, [dateStart]))
           .orWhere('ipt.dchdate', noDate);
       })
+      .andWhere(db.raw(`idpm.idpm <> '' and idpm.idpm is not null`))
       .select(
+        db.raw(`${hcode} as hospcode`),
         'ipt.ward as wardcode',
         'idpm.nameidpm as wardname',
         db.raw(`count(case when concat(rgtdate,' ',time(rgttime*100)) between ?  and ? then ipt.an end) as new_case`, [dateStart, dateEnd]),
@@ -304,7 +310,7 @@ export class HisHiModel {
       .innerJoin('cln', 'visit.cln', 'cln.cln')
       .innerJoin('spclty as spec', 'cln.specialty', 'spec.spclty')
       .where(db.raw(`date(visit.vstdttm) = ?`, [date]))
-      .select('cln.specialty as cliniccode', 'spec.namespclty as clinicname',
+      .select(db.raw(`${hcode} as hospcode`),db.raw(`IFNULL(cln.specialty, '00') as cliniccode`), 'spec.namespclty as clinicname',
         db.raw(`COUNT(
           CASE 
             WHEN visit.an > 0 THEN visit.an  
