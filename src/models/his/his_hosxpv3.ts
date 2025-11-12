@@ -1561,7 +1561,7 @@ export class HisHosxpv3Model {
                 db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]),
                 db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09'])
             )
-                .count('* as cases')
+                .count('ipt.regdate as cases')
                 .where('ipt.regdate', '<=', date)
                 .andWhere(function () {
                     this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', dischargeDate);
@@ -1596,7 +1596,7 @@ export class HisHosxpv3Model {
                 db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]),
                 db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]),
                 db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death'))
-            .count('* as cases')
+            .count('ipt.regdate as cases')
             .where('ipt.regdate', '<=', date)
             .whereRaw('ipt.ward is not null and ipt.ward!= ""')
             .andWhere(function () {
@@ -1612,7 +1612,7 @@ export class HisHosxpv3Model {
                 db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]),
                 db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]),
                 db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death'))
-            .count('* as cases')
+            .count('ipt.regdate as cases')
             .where('ipt.regdate', '<=', date)
             // .whereRaw('ipt.ward is not null and ipt.ward!= ""')
             .andWhere(function () {
@@ -1626,7 +1626,7 @@ export class HisHosxpv3Model {
             .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode',
                 'spclty.name as clinicname',
                 db.raw('SUM(CASE WHEN an IS NULL or an="" THEN 0 ELSE 1 END) AS admit'))
-            .count('* as cases')
+            .count('ovst.vstdate as cases')
             .where('ovst.vstdate', date);
         return sql.groupBy('spclty.nhso_code').orderBy('spclty.nhso_code');
     }

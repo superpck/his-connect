@@ -1394,7 +1394,7 @@ class HisHosxpv3Model {
         if (date.length === 10) {
             date = moment(date).locale('TH').format('YYYY-MM-DD');
             sql = sql.select(db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09']))
-                .count('* as cases')
+                .count('ipt.regdate as cases')
                 .where('ipt.regdate', '<=', date)
                 .andWhere(function () {
                 this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', dischargeDate);
@@ -1417,7 +1417,7 @@ class HisHosxpv3Model {
         let sql = db('ipt')
             .leftJoin('ward', 'ipt.ward', 'ward.ward')
             .select('ipt.ward as wardcode', 'ward.name as wardname', db.raw('? as date', [date]), db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death'))
-            .count('* as cases')
+            .count('ipt.regdate as cases')
             .where('ipt.regdate', '<=', date)
             .whereRaw('ipt.ward is not null and ipt.ward!= ""')
             .andWhere(function () {
@@ -1429,7 +1429,7 @@ class HisHosxpv3Model {
         let sql = db('ipt')
             .leftJoin('ipt_spclty as clinic', 'ipt.spclty', 'clinic.ipt_spclty')
             .select('ipt.spclty as cliniccode', 'clinic.name as clinicname', db.raw('? as date', [date]), db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death'))
-            .count('* as cases')
+            .count('ipt.regdate as cases')
             .where('ipt.regdate', '<=', date)
             .andWhere(function () {
             this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', date);
@@ -1440,7 +1440,7 @@ class HisHosxpv3Model {
         let sql = db('ovst')
             .leftJoin('spclty', 'ovst.spclty', 'spclty.spclty')
             .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode', 'spclty.name as clinicname', db.raw('SUM(CASE WHEN an IS NULL or an="" THEN 0 ELSE 1 END) AS admit'))
-            .count('* as cases')
+            .count('ovst.vstdate as cases')
             .where('ovst.vstdate', date);
         return sql.groupBy('spclty.nhso_code').orderBy('spclty.nhso_code');
     }

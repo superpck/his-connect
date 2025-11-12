@@ -1440,7 +1440,7 @@ class HisHospitalOsModel {
         let sql = db('ipt')
             .leftJoin('ward', 'ipt.ward', 'ward.ward')
             .select('ipt.ward as wardcode', 'ward.name as wardname', db.raw('sum(if(ipt.regdate = ?,1,0)) as new_case', [date]), db.raw('sum(if(ipt.dchdate = ?,1,0)) as discharge', [date]), db.raw('sum(if(ipt.dchstts IN ("08","09"), 1,0)) as death'))
-            .count('* as cases')
+            .count('ipt.regdate as cases')
             .where('ipt.regdate', '<=', date)
             .whereRaw('ipt.ward is not null and ipt.ward!= ""')
             .andWhere(function () {
@@ -1452,7 +1452,7 @@ class HisHospitalOsModel {
         let sql = db('ipt')
             .leftJoin('ipt_spclty as clinic', 'ipt.spclty', 'clinic.ipt_spclty')
             .select('ipt.spclty as cliniccode', 'clinic.name as clinicname', db.raw('sum(if(ipt.regdate = ?,1,0)) as new_case', [date]), db.raw('sum(if(ipt.dchdate = ?,1,0)) as discharge', [date]), db.raw('sum(if(ipt.dchstts IN ("08","09"), 1,0)) as death'))
-            .count('* as cases')
+            .count('ipt.regdate as cases')
             .where('ipt.regdate', '<=', date)
             .andWhere(function () {
             this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', date);
@@ -1463,7 +1463,7 @@ class HisHospitalOsModel {
         let sql = db('ovst')
             .leftJoin('spclty', 'ovst.spclty', 'spclty.spclty')
             .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode', 'spclty.name as clinicname', db.raw('sum(if(an IS NULL or an="",0,1)) as admit'))
-            .count('* as cases')
+            .count('ovst.vstdate as cases')
             .where('ovst.vstdate', date);
         return sql.groupBy('spclty.nhso_code').orderBy('spclty.nhso_code');
     }
