@@ -1324,7 +1324,7 @@ class HisHosxpv3Model {
             .leftJoin('ward', 'roomno.ward', 'ward.ward')
             .where('ward.ward_active', 'Y').first();
     }
-    getBedNo(db, bedno = null) {
+    async getBedNo(db, bedno = null, start = -1, limit = 1000) {
         let sql = db('bedno')
             .leftJoin('roomno', 'bedno.roomno', 'roomno.roomno')
             .leftJoin('ward', 'roomno.ward', 'ward.ward')
@@ -1341,6 +1341,9 @@ class HisHosxpv3Model {
                 `));
         if (bedno) {
             sql = sql.where('bedno.bedno', bedno);
+        }
+        if (start >= 0) {
+            sql = sql.offset(start).limit(limit);
         }
         return sql.orderBy('bedno.bedno');
     }

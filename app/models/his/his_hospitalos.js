@@ -1485,7 +1485,7 @@ class HisHospitalOsModel {
             .leftJoin('b_visit_ward as ward', 'bed.b_visit_ward_id', 'ward.b_visit_ward_id')
             .where({ 'bed.active': '1', 'ward.visit_ward_active': '1' }).first();
     }
-    getBedNo(db, bedno = null) {
+    async getBedNo(db, bedno = null, start = -1, limit = 1000) {
         const clientType = (db.client?.config?.client || '').toLowerCase();
         const createQueryConcat = (wardCode, bedNumber) => {
             switch (clientType) {
@@ -1516,6 +1516,9 @@ class HisHospitalOsModel {
                     `)).where({ 'bed.active': '1', 'ward.visit_ward_active': '1' });
         if (bedno) {
             sql = sql.where('bedno', bedno);
+        }
+        if (start >= 0) {
+            sql = sql.offset(start).limit(limit);
         }
         return sql.orderBy('bedno');
     }

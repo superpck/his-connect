@@ -1630,7 +1630,7 @@ export class HisHosxpv4Model {
             .groupBy('referin.refer_date');
     }
 
-    // MOPH ERP
+    // MOPH ERP ==========================================================
     countBedNo(db: Knex) {
         return db('bedno').count('bedno.bedno as total_bed')
             .leftJoin('roomno', 'bedno.roomno', 'roomno.roomno')
@@ -1639,7 +1639,6 @@ export class HisHosxpv4Model {
     }
 
     async getBedNo(db: Knex, bedno: any = null, start = -1, limit: number = 1000) {
-    // getBedNo(db: Knex, bedno: any = null) {
         let sql = db('bedno')
             .leftJoin('roomno', 'bedno.roomno', 'roomno.roomno')
             .leftJoin('ward', 'roomno.ward', 'ward.ward')
