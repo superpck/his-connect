@@ -1677,7 +1677,6 @@ export class HisHospitalOsModel {
     getData(db, tableName, columnName, searchNo, hospCode = hisHospcode) {
         return db(tableName)
             .select(db.raw('"' + hisHospcode + '" as hospcode'))
-            .select('*')
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
     }
@@ -1715,7 +1714,7 @@ export class HisHospitalOsModel {
                 db.raw('sum(if(ipt.regdate = ?,1,0)) as new_case', [date]),
                 db.raw('sum(if(ipt.dchdate = ?,1,0)) as discharge', [date]),
                 db.raw('sum(if(ipt.dchstts IN ("08","09"), 1,0)) as death'))
-            .count('* as cases')
+            .count('ipt.regdate as cases')
             .where('ipt.regdate', '<=', date)
             .whereRaw('ipt.ward is not null and ipt.ward!= ""')
             .andWhere(function () {
@@ -1730,7 +1729,7 @@ export class HisHospitalOsModel {
                 db.raw('sum(if(ipt.regdate = ?,1,0)) as new_case', [date]),
                 db.raw('sum(if(ipt.dchdate = ?,1,0)) as discharge', [date]),
                 db.raw('sum(if(ipt.dchstts IN ("08","09"), 1,0)) as death'))
-            .count('* as cases')
+            .count('ipt.regdate as cases')
             .where('ipt.regdate', '<=', date)
             // .whereRaw('ipt.ward is not null and ipt.ward!= ""')
             .andWhere(function () {
@@ -1744,7 +1743,7 @@ export class HisHospitalOsModel {
             .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode',
                 'spclty.name as clinicname',
                 db.raw('sum(if(an IS NULL or an="",0,1)) as admit'))
-            .count('* as cases')
+            .count('ovst.vstdate as cases')
             .where('ovst.vstdate', date);
         return sql.groupBy('spclty.nhso_code').orderBy('spclty.nhso_code');
     }
@@ -1772,7 +1771,7 @@ export class HisHospitalOsModel {
             .leftJoin('b_visit_ward as ward', 'bed.b_visit_ward_id', 'ward.b_visit_ward_id')
             .where({ 'bed.active': '1', 'ward.visit_ward_active': '1' }).first();
     }
-    getBedNo(db: Knex, bedno: any = null) {
+    async getBedNo(db: Knex, bedno: any = null, start = -1, limit: number = 1000) {
         const clientType = (db.client?.config?.client || '').toLowerCase();
         const createQueryConcat = (wardCode: string, bedNumber: string): any => {
             switch (clientType) {
@@ -1806,9 +1805,12 @@ export class HisHospitalOsModel {
                             ELSE 'N'
                         END as bed_type
                     `)
-            ).where({ 'bed.active': '1', 'ward.visit_ward_active': '1' });
+            ).where({ 'bed.active': '1', 'ward.visit_ward_active': '1' })
         if (bedno) {
             sql = sql.where('bedno', bedno);
+        }
+        if (start >= 0) {
+            sql = sql.offset(start).limit(limit);
         }
         return sql.orderBy('bedno');
     }
