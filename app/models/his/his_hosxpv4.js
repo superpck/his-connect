@@ -1283,7 +1283,7 @@ class HisHosxpv4Model {
             .leftJoin('refer_reply', 'referin.vn', 'refer_reply.vn')
             .select(db.raw(`'${hisHospcode}' as HOSPCODE`))
             .select('referin.refer_hospcode as HOSP_SOURCE', 'patient.cid as CID_IN', 'referin.hn as PID_IN', 'referin.vn as SEQ_IN', 'referin.docno as REFERID', 'referin.refer_date as DATETIME_REFER', 'referin.icd10 as detail', 'refer_reply.diagnosis_text as reply_diagnostic', 'refer_reply.advice_text as reply_recommend')
-            .select(db.raw(`case when referin.referin_number then referin.referin_number else concat('${hisHospcode}-',referin.docno) end as REFERID_SOURCE`))
+            .select(db.raw(`case when referin.referin_number IS NOT NULL AND referin.referin_number !='' AND referin.referin_number !='-' then referin.referin_number else concat('${hisHospcode}-',referin.docno) end as REFERID_SOURCE`))
             .select(db.raw(`concat(refer_reply.reply_date, ' ',refer_reply.reply_time) as reply_date`))
             .select(db.raw(`'' as AN_IN, concat(referin.refer_hospcode,referin.referin_number) as REFERID_PROVINCE`))
             .select(db.raw(`concat(ovst.vstdate, ' ',ovst.vsttime) as DATETIME_IN, '1' as REFER_RESULT`))
@@ -1412,7 +1412,7 @@ class HisHosxpv4Model {
         return sql.orderBy('bedno.bedno');
     }
     concurrentIPDByWard(db, date) {
-        const clientType = db.client.config.client;
+        const clientType = (db.client?.config?.client || '').toLowerCase();
         let sql = db('ipt')
             .leftJoin('ward', 'ipt.ward', 'ward.ward')
             .select('ipt.ward as wardcode', 'ward.name as wardname');
@@ -1430,12 +1430,13 @@ class HisHosxpv4Model {
                     return db.raw(`CONCAT(${dateCol}, ' ', ${timeCol})`);
             }
         };
-        let dischargeDate = date;
-        if (date.length === 10) {
-            date = moment(date).locale('TH').format('YYYY-MM-DD');
-            sql = sql.select(db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09']))
+        const isDateOnly = typeof date === 'string' && date.length === 10;
+        const dischargeDate = date;
+        if (isDateOnly) {
+            const formattedDate = moment(date).locale('TH').format('YYYY-MM-DD');
+            sql = sql.select(db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [formattedDate]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [formattedDate]), db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09']))
                 .count('ipt.regdate as cases')
-                .where('ipt.regdate', '<=', date)
+                .where('ipt.regdate', '<=', formattedDate)
                 .andWhere(function () {
                 this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', dischargeDate);
             });
@@ -1446,24 +1447,24 @@ class HisHosxpv4Model {
             const regdatetime = getDatetimeExpr('ipt.regdate', 'ipt.regtime');
             const dchdatetime = getDatetimeExpr('ipt.dchdate', 'ipt.dchtime');
             sql = sql.select(db.raw(`SUM(CASE WHEN ${regdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? AND ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death`, [dateStart, dateEnd, '08', '09']), db.raw(`SUM(CASE WHEN ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS cases`, [dateStart, dateEnd]))
-                .whereRaw(`${regdatetime.sql} <= ?`, dateStart)
+                .whereRaw(`${regdatetime.sql} <= ?`, [dateStart])
                 .whereRaw(`(ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ?)`, [dateStart, dateEnd]);
         }
         sql = sql.whereNotNull('ipt.ward')
             .whereNot('ipt.ward', '');
-        return sql.groupBy('ipt.ward').orderBy('ipt.ward');
+        return sql.groupBy(['ipt.ward', 'ward.name']).orderBy('ipt.ward');
     }
     concurrentIPDByClinic(db, date) {
-        date = moment(date).format('YYYY-MM-DD');
+        const formattedDate = moment(date).locale('TH').format('YYYY-MM-DD');
         let sql = db('ipt')
-            .leftJoin('spclty as clinic', 'ipt.spclty', 'clinic.spclty')
-            .select('ipt.spclty as cliniccode', 'clinic.name as clinicname', db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death'))
+            .leftJoin('ipt_spclty as clinic', 'ipt.spclty', 'clinic.ipt_spclty')
+            .select('ipt.spclty as cliniccode', 'clinic.name as clinicname', db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [formattedDate]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [formattedDate]), db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09']))
             .count('ipt.regdate as cases')
-            .where('ipt.regdate', '<=', date)
+            .where('ipt.regdate', '<=', formattedDate)
             .andWhere(function () {
-            this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', date);
+            this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', formattedDate);
         });
-        return sql.groupBy('ipt.spclty').orderBy('ipt.spclty');
+        return sql.groupBy(['ipt.spclty', 'clinic.name']).orderBy('ipt.spclty');
     }
     sumOpdVisitByClinic(db, date) {
         let sql = db('ovst')
@@ -1471,7 +1472,8 @@ class HisHosxpv4Model {
             .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode', 'spclty.name as clinicname', db.raw('SUM(CASE WHEN an IS NULL or an="" THEN 0 ELSE 1 END) AS admit'))
             .count('ovst.vstdate as cases')
             .where('ovst.vstdate', date);
-        return sql.groupBy('spclty.nhso_code').orderBy('spclty.nhso_code');
+        return sql.groupBy(['ovst.vstdate', 'spclty.nhso_code', 'spclty.name'])
+            .orderBy('spclty.nhso_code');
     }
 }
 exports.HisHosxpv4Model = HisHosxpv4Model;
