@@ -1387,13 +1387,13 @@ class HisHosxpv4Model {
             .leftJoin('ward', 'roomno.ward', 'ward.ward')
             .where('ward.ward_active', 'Y').first();
     }
-    getBedNo(db, bedno = null) {
+    async getBedNo(db, bedno = null, start = -1, limit = 1000) {
         let sql = db('bedno')
             .leftJoin('roomno', 'bedno.roomno', 'roomno.roomno')
             .leftJoin('ward', 'roomno.ward', 'ward.ward')
             .leftJoin('bedtype', 'bedno.bedtype', 'bedtype.bedtype')
             .leftJoin('bed_status_type as status', 'bedno.bed_status_type_id', 'status.bed_status_type_id')
-            .select('bedno.bedno', 'bedno.bedtype', 'bedtype.name as bedtype_name', 'bedno.roomno', 'roomno.ward as wardcode', 'ward.name as wardname', 'bedno.export_code as std_code', 'bedno.bed_status_type_id', 'status.bed_status_type_name', db.raw("CASE WHEN ward.ward_active ='Y' THEN 1 ELSE 0 END as isactive"), db.raw(`
+            .select('bedno.bedno', 'bedno.bedtype', 'bedtype.name as bedtype_name', 'bedno.roomno', 'roomno.ward as wardcode', 'ward.name as wardname', 'bedno.export_code as std_code', 'bedno.bed_status_type_id', 'status.bed_status_type_name', db.raw("CASE WHEN ward.ward_active !='Y' OR status.is_available !='Y' THEN 0 ELSE 1 END as isactive"), db.raw(`
                     CASE 
                         WHEN LOWER(bedtype.name) LIKE '%พิเศษ%' THEN 'S'
                         WHEN LOWER(bedtype.name) LIKE '%icu%' OR bedtype.name LIKE '%ไอซียู%' THEN 'ICU'
@@ -1405,6 +1405,9 @@ class HisHosxpv4Model {
             .where('ward.ward_active', 'Y');
         if (bedno) {
             sql = sql.where('bedno.bedno', bedno);
+        }
+        if (start >= 0) {
+            sql = sql.offset(start).limit(limit);
         }
         return sql.orderBy('bedno.bedno');
     }
@@ -1431,7 +1434,7 @@ class HisHosxpv4Model {
         if (date.length === 10) {
             date = moment(date).locale('TH').format('YYYY-MM-DD');
             sql = sql.select(db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09']))
-                .count('* as cases')
+                .count('ipt.regdate as cases')
                 .where('ipt.regdate', '<=', date)
                 .andWhere(function () {
                 this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', dischargeDate);
@@ -1453,9 +1456,9 @@ class HisHosxpv4Model {
     concurrentIPDByClinic(db, date) {
         date = moment(date).format('YYYY-MM-DD');
         let sql = db('ipt')
-            .leftJoin('ipt_spclty as clinic', 'ipt.spclty', 'clinic.ipt_spclty')
+            .leftJoin('spclty as clinic', 'ipt.spclty', 'clinic.spclty')
             .select('ipt.spclty as cliniccode', 'clinic.name as clinicname', db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death'))
-            .count('* as cases')
+            .count('ipt.regdate as cases')
             .where('ipt.regdate', '<=', date)
             .andWhere(function () {
             this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', date);
@@ -1466,7 +1469,7 @@ class HisHosxpv4Model {
         let sql = db('ovst')
             .leftJoin('spclty', 'ovst.spclty', 'spclty.spclty')
             .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode', 'spclty.name as clinicname', db.raw('SUM(CASE WHEN an IS NULL or an="" THEN 0 ELSE 1 END) AS admit'))
-            .count('* as cases')
+            .count('ovst.vstdate as cases')
             .where('ovst.vstdate', date);
         return sql.groupBy('spclty.nhso_code').orderBy('spclty.nhso_code');
     }
