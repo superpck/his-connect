@@ -197,7 +197,7 @@ export class HisHiModel {
       .andWhere(db.raw(`ipt.ward <> ''`))
       .select(
         db.raw(`${hcode} as hospcode`)
-        ,db.raw(`ifnull(if(ltrim(substring(iptadm.bedno, 2, 20) = '', 'ไม่ระบุเตียง', ltrim(substring(iptadm.bedno, 2, 20)), 'ไม่ระบุเตียง') as bedno`)
+        , db.raw(`ifnull(nullif(ltrim(substring(iptadm.bedno, 2, 20)), 'ไม่ระบุเตียง'), 'ไม่ระบุเตียง') as bedno`)
         , db.raw(`ifnull(bedtype.type_code, 'N') as bedtype`)
         , db.raw(`ifnull(bedtype.namebedtyp,'-') as bedtype_name`)
         , 'ipt.ward as wardcode'
