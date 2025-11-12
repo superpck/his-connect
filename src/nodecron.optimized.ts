@@ -320,6 +320,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
     updateAlive();
     sendWardName();
     sendBedNo();
+    // sendBedOccupancy();
     // mophErpProcessTask();
   }
   

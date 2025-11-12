@@ -1587,7 +1587,7 @@ export class HisHosxpv3Model {
 
         sql = sql.whereNotNull('ipt.ward')
             .whereNot('ipt.ward', '');
-        return sql.groupBy('ipt.ward').orderBy('ipt.ward');
+        return sql.groupBy(['ipt.ward','ward.name']).orderBy('ipt.ward');
     }
 
     concurrentIPDByClinic(db: Knex, date: any) {
@@ -1604,7 +1604,7 @@ export class HisHosxpv3Model {
             .andWhere(function () {
                 this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', date);
             });
-        return sql.groupBy('ipt.spclty').orderBy('ipt.spclty');
+        return sql.groupBy(['ipt.spclty','clinic.name']).orderBy('ipt.spclty');
     }
     sumOpdVisitByClinic(db: Knex, date: any) {
         let sql = db('ovst')
@@ -1614,6 +1614,7 @@ export class HisHosxpv3Model {
                 db.raw('SUM(CASE WHEN an IS NULL or an="" THEN 0 ELSE 1 END) AS admit'))
             .count('ovst.vstdate as cases')
             .where('ovst.vstdate', date);
-        return sql.groupBy('spclty.nhso_code').orderBy('spclty.nhso_code');
+        return sql.groupBy(['ovst.vstdate', 'spclty.nhso_code', 'spclty.name'])
+        .orderBy('spclty.nhso_code');
     }
 }

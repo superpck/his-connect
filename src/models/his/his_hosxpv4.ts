@@ -1669,7 +1669,7 @@ export class HisHosxpv4Model {
     }
 
     concurrentIPDByWard(db: Knex, date: any) {
-        const clientType = db.client.config.client;
+        const clientType = (db.client?.config?.client || '').toLowerCase();
         let sql = db('ipt')
             .leftJoin('ward', 'ipt.ward', 'ward.ward')
             .select('ipt.ward as wardcode', 'ward.name as wardname');
@@ -1690,16 +1690,17 @@ export class HisHosxpv4Model {
             }
         };
 
-        let dischargeDate = date;
-        if (date.length === 10) {       // Process ย้อนหลัง ส่งมาเฉพาะวันที่
-            date = moment(date).locale('TH').format('YYYY-MM-DD');
+        const isDateOnly = typeof date === 'string' && date.length === 10;
+        const dischargeDate = date;
+        if (isDateOnly) {       // Process ย้อนหลัง ส่งมาเฉพาะวันที่
+            const formattedDate = moment(date).locale('TH').format('YYYY-MM-DD');
             sql = sql.select(
-                db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]),
-                db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]),
+                db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [formattedDate]),
+                db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [formattedDate]),
                 db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09'])
             )
                 .count('ipt.regdate as cases')
-                .where('ipt.regdate', '<=', date)
+                .where('ipt.regdate', '<=', formattedDate)
                 .andWhere(function () {
                     this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', dischargeDate);
                 });
@@ -1716,31 +1717,29 @@ export class HisHosxpv4Model {
                 db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge`, [dateStart, dateEnd]),
                 db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? AND ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death`, [dateStart, dateEnd, '08', '09']),
                 db.raw(`SUM(CASE WHEN ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS cases`, [dateStart, dateEnd]))
-                .whereRaw(`${regdatetime.sql} <= ?`, dateStart)
-                // .where(`${regdatetime.sql}`, '<=', dateEnd)
-                // .where('ipt.regdate', '<=', regdate)
+                .whereRaw(`${regdatetime.sql} <= ?`, [dateStart])
                 .whereRaw(`(ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ?)`, [dateStart, dateEnd]);
         }
 
         sql = sql.whereNotNull('ipt.ward')
             .whereNot('ipt.ward', '');
-        return sql.groupBy('ipt.ward').orderBy('ipt.ward');
+        return sql.groupBy(['ipt.ward', 'ward.name']).orderBy('ipt.ward');
     }
 
     concurrentIPDByClinic(db: Knex, date: any) {
-        date = moment(date).format('YYYY-MM-DD');
+        const formattedDate = moment(date).locale('TH').format('YYYY-MM-DD');
         let sql = db('ipt')
-            .leftJoin('spclty as clinic', 'ipt.spclty', 'clinic.spclty')
+            .leftJoin('ipt_spclty as clinic', 'ipt.spclty', 'clinic.ipt_spclty')
             .select('ipt.spclty as cliniccode', 'clinic.name as clinicname',
-                db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]),
-                db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]),
-                db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death'))
+                db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [formattedDate]),
+                db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [formattedDate]),
+                db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09']))
             .count('ipt.regdate as cases')
-            .where('ipt.regdate', '<=', date)
+            .where('ipt.regdate', '<=', formattedDate)
             .andWhere(function () {
-                this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', date);
+                this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', formattedDate);
             });
-        return sql.groupBy('ipt.spclty').orderBy('ipt.spclty');
+        return sql.groupBy(['ipt.spclty', 'clinic.name']).orderBy('ipt.spclty');
     }
     sumOpdVisitByClinic(db: Knex, date: any) {
         let sql = db('ovst')
@@ -1750,6 +1749,7 @@ export class HisHosxpv4Model {
                 db.raw('SUM(CASE WHEN an IS NULL or an="" THEN 0 ELSE 1 END) AS admit'))
             .count('ovst.vstdate as cases')
             .where('ovst.vstdate', date);
-        return sql.groupBy('spclty.nhso_code').orderBy('spclty.nhso_code');
+        return sql.groupBy(['ovst.vstdate', 'spclty.nhso_code', 'spclty.name'])
+            .orderBy('spclty.nhso_code');
     }
 }

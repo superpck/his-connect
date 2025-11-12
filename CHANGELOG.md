@@ -7,6 +7,7 @@
   - ปรับ Source HIS: HI
   - เพิ่ม source HIS: MIT Net
   - ปรับ source HIS: HOSxP ให้ get clinic ที่ spclty แทน ipt_spclty
+  - เพิ่ม Group by แบบ Aggregate ใน Query ของ MOPH ERP
   
 # 3.8.12
 ## Feature
