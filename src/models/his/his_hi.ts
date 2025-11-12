@@ -264,6 +264,7 @@ export class HisHiModel {
     const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
     const noDate = '0000-00-00';
     return db('ipt')
+      .innerJoin('idpm','ipt.ward','idpm.idpm')
       .innerJoin('iptadm', 'ipt.an', 'iptadm.an')
       .leftJoin('bedtype', 'iptadm.bedtype', 'bedtype.bedtype')
       .leftJoin('spclty', 'ipt.dept', 'spclty.spclty')
