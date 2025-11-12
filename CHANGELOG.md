@@ -6,6 +6,7 @@
   - เพิ่ม model ว่างๆ สำหรับ HI, HimPro, Mitnet, E-PIS
   - ปรับ Source HIS: HI
   - เพิ่ม source HIS: MIT Net
+  - ปรับ source HIS: HOSxP ให้ get clinic ที่ spclty แทน ipt_spclty
   
 # 3.8.12
 ## Feature

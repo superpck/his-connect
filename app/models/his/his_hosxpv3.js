@@ -1415,7 +1415,7 @@ class HisHosxpv3Model {
     }
     concurrentIPDByClinic(db, date) {
         let sql = db('ipt')
-            .leftJoin('ipt_spclty as clinic', 'ipt.spclty', 'clinic.ipt_spclty')
+            .leftJoin('spclty as clinic', 'ipt.spclty', 'clinic.spclty')
             .select('ipt.spclty as cliniccode', 'clinic.name as clinicname', db.raw('? as date', [date]), db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death'))
             .count('ipt.regdate as cases')
             .where('ipt.regdate', '<=', date)

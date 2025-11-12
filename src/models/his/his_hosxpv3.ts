@@ -1592,7 +1592,7 @@ export class HisHosxpv3Model {
 
     concurrentIPDByClinic(db: Knex, date: any) {
         let sql = db('ipt')
-            .leftJoin('ipt_spclty as clinic', 'ipt.spclty', 'clinic.ipt_spclty')
+            .leftJoin('spclty as clinic', 'ipt.spclty', 'clinic.spclty')
             .select('ipt.spclty as cliniccode', 'clinic.name as clinicname',
                 db.raw('? as date', [date]),
                 db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]),
