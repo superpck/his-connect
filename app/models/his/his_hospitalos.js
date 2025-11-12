@@ -1408,7 +1408,6 @@ class HisHospitalOsModel {
     getData(db, tableName, columnName, searchNo, hospCode = hisHospcode) {
         return db(tableName)
             .select(db.raw('"' + hisHospcode + '" as hospcode'))
-            .select('*')
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
     }
