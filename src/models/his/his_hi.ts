@@ -262,6 +262,7 @@ export class HisHiModel {
     const noDate = '0000-00-00';
     return db('ipt')
       .innerJoin('iptadm', 'ipt.an', 'iptadm.an')
+      .leftJoin('bedtype', 'iptadm.bedtype', 'bedtype.bedtype')
       .leftJoin('spclty', 'ipt.dept', 'spclty.spclty')
       .where(db.raw(`concat(ipt.rgtdate,' ',time(ipt.rgttime*100)) <= ?`, [dateEnd]))
       .andWhere('ipt.rgtdate', '>=', dateAdmitLimit)
