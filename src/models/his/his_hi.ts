@@ -209,7 +209,6 @@ export class HisHiModel {
         , 'idpm.is_active as isactive'
         , db.raw(`if(bedtype.export_code is null, idpm.export_code, concat(substr(idpm.export_code,1,3),bedtype.export_code)) as std_code`)
       );
-    // return []
   }
 
   concurrentIPDByWard(db: Knex, date: any) { // date: datetime
