@@ -49,7 +49,7 @@ const getReferToken = async () => {
         return data;
     }
     catch (error) {
-        console.log('getNReferToken', error.status || '', error.message);
+        console.log('getNReferToken Error:', error.status || '', error.message);
         return error;
     }
 };
@@ -105,10 +105,6 @@ const sendingToMoph = async (uri, dataArray) => {
 };
 exports.sendingToMoph = sendingToMoph;
 const updateHISAlive = async (dataArray) => {
-    await (0, exports.getReferToken)();
-    if (!nReferToken) {
-        return { status: 500, message: 'No nRefer token' };
-    }
     const hashedApiKey = (0, crypto_1.createHash)('sha1')
         .update((process.env.REQUEST_KEY || '') + (dataArray.hospcode || '') + (dataArray.his || '') + moment().format('YYYY-MM-DD HH:mm:ss'))
         .digest('hex');

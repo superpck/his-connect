@@ -50,7 +50,7 @@ export const getReferToken = async () => {
     nReferToken = data?.token || nReferToken;
     return data;
   } catch (error) {
-    console.log('getNReferToken', error.status || '', error.message);
+    console.log('getNReferToken Error:', error.status || '', error.message);
     return error;
   }
 }
@@ -105,10 +105,10 @@ export const sendingToMoph = async (uri: string, dataArray: any) => {
 }
 
 export const updateHISAlive = async (dataArray: any) => {
-  await getReferToken();
-  if (!nReferToken) {
-    return { status: 500, message: 'No nRefer token' };
-  }
+  // await getReferToken();
+  // if (!nReferToken) {
+  //   return { status: 500, message: 'No nRefer token' };
+  // }
 
   const hashedApiKey = createHash('sha1')
     .update((process.env.REQUEST_KEY || '') + (dataArray.hospcode || '') + (dataArray.his || '') + moment().format('YYYY-MM-DD HH:mm:ss'))
