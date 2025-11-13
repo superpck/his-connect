@@ -1851,13 +1851,15 @@ export class HisHosxpv4Model {
         }
 
         sql = sql.whereNotNull('ipt.ward')
-            .whereNot('ipt.ward', '');
+            .whereNot('ipt.ward', '')
+            .where("ward.ward_active", "Y");
         return sql.groupBy(['ipt.ward', 'ward.name']).orderBy('ipt.ward');
     }
 
     concurrentIPDByClinic(db: Knex, date: any) {
         const formattedDate = moment(date).locale('TH').format('YYYY-MM-DD');
         let sql = db('ipt')
+            .leftJoin('ward', 'ipt.ward', 'ward.ward')
             .leftJoin('ipt_spclty as clinic', 'ipt.spclty', 'clinic.ipt_spclty')
             .select('ipt.spclty as cliniccode', 'clinic.name as clinicname',
                 db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [formattedDate]),
@@ -1868,14 +1870,16 @@ export class HisHosxpv4Model {
             .andWhere(function () {
                 this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', formattedDate);
             });
-        return sql.groupBy(['ipt.spclty', 'clinic.name']).orderBy('ipt.spclty');
+        return sql.where("ward.ward_active", "Y")
+            .groupBy(['ipt.spclty', 'clinic.name'])
+            .orderBy('ipt.spclty');
     }
     sumOpdVisitByClinic(db: Knex, date: any) {
         let sql = db('ovst')
             .leftJoin('spclty', 'ovst.spclty', 'spclty.spclty')
             .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode',
                 'spclty.name as clinicname',
-                db.raw('SUM(CASE WHEN an IS NULL or an="" THEN 0 ELSE 1 END) AS admit'))
+                db.raw('SUM(CASE WHEN an IS NULL or an=\'\' THEN 0 ELSE 1 END) AS admit'))
             .count('ovst.vstdate as cases')
             .where('ovst.vstdate', date);
         return sql.groupBy(['ovst.vstdate', 'spclty.nhso_code', 'spclty.name'])
