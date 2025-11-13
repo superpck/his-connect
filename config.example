@@ -16,7 +16,7 @@ SSL_CRT=public/ssl/localhost.crt
 # valid HIS provider name: 
 #    iHospital, HOSxPv3, HOSxPv4, HOSxPpcu, infod, homc, ssb
 #    hospitalos, jhcis, kpstat, md, mkhospital, thiades, 
-#    hi, himpro, mitnet, EPIS, nemo, mypcu, emrsoft, haos, MBase
+#    hi, himpro, mitnet, EPIS, nemo, mypcu, emrsoft, haos, MBase,VPM
 
 # [HIS DB]
 HIS_PROVIDER=HOSxPv3
@@ -32,25 +32,6 @@ HIS_DB_ENCRYPT=true
 MAX_CONNECTION_PER_MINUTE=1000
 # oracledb
 NODE_ORACLEDB_DRIVER_MODE=thin
-
-# [ISDB - for ISONLINE only]
-IS_DB_HOST=localhost
-IS_DB_PORT=3306
-IS_DB_CLIENT=mysql2
-IS_DB_SCHEMA=public
-IS_DB_NAME=isdb
-IS_DB_USER="user"
-IS_DB_PASSWORD="password"
-IS_DB_CHARSET=utf8mb4
-IS_DB_ENCRYPT=false
-IS_AUTO_SEND=0
-IS_AUTO_SEND_EVERY_MINUTE=30
-IS_AUTO_SEND_EVERY_HOUR=0
-IS_URL=https://connect.moph.go.th/is-api
-
-#User from https://connect.moph.go.th/pher-plus/#/login
-IS_MOPH_USER="??"
-IS_MOPH_PASSWORD="??"
 
 # [nRefer]
 NREFER_API_URL="https://refer.moph.go.th/api/his"
