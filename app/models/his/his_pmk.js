@@ -7,6 +7,10 @@ const hcode = process.env.HOSPCODE;
 const dbName = process.env.HIS_DB_NAME;
 const dbClient = process.env.HIS_DB_CLIENT;
 class HisPmkModel {
+    async testConnect(db) {
+        const row = await db('PATIENTS').select('HN').first();
+        return { connection: row ? true : false };
+    }
     getTableName(db) {
         if (dbClient === 'oracledb') {
             return db('ALL_TABLES')
@@ -17,9 +21,6 @@ class HisPmkModel {
                 .select('table_name')
                 .where('table_schema', '=', dbName);
         }
-    }
-    testConnect(db) {
-        return db('PATIENTS').select('HN').limit(1);
     }
     async getReferOut(db, date, hospCode = hcode) {
         date = moment(date).format('YYYY-MM-DD');

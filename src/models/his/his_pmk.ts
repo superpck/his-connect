@@ -8,6 +8,11 @@ const dbClient = process.env.HIS_DB_CLIENT;
 
 export class HisPmkModel {
 
+    async testConnect(db: Knex) {
+        const row = await db('PATIENTS').select('HN').first();
+        return { connection: row ? true : false };
+    }
+
     getTableName(db: Knex) {
         if (dbClient === 'oracledb') {
             return db('ALL_TABLES')
@@ -17,10 +22,6 @@ export class HisPmkModel {
                 .select('table_name')
                 .where('table_schema', '=', dbName);
         }
-    }
-
-    testConnect(db: Knex) {
-        return db('PATIENTS').select('HN').limit(1)
     }
 
     async getReferOut(db: Knex, date, hospCode = hcode) {
