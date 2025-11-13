@@ -140,5 +140,8 @@ class HisMBaseModel {
     sumOpdVisitByClinic(db, date) {
         return [];
     }
+    getMophAlertOPDVisit(db, date) {
+        return [];
+    }
 }
 exports.HisMBaseModel = HisMBaseModel;

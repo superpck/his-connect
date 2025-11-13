@@ -1303,12 +1303,33 @@ class HisHaosModel {
         const result = await db.raw(sql);
         return result[0];
     }
+    sumReferIn(db, dateStart, dateEnd) {
+        return [];
+    }
     getData(db, tableName, columnName, searchNo, hospCode = hcode) {
         return db(tableName)
             .select(db.raw('"' + hcode + '" as hospcode'))
             .select('*')
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
+    }
+    countBedNo(db) {
+        return { total_bed: 0 };
+    }
+    async getBedNo(db, bedno = null, start = -1, limit = 1000) {
+        return [];
+    }
+    concurrentIPDByWard(db, date) {
+        return [];
+    }
+    concurrentIPDByClinic(db, date) {
+        return [];
+    }
+    sumOpdVisitByClinic(db, date) {
+        return [];
+    }
+    getMophAlertOPDVisit(db, date) {
+        return [];
     }
 }
 exports.HisHaosModel = HisHaosModel;

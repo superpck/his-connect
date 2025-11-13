@@ -15,10 +15,10 @@ const sendBedOccupancy = async (dateProcess = null) => {
     let whatUTC = Intl?.DateTimeFormat().resolvedOptions().timeZone || '';
     let currDate;
     if (whatUTC == 'UTC' || whatUTC == 'Etc/UTC') {
-        currDate = moment().locale('TH').add(7, 'hours').subtract(1, 'minutes').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        currDate = moment().locale('TH').add(7, 'hours').subtract(10, 'minutes').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
     }
     else {
-        currDate = moment().locale('TH').subtract(1, 'minutes').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        currDate = moment().locale('TH').subtract(30, 'minutes').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
     }
     let date = dateProcess || currDate;
     let dateOpd = date;
