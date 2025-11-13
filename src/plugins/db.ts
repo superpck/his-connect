@@ -50,12 +50,13 @@ const dbConnection = (type = 'HIS') => {
         database: connection.database,
         options: {
           port: +connection.port,
-          schema: connection.schema
+          schema: connection.schema,
+          trustServerCertificate: connection?.trustServerCertificate !== false
         }
       }
     };
     if (connection?.encrypt) {
-      opt.connection.encrypt = connection.encrypt;
+      opt.connection.encrypt = connection?.encrypt === false ? false : 'strict';
     }
   } else if (config.client == 'oracledb') {
     process.env.NODE_ORACLEDB_DRIVER_MODE ||= process.env.DB_ORACLEDB_DRIVER_MODE || 'thin';

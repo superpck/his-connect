@@ -4,6 +4,7 @@ import * as moment from 'moment';
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
+const noDate = '0000-00-00';
 
 export class HisHiModel {
   check() {
@@ -30,7 +31,7 @@ export class HisHiModel {
     }
     return sql
       .select('idpm as wardcode', 'nameidpm as wardname',
-        `export_code as std_code`, 'bed_normal', 'bed_sp as bed_special', 'bed_icu','bed_extra',
+        `export_code as std_code`, 'bed_normal', 'bed_sp as bed_special', 'bed_icu', 'bed_extra',
         'is_active as isactive'
       )
       .where(db.raw(`idpm <> ''`))
@@ -173,18 +174,21 @@ export class HisHiModel {
     return [];
   }
 
-  // MOPH ERP
+  // Report zone
+  sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
+    return [];
+  }
+
+  // MOPH ERP ========================================================
+  // นับจำนวนเตียงทั้งหมด
   countBedNo(db: Knex) {
-    const noDate = '0000-00-00';
     return db('ipt')
       .where('dchdate', noDate)
       .count('an as total_bed')
       .first();
-    // return { total_bed: 0 };
   }
 
   async getBedNo(db: Knex, bedno: any = null, start = -1, limit: number = 1000) {
-    const noDate = '0000-00-00';
     let sql = db('ipt');
     if (start >= 0) {
       sql = sql.offset(start).limit(limit);
@@ -208,16 +212,10 @@ export class HisHiModel {
     // return []
   }
 
-  // Report zone
-  sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
-    return [];
-  }
-
-  concurrentIPDByWard(db: Knex, date: any) {
+  concurrentIPDByWard(db: Knex, date: any) { // date: datetime
     const dateAdmitLimit = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
     const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
     const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
-    const noDate = '0000-00-00';
     return db('ipt')
       .innerJoin('idpm', 'ipt.ward', 'idpm.idpm')
       .innerJoin('iptadm', 'ipt.an', 'iptadm.an')
@@ -230,7 +228,7 @@ export class HisHiModel {
       })
       .andWhere(db.raw(`ipt.ward <> ''`))
       .select(
-        db.raw(`${hcode} as hospcode`),
+        db.raw(`? as hospcode`, [hcode]),
         'ipt.ward as wardcode',
         'idpm.nameidpm as wardname',
         db.raw(`count(case when concat(rgtdate,' ',time(rgttime*100)) between ?  and ? then ipt.an end) as new_case`, [dateStart, dateEnd]),
@@ -258,13 +256,12 @@ export class HisHiModel {
       .groupBy('ipt.ward');
   }
 
-  concurrentIPDByClinic(db: Knex, date: any) {
+  concurrentIPDByClinic(db: Knex, date: any) { // date: datetime
     const dateAdmitLimit = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
     const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
     const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
-    const noDate = '0000-00-00';
     return db('ipt')
-      .innerJoin('idpm','ipt.ward','idpm.idpm')
+      .innerJoin('idpm', 'ipt.ward', 'idpm.idpm')
       .innerJoin('iptadm', 'ipt.an', 'iptadm.an')
       .leftJoin('bedtype', 'iptadm.bedtype', 'bedtype.bedtype')
       .leftJoin('spclty', 'ipt.dept', 'spclty.spclty')
@@ -276,7 +273,7 @@ export class HisHiModel {
       })
       .andWhere(db.raw(`ipt.ward <> ''`))
       .select(
-        db.raw(`${hcode} as hospcode`),
+        db.raw(`? as hospcode`, [hcode]),
         'ipt.ward as wardcode',
         'idpm.nameidpm as wardname',
         db.raw(`count(case when concat(rgtdate,' ',time(rgttime*100)) between ?  and ? then ipt.an end) as new_case`, [dateStart, dateEnd]),
@@ -300,17 +297,18 @@ export class HisHiModel {
         db.raw(`count(case when bedtype.type_code = 'LR' then ipt.an end) as lr`),
         db.raw(`count(case when bedtype.type_code = 'STROKE' then ipt.an end) as stroke`),
         db.raw(`count(case when bedtype.type_code = 'BURN' then ipt.an end) as burn`),
-
       )
       .groupBy('ipt.dept');
   }
 
   sumOpdVisitByClinic(db: Knex, date: any) {
+    date = moment(date).locale('TH').format('YYYY-MM-DD'); // set date only
     return db('ovst as visit')
       .innerJoin('cln', 'visit.cln', 'cln.cln')
       .innerJoin('spclty as spec', 'cln.specialty', 'spec.spclty')
       .where(db.raw(`date(visit.vstdttm) = ?`, [date]))
-      .select(db.raw(`${hcode} as hospcode`),db.raw(`IFNULL(cln.specialty, '00') as cliniccode`), 'spec.namespclty as clinicname',
+      .select(db.raw(`? as hospcode`, [hcode]),
+        db.raw(`IFNULL(cln.specialty, '00') as cliniccode`), 'spec.namespclty as clinicname',
         db.raw(`COUNT(
           CASE 
             WHEN visit.an > 0 THEN visit.an  
