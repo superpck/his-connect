@@ -1881,8 +1881,7 @@ export class HisHosxpv4Model {
         return sql.groupBy(['ovst.vstdate', 'spclty.nhso_code', 'spclty.name'])
             .orderBy('spclty.nhso_code');
     }
-    getMophAlertOPDVisit(db: Knex, date: any) {
-        // cid,hn,vn,date_service,time_service, clinic_code (local), clinic_name (local)
+    getVisitForMophAlert(db: Knex, date: any) {
         return [];
     }
 }

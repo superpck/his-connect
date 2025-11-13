@@ -226,7 +226,7 @@ class HisHiModel {
             .groupBy('cln.specialty')
             .orderBy('cln.specialty');
     }
-    getMophAlertOPDVisit(db, date) {
+    getVisitForMophAlert(db, date) {
         return [];
     }
 }

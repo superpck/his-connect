@@ -9,7 +9,7 @@ const hospcode = process.env.HOSPCODE || '';
 
 export const opdVisit = async (date: any) => {
   try {
-    let rows: any = await hisModel.getMophAlertOPDVisit(db, date);
+    let rows: any = await hisModel.getVisitForMophAlert(db, date);
     if (rows && rows.length) {
       for (let row of rows) {
         row.hospcode = hospcode;
@@ -22,7 +22,7 @@ export const opdVisit = async (date: any) => {
       return { statusCode: 200, message: 'No opd visit data' };
     }
   } catch (error) {
-    console.log(moment().format('HH:mm:ss'), 'getMophAlertOPDVisit error', error.message);
+    console.log(moment().format('HH:mm:ss'), 'getVisitForMophAlert error', error.message);
     return [];
   }
 }

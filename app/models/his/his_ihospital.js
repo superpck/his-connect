@@ -587,7 +587,7 @@ class HisIHospitalModel {
             .where('visit.date', date);
         return sql.groupBy('cliniccode').orderBy('cliniccode');
     }
-    getMophAlertOPDVisit(db, date) {
+    getVisitForMophAlert(db, date) {
         return [];
     }
 }

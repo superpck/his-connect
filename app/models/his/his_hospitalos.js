@@ -1521,7 +1521,7 @@ class HisHospitalOsModel {
         }
         return sql.orderBy('bedno');
     }
-    getMophAlertOPDVisit(db, date) {
+    getVisitForMophAlert(db, date) {
         return [];
     }
 }

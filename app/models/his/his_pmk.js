@@ -280,7 +280,7 @@ class HisPmkModel {
     sumOpdVisitByClinic(db, date) {
         return [];
     }
-    getMophAlertOPDVisit(db, date) {
+    getVisitForMophAlert(db, date) {
         return [];
     }
 }

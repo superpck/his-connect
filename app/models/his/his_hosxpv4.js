@@ -1382,7 +1382,7 @@ class HisHosxpv4Model {
         return sql.groupBy(['ovst.vstdate', 'spclty.nhso_code', 'spclty.name'])
             .orderBy('spclty.nhso_code');
     }
-    getMophAlertOPDVisit(db, date) {
+    getVisitForMophAlert(db, date) {
         return [];
     }
 }

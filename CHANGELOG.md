@@ -2,6 +2,7 @@
 ## Feature
   - เพิ่ม source HIS: VPM
   - เปลี่ยนตัวแปร Key ให้สอดคล้องกับ MOPH ERP
+  - เพิ่ม getVisitForMophAlert
 
 # 3.8.13
 ## Feature

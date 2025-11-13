@@ -791,8 +791,7 @@ export class HisIHospitalModel {
     return sql.groupBy('cliniccode').orderBy('cliniccode');
   }
 
-  getMophAlertOPDVisit(db: Knex, date: any) {
-    // cid,hn,vn,date_service,time_service, clinic_code (local), clinic_name (local)
+  getVisitForMophAlert(db: Knex, date: any) {
     return [];
   }
 
