@@ -102,15 +102,17 @@
 | cid | string | เลขที่บัตรประชาชน |
 | hn | string | เลขที่ผู้ป่วยโรงพยาบาล |
 | vn | string | visit no |
-| clinic_code | string | local code |
-| clinic_name | string | local name |
+| department_type | string | OPD, ER, IPD, HOMEWARD, OTHER |
+| department_code | string | local code |
+| department_name | string | local name |
 | date_service | string | วันที่รับบริการ |
 | time_service | string | เวลารับบริการ (ณ ห้องตรวจ) |
 
 หมายเหตุ
 ```
- - ระบบจะเข้ารหัส เลขบัตรประชาชน, hn, vn ก่อนการบันทึกลงตารางข้อมูล
+ - ให้ส่งเฉพาะผู้รับบริการที่ต้องการให้ประเมินความพึงพอใจ ไม่ควรส่งไปยังผู้ป่วยนอกที่รับไว้รักษา (Admission), กรณีไม่รอตรวจ, ไม่มาตามนัด
  - ระบบจะส่ง Alert ไปยังหมอพร้อมหลังส่งข้อมูล ภายใน 5 นาที
+ - หลังส่ง Alert ระบบจะเข้ารหัส เลขบัตรประชาชน, hn, vn ก่อนการบันทึกลงตารางข้อมูล
 ```
 
 # สำหรับ nRefer
