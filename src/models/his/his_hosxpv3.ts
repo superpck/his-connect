@@ -1396,7 +1396,7 @@ export class HisHosxpv3Model {
             .select(db.raw(`'' as AN_IN, concat(referin.refer_hospcode,referin.referin_number) as REFERID_PROVINCE`))
             .select(db.raw(`concat(ovst.vstdate, ' ',ovst.vsttime) as DATETIME_IN, '1' as REFER_RESULT`))
             .select(db.raw(`concat(ovst.vstdate, ' ',ovst.vsttime) as D_UPDATE`))
-            .where(db.raw(`(referin.refer_date=? or referin.date_in=?)`,[visitDate, visitDate]))
+            .where(db.raw(`(referin.refer_date=? or referin.date_in=?)`, [visitDate, visitDate]))
             .where(db.raw('length(referin.refer_hospcode)=5'))
             .whereNotNull('referin.vn')
             .whereNotNull('patient.hn')
@@ -1586,12 +1586,14 @@ export class HisHosxpv3Model {
         }
 
         sql = sql.whereNotNull('ipt.ward')
-            .whereNot('ipt.ward', '');
-        return sql.groupBy(['ipt.ward','ward.name']).orderBy('ipt.ward');
+            .whereNot('ipt.ward', '')
+            .where("ward.ward_active", "Y");
+        return sql.groupBy(['ipt.ward', 'ward.name']).orderBy('ipt.ward');
     }
 
     concurrentIPDByClinic(db: Knex, date: any) {
         let sql = db('ipt')
+            .leftJoin('ward', 'ipt.ward', 'ward.ward')
             .leftJoin('spclty as clinic', 'ipt.spclty', 'clinic.spclty')
             .select('ipt.spclty as cliniccode', 'clinic.name as clinicname',
                 db.raw('? as date', [date]),
@@ -1604,7 +1606,9 @@ export class HisHosxpv3Model {
             .andWhere(function () {
                 this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', date);
             });
-        return sql.groupBy(['ipt.spclty','clinic.name']).orderBy('ipt.spclty');
+        return sql.where("ward.ward_active", "Y")
+            .groupBy(['ipt.spclty', 'clinic.name'])
+            .orderBy('ipt.spclty');
     }
     sumOpdVisitByClinic(db: Knex, date: any) {
         let sql = db('ovst')
@@ -1615,7 +1619,7 @@ export class HisHosxpv3Model {
             .count('ovst.vstdate as cases')
             .where('ovst.vstdate', date);
         return sql.groupBy(['ovst.vstdate', 'spclty.nhso_code', 'spclty.name'])
-        .orderBy('spclty.nhso_code');
+            .orderBy('spclty.nhso_code');
     }
     getVisitForMophAlert(db: Knex, date: any) {
         return [];

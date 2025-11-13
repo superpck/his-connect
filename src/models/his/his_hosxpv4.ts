@@ -1851,13 +1851,15 @@ export class HisHosxpv4Model {
         }
 
         sql = sql.whereNotNull('ipt.ward')
-            .whereNot('ipt.ward', '');
+            .whereNot('ipt.ward', '')
+            .where("ward.ward_active", "Y");
         return sql.groupBy(['ipt.ward', 'ward.name']).orderBy('ipt.ward');
     }
 
     concurrentIPDByClinic(db: Knex, date: any) {
         const formattedDate = moment(date).locale('TH').format('YYYY-MM-DD');
         let sql = db('ipt')
+            .leftJoin('ward', 'ipt.ward', 'ward.ward')
             .leftJoin('ipt_spclty as clinic', 'ipt.spclty', 'clinic.ipt_spclty')
             .select('ipt.spclty as cliniccode', 'clinic.name as clinicname',
                 db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [formattedDate]),
@@ -1868,7 +1870,9 @@ export class HisHosxpv4Model {
             .andWhere(function () {
                 this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', formattedDate);
             });
-        return sql.groupBy(['ipt.spclty', 'clinic.name']).orderBy('ipt.spclty');
+        return sql.where("ward.ward_active", "Y")
+            .groupBy(['ipt.spclty', 'clinic.name'])
+            .orderBy('ipt.spclty');
     }
     sumOpdVisitByClinic(db: Knex, date: any) {
         let sql = db('ovst')
