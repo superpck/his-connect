@@ -209,7 +209,6 @@ export class HisHiModel {
         , 'idpm.is_active as isactive'
         , db.raw(`if(bedtype.export_code is null, idpm.export_code, concat(substr(idpm.export_code,1,3),bedtype.export_code)) as std_code`)
       );
-    // return []
   }
 
   concurrentIPDByWard(db: Knex, date: any) { // date: datetime
@@ -273,9 +272,9 @@ export class HisHiModel {
       })
       .andWhere(db.raw(`ipt.ward <> ''`))
       .select(
-        db.raw(`? as hospcode`, [hcode]),
-        'ipt.ward as wardcode',
-        'idpm.nameidpm as wardname',
+        db.raw(`${hcode} as hospcode`),
+        db.raw(`if(ipt.dept = '' or ipt.dept is null,'00',ipt.dept) as cliniccode`),
+        db.raw(`ifnull(spec.namespclty,'ไม่ระบุ') as clinicname`),
         db.raw(`count(case when concat(rgtdate,' ',time(rgttime*100)) between ?  and ? then ipt.an end) as new_case`, [dateStart, dateEnd]),
         db.raw(`count(case when concat(dchdate,' ',time(dchtime*100)) between ?  and ? then ipt.an end) as discharge`, [dateStart, dateEnd]),
         db.raw(`count(case when dchstts in (8,9) and concat(dchdate,' ',time(dchtime*100)) between ?  and ? then ipt.an end) as death`, [dateStart, dateEnd]),
