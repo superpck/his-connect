@@ -16,7 +16,7 @@ SSL_CRT=public/ssl/localhost.crt
 # valid HIS provider name: 
 #    iHospital, HOSxPv3, HOSxPv4, HOSxPpcu, infod, homc, ssb
 #    hospitalos, jhcis, kpstat, md, mkhospital, thiades, 
-#    hi, himpro, mitnet, EPIS, nemo, mypcu, emrsoft, haos, MBase
+#    hi, himpro, mitnet, EPIS, nemo, mypcu, emrsoft, haos, MBase,VPM
 
 # [HIS DB]
 HIS_PROVIDER=HOSxPv3

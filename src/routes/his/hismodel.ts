@@ -22,6 +22,7 @@ import { HisHiModel } from '../../models/his/his_hi';
 import { HisHimproModel } from '../../models/his/his_himpro';
 import { HisEPisModel } from '../../models/his/his_epis';
 import { HisMBaseModel } from '../../models/his/his_mbase';
+import { HisVpmHModel } from '../../models/his/his_vpm';
 
 console.log('HIS Provider:', process.env.HIS_PROVIDER);
 const hisProvider = (process.env.HIS_PROVIDER || 'unknown-his').toLowerCase();
@@ -73,8 +74,8 @@ switch (hisProvider) {
   case 'hospitalos':
     hisModel = new HisHospitalOsModel();
     break;
-  case 'jhos':
-    // hisModel = new HisJhosModel();
+  case 'vpm':
+    hisModel = new HisVpmHModel();
     break;
   case 'pmk':
     hisModel = new HisPmkModel();

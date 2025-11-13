@@ -89,11 +89,15 @@ switch (provider) {
     case 'mitnet':
         hisModel = new his_mitnet_1.HisMitnetModel();
         break;
+    case 'vpm':
+        hisModel = new his_vpm_1.HisVpmHModel();
+        break;
     default:
         hisModel = new his_model_1.HisModel();
 }
 const hismodel_1 = require("./../his/hismodel");
 const his_mitnet_1 = require("../../models/his/his_mitnet");
+const his_vpm_1 = require("../../models/his/his_vpm");
 const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb',
     'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades',
     'himpro', 'nemo', 'mypcu', 'emrsoft', 'haos', 'other'];

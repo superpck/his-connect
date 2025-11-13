@@ -90,12 +90,16 @@ switch (provider) {
   case 'mitnet':
     hisModel = new HisMitnetModel();
     break;
+  case 'vpm':
+    hisModel = new HisVpmHModel();
+    break;
   default:
     hisModel = new HisModel();
 }
 
 import hisReferModel from './../his/hismodel';
 import { HisMitnetModel } from '../../models/his/his_mitnet';
+import { HisVpmHModel } from '../../models/his/his_vpm';
 
 const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb'
   , 'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades'
