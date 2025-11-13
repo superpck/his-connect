@@ -5,12 +5,12 @@ const axios_1 = require("axios");
 const moment = require("moment");
 const crypto_1 = require("crypto");
 const utils_1 = require("./utils");
-const referAPIUrl = 'https://refer.moph.go.th/api/beta';
+const referAPIUrl = process.env?.MOPH_ERP_API_URL || 'https://refer.moph.go.th/api/erp';
 const adminAPIUrl = process.env.ADMIN_API_URL || 'https://referlink.moph.go.th/api/admin';
 const erpAPIUrl = process.env.ERP_API_URL || 'https://referlink.moph.go.th/api/moph-erp';
 const hcode = process.env.HOSPCODE;
-const apiKey = process.env.NREFER_APIKEY || process.env.APIKEY || 'api-key';
-const secretKey = process.env.NREFER_SECRETKEY || process.env.SECRETKEY || 'secret-key';
+const apiKey = process.env?.MOPH_ERP_APIKEY || process.env.NREFER_APIKEY || 'api-key';
+const secretKey = process.env?.MOPH_ERP_SECRETKEY || process.env.NREFER_SECRETKEY || 'secret-key';
 let crontabConfig = {
     client_ip: '', version: global.appDetail?.version || '',
     subVersion: global.appDetail?.subVersion || ''

@@ -33,15 +33,19 @@ MAX_CONNECTION_PER_MINUTE=1000
 # oracledb
 NODE_ORACLEDB_DRIVER_MODE=thin
 
+# [ISDB - for ISONLINE only]
+# ตั้งแต่ v.3.8.14 จะไม่รองรับ ISOnline (รองรับเฉพาะ PHER+)
+
 # [nRefer]
 NREFER_API_URL="https://refer.moph.go.th/api/his"
 NREFER_DATA_BACKWARD_MONTH=0
-
-#Key from https://nrefer.moph.go.th หรือ MOPH ERP Admin
-NREFER_APIKEY="กรุณาระบุ API Key"
-NREFER_SECRETKEY="กรุณาระบุ API Secret Key"
 NREFER_AUTO_SEND=1
 NREFER_AUTO_SEND_EVERY_MINUTE=15
+
+#[MOPH ERP]
+MOPH_ERP_API_URL='https://refer.moph.go.th/api/erp'
+MOPH_ERP_APIKEY="กรุณาระบุ API Key จากหน้า Admin page"
+MOPH_ERP_SECRETKEY="กรุณาระบุ API Secret Key จากหน้า Admin page"
 
 # [JWT]
 REQUEST_KEY="<ใส่อะไรก็ได้ที่จำได้_10_ถึง_16_ตัว>"

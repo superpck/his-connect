@@ -6,7 +6,9 @@
 > - หากฟังก์ชันดึงข้อมูลผ่านวิวหรือตารางที่มีการเลือกทุกคอลัมน์ (`select *`) จะระบุเป็นข้อความไว้แทนตารางรายละเอียด
 > - นิพจน์ที่เป็นค่าคงที่หรือคำนวณจะอธิบายสั้น ๆ ในคอลัมน์ “หมายเหตุ”
 
+# สำหรับ MOPH ERP
 ## getWard
+รายละเอียด: ทะเบียนรหัส Ward
 | column | type | describe |
 | --- | --- | --- |
 | hospcode | string | รหสัสถานพยาบาล |
@@ -23,10 +25,12 @@
 | bed_extra | number | จำนวนเตียงเสริม |
 | lr | number | จำนวนเตียงรอคลอด |
 | clip | number | จำนวน Clip เด็ก |
+| imc | number | จำนวนเตียง IMC/Palliative care (ที่จัดไว้โดยเฉพาะ) |
 | homeward | number | จำนวนเตียง homeward |
 | isactive | 0, 1 | 1=ใช้งาน |
 
 ## getBedNo
+รายละเอียด: ทะเบียนรหัสเตียง
 | column | type | describe |
 | --- | --- | --- |
 | bedno * | string | หมายเลขเตียง |
@@ -39,7 +43,7 @@
 | isactive * | 0, 1 | 1=ใช้งาน |
 
 ## concurrentIPDByWard
-คอลัมน์:
+รายละเอียด: อัตราการคงค้างพยาบาล แยกราย Ward (local code)
 | column | type | describe |
 | --- | --- | --- |
 | hospcode | string | รหสัสถานพยาบาล |
@@ -50,17 +54,17 @@
 | new_case | number | รับใหม่ในเวลา |
 | discharge | number | จำหน่ายในเวลา |
 | death | number | เสียชีวิตในเวลา |
-| normal | number | จำนวสามัญ |
-| special | number | จำนวนพิเศษ |
-| icu | number | จำนวน case icu |
-| semi | number | จำนวน case semi-icu |
-| stroke | number | จำนวน case stroke |
-| burn | number | จำนวน case burn |
-| imc | number | จำนวน case IMC/Palliative |
+| normal | number | จำนวนผู้ป่วยสามัญ |
+| special | number | จำนวนผู้ป่วยพิเศษ |
+| icu | number | จำนวนผู้ป่วย icu |
+| semi | number | จำนวนผู้ป่วย semi-icu |
+| stroke | number | จำนวนผู้ป่วย stroke |
+| burn | number | จำนวนผู้ป่วย burn |
+| imc | number | จำนวนผู้ป่วย IMC/Palliative |
 | lr | number | จำนวน รอคลอด |
 | clip | number | จำนวนเด็กแรกเกิด |
-| minithanyaruk | number | จำนวน case minithanyaruk |
-| homeward | number | จำนวน case homeward |
+| minithanyaruk | number | จำนวนผู้ป่วย minithanyaruk |
+| homeward | number | จำนวนผู้ป่วย homeward |
 
 ตัวอย่าง filter
 ```
@@ -71,36 +75,47 @@
 ```
 
 ## concurrentIPDByClinic
-คอลัมน์:
+รายละเอียด: อัตราการคงค้างพยาบาล แยกรายแผนก/สาขา ตาม HDC
 | column | type | describe |
 | --- | --- | --- |
 | hospcode | string | รหสัสถานพยาบาล |
 | date | datetime | เวลาที่ประมวลผล |
 | cliniccode | string | code ตาม HDC |
-| cases | number | คงค้างพยาบาลทั้งหมด (รวม discharge) |
-| new_case | number | รับใหม่ในเวลา |
-| discharge | number | จำหน่ายในเวลา |
-| death | number | เสียชีวิตในเวลา |
-| icu | number | จำนวน case icu |
-| semi | number | จำนวน case semi-icu |
-| homeward | number | จำนวน case homeward |
-| clip | number | จำนวนเด็กแรกเกิด |
+| cases-homeward |  | แบบเดียวกับ concurrentIPDByWard |
 
 ## sumOpdVisitByClinic
-คอลัมน์:
+รายละเอียด: จำนวนการให้บริการผู้ป่วยนอด แยกรายแผนก/สาขา ตาม HDC
 | column | type | describe |
 | --- | --- | --- |
 | hospcode | string | รหสัสถานพยาบาล |
 | date | datetime | เวลาที่ประมวลผล |
 | cliniccode | string | code ตาม HDC |
-| clinicname | string | name ตาม HDC |
 | cases | number | OPD visit (ไม่รวมไม่รอตรวจ ไม่มาตามนัด) |
 | admit | number | จำนวนสั่ง Admission |
 
+# สำหรับ MOPH Alert
+## getMophAlertOPDVisit
+รายละเอียด: ทะเบียนผู้ป่วยนอกที่สิ้นสุดการรักษาแล้ว เพื่อส่งให้ประเมินความพึงพอใจการรับบริการ
+| column | type | describe |
+| --- | --- | --- |
+| hospcode | string | รหสัสถานพยาบาล |
+| cid | string | เลขที่บัตรประชาชน |
+| hn | string | เลขที่ผู้ป่วยโรงพยาบาล |
+| vn | string | visit no |
+| clinic_code | string | local code |
+| clinic_name | string | local name |
+| date_service | string | วันที่รับบริการ |
+| time_service | string | เวลารับบริการ (ณ ห้องตรวจ) |
 
+หมายเหตุ
+```
+ - ระบบจะเข้ารหัส เลขบัตรประชาชน, hn, vn ก่อนการบันทึกลงตารางข้อมูล
+ - ระบบจะส่ง Alert ไปยังหมอพร้อมหลังส่งข้อมูล ภายใน 5 นาที
+```
 
-
+# สำหรับ nRefer
 ## testConnect
+รายละเอียด: สำหรับ his/alive
 | Source / Expression | Output Column | หมายเหตุ |
 | --- | --- | --- |
 | `opdconfig.hospitalname` / `opdconfig.hospitalcode` | `hospname` | ชื่อหรือรพ.โค้ดจากตาราง `opdconfig`; คืนค่า `hospitalname` หากมี ไม่เช่นนั้นใช้ `hospitalcode` |

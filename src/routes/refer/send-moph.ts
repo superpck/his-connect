@@ -18,8 +18,8 @@ const router = (fastify, { }, next) => {
   fastify.get('/sending-process/:?date', async (req: any, reply: any) => {
     const now = moment().locale('th').format('YYYY-MM-DD');
     const trust = req.headers.host.search('localhost|127.0.0.1') > -1;
-    const apiKey = process.env.NREFER_APIKEY || process.env.APIKEY;
-    const secretKey = process.env.NREFER_SECRETKEY || process.env.SECRETKEY;
+    const apiKey = process.env?.MOPH_ERP_APIKEY || process.env.NREFER_APIKEY;
+    const secretKey = process.env?.MOPH_ERP_SECRETKEY || process.env.NREFER_SECRETKEY;
     const date = req.params.date || now;
 
     if (!trust || !apiKey || !secretKey) {

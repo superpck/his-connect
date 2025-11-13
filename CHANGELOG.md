@@ -1,6 +1,7 @@
 # 3.8.14
 ## Feature
   - เพิ่ม source HIS: VPM
+  - เปลี่ยนตัวแปร Key ให้สอดคล้องกับ MOPH ERP
 
 # 3.8.13
 ## Feature
