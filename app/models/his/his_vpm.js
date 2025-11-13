@@ -38,7 +38,7 @@ class HisVpmHModel {
     sumOpdVisitByClinic(db, date) {
         return [];
     }
-    getMophAlertOPDVisit(db, date) {
+    getVisitForMophAlert(db, date) {
         return [];
     }
 }

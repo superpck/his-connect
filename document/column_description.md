@@ -94,7 +94,7 @@
 | admit | number | จำนวนสั่ง Admission |
 
 # สำหรับ MOPH Alert
-## getMophAlertOPDVisit
+## getVisitForMophAlert
 รายละเอียด: ทะเบียนผู้ป่วยนอกที่สิ้นสุดการรักษาแล้ว เพื่อส่งให้ประเมินความพึงพอใจการรับบริการ
 | column | type | describe |
 | --- | --- | --- |

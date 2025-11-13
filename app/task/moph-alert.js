@@ -9,7 +9,7 @@ let db = dbConnection('HIS');
 const hospcode = process.env.HOSPCODE || '';
 const opdVisit = async (date) => {
     try {
-        let rows = await hismodel_1.default.getMophAlertOPDVisit(db, date);
+        let rows = await hismodel_1.default.getVisitForMophAlert(db, date);
         if (rows && rows.length) {
             for (let row of rows) {
                 row.hospcode = hospcode;
@@ -23,7 +23,7 @@ const opdVisit = async (date) => {
         }
     }
     catch (error) {
-        console.log(moment().format('HH:mm:ss'), 'getMophAlertOPDVisit error', error.message);
+        console.log(moment().format('HH:mm:ss'), 'getVisitForMophAlert error', error.message);
         return [];
     }
 };

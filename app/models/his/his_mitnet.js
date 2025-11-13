@@ -190,7 +190,7 @@ class HisMitnetModel {
             .where('OpdVisitByClinic.date', date)
             .orderBy('OpdVisitByClinic.cliniccode');
     }
-    getMophAlertOPDVisit(db, date) {
+    getVisitForMophAlert(db, date) {
         return [];
     }
 }
