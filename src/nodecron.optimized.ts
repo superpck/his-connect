@@ -303,8 +303,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   // Create cron schedule (run every minute)
   const secondNow = moment().seconds();
   const timingSch = `${secondNow} * * * * *`;
-  let timeRandom = Math.ceil(Math.random() * 5) || 1;
-  timeRandom += 10;
+  let timeRandom = 10 + (Math.ceil(Math.random() * 5) || 1);
 
   // Configure timing schedules
   const timingSchedule = configureTimingSchedules();
@@ -346,7 +345,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
         erpAdminRequest();
       }
 
-      if (minuteNow == ((timeRandom - 5) < 5 ? 5 : (timeRandom - 5))) {
+      if (minuteNow == timeRandom) {
         sendBedOccupancy();
       }
       if (moment().hour() % 4 === 0 && minuteNow == 37) {

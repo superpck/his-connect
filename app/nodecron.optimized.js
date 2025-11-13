@@ -140,8 +140,7 @@ async function cronjob(fastify) {
     updateProcessState();
     const secondNow = moment().seconds();
     const timingSch = `${secondNow} * * * * *`;
-    let timeRandom = Math.ceil(Math.random() * 5) || 1;
-    timeRandom += 10;
+    let timeRandom = 10 + (Math.ceil(Math.random() * 5) || 1);
     const timingSchedule = configureTimingSchedules();
     if (processState.isFirstProcess) {
         console.log(`${getTimestamp()} Start API for Hospcode ${process.env.HOSPCODE}`);
@@ -167,7 +166,7 @@ async function cronjob(fastify) {
             if (minuteSinceLastNight % 2 == 0) {
                 (0, moph_erp_1.erpAdminRequest)();
             }
-            if (minuteNow == ((timeRandom - 5) < 5 ? 5 : (timeRandom - 5))) {
+            if (minuteNow == timeRandom) {
                 (0, moph_erp_1.sendBedOccupancy)();
             }
             if (moment().hour() % 4 === 0 && minuteNow == 37) {
