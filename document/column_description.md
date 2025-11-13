@@ -115,7 +115,7 @@
  - หลังส่ง Alert ระบบจะเข้ารหัส เลขบัตรประชาชน, hn, vn ก่อนการบันทึกลงตารางข้อมูล
 ```
 
-# สำหรับ nRefer
+# สำหรับ nRefer และ PHER+
 ## testConnect
 รายละเอียด: สำหรับ his/alive
 | Source / Expression | Output Column | หมายเหตุ |
