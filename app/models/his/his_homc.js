@@ -38,5 +38,8 @@ class HisHomCHModel {
     sumOpdVisitByClinic(db, date) {
         return [];
     }
+    getMophAlertOPDVisit(db, date) {
+        return [];
+    }
 }
 exports.HisHomCHModel = HisHomCHModel;

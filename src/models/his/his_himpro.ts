@@ -180,4 +180,8 @@ export class HisHimproModel {
   sumOpdVisitByClinic(db: Knex, date: any) {
     return [];
   }
+  getMophAlertOPDVisit(db: Knex, date: any) {
+    // cid,hn,vn,date_service,time_service, clinic_code (local), clinic_name (local)
+    return [];
+  }
 }

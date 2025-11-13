@@ -247,7 +247,7 @@ export class HisHosxpv4Model {
                 db.raw('p.last_update as D_Update')
             )
             .where(columnName, searchText);
-        
+
         return result[0];
     }
     async getService(db: Knex, columnName, searchText, hospCode = hisHospcode) {
@@ -257,7 +257,7 @@ export class HisHosxpv4Model {
         columnName = columnName === 'seq_id' ? 'os.seq_id' : columnName;
         columnName = columnName === 'hn' ? 'o.hn' : columnName;
         columnName = columnName === 'date_serv' ? 'o.vstdate' : columnName;
-        
+
         const result = await db('ovst as o')
             .select(
                 db.raw('? as HOSPCODE', [hisHospcode]),
@@ -335,12 +335,12 @@ export class HisHosxpv4Model {
                 db.raw('vn.hospsub as hsub')
             )
             .leftJoin('person as p', 'o.hn', 'p.patient_hn')
-            .leftJoin('vn_stat as vn', function() {
+            .leftJoin('vn_stat as vn', function () {
                 this.on('o.vn', '=', 'vn.vn')
                     .andOn('vn.hn', '=', 'p.patient_hn');
             })
             .leftJoin('ipt as i', 'i.vn', 'o.vn')
-            .leftJoin('opdscreen as s', function() {
+            .leftJoin('opdscreen as s', function () {
                 this.on('o.vn', '=', 's.vn')
                     .andOn('o.hn', '=', 's.hn');
             })
@@ -381,7 +381,7 @@ export class HisHosxpv4Model {
             .leftJoin('doctor as d', 'd.CODE', 'o.doctor')
             .where('q.vn', visitNo)
             .whereRaw(`odx.icd10 REGEXP '[A-Z]'`);
-        
+
         return result;
     }
     async getDiagnosisOpdAccident(db: Knex, dateStart: any, dateEnd: any, hospCode = hisHospcode) {
@@ -427,7 +427,7 @@ export class HisHosxpv4Model {
         const subquery = db('ovstdiag as dx')
             .select('vn')
             .where('dx.vstdate', date)
-            .where(function() {
+            .where(function () {
                 this.whereRaw(`LEFT(icd10, 4) IN ('R651', 'R572')`)
                     .orWhereRaw(`LEFT(diag, 3) IN ('A40', 'A41')`);
             })
@@ -460,7 +460,7 @@ export class HisHosxpv4Model {
             .select('dx.an')
             .leftJoin('ipt', 'dx.an', 'ipt.an')
             .whereBetween('ipt.dchdate', [dateStart, dateEnd])
-            .where(function() {
+            .where(function () {
                 this.whereRaw(`LEFT(icd10, 4) IN ('R651', 'R572')`)
                     .orWhereRaw(`LEFT(diag, 3) IN ('A40', 'A41')`);
             })
@@ -531,11 +531,11 @@ export class HisHosxpv4Model {
             .leftJoin('health_med_operation_item as h3', 'h3.health_med_operation_item_id', 'h2.health_med_operation_item_id')
             .leftJoin('health_med_organ as g1', 'g1.health_med_organ_id', 'h2.health_med_organ_id')
             .leftJoin('health_med_operation_type as t1', 't1.health_med_operation_type_id', 'h2.health_med_operation_type_id')
-            .leftJoin('ovst as o', function() {
+            .leftJoin('ovst as o', function () {
                 this.on('o.vn', '=', 'h1.vn')
                     .andOn('h1.hn', '=', 'o.hn');
             })
-            .leftJoin('vn_stat as v', function() {
+            .leftJoin('vn_stat as v', function () {
                 this.on('v.vn', '=', 'h1.vn')
                     .andOn('h1.hn', '=', 'v.hn');
             })
@@ -630,11 +630,11 @@ export class HisHosxpv4Model {
             )
             .leftJoin('person as p', 'p.patient_hn', 'r.hn')
             .leftJoin('dttm as e', 'e.icd9cm', 'r.icd9')
-            .leftJoin('vn_stat as v', function() {
+            .leftJoin('vn_stat as v', function () {
                 this.on('v.vn', '=', 'r.vn')
                     .andOn('v.hn', '=', 'r.hn');
             })
-            .leftJoin('ovst as o', function() {
+            .leftJoin('ovst as o', function () {
                 this.on('o.vn', '=', 'r.vn')
                     .andOn('o.hn', '=', 'r.hn');
             })
@@ -654,7 +654,7 @@ export class HisHosxpv4Model {
             UNION ALL
             ${query3.toString()}
         `);
-        
+
         return result[0];
     }
 
@@ -1660,7 +1660,7 @@ export class HisHosxpv4Model {
             .select(db.raw(`'' as AN_IN, concat(referin.refer_hospcode,referin.referin_number) as REFERID_PROVINCE`))
             .select(db.raw(`concat(ovst.vstdate, ' ',ovst.vsttime) as DATETIME_IN, '1' as REFER_RESULT`))
             .select(db.raw(`concat(ovst.vstdate, ' ',ovst.vsttime) as D_UPDATE`))
-            .where(db.raw(`(referin.refer_date=? or referin.date_in=?)`,[visitDate, visitDate]))
+            .where(db.raw(`(referin.refer_date=? or referin.date_in=?)`, [visitDate, visitDate]))
             .where(db.raw('length(referin.refer_hospcode)=5'))
             .whereNotNull('referin.vn')
             .whereNotNull('patient.hn')
@@ -1880,5 +1880,9 @@ export class HisHosxpv4Model {
             .where('ovst.vstdate', date);
         return sql.groupBy(['ovst.vstdate', 'spclty.nhso_code', 'spclty.name'])
             .orderBy('spclty.nhso_code');
+    }
+    getMophAlertOPDVisit(db: Knex, date: any) {
+        // cid,hn,vn,date_service,time_service, clinic_code (local), clinic_name (local)
+        return [];
     }
 }

@@ -13,7 +13,7 @@ export class HisSsbHModel {
         const hospname = result?.hospitalname || result?.hospitalcode || null;
 
         result = await db('patient').first();
-        const connection = result? true : false;
+        const connection = result ? true : false;
 
         return { hospname, connection };
     }
@@ -50,6 +50,10 @@ export class HisSsbHModel {
         return [];
     }
     sumOpdVisitByClinic(db: Knex, date: any) {
+        return [];
+    }
+    getMophAlertOPDVisit(db: Knex, date: any) {
+        // cid,hn,vn,date_service,time_service, clinic_code (local), clinic_name (local)
         return [];
     }
 }

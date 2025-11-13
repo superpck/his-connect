@@ -20,10 +20,6 @@ export const sendBedOccupancy = async (dateProcess: any = null) => {
     currDate = moment().locale('TH').subtract(30, 'minutes').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
   }
 
-  // console.log('sendBedOccupancy currDate:', currDate, moment().utc().format('HH:mm:ss'));
-  // console.log(Intl.DateTimeFormat().resolvedOptions().timeZone);
-  // console.log(new Date().getTimezoneOffset());
-
   let date = dateProcess || currDate;
 
   let dateOpd = date; // เฉพาะ OPD Visit

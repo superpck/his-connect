@@ -261,5 +261,26 @@ class HisPmkModel {
             .where(columnName, "=", searchNo)
             .limit(5000);
     }
+    sumReferIn(db, dateStart, dateEnd) {
+        return [];
+    }
+    countBedNo(db) {
+        return { total_bed: 0 };
+    }
+    async getBedNo(db, bedno = null, start = -1, limit = 1000) {
+        return [];
+    }
+    concurrentIPDByWard(db, date) {
+        return [];
+    }
+    concurrentIPDByClinic(db, date) {
+        return [];
+    }
+    sumOpdVisitByClinic(db, date) {
+        return [];
+    }
+    getMophAlertOPDVisit(db, date) {
+        return [];
+    }
 }
 exports.HisPmkModel = HisPmkModel;
