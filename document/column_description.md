@@ -120,6 +120,44 @@
 - ระบบจะส่ง Alert ไปยังหมอพร้อมหลังส่งข้อมูล ภายใน 5 นาที
 - หลังส่ง Alert ระบบจะเข้ารหัส เลขบัตรประชาชน, hn, vn ก่อนการบันทึกลงตารางข้อมูล
 ```
+ตัวอย่าง SQL ของ iHospital
+```
+  getVisitForMophAlert(db: Knex, date: any) {
+    date = moment(date).format('YYYY-MM-DD'); // for safety date format
+
+    // Detect database client for cross-database compatibility
+    const client = db.client.config.client;
+    const isMSSQL = client === 'mssql';
+    const isPostgreSQL = client === 'pg' || client === 'postgres' || client === 'postgresql';
+
+    // LENGTH() function - MySQL/PostgreSQL use LENGTH(), MSSQL uses LEN()
+    const lengthCheck = isMSSQL
+      ? 'LEN(no_card) = 13'
+      : 'LENGTH(no_card) = 13';
+
+    // LOCATE/POSITION/CHARINDEX for text search
+    // MySQL: LOCATE(substring, string) = 0
+    // PostgreSQL: POSITION(substring IN string) = 0
+    // MSSQL: CHARINDEX(substring, string) = 0
+    const locateCheck = isMSSQL
+      ? "CHARINDEX('เสียชีวิต', opd_result) = 0"
+      : isPostgreSQL
+        ? "POSITION('เสียชีวิต' IN opd_result) = 0"
+        : "LOCATE('เสียชีวิต', opd_result) = 0";
+
+    return db('view_opd_visit')
+      .where('date', date)
+      .whereRaw(lengthCheck)
+      .whereRaw(locateCheck)
+      .where('opd_age', '>', 12)  // กรณีไม่สนใจอายุ ให้ลบบรรทัดนี้ทิ้ง
+      .where('opd_age_type', 1)  // กรณีไม่สนใจอายุ ให้ลบบรรทัดนี้ทิ้ง
+      .select('hn', 'vn', 'cid',
+        db.raw("'OPD' as department_type"),
+        'dep as department_code', 'dep_name as department_name',
+        'date as date_service', 'time as time_service')
+      .groupBy('dep', 'hn');  // 1 HN ส่งครั้งเดียว, กรณีจะให้ตอบทุกรายการ ให้ลบ groupBy ออก
+  }
+```
 
 # สำหรับ nRefer และ PHER+
 ## testConnect
