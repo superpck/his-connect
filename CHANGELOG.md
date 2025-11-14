@@ -4,6 +4,8 @@
   - เปลี่ยนตัวแปร Key ให้สอดคล้องกับ MOPH ERP
   - เพิ่ม getVisitForMophAlert
   - เพิ่มเงื่อนไขใน HOSxP ให้ sum เฉพาะ ward.ward_active=Y
+  - ยกเลิกการส่ง spclty.name ใน HOSxP
+  - ยกเลิกการประมวลผล OPD Visit ย้อนหลัง
 
 # 3.8.13
 ## Feature
