@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import * as moment from 'moment';
 import { execSync } from 'child_process';
 import { sendWardName, sendBedNo, sendBedOccupancy, updateAlive, erpAdminRequest, mophErpProcessTask } from "./task/moph-erp";
+import { mophAlertSurvey } from "./task/moph-alert";
 
 // Type definitions for better type safety
 interface ServiceSchedule {
@@ -316,11 +317,12 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
 
   // Initial tasks on first process
   if (processState.isFirstProcess) {
-    updateAlive();
-    sendWardName();
-    sendBedNo();
+    // updateAlive();
+    // sendWardName();
+    // sendBedNo();
     // sendBedOccupancy();
     // mophErpProcessTask();
+    mophAlertSurvey();
   }
 
   // Schedule cron job
