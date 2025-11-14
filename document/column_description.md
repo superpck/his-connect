@@ -149,6 +149,7 @@
       .where('date', date)
       .whereRaw(lengthCheck)
       .whereRaw(locateCheck)
+      .where('status', 'not in', [3, 6, 8, 20, 98, 99]) // เฉพาะที่ตรวจเสร็จ และไม่ Admit
       .where('opd_age', '>', 12)  // กรณีไม่สนใจอายุ ให้ลบบรรทัดนี้ทิ้ง
       .where('opd_age_type', 1)  // กรณีไม่สนใจอายุ ให้ลบบรรทัดนี้ทิ้ง
       .select('hn', 'vn', 'cid',
