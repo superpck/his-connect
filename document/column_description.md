@@ -129,6 +129,7 @@
     const client = db.client.config.client;
     const isMSSQL = client === 'mssql';
     const isPostgreSQL = client === 'pg' || client === 'postgres' || client === 'postgresql';
+    const isOracle = client === 'oracledb' || client === 'oracle';
 
     // LENGTH() function - MySQL/PostgreSQL use LENGTH(), MSSQL uses LEN()
     const lengthCheck = isMSSQL
@@ -139,11 +140,14 @@
     // MySQL: LOCATE(substring, string) = 0
     // PostgreSQL: POSITION(substring IN string) = 0
     // MSSQL: CHARINDEX(substring, string) = 0
+    // Oracle: INSTR(string, substring) = 0
     const locateCheck = isMSSQL
       ? "CHARINDEX('เสียชีวิต', opd_result) = 0"
       : isPostgreSQL
         ? "POSITION('เสียชีวิต' IN opd_result) = 0"
-        : "LOCATE('เสียชีวิต', opd_result) = 0";
+        : isOracle
+          ? "INSTR(opd_result, 'เสียชีวิต') = 0"
+          : "LOCATE('เสียชีวิต', opd_result) = 0";
 
     return db('view_opd_visit')
       .where('date', date)

@@ -593,6 +593,7 @@ class HisIHospitalModel {
         const client = db.client.config.client;
         const isMSSQL = client === 'mssql';
         const isPostgreSQL = client === 'pg' || client === 'postgres' || client === 'postgresql';
+        const isOracle = client === 'oracledb' || client === 'oracle';
         const lengthCheck = isMSSQL
             ? 'LEN(no_card) = 13'
             : 'LENGTH(no_card) = 13';
@@ -600,7 +601,9 @@ class HisIHospitalModel {
             ? "CHARINDEX('เสียชีวิต', opd_result) = 0"
             : isPostgreSQL
                 ? "POSITION('เสียชีวิต' IN opd_result) = 0"
-                : "LOCATE('เสียชีวิต', opd_result) = 0";
+                : isOracle
+                    ? "INSTR(opd_result, 'เสียชีวิต') = 0"
+                    : "LOCATE('เสียชีวิต', opd_result) = 0";
         return db('hospdata.view_opd_visit')
             .where('date', date)
             .where('visit_grp', 'not in', [16, 19, 7, 3, 13, 7])
