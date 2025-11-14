@@ -6,6 +6,7 @@
   - เพิ่มเงื่อนไขใน HOSxP ให้ sum เฉพาะ ward.ward_active=Y
   - ยกเลิกการส่ง spclty.name ใน HOSxP
   - ยกเลิกการประมวลผล OPD Visit ย้อนหลัง
+  - ปรับ SQL HOSxP จากตาราง ipt_spclty เป็น spclty
 
 # 3.8.13
 ## Feature

@@ -1797,7 +1797,10 @@ export class HisHosxpv4Model {
         return sql.orderBy('bedno.bedno');
     }
 
-    concurrentIPDByWard(db: Knex, date: any) {
+    concurrentIPDByWard(db: Knex, date: any) {  // date format 'YYYY-MM-DD HH:mm:ss'
+        const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
+
         const clientType = (db.client?.config?.client || '').toLowerCase();
         let sql = db('ipt')
             .leftJoin('ward', 'ipt.ward', 'ward.ward')
@@ -1819,36 +1822,17 @@ export class HisHosxpv4Model {
             }
         };
 
-        const isDateOnly = typeof date === 'string' && date.length === 10;
-        const dischargeDate = date;
-        if (isDateOnly) {       // Process ย้อนหลัง ส่งมาเฉพาะวันที่
-            const formattedDate = moment(date).locale('TH').format('YYYY-MM-DD');
-            sql = sql.select(
-                db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [formattedDate]),
-                db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [formattedDate]),
-                db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09'])
-            )
-                .count('ipt.regdate as cases')
-                .where('ipt.regdate', '<=', formattedDate)
-                .andWhere(function () {
-                    this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', dischargeDate);
-                });
-        } else {    // date ที่ส่งมามีเวลา
-            const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
-            const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        // สร้าง datetime expression ตาม DB type
+        const regdatetime = getDatetimeExpr('ipt.regdate', 'ipt.regtime');
+        const dchdatetime = getDatetimeExpr('ipt.dchdate', 'ipt.dchtime');
 
-            // สร้าง datetime expression ตาม DB type
-            const regdatetime = getDatetimeExpr('ipt.regdate', 'ipt.regtime');
-            const dchdatetime = getDatetimeExpr('ipt.dchdate', 'ipt.dchtime');
-
-            sql = sql.select(
-                db.raw(`SUM(CASE WHEN ${regdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case`, [dateStart, dateEnd]),
-                db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge`, [dateStart, dateEnd]),
-                db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? AND ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death`, [dateStart, dateEnd, '08', '09']),
-                db.raw(`SUM(CASE WHEN ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS cases`, [dateStart, dateEnd]))
-                .whereRaw(`${regdatetime.sql} <= ?`, [dateStart])
-                .whereRaw(`(ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ?)`, [dateStart, dateEnd]);
-        }
+        sql = sql.select(
+            db.raw(`SUM(CASE WHEN ${regdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case`, [dateStart, dateEnd]),
+            db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge`, [dateStart, dateEnd]),
+            db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? AND ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death`, [dateStart, dateEnd, '08', '09']),
+            db.raw(`SUM(CASE WHEN ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS cases`, [dateStart, dateEnd]))
+            .whereRaw(`${regdatetime.sql} <= ?`, [dateStart])
+            .whereRaw(`(ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ?)`, [dateStart, dateEnd]);
 
         sql = sql.whereNotNull('ipt.ward')
             .whereNot('ipt.ward', '')
@@ -1860,13 +1844,14 @@ export class HisHosxpv4Model {
         const formattedDate = moment(date).locale('TH').format('YYYY-MM-DD');
         let sql = db('ipt')
             .leftJoin('ward', 'ipt.ward', 'ward.ward')
-            .leftJoin('ipt_spclty as clinic', 'ipt.spclty', 'clinic.ipt_spclty')
+            .leftJoin('spclty as clinic', 'ipt.spclty', 'clinic.spclty')
             .select('ipt.spclty as cliniccode',
                 db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [formattedDate]),
                 db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [formattedDate]),
                 db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09']))
             .count('ipt.regdate as cases')
             .where('ipt.regdate', '<=', formattedDate)
+            .whereRaw('ipt.spclty is not null and ipt.spclty!= ""')
             .andWhere(function () {
                 this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', formattedDate);
             });

@@ -1372,6 +1372,8 @@ class HisHosxpv3Model {
         return sql.orderBy('bedno.bedno');
     }
     concurrentIPDByWard(db, date) {
+        const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
         const clientType = db.client.config.client;
         let sql = db('ipt')
             .leftJoin('ward', 'ipt.ward', 'ward.ward')
@@ -1390,25 +1392,11 @@ class HisHosxpv3Model {
                     return db.raw(`CONCAT(${dateCol}, ' ', ${timeCol})`);
             }
         };
-        let dischargeDate = date;
-        if (date.length === 10) {
-            date = moment(date).locale('TH').format('YYYY-MM-DD');
-            sql = sql.select(db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09']))
-                .count('ipt.regdate as cases')
-                .where('ipt.regdate', '<=', date)
-                .andWhere(function () {
-                this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', dischargeDate);
-            });
-        }
-        else {
-            const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
-            const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
-            const regdatetime = getDatetimeExpr('ipt.regdate', 'ipt.regtime');
-            const dchdatetime = getDatetimeExpr('ipt.dchdate', 'ipt.dchtime');
-            sql = sql.select(db.raw(`SUM(CASE WHEN ${regdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? AND ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death`, [dateStart, dateEnd, '08', '09']), db.raw(`SUM(CASE WHEN ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS cases`, [dateStart, dateEnd]))
-                .whereRaw(`${regdatetime.sql} <= ?`, dateStart)
-                .whereRaw(`(ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ?)`, [dateStart, dateEnd]);
-        }
+        const regdatetime = getDatetimeExpr('ipt.regdate', 'ipt.regtime');
+        const dchdatetime = getDatetimeExpr('ipt.dchdate', 'ipt.dchtime');
+        sql = sql.select(db.raw(`SUM(CASE WHEN ${regdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? AND ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death`, [dateStart, dateEnd, '08', '09']), db.raw(`SUM(CASE WHEN ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS cases`, [dateStart, dateEnd]))
+            .whereRaw(`${regdatetime.sql} <= ?`, dateStart)
+            .whereRaw(`(ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ?)`, [dateStart, dateEnd]);
         sql = sql.whereNotNull('ipt.ward')
             .whereNot('ipt.ward', '')
             .where("ward.ward_active", "Y");
@@ -1421,6 +1409,7 @@ class HisHosxpv3Model {
             .select('ipt.spclty as cliniccode', 'clinic.name as clinicname', db.raw('? as date', [date]), db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death'))
             .count('ipt.regdate as cases')
             .where('ipt.regdate', '<=', date)
+            .whereRaw('ipt.spclty is not null and ipt.spclty!= ""')
             .andWhere(function () {
             this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', date);
         });
