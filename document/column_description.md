@@ -103,8 +103,8 @@
 | hn | string | เลขที่โรงพยาบาล |
 | vn | string | visit no |
 | department_type | string | OPD, ER, IPD, HOMEWARD, OTHER |
-| department_code | string | local code |
-| department_name | string | local name |
+| department_code | string | local code (Clinic or Ward) |
+| department_name | string | local name (Clinic or Ward) |
 | date_service | string | วันที่รับบริการ |
 | time_service | string | เวลารับบริการ (ณ ห้องตรวจ) |
 
