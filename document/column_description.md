@@ -11,7 +11,7 @@
 รายละเอียด: ทะเบียนรหัส Ward
 | column | type | describe |
 | --- | --- | --- |
-| hospcode | string | รหสัสถานพยาบาล |
+| hospcode | string | รหัสสถานพยาบาล |
 | wardcode | string | local code |
 | wardname | string | local name |
 | std_code | string | รหัสตามมาตรฐาน กบรส. |
@@ -46,7 +46,7 @@
 รายละเอียด: อัตราการคงค้างพยาบาล แยกราย Ward (local code)
 | column | type | describe |
 | --- | --- | --- |
-| hospcode | string | รหสัสถานพยาบาล |
+| hospcode | string | รหัสสถานพยาบาล |
 | date | datetime | เวลาที่ประมวลผล |
 | wardcode | string | local code |
 | std_code | string | รหัสตามมาตรฐาน กบรส. |
@@ -78,7 +78,7 @@
 รายละเอียด: อัตราการคงค้างพยาบาล แยกรายแผนก/สาขา ตาม HDC
 | column | type | describe |
 | --- | --- | --- |
-| hospcode | string | รหสัสถานพยาบาล |
+| hospcode | string | รหัสสถานพยาบาล |
 | date | datetime | เวลาที่ประมวลผล |
 | cliniccode | string | code ตาม HDC |
 | cases-homeward |  | แบบเดียวกับ concurrentIPDByWard |
@@ -87,7 +87,7 @@
 รายละเอียด: จำนวนการให้บริการผู้ป่วยนอด แยกรายแผนก/สาขา ตาม HDC
 | column | type | describe |
 | --- | --- | --- |
-| hospcode | string | รหสัสถานพยาบาล |
+| hospcode | string | รหัสสถานพยาบาล |
 | date | datetime | เวลาที่ประมวลผล |
 | cliniccode | string | code ตาม HDC |
 | cases | number | OPD visit (ไม่รวมไม่รอตรวจ ไม่มาตามนัด) |
@@ -98,9 +98,9 @@
 รายละเอียด: ทะเบียนผู้ป่วยนอกที่สิ้นสุดการรักษาแล้ว เพื่อส่งให้ประเมินความพึงพอใจการรับบริการ
 | column | type | describe |
 | --- | --- | --- |
-| hospcode | string | รหสัสถานพยาบาล |
+| hospcode | string | รหัสสถานพยาบาล |
 | cid | string | เลขที่บัตรประชาชน |
-| hn | string | เลขที่ผู้ป่วยโรงพยาบาล |
+| hn | string | เลขที่โรงพยาบาล |
 | vn | string | visit no |
 | department_type | string | OPD, ER, IPD, HOMEWARD, OTHER |
 | department_code | string | local code |
