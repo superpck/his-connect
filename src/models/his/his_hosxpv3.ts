@@ -1614,11 +1614,10 @@ export class HisHosxpv3Model {
         let sql = db('ovst')
             .leftJoin('spclty', 'ovst.spclty', 'spclty.spclty')
             .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode',
-                'spclty.name as clinicname',
                 db.raw('SUM(CASE WHEN an IS NULL or an=\'\' THEN 0 ELSE 1 END) AS admit'))
             .count('ovst.vstdate as cases')
             .where('ovst.vstdate', date);
-        return sql.groupBy(['ovst.vstdate', 'spclty.nhso_code', 'spclty.name'])
+        return sql.groupBy(['ovst.vstdate', 'spclty.nhso_code'])
             .orderBy('spclty.nhso_code');
     }
     getVisitForMophAlert(db: Knex, date: any) {
