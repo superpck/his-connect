@@ -11,8 +11,9 @@ export const mophAlertSurvey = async (date: any = null) => {
   try {
     date = date ? moment(date).format('YYYY-MM-DD') : moment().subtract(3, 'hours').format('YYYY-MM-DD');
     let rows: any = await hisModel.getVisitForMophAlert(db, date);
+    console.log(moment().format('HH:mm:ss'), 'getVisitForMophAlert', date, 'rows:', rows.length);
     if (rows && rows.length > 0) {
-      rows = rows.map(item => { return { ...item, hospcode }; });
+      rows = rows.map((item: any) => { return { ...item, hospcode }; });
       const result: any = await sendingToMoph('/save-moph-alert', rows);
       console.log(moment().format('HH:mm:ss'), 'send moph alert', result.status || '', result.message || '', result);
     } else {

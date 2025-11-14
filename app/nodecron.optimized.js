@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const moment = require("moment");
 const child_process_1 = require("child_process");
 const moph_erp_1 = require("./task/moph-erp");
-const moph_alert_1 = require("./task/moph-alert");
 const shell = require("shelljs");
 const cron = require('node-cron');
 const referCrontab = require('./routes/refer/crontab');
@@ -148,7 +147,9 @@ async function cronjob(fastify) {
         logScheduledServices(timingSchedule);
     }
     if (processState.isFirstProcess) {
-        (0, moph_alert_1.mophAlertSurvey)();
+        (0, moph_erp_1.updateAlive)();
+        (0, moph_erp_1.sendWardName)();
+        (0, moph_erp_1.sendBedNo)();
     }
     let minuteCount = 0;
     cron.schedule(timingSch, async (req, res) => {
