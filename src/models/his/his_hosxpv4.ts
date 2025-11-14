@@ -1861,7 +1861,7 @@ export class HisHosxpv4Model {
         let sql = db('ipt')
             .leftJoin('ward', 'ipt.ward', 'ward.ward')
             .leftJoin('ipt_spclty as clinic', 'ipt.spclty', 'clinic.ipt_spclty')
-            .select('ipt.spclty as cliniccode', 'clinic.name as clinicname',
+            .select('ipt.spclty as cliniccode',
                 db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [formattedDate]),
                 db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [formattedDate]),
                 db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09']))
@@ -1871,14 +1871,13 @@ export class HisHosxpv4Model {
                 this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', formattedDate);
             });
         return sql.where("ward.ward_active", "Y")
-            .groupBy(['ipt.spclty', 'clinic.name'])
+            .groupBy(['ipt.spclty'])
             .orderBy('ipt.spclty');
     }
     sumOpdVisitByClinic(db: Knex, date: any) {
         let sql = db('ovst')
             .leftJoin('spclty', 'ovst.spclty', 'spclty.spclty')
             .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode',
-                'spclty.name as clinicname',
                 db.raw('SUM(CASE WHEN an IS NULL or an=\'\' THEN 0 ELSE 1 END) AS admit'))
             .count('ovst.vstdate as cases')
             .where('ovst.vstdate', date);
