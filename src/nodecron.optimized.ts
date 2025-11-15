@@ -305,6 +305,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   const secondNow = moment().seconds();
   const timingSch = `${secondNow} * * * * *`;
   let timeRandom = 10 + (Math.ceil(Math.random() * 5) || 1);
+  let hourRandom = Math.ceil(Math.random() * 22) || 1;
 
   // Configure timing schedules
   const timingSchedule = configureTimingSchedules();
@@ -320,9 +321,6 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
     updateAlive();
     sendWardName();
     sendBedNo();
-    // sendBedOccupancy();
-    // mophErpProcessTask();
-    // mophAlertSurvey();
   }
 
   // Schedule cron job
@@ -350,7 +348,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
       if (minuteNow == timeRandom) {
         sendBedOccupancy();
       }
-      if (moment().hour() % 4 === 0 && minuteNow == 37) {
+      if (moment().hour() == hourRandom && minuteNow == timeRandom) {
         sendWardName();
         sendBedNo();
       }
