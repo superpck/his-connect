@@ -159,7 +159,7 @@ export class HisHosxpv4Model {
                 WHEN pvd.person_duty_id IN ('7','8','9') THEN '5'
                 ELSE '5' 
             END`))
-            .whereRaw('pvd.person_id = p.cid')
+            .whereRaw('pvd.person_id = person.cid')
             .limit(1);
 
         const result = await db('patient as p')
@@ -173,16 +173,16 @@ export class HisHosxpv4Model {
             .leftJoin('person_labor_type as pl', 'person.person_labor_type_id', 'pl.person_labor_type_id')
             .select(
                 db.raw('? as HOSPCODE', [hisHospcode]),
-                db.raw('h.house_id as HID'),
-                db.raw('p.cid as CID'),
-                db.raw('p.pname as PRENAME'),
-                db.raw('p.fname as NAME'),
-                db.raw('p.lname as LNAME'),
-                db.raw('p.hn as HN'),
-                db.raw('p.hn as PID'),
-                db.raw('p.sex as SEX'),
-                db.raw('p.birthday as BIRTH'),
-                db.raw("CASE WHEN p.marrystatus IN (1,2,3,4,5,6) THEN p.marrystatus ELSE '9' END as MSTATUS"),
+                'h.house_id as HID',
+                'p.cid as CID',
+                'p.pname as PRENAME',
+                'p.fname as NAME',
+                'p.lname as LNAME',
+                'p.hn as HN',
+                'p.hn as PID',
+                'p.sex as SEX',
+                'p.birthday as BIRTH',
+                db.raw("CASE WHEN p.marrystatus IN (1,2,3,4,5,6) THEN p.marrystatus ELSE 9 END as MSTATUS"),
                 db.raw("CASE WHEN person.person_house_position_id = 1 THEN '1' ELSE '2' END as FSTATUS"),
                 db.raw("CASE WHEN o.occupation IS NULL THEN '000' ELSE o.occupation END AS OCCUPATION_OLD"),
                 db.raw("CASE WHEN o.nhso_code IS NULL THEN '9999' ELSE o.nhso_code END AS OCCUPATION_NEW"),
@@ -190,26 +190,19 @@ export class HisHosxpv4Model {
                 db.raw("CASE WHEN nt1.nhso_code IS NULL THEN '099' ELSE nt1.nhso_code END AS NATION"),
                 db.raw("CASE WHEN p.religion IS NULL THEN '01' ELSE p.religion END AS RELIGION"),
                 db.raw("CASE WHEN e.provis_code IS NULL THEN '9' ELSE e.provis_code END as EDUCATION"),
-                db.raw('p.father_cid as FATHER'),
-                db.raw('p.mother_cid as MOTHER'),
-                db.raw('p.couple_cid as COUPLE'),
+                'p.father_cid as FATHER',
+                'p.mother_cid as MOTHER',
+                'p.couple_cid as COUPLE',
                 db.raw(`(${vstatusSubquery.toString()}) as VSTATUS`),
-                db.raw('person.movein_date as MOVEIN'),
+                'person.movein_date as MOVEIN',
                 db.raw("CASE WHEN person.person_discharge_id IS NULL THEN '9' ELSE person.person_discharge_id END AS DISCHARGE"),
-                db.raw('person.discharge_date as DDISCHARGE'),
-                db.raw(`CASE 
-                    WHEN person.blood_grp_id = 1 THEN '1'
-                    WHEN person.blood_grp_id = 2 THEN '2'
-                    WHEN person.blood_grp_id = 3 THEN '3'
-                    WHEN person.blood_grp_id = 4 THEN '4'
-                    ELSE '9' 
-                END as ABOGROUP`),
-                db.raw('person.blood_grp_rh as RHGROUP'),
-                db.raw('pl.nhso_code as LABOR'),
-                db.raw('p.passport_no as PASSPORT'),
-                db.raw('p.type_area as TYPEAREA'),
-                db.raw('p.mobile_phone_number as MOBILE'),
-                db.raw('p.deathday as dead'),
+                'person.discharge_date as DDISCHARGE', 'person.blood_group as ABOGROUP',
+                'person.blood_grp_rh as RHGROUP',
+                'pl.nhso_code as LABOR',
+                'p.passport_no as PASSPORT',
+                'p.type_area as TYPEAREA',
+                'p.mobile_phone_number as MOBILE',
+                'p.deathday as dead',
                 db.raw('CASE WHEN p.last_update IS NULL THEN p.last_update ELSE p.last_visit END as D_UPDATE')
             )
             .where(columnName, searchText);
