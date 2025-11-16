@@ -30,7 +30,7 @@ const mophAlertSurvey = async (date = null) => {
 exports.mophAlertSurvey = mophAlertSurvey;
 async function opdVisit(date = null) {
     let result = await hismodel_1.default.getVisitForMophAlert(db, date, true);
-    const totalRows = result?.total_rows || 0;
+    const totalRows = result?.row_count || 0;
     if (totalRows === 0) {
         console.log(moment().format('HH:mm:ss'), 'MOPH Alert survey: No opd visit data', date);
         return { statusCode: 200, date, message: 'No opd visit data' };
@@ -38,7 +38,7 @@ async function opdVisit(date = null) {
     console.log(moment().format('HH:mm:ss'), 'MOPH Alert survey: Total rows to process for date', date, ':', totalRows);
     let times = 0;
     let startRow = 0;
-    const limitRow = 500;
+    const limitRow = 100;
     let sentResult = [];
     do {
         const result = await getAndSend(date, startRow, limitRow);
@@ -48,7 +48,7 @@ async function opdVisit(date = null) {
     } while (startRow < totalRows - 1);
     return sentResult;
 }
-async function getAndSend(date, startRow, limitRow) {
+async function getAndSend(date, startRow = -1, limitRow = 1000) {
     let rows = await hismodel_1.default.getVisitForMophAlert(db, date, false, startRow, limitRow);
     if (rows && rows.length > 0) {
         const allVns = rows.map((row) => row.vn).filter((vn) => vn);

@@ -4,7 +4,8 @@ exports.HisHosxpv4Model = void 0;
 const moment = require("moment");
 const maxLimit = 250;
 let hisHospcode = process.env.HOSPCODE;
-let hisVersion = process.env.HIS_PROVIDER.toLowerCase() == 'hosxpv3' ? '3' : '4';
+const hisVersion = process.env.HIS_PROVIDER.toLowerCase() == 'hosxpv3' ? '3' : '4';
+const dbClient = process.env.HIS_DB_CLIENT ? process.env.HIS_DB_CLIENT.toLowerCase() : 'mysql2';
 const getHospcode = async () => {
     try {
         if (typeof global.dbHIS === 'function') {
@@ -611,122 +612,6 @@ class HisHosxpv4Model {
                 CASE WHEN i.grouper_version IS NULL THEN '5.1.3' ELSE i.grouper_version END AS grouper_version,
                 CASE WHEN i.grouper_version IS NULL THEN '5.1.3' ELSE i.grouper_version END AS grouper_version
         `, [hisHospcode])).groupBy('i.an');
-    }
-    async getAdmission_(db, columnName, searchValue, hospCode = hisHospcode) {
-        columnName = columnName === 'an' ? 'i.an' : columnName;
-        columnName = columnName === 'hn' ? 'i.hn' : columnName;
-        columnName = columnName === 'visitNo' ? 'q.vn' : columnName;
-        columnName = columnName === 'dateadmit' ? 'i.regdate' : columnName;
-        columnName = columnName === 'datedisc' ? 'i.dchdate' : columnName;
-        let validRefer = columnName === 'datedisc' ? ' AND LENGTH(i.rfrilct)=5 ' : '';
-        const sql = `
-            SELECT
-                ? as HOSPCODE,
-                i.hn as PID,
-                q.seq_id, o.vn SEQ, i.an AS AN, pt.sex as SEX,
-                date_format(concat(i.regdate, ' ', i.regtime),'%Y-%m-%d %H:%i:%s') as datetime_admit,
-                i.ward as WARD_LOCAL,
-                CASE WHEN s.provis_code IS NULL THEN '' ELSE s.provis_code END AS wardadmit,
-                ward.name as WARDADMITNAME,
-                CASE WHEN ps.pttype_std_code THEN '' ELSE ps.pttype_std_code END AS instype,
-                RIGHT ((SELECT export_code FROM ovstist WHERE ovstist = i.ivstist),1),'1' AS typein,
-                i.rfrilct as referinhosp,
-                i.rfrics as causein,
-                cast(
-                    IF (
-                        i.bw = 0,'',
-                            IF (
-                                i.bw IS NOT NULL,
-                                cast(i.bw / 1000 AS DECIMAL(5, 1)),
-                                IF (
-                                    os.bw = 0,'',
-                                    cast(os.bw AS DECIMAL(5, 1))
-                                )
-                            )
-                    ) AS CHAR (5)
-                ) ddmitweight,
-                IF (os.height = 0,'',os.height) admitheight,
-                date_format(concat(i.dchdate, ' ', i.dchtime),'%Y-%m-%d %H:%i:%s') as datetime_disch,
-                s.provis_code as warddisch, ward.name as WARDDISCHNAME,
-                ds.nhso_dchstts as dischstatus,
-                dt.nhso_dchtype as dischtype,            
-                IF (i.dchtype = 04, i.rfrolct,'') referouthosp,
-                IF (i.dchtype = 04,            
-                    IF (
-                        i.rfrocs = 7,
-                        '5',            
-                        IF (
-                            i.rfrocs IS NOT NULL,
-                            '1',
-                            ''
-                        )
-                    ),
-                    ''
-                ) causeout,
-                ROUND(CASE WHEN sum(c.qty * c.cost) IS NULL THEN 0 ELSE sum(c.qty * c.cost) END) AS cost,
-                ROUND(CASE WHEN a.uc_money IS NULL THEN 0 ELSE a.uc_money END) AS price,
-                ROUND(
-                    sum(
-                        IF (
-                            c.paidst IN (01, 03),
-                            c.sum_price,
-                            0
-                            )
-                    ),
-                    2
-                ) payprice,
-                ROUND(
-                    IFNULL(		
-                        a.paid_money,
-                        0
-                    ),
-                    2
-                ) actualpay,	
-                a.dx_doctor provider,
-                ifnull(
-                    date_format(
-                    idx.modify_datetime,
-                    '%Y-%m-%d %H:%i:%s'
-                    ),
-                    ''
-                ) d_update,
-                ifnull(
-                    i.drg,
-                    0                
-                ) drg,
-                ifnull(
-                    a.rw,
-                    0
-                ) rw,                
-                ifnull(
-                    i.adjrw,
-                    0
-                ) adjrw,               
-                ifnull(i.grouper_err, 1) error,
-                ifnull(i.grouper_warn, 64) warning,
-                ifnull(i.grouper_actlos, 0) actlos,
-                ifnull(i.grouper_version, '5.1.3') grouper_version,
-                ifnull(pt.cid,'') cid
-            FROM
-                ipt as i
-                LEFT JOIN an_stat a ON i.an = a.an
-                LEFT JOIN iptdiag idx ON i.an = idx.an
-                LEFT JOIN patient pt ON i.hn = pt.hn
-                LEFT JOIN person p ON p.patient_hn = pt.hn
-                LEFT JOIN ovst o ON o.vn = i.vn
-                LEFT JOIN ovst_seq q ON q.vn = o.vn
-                LEFT JOIN opdscreen os ON o.vn = os.vn
-                LEFT JOIN spclty s ON i.spclty = s.spclty
-                LEFT JOIN pttype p1 ON p1.pttype = i.pttype
-                LEFT JOIN provis_instype ps ON ps. CODE = p1.nhso_code
-                LEFT JOIN dchtype dt ON i.dchtype = dt.dchtype
-                LEFT JOIN dchstts ds ON i.dchstts = ds.dchstts
-                LEFT JOIN opitemrece c ON c.an = i.an  
-                LEFT JOIN ward ON i.ward = ward.ward           
-            WHERE ${columnName}=? ${validRefer}
-            GROUP BY i.an `;
-        const result = await db.raw(sql, [hisHospcode, searchValue]);
-        return result[0];
     }
     async getDiagnosisIpd(db, columnName, searchNo, hospCode = hisHospcode) {
         columnName = columnName === 'visitNo' ? 'q.vn' : columnName;
@@ -1379,27 +1264,54 @@ class HisHosxpv4Model {
     }
     async getVisitForMophAlert(db, date, isRowCount = false, start = -1, limit = 1000) {
         date = moment(date).locale('TH').format('YYYY-MM-DD');
-        const dbClient = db.client.config.client;
-        let query = db('ovst as o')
-            .leftJoin('patient as p', 'p.hn', 'o.hn')
-            .leftJoin('kskdepartment as d', 'o.main_dep', 'd.depcode')
-            .leftJoin('ovstost as ot', 'o.ovstost', 'ot.ovstost')
-            .where('o.vstdate', date);
-        if (dbClient === 'pg' || dbClient === 'postgres' || dbClient === 'postgresql') {
-            query = query.whereRaw(`POSITION('ตรวจแล้ว' IN ot.name) > 0`);
-        }
-        else {
-            query = query.whereRaw(`LOCATE('ตรวจแล้ว', ot.name) > 0`);
-        }
         if (isRowCount) {
-            const result = await query.count('o.vn as total_rows').first();
-            return result;
+            return db('ovst').where('ovst.vstdate', date).count('ovst.vn as row_count');
         }
         else {
+            let sql = db('ovst')
+                .leftJoin('patient as p', 'p.hn', 'ovst.hn')
+                .leftJoin('ovstost as ot', 'ovst.ovstost', 'ot.ovstost')
+                .leftJoin('kskdepartment as d', 'ovst.main_dep', 'd.depcode')
+                .select('ovst.hn', 'ovst.vn', 'p.cid', db.raw(`? as department_type`, ['OPD']), 'ovst.main_dep as department_code', 'd.department as department_name', 'ovst.vstdate as date_service', 'ovst.vsttime as time_service', 'ot.name as service_status', 'ot.name as service_status_name')
+                .where('ovst.vstdate', date);
             if (start >= 0) {
-                query = query.offset(start).limit(limit);
+                sql = sql.offset(start).limit(limit);
             }
-            return await query.select('o.hn', 'o.vn', 'p.cid', db.raw(`? as department_type`, ['OPD']), 'o.main_dep as department_code', 'd.department as department_name', 'o.vstdate as date_service', 'o.vsttime as time_service', 'ot.name as service_status');
+            const rows = await sql;
+            return rows.filter((row) => {
+                return row.service_status_name && row.service_status_name.includes('ตรวจแล้ว');
+            });
+        }
+    }
+    async getVisitForMophAlert1(db, date, isRowCount = false, start = -1, limit = 1000) {
+        try {
+            date = moment(date).locale('TH').format('YYYY-MM-DD');
+            let query = db('ovst as o')
+                .leftJoin('ovstost as ot', 'o.ovstost', 'ot.ovstost')
+                .where('o.vstdate', date);
+            if (dbClient === 'pg' || dbClient === 'postgres' || dbClient === 'postgresql') {
+                query = query.whereRaw(`POSITION('ตรวจแล้ว' IN ot.name) > 0`);
+            }
+            else {
+                query = query.whereRaw(`LOCATE('ตรวจแล้ว', ot.name) > 0`);
+            }
+            if (isRowCount) {
+                query = query.count('o.vn as row_count');
+                const result = await query.first();
+                return result;
+            }
+            else {
+                if (start >= 0) {
+                    query = query.offset(start).limit(limit);
+                }
+                return await query.leftJoin('patient as p', 'p.hn', 'o.hn')
+                    .leftJoin('kskdepartment as d', 'o.main_dep', 'd.depcode')
+                    .select('o.hn', 'o.vn', 'p.cid', db.raw(`? as department_type`, ['OPD']), 'o.main_dep as department_code', 'd.department as department_name', 'o.vstdate as date_service', 'o.vsttime as time_service', 'ot.name as service_status')
+                    .limit(maxLimit);
+            }
+        }
+        catch (error) {
+            throw error;
         }
     }
 }
