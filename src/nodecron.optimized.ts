@@ -319,10 +319,9 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
 
   // Initial tasks on first process
   if (processState.isFirstProcess) {
-    // updateAlive();
-    // sendWardName();
-    // sendBedNo();
-    mophAlertSurvey();
+    updateAlive();
+    sendWardName();
+    sendBedNo();
   }
 
   // Schedule cron job
