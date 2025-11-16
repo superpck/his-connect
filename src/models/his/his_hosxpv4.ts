@@ -1862,7 +1862,42 @@ export class HisHosxpv4Model {
         return sql.groupBy(['ovst.vstdate', 'spclty.nhso_code', 'spclty.name'])
             .orderBy('spclty.nhso_code');
     }
-    getVisitForMophAlert(db: Knex, date: any) {
-        return [];
+
+    async getVisitForMophAlert(db: Knex, date: any, isRowCount: boolean = false, start = -1, limit: number = 1000) {
+        date = moment(date).locale('TH').format('YYYY-MM-DD');
+        
+        // Detect database client
+        const dbClient = db.client.config.client;
+        
+        // Build LOCATE/POSITION condition based on database type
+        let locateCondition: string;
+        if (dbClient === 'pg' || dbClient === 'postgres' || dbClient === 'postgresql') {
+            locateCondition = 'POSITION(\'ตรวจแล้ว\' IN ot.name) > 0';
+        } else {
+            // MySQL default
+            locateCondition = `LOCATE(\'ตรวจแล้ว\', ot.name) > 0`;
+        }
+        
+        let query = db('ovst as o')
+            .leftJoin('patient as p', 'p.hn', 'o.hn')
+            .leftJoin('kskdepartment as d', 'o.main_dep', 'd.depcode')
+            .leftJoin('ovstost as ot', 'o.ovstost', 'ot.ovstost')
+            .where('o.vstdate', date)
+            .whereRaw(locateCondition);
+        if (isRowCount) {
+            const result: any = await query.count('o.vn as total_rows').first();
+            return result;
+        } else {
+            if (start >= 0) {
+                query = query.offset(start).limit(limit);
+            }
+            return await query.select('o.hn', 'o.vn', 'p.cid',
+                db.raw(`? as department_type`, ['OPD']),
+                'o.main_dep as department_code',
+                'd.department as department_name',
+                'o.vstdate as date_service',
+                'o.vsttime as time_service',
+                'ot.name as service_status')
+        }
     }
 }
