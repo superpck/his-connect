@@ -589,7 +589,7 @@ class HisIHospitalModel {
         return sql.groupBy('cliniccode').orderBy('cliniccode');
     }
     getVisitForMophAlert(db, date, isRowCount = false, start = -1, limit = 1000) {
-        date = moment(date).format('YYYY-MM-DD');
+        date = moment(date).locale('th').format('YYYY-MM-DD');
         const client = db.client.config.client;
         const isMSSQL = client === 'mssql';
         const isPostgreSQL = client === 'pg' || client === 'postgres' || client === 'postgresql';
@@ -620,7 +620,7 @@ class HisIHospitalModel {
             if (start >= 0) {
                 query = query.offset(start).limit(limit);
             }
-            return query.select('hn', 'vn', 'no_card as cid', db.raw("? as department_type", ['OPD']), 'dep as department_code', 'dep_name as department_name', 'date as date_service', 'time as time_service', 'status', 'opd_result as service_status')
+            return query.select('hn', 'vn', 'no_card as cid', db.raw("? as department_type", ['OPD']), 'dep as department_code', 'dep_name as department_name', db.raw('date(date) as date_service'), db.raw('time as time_service'), 'status', 'opd_result as service_status')
                 .groupBy('dep', 'hn');
         }
     }

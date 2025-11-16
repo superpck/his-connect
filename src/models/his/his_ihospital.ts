@@ -793,7 +793,7 @@ export class HisIHospitalModel {
   }
 
   getVisitForMophAlert(db: Knex, date: any, isRowCount: boolean = false, start = -1, limit: number = 1000) {
-    date = moment(date).format('YYYY-MM-DD'); // for safety date format
+    date = moment(date).locale('th').format('YYYY-MM-DD'); // for safety date format
 
     // Detect database client for cross-database compatibility
     const client = db.client.config.client;
@@ -801,18 +801,10 @@ export class HisIHospitalModel {
     const isPostgreSQL = client === 'pg' || client === 'postgres' || client === 'postgresql';
     const isOracle = client === 'oracledb' || client === 'oracle';
 
-    // LENGTH() function
-    // MySQL/PostgreSQL/Oracle: LENGTH()
-    // MSSQL: LEN()
     const lengthCheck = isMSSQL
       ? 'LEN(no_card) = 13'
       : 'LENGTH(no_card) = 13';
 
-    // LOCATE/POSITION/CHARINDEX/INSTR for text search
-    // MySQL: LOCATE(substring, string) = 0
-    // PostgreSQL: POSITION(substring IN string) = 0
-    // MSSQL: CHARINDEX(substring, string) = 0
-    // Oracle: INSTR(string, substring) = 0
     const locateCheck = isMSSQL
       ? "CHARINDEX('เสียชีวิต', opd_result) = 0"
       : isPostgreSQL
@@ -840,7 +832,7 @@ export class HisIHospitalModel {
       return query.select('hn', 'vn', 'no_card as cid',
         db.raw("? as department_type", ['OPD']),
         'dep as department_code', 'dep_name as department_name',
-        'date as date_service', 'time as time_service', 'status',
+        db.raw('date(date) as date_service'), db.raw('time as time_service'), 'status',
         'opd_result as service_status')
         .groupBy('dep', 'hn');  // 1 HN ส่งครั้งเดียว, กรณีจะให้ตอบทุกรายการ ให้ลบ groupBy ออก
     }

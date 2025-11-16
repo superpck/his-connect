@@ -121,6 +121,8 @@ const updateHISAlive = async (dataArray) => {
     }
 };
 exports.updateHISAlive = updateHISAlive;
+function updateHisVersion() {
+}
 const checkAdminRequest = async () => {
     const apiIp = (0, utils_1.getIP)();
     if (!apiIp || !apiIp.ip) {
