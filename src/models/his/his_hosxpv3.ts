@@ -1605,7 +1605,27 @@ export class HisHosxpv3Model {
         return sql.groupBy(['ovst.vstdate', 'spclty.nhso_code'])
             .orderBy('spclty.nhso_code');
     }
-    getVisitForMophAlert(db: Knex, date: any) {
-        return [];
+    getVisitForMophAlert(db: Knex, date: any, isRowCount: boolean = false, start = -1, limit: number = 1000) {
+        date = moment(date).locale('TH').format('YYYY-MM-DD');
+        let query = db('ovst as o')
+            .leftJoin('patient as p', 'p.hn', 'o.hn')
+            .leftJoin('kskdepartment as d', 'o.main_dep', 'd.depcode')
+            .leftJoin('ovstost as ot', 'o.ovstost', 'ot.ovstost')
+            .where('o.vstdate', date)
+            .andWhereRaw(`LOCATE('ตรวจแล้ว', ot.name) > 0`);
+        if (isRowCount) {
+            return query.count('o.vn as total_rows').first();
+        } else {
+            if (start >= 0) {
+                query = query.offset(start).limit(limit);
+            }
+            return query.select('o.hn', 'o.vn', 'p.cid',
+                db.raw(`'OPD' as department_type`),
+                'o.main_dep as department_code',
+                'd.department as department_name',
+                'o.vstdate as date_service',
+                'o.vsttime as time_service',
+                'ot.name as service_status')
+        }
     }
 }
