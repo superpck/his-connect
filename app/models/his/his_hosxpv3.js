@@ -13,7 +13,7 @@ const getHospcode = async () => {
             console.log('hisHospcode v.4', hisHospcode);
         }
         else {
-            console.error('Default HOSPCODE:', hisHospcode);
+            console.log('Default HOSPCODE:', hisHospcode);
         }
     }
     catch (error) {
@@ -73,6 +73,8 @@ class HisHosxpv3Model {
         }
         return sql
             .select('ward as wardcode', 'name as wardname', `ward_export_code as std_code`, 'bedcount as bed_normal', db.raw("CASE WHEN ward_active ='Y' THEN 1 ELSE 0 END as isactive"))
+            .where('ward', '!=', '')
+            .whereNotNull('ward')
             .orderBy('ward')
             .limit(maxLimit);
     }
@@ -162,14 +164,8 @@ class HisHosxpv3Model {
             ,person.movein_date MOVEIN
             ,CASE WHEN person.person_discharge_id IS NULL THEN '9' ELSE person.person_discharge_id END AS DISCHARGE
             ,person.discharge_date DDISCHARGE
-            ,case 
-                when @blood='A' then '1'
-                when @blood='B' then '2'
-                when @blood='AB' then '3'
-                when @blood='O' then '4'
-                else '9' 
-            end ABOGROUP
-            ,p.bloodgroup_rh as RHGROUP                
+            ,person.blood_group as ABOGROUP
+            ,p.bloodgroup_rh as RHGROUP
             ,pl.nhso_code LABOR
             ,p.passport_no as PASSPORT
             ,p.type_area as TYPEAREA
@@ -1369,7 +1365,12 @@ class HisHosxpv3Model {
         if (start >= 0) {
             sql = sql.offset(start).limit(limit);
         }
-        return sql.orderBy('bedno.bedno');
+        return sql
+            .where('bedno.bedno', '!=', '')
+            .whereNotNull('bedno.bedno')
+            .where('roomno.ward', '!=', '')
+            .whereNotNull('roomno.ward')
+            .orderBy('bedno.bedno');
     }
     concurrentIPDByWard(db, date) {
         const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');

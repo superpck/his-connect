@@ -83,6 +83,8 @@ export class HisHosxpv4Model {
                 `ward_export_code as std_code`, 'bedcount as bed_normal',
                 db.raw("CASE WHEN ward_active ='Y' THEN 1 ELSE 0 END as isactive")
             )
+            .where('ward', '!=', '')
+            .whereNotNull('ward')
             .orderBy('ward')
             .limit(maxLimit);
     }
@@ -151,7 +153,6 @@ export class HisHosxpv4Model {
         columnName = columnName == 'name' ? 'p.fname' : columnName;
         columnName = columnName == 'hid' ? 'h.house_id' : columnName;
 
-        const bloodGrp = hisVersion == '4' ? 'person.blood_group' : 'person.blood_grp';
         const rhGrp = hisVersion == '4' ? 'person.bloodgroup_rh' : 'person.blood_grp_rh';
 
         // Subquery for VSTATUS
@@ -201,7 +202,7 @@ export class HisHosxpv4Model {
                 db.raw(`(${vstatusSubquery.toString()}) as VSTATUS`),
                 'person.movein_date as MOVEIN',
                 db.raw("CASE WHEN person.person_discharge_id IS NULL THEN '9' ELSE person.person_discharge_id END AS DISCHARGE"),
-                'person.discharge_date as DDISCHARGE', `${bloodGrp} as ABOGROUP`,
+                'person.discharge_date as DDISCHARGE', `person.blood_group as ABOGROUP`,
                 `${rhGrp} as RHGROUP`,
                 'pl.nhso_code as LABOR',
                 'p.passport_no as PASSPORT',
@@ -1792,7 +1793,12 @@ export class HisHosxpv4Model {
         if (start >= 0) {
             sql = sql.offset(start).limit(limit);
         }
-        return sql.orderBy('bedno.bedno');
+        return sql
+            .where('bedno.bedno', '!=', '')
+            .whereNotNull('bedno.bedno')
+            .where('roomno.ward', '!=', '')
+            .whereNotNull('roomno.ward')
+            .orderBy('bedno.bedno');
     }
 
     concurrentIPDByWard(db: Knex, date: any) {  // date format 'YYYY-MM-DD HH:mm:ss'
