@@ -322,6 +322,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
     updateAlive();
     sendWardName();
     sendBedNo();
+        // mophAlertSurvey();
   }
 
   // Schedule cron job
@@ -338,7 +339,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
       if (minuteSinceLastNight % 2 === 1) {
         logJobStatus();
       }
-      if (minuteNow % timeRandom == 0) {
+      if (minuteNow !=0 && minuteNow % timeRandom == 0) {
         updateAlive();
         mophAlertSurvey();
       }

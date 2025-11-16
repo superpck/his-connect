@@ -3,6 +3,8 @@ import * as moment from 'moment';
 
 const maxLimit = 250;
 let hisHospcode = process.env.HOSPCODE;
+let hisVersion = process.env.HIS_PROVIDER.toLowerCase() == 'hosxpv3'? '3' : '4';
+
 const getHospcode = async () => {
     try {
         if (typeof global.dbHIS === 'function') {
@@ -149,6 +151,9 @@ export class HisHosxpv4Model {
         columnName = columnName == 'name' ? 'p.fname' : columnName;
         columnName = columnName == 'hid' ? 'h.house_id' : columnName;
 
+        const bloodGrp = hisVersion == '4' ? 'person.blood_group' : 'person.blood_grp';
+        const rhGrp = hisVersion == '4' ? 'person.bloodgroup_rh' : 'person.blood_grp_rh';
+
         // Subquery for VSTATUS
         const vstatusSubquery = db('person_village_duty as pvd')
             .select(db.raw(`CASE 
@@ -196,8 +201,8 @@ export class HisHosxpv4Model {
                 db.raw(`(${vstatusSubquery.toString()}) as VSTATUS`),
                 'person.movein_date as MOVEIN',
                 db.raw("CASE WHEN person.person_discharge_id IS NULL THEN '9' ELSE person.person_discharge_id END AS DISCHARGE"),
-                'person.discharge_date as DDISCHARGE', 'person.blood_group as ABOGROUP',
-                'person.blood_grp_rh as RHGROUP',
+                'person.discharge_date as DDISCHARGE', `${bloodGrp} as ABOGROUP`,
+                `${rhGrp} as RHGROUP`,
                 'pl.nhso_code as LABOR',
                 'p.passport_no as PASSPORT',
                 'p.type_area as TYPEAREA',
@@ -1869,21 +1874,19 @@ export class HisHosxpv4Model {
         // Detect database client
         const dbClient = db.client.config.client;
         
-        // Build LOCATE/POSITION condition based on database type
-        let locateCondition: string;
-        if (dbClient === 'pg' || dbClient === 'postgres' || dbClient === 'postgresql') {
-            locateCondition = 'POSITION(\'ตรวจแล้ว\' IN ot.name) > 0';
-        } else {
-            // MySQL default
-            locateCondition = `LOCATE(\'ตรวจแล้ว\', ot.name) > 0`;
-        }
-        
         let query = db('ovst as o')
             .leftJoin('patient as p', 'p.hn', 'o.hn')
             .leftJoin('kskdepartment as d', 'o.main_dep', 'd.depcode')
             .leftJoin('ovstost as ot', 'o.ovstost', 'ot.ovstost')
-            .where('o.vstdate', date)
-            .whereRaw(locateCondition);
+            .where('o.vstdate', date);
+        
+        // Add LOCATE/POSITION condition based on database type
+        if (dbClient === 'pg' || dbClient === 'postgres' || dbClient === 'postgresql') {
+            query = query.whereRaw(`POSITION('ตรวจแล้ว' IN ot.name) > 0`);
+        } else {
+            // MySQL default
+            query = query.whereRaw(`LOCATE('ตรวจแล้ว', ot.name) > 0`);
+        }
         if (isRowCount) {
             const result: any = await query.count('o.vn as total_rows').first();
             return result;

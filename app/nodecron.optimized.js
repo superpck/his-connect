@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = cronjob;
 const moment = require("moment");
 const child_process_1 = require("child_process");
 const moph_erp_1 = require("./task/moph-erp");
@@ -164,7 +163,7 @@ async function cronjob(fastify) {
             if (minuteSinceLastNight % 2 === 1) {
                 logJobStatus();
             }
-            if (minuteNow % timeRandom == 0) {
+            if (minuteNow != 0 && minuteNow % timeRandom == 0) {
                 (0, moph_erp_1.updateAlive)();
                 (0, moph_alert_1.mophAlertSurvey)();
             }
@@ -204,3 +203,4 @@ async function cronjob(fastify) {
         }
     });
 }
+exports.default = cronjob;

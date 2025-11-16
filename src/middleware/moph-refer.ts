@@ -125,6 +125,10 @@ export const updateHISAlive = async (dataArray: any) => {
   }
 }
 
+function updateHisVersion(){
+  // /save-api-config
+}
+
 export const checkAdminRequest = async () => {
   const apiIp = getIP();
   if (!apiIp || !apiIp.ip) {
