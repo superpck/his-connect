@@ -13,7 +13,7 @@ const getHospcode = async () => {
             console.log('hisHospcode v.4', hisHospcode);
         }
         else {
-            console.error('Default HOSPCODE:', hisHospcode);
+            console.log('Default HOSPCODE:', hisHospcode);
         }
     }
     catch (error) {
@@ -73,6 +73,8 @@ class HisHosxpv3Model {
         }
         return sql
             .select('ward as wardcode', 'name as wardname', `ward_export_code as std_code`, 'bedcount as bed_normal', db.raw("CASE WHEN ward_active ='Y' THEN 1 ELSE 0 END as isactive"))
+            .where('ward', '!=', '')
+            .whereNotNull('ward')
             .orderBy('ward')
             .limit(maxLimit);
     }
@@ -162,14 +164,8 @@ class HisHosxpv3Model {
             ,person.movein_date MOVEIN
             ,CASE WHEN person.person_discharge_id IS NULL THEN '9' ELSE person.person_discharge_id END AS DISCHARGE
             ,person.discharge_date DDISCHARGE
-            ,case 
-                when @blood='A' then '1'
-                when @blood='B' then '2'
-                when @blood='AB' then '3'
-                when @blood='O' then '4'
-                else '9' 
-            end ABOGROUP
-            ,p.bloodgroup_rh as RHGROUP                
+            ,person.blood_group as ABOGROUP
+            ,p.bloodgroup_rh as RHGROUP
             ,pl.nhso_code LABOR
             ,p.passport_no as PASSPORT
             ,p.type_area as TYPEAREA
@@ -1369,7 +1365,12 @@ class HisHosxpv3Model {
         if (start >= 0) {
             sql = sql.offset(start).limit(limit);
         }
-        return sql.orderBy('bedno.bedno');
+        return sql
+            .where('bedno.bedno', '!=', '')
+            .whereNotNull('bedno.bedno')
+            .where('roomno.ward', '!=', '')
+            .whereNotNull('roomno.ward')
+            .orderBy('bedno.bedno');
     }
     concurrentIPDByWard(db, date) {
         const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
@@ -1426,22 +1427,25 @@ class HisHosxpv3Model {
         return sql.groupBy(['ovst.vstdate', 'spclty.nhso_code'])
             .orderBy('spclty.nhso_code');
     }
-    getVisitForMophAlert(db, date, isRowCount = false, start = -1, limit = 1000) {
+    async getVisitForMophAlert(db, date, isRowCount = false, start = -1, limit = 1000) {
         date = moment(date).locale('TH').format('YYYY-MM-DD');
-        let query = db('ovst as o')
-            .leftJoin('patient as p', 'p.hn', 'o.hn')
-            .leftJoin('kskdepartment as d', 'o.main_dep', 'd.depcode')
-            .leftJoin('ovstost as ot', 'o.ovstost', 'ot.ovstost')
-            .where('o.vstdate', date)
-            .andWhereRaw(`LOCATE('ตรวจแล้ว', ot.name) > 0`);
         if (isRowCount) {
-            return query.count('o.vn as total_rows').first();
+            return db('ovst').where('ovst.vstdate', date).count('ovst.vn as row_count');
         }
         else {
+            let sql = db('ovst')
+                .leftJoin('patient as p', 'p.hn', 'ovst.hn')
+                .leftJoin('ovstost as ot', 'ovst.ovstost', 'ot.ovstost')
+                .leftJoin('kskdepartment as d', 'ovst.main_dep', 'd.depcode')
+                .select('ovst.hn', 'ovst.vn', 'p.cid', db.raw(`? as department_type`, ['OPD']), 'ovst.main_dep as department_code', 'd.department as department_name', 'ovst.vstdate as date_service', 'ovst.vsttime as time_service', 'ot.name as service_status', 'ot.name as service_status_name')
+                .where('ovst.vstdate', date);
             if (start >= 0) {
-                query = query.offset(start).limit(limit);
+                sql = sql.offset(start).limit(limit);
             }
-            return query.select('o.hn', 'o.vn', 'p.cid', db.raw(`'OPD' as department_type`), 'o.main_dep as department_code', 'd.department as department_name', 'o.vstdate as date_service', 'o.vsttime as time_service', 'ot.name as service_status');
+            const rows = await sql;
+            return rows.filter((row) => {
+                return row.service_status_name && row.service_status_name.includes('ตรวจแล้ว');
+            });
         }
     }
 }

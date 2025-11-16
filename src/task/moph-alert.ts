@@ -38,7 +38,7 @@ export const mophAlertSurvey = async (date: any = null) => {
 
 async function opdVisit(date: any = null) {
   let result: any = await hisModel.getVisitForMophAlert(db, date, true);
-  const totalRows = result?.total_rows || 0;
+  const totalRows = result?.row_count || 0;
   if (totalRows === 0) {
     console.log(moment().format('HH:mm:ss'), 'MOPH Alert survey: No opd visit data', date);
     return { statusCode: 200, date, message: 'No opd visit data' };
@@ -47,7 +47,7 @@ async function opdVisit(date: any = null) {
   console.log(moment().format('HH:mm:ss'), 'MOPH Alert survey: Total rows to process for date', date, ':', totalRows);
   let times = 0;
   let startRow = 0;
-  const limitRow = 500;
+  const limitRow = 100;
   let sentResult = [];
   do {
     const result = await getAndSend(date, startRow, limitRow);
@@ -59,7 +59,7 @@ async function opdVisit(date: any = null) {
   return sentResult;
 }
 
-async function getAndSend(date: any, startRow: number, limitRow: number) {
+async function getAndSend(date: any, startRow: number = -1, limitRow: number = 1000) {
   let rows: any = await hisModel.getVisitForMophAlert(db, date, false, startRow, limitRow);
   if (rows && rows.length > 0) {
     // Extract VNs from rows
