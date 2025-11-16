@@ -132,7 +132,7 @@ const router = (fastify, {}, next) => {
     async function configVar() {
         const configs = await resetVar();
         const cnfFile = path.join(__dirname, `./../../${configFileName}`);
-        const gotConfigs = await require('dotenv').config({ path: cnfFile }).parsed;
+        const gotConfigs = await require('dotenv').config({ path: cnfFile, debug: false }).parsed;
         for (let config in configs) {
             for (let item in configs[config]) {
                 if (gotConfigs && gotConfigs[item]) {
