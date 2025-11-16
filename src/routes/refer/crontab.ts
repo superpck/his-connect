@@ -1,5 +1,9 @@
 import path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../../../config') });
+require('dotenv').config({
+  path: path.join(__dirname, '../../../config'),
+  quiet: true,
+  debug: false
+});
 
 var fastify = require('fastify');
 import * as moment from 'moment';

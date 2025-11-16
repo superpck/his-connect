@@ -304,7 +304,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   // Create cron schedule (run every minute)
   const secondNow = moment().seconds();
   const timingSch = `${secondNow} * * * * *`;
-  let timeRandom = 10 + (Math.ceil(Math.random() * 5) || 1);
+  let timeRandom = 10 + (Math.ceil(Math.random() * 10) || 1);
   let hourRandom = Math.ceil(Math.random() * 22) || 1;
 
   // Configure timing schedules
@@ -313,6 +313,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   // Log startup information if this is the first process
   if (processState.isFirstProcess) {
     console.log(`${getTimestamp()} Start API for Hospcode ${process.env.HOSPCODE}`);
+    console.log(`   ⬜ Random time for alive: every ${timeRandom} minutes, Occupancy: xx:${timeRandom}, ward/bed update: ${hourRandom}:${timeRandom}`);
     logScheduledServices(timingSchedule);
   }
 
@@ -339,6 +340,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
       }
       if (minuteNow % timeRandom == 0) {
         updateAlive();
+        mophAlertSurvey();
       }
 
       if (minuteSinceLastNight % 2 == 0) {
@@ -348,6 +350,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
       if (minuteNow == timeRandom) {
         sendBedOccupancy();
       }
+
       if (moment().hour() == hourRandom && minuteNow == timeRandom) {
         sendWardName();
         sendBedNo();
@@ -388,6 +391,3 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
     }
   });
 }
-
-// Initialize process state on module load
-// updateProcessState();

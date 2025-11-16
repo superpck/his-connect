@@ -1,7 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const path = require("path");
-require('dotenv').config({ path: path.join(__dirname, '../../../config') });
+require('dotenv').config({
+    path: path.join(__dirname, '../../../config'),
+    quiet: true,
+    debug: false
+});
 var fastify = require('fastify');
 const moment = require("moment");
 const axios_1 = require("axios");
