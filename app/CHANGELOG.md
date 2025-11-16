@@ -1,3 +1,8 @@
+# 3.9.0
+## Feature
+  - เพิ่มการส่งข้อมูลการรับบริการ getVisitForMophAlert เพื่อใช้ประเมินความพึงพอใจ
+  - เพิ่ม SQL Lite เพื่อบันทึกข้อมูลการส่ง MOPH Alert
+
 # 3.8.14
 ## Feature
   - เพิ่ม source HIS: VPM
