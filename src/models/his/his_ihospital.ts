@@ -830,7 +830,7 @@ export class HisIHospitalModel {
         query = query.offset(start).limit(limit);
       }
       return query.select('hn', 'vn', 'no_card as cid',
-        db.raw("? as department_type", ['OPD']),
+        db.raw("CASE WHEN dep IN (1,40) THEN 'ER' ELSE 'OPD' END as department_type"),
         'dep as department_code', 'dep_name as department_name',
         db.raw('date(date) as date_service'), db.raw('time as time_service'), 'status',
         'opd_result as service_status')

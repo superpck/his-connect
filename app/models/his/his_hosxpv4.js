@@ -1263,9 +1263,8 @@ class HisHosxpv4Model {
             .orderBy('spclty.nhso_code');
     }
     async getVisitForMophAlert(db, date, isRowCount = false, start = -1, limit = 1000) {
-        date = moment(date).locale('TH').format('YYYY-MM-DD');
         if (isRowCount) {
-            return db('ovst').where('ovst.vstdate', date).count('ovst.vn as row_count');
+            return db('ovst').where('ovst.vstdate', date).count('ovst.vn as row_count').first();
         }
         else {
             let sql = db('ovst')

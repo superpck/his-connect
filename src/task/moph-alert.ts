@@ -67,7 +67,7 @@ async function getAndSend(date: any, startRow: number = -1, limitRow: number = 1
 
     // Check which VNs already exist in cache
     const existingVns = await getExistingVns(allVns, hospcode);
-    console.log(moment().format('HH:mm:ss'), 'Found', existingVns.length,'/',allVns.length, 'VNs already sent in cache');
+    console.log(moment().format('HH:mm:ss'), 'Found', existingVns.length, '/', allVns.length, 'VNs already sent in cache');
 
     // Filter out VNs that were already sent
     const filteredRows = rows.filter((row: any) => !existingVns.includes(row.vn));
