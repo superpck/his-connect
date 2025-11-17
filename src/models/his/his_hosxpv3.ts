@@ -1607,7 +1607,7 @@ export class HisHosxpv3Model {
   }
 
   async getVisitForMophAlert(db: Knex, date: any, isRowCount: boolean = false, start = -1, limit: number = 1000) {
-    // date = moment(date).locale('TH').format('YYYY-MM-DD');
+    date = moment(date).locale('TH').format('YYYY-MM-DD');
     if (isRowCount) {
       return db('ovst').where('ovst.vstdate', date).count('ovst.vn as row_count').first();
     } else {
@@ -1628,7 +1628,7 @@ export class HisHosxpv3Model {
       }
       const rows = await sql;
       return rows.filter((row) => {
-        return row.service_status_name && row.service_status_name.includes('ตรวจแล้ว');
+        return row.service_status_name && (row.service_status_name.includes('ตรวจแล้ว') || row.service_status_name.includes('รอรับยา'));
       });
     }
   }
