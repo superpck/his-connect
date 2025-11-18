@@ -140,5 +140,8 @@ class HisHimproModel {
     sumOpdVisitByClinic(db, date) {
         return [];
     }
+    getVisitForMophAlert(db, date) {
+        return [];
+    }
 }
 exports.HisHimproModel = HisHimproModel;

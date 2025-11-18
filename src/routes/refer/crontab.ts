@@ -1,5 +1,9 @@
 import path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../../../config') });
+require('dotenv').config({
+  path: path.join(__dirname, '../../../config'),
+  quiet: true,
+  debug: false
+});
 
 var fastify = require('fastify');
 import * as moment from 'moment';
@@ -11,8 +15,8 @@ var fs = require('fs');
 
 const hcode = process.env.HOSPCODE;
 const resultText = 'sent_result.txt';
-const apiKey = process.env.NREFER_APIKEY || process.env.APIKEY || 'api-key';
-const secretKey = process.env.NREFER_SECRETKEY || process.env.SECRETKEY || 'secret-key';
+const apiKey = process.env?.MOPH_ERP_APIKEY || process.env.NREFER_APIKEY || 'api-key';
+const secretKey = process.env?.MOPH_ERP_SECRETKEY || process.env.NREFER_SECRETKEY || 'secret-key';
 const backwardMonth = process.env.NREFER_DATA_BACKWARD_MONTH;
 const sendEveryMinute = Number(process.env.NREFER_AUTO_SEND_EVERY_MINUTE) || 5;
 
@@ -428,50 +432,55 @@ async function sendReferIn(row, sentResult) {
 }
 
 async function getPerson(db, pid, sentResult) {
-  const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
-  const rows = await hisModel.getPerson(db, 'hn', pid, hcode);
-  sentContent += '  - person = ' + rows.length + '\r';
-  if (rows && rows.length) {
-    for (const row of rows) {
-      // transform column name to lowercase
-      for (let fld in row) {
-        row[fld.toLowerCase()] = row[fld];
-      }
-      const person = {
-        HOSPCODE: row.hospcode,
-        CID: row.cid,
-        PID: row.hn || row.pid,
-        HID: row.hid || '',
-        HN: row.hn || row.pid,
-        PRENAME: row.prename,
-        NAME: row.name,
-        LNAME: row.lname,
-        SEX: row.sex,
-        BIRTH: row.BIRTH || row.birth,
-        MSTATUS: row.MSTATUS || row.mstatus,
-        OCCUPATION_NEW: row.OCCUPATION_NEW || row.occupation_new,
-        RACE: row.RACE || row.race,
-        NATION: row.NATION || row.nation,
-        RELIGION: row.RELIGION || row.religion,
-        EDUCATION: row.EDUCATION || row.education,
-        ABOGROUP: row.ABOGROUP || row.abogroup,
-        TELEPHONE: row.TELEPHONE || row.telephone,
-        TYPEAREA: row.TYPEAREA || row.typearea,
-        D_UPDATE: row.D_UPDATE || row.d_update || d_update,
-      }
+  try {
 
-      const saveResult: any = await sendingToMoph('/save-person', person)
-      // const saveResult: any = await referSending('/save-person', person);
-      if (saveResult.statusCode === 200) {
-        sentResult.person.success += 1;
-      } else {
-        sentResult.person.fail += 1;
-        console.log('save-person', person.HN, saveResult.message || saveResult);
+    const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
+    const rows = await hisModel.getPerson(db, 'hn', pid, hcode);
+    sentContent += '  - person = ' + rows.length + '\r';
+    if (rows && rows.length) {
+      for (const row of rows) {
+        // transform column name to lowercase
+        for (let fld in row) {
+          row[fld.toLowerCase()] = row[fld];
+        }
+        const person = {
+          HOSPCODE: row.hospcode,
+          CID: row.cid,
+          PID: row.hn || row.pid,
+          HID: row.hid || '',
+          HN: row.hn || row.pid,
+          PRENAME: row.prename,
+          NAME: row.name,
+          LNAME: row.lname,
+          SEX: row.sex,
+          BIRTH: row.BIRTH || row.birth,
+          MSTATUS: row.MSTATUS || row.mstatus,
+          OCCUPATION_NEW: row.OCCUPATION_NEW || row.occupation_new,
+          RACE: row.RACE || row.race,
+          NATION: row.NATION || row.nation,
+          RELIGION: row.RELIGION || row.religion,
+          EDUCATION: row.EDUCATION || row.education,
+          ABOGROUP: row.ABOGROUP || row.abogroup,
+          TELEPHONE: row.TELEPHONE || row.telephone,
+          TYPEAREA: row.TYPEAREA || row.typearea,
+          D_UPDATE: row.D_UPDATE || row.d_update || d_update,
+        }
+
+        const saveResult: any = await sendingToMoph('/save-person', person)
+        // const saveResult: any = await referSending('/save-person', person);
+        if (saveResult.statusCode === 200) {
+          sentResult.person.success += 1;
+        } else {
+          sentResult.person.fail += 1;
+          console.log('save-person', person.HN, saveResult.message || saveResult);
+        }
+        sentContent += '    -- PID ' + person.HN + ' ' + (saveResult.result || saveResult.message) + '\r';
       }
-      sentContent += '    -- PID ' + person.HN + ' ' + (saveResult.result || saveResult.message) + '\r';
     }
+    return rows;
+  } catch (error) {
+    console.log('getPerson error', error.message || error);
   }
-  return rows;
 }
 
 async function getAddress(db, pid, sentResult) {

@@ -1814,4 +1814,7 @@ export class HisHospitalOsModel {
         }
         return sql.orderBy('bedno');
     }
+    getVisitForMophAlert(db: Knex, date: any) {
+        return [];
+    }
 }

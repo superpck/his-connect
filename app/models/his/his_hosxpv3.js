@@ -13,7 +13,7 @@ const getHospcode = async () => {
             console.log('hisHospcode v.4', hisHospcode);
         }
         else {
-            console.error('Default HOSPCODE:', hisHospcode);
+            console.log('Default HOSPCODE:', hisHospcode);
         }
     }
     catch (error) {
@@ -73,6 +73,8 @@ class HisHosxpv3Model {
         }
         return sql
             .select('ward as wardcode', 'name as wardname', `ward_export_code as std_code`, 'bedcount as bed_normal', db.raw("CASE WHEN ward_active ='Y' THEN 1 ELSE 0 END as isactive"))
+            .where('ward', '!=', '')
+            .whereNotNull('ward')
             .orderBy('ward')
             .limit(maxLimit);
     }
@@ -162,14 +164,8 @@ class HisHosxpv3Model {
             ,person.movein_date MOVEIN
             ,CASE WHEN person.person_discharge_id IS NULL THEN '9' ELSE person.person_discharge_id END AS DISCHARGE
             ,person.discharge_date DDISCHARGE
-            ,case 
-                when @blood='A' then '1'
-                when @blood='B' then '2'
-                when @blood='AB' then '3'
-                when @blood='O' then '4'
-                else '9' 
-            end ABOGROUP
-            ,p.bloodgroup_rh as RHGROUP                
+            ,person.blood_group as ABOGROUP
+            ,p.bloodgroup_rh as RHGROUP
             ,pl.nhso_code LABOR
             ,p.passport_no as PASSPORT
             ,p.type_area as TYPEAREA
@@ -1369,9 +1365,16 @@ class HisHosxpv3Model {
         if (start >= 0) {
             sql = sql.offset(start).limit(limit);
         }
-        return sql.orderBy('bedno.bedno');
+        return sql
+            .where('bedno.bedno', '!=', '')
+            .whereNotNull('bedno.bedno')
+            .where('roomno.ward', '!=', '')
+            .whereNotNull('roomno.ward')
+            .orderBy('bedno.bedno');
     }
     concurrentIPDByWard(db, date) {
+        const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
         const clientType = db.client.config.client;
         let sql = db('ipt')
             .leftJoin('ward', 'ipt.ward', 'ward.ward')
@@ -1390,48 +1393,60 @@ class HisHosxpv3Model {
                     return db.raw(`CONCAT(${dateCol}, ' ', ${timeCol})`);
             }
         };
-        let dischargeDate = date;
-        if (date.length === 10) {
-            date = moment(date).locale('TH').format('YYYY-MM-DD');
-            sql = sql.select(db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09']))
-                .count('ipt.regdate as cases')
-                .where('ipt.regdate', '<=', date)
-                .andWhere(function () {
-                this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', dischargeDate);
-            });
-        }
-        else {
-            const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
-            const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
-            const regdatetime = getDatetimeExpr('ipt.regdate', 'ipt.regtime');
-            const dchdatetime = getDatetimeExpr('ipt.dchdate', 'ipt.dchtime');
-            sql = sql.select(db.raw(`SUM(CASE WHEN ${regdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? AND ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death`, [dateStart, dateEnd, '08', '09']), db.raw(`SUM(CASE WHEN ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS cases`, [dateStart, dateEnd]))
-                .whereRaw(`${regdatetime.sql} <= ?`, dateStart)
-                .whereRaw(`(ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ?)`, [dateStart, dateEnd]);
-        }
+        const regdatetime = getDatetimeExpr('ipt.regdate', 'ipt.regtime');
+        const dchdatetime = getDatetimeExpr('ipt.dchdate', 'ipt.dchtime');
+        sql = sql.select(db.raw(`SUM(CASE WHEN ${regdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? AND ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death`, [dateStart, dateEnd, '08', '09']), db.raw(`SUM(CASE WHEN ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS cases`, [dateStart, dateEnd]))
+            .whereRaw(`${regdatetime.sql} <= ?`, dateStart)
+            .whereRaw(`(ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ?)`, [dateStart, dateEnd]);
         sql = sql.whereNotNull('ipt.ward')
-            .whereNot('ipt.ward', '');
+            .whereNot('ipt.ward', '')
+            .where("ward.ward_active", "Y");
         return sql.groupBy(['ipt.ward', 'ward.name']).orderBy('ipt.ward');
     }
     concurrentIPDByClinic(db, date) {
         let sql = db('ipt')
+            .leftJoin('ward', 'ipt.ward', 'ward.ward')
             .leftJoin('spclty as clinic', 'ipt.spclty', 'clinic.spclty')
             .select('ipt.spclty as cliniccode', 'clinic.name as clinicname', db.raw('? as date', [date]), db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death'))
             .count('ipt.regdate as cases')
             .where('ipt.regdate', '<=', date)
+            .whereRaw('ipt.spclty is not null and ipt.spclty!= ""')
             .andWhere(function () {
             this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', date);
         });
-        return sql.groupBy(['ipt.spclty', 'clinic.name']).orderBy('ipt.spclty');
+        return sql.where("ward.ward_active", "Y")
+            .groupBy(['ipt.spclty', 'clinic.name'])
+            .orderBy('ipt.spclty');
     }
     sumOpdVisitByClinic(db, date) {
         let sql = db('ovst')
             .leftJoin('spclty', 'ovst.spclty', 'spclty.spclty')
-            .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode', 'spclty.name as clinicname', db.raw('SUM(CASE WHEN an IS NULL or an="" THEN 0 ELSE 1 END) AS admit'))
+            .select('ovst.vstdate as date', 'spclty.nhso_code as cliniccode', db.raw('SUM(CASE WHEN an IS NULL or an=\'\' THEN 0 ELSE 1 END) AS admit'))
             .count('ovst.vstdate as cases')
             .where('ovst.vstdate', date);
-        return sql.groupBy(['ovst.vstdate', 'spclty.nhso_code', 'spclty.name'])
+        return sql.groupBy(['ovst.vstdate', 'spclty.nhso_code'])
             .orderBy('spclty.nhso_code');
+    }
+    async getVisitForMophAlert(db, date, isRowCount = false, start = -1, limit = 1000) {
+        date = moment(date).locale('TH').format('YYYY-MM-DD');
+        if (isRowCount) {
+            return db('ovst').where('ovst.vstdate', date).count('ovst.vn as row_count').first();
+        }
+        else {
+            let sql = db('ovst')
+                .leftJoin('patient as p', 'p.hn', 'ovst.hn')
+                .leftJoin('ovstost as ot', 'ovst.ovstost', 'ot.ovstost')
+                .leftJoin('kskdepartment as d', 'ovst.main_dep', 'd.depcode')
+                .select('ovst.hn', 'ovst.vn', 'p.cid', db.raw(`? as department_type`, ['OPD']), 'ovst.main_dep as department_code', 'd.department as department_name', 'ovst.vstdate as date_service', 'ovst.vsttime as time_service', 'ot.name as service_status', 'ot.name as service_status_name')
+                .where('ovst.vstdate', date);
+            if (start >= 0) {
+                sql = sql.offset(start).limit(limit);
+            }
+            const rows = await sql;
+            return rows.filter((row) => {
+                return row.service_status_name && (row.service_status_name.includes('ตรวจแล้ว') || row.service_status_name.includes('รอรับยา'));
+            });
+        }
     }
 }
 exports.HisHosxpv3Model = HisHosxpv3Model;

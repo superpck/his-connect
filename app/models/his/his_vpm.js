@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.HisHomCHModel = void 0;
+exports.HisVpmHModel = void 0;
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
-class HisHomCHModel {
+class HisVpmHModel {
     async testConnect(db) {
         const row = await db('Ward').first();
         return { connection: row ? true : false };
@@ -42,4 +42,4 @@ class HisHomCHModel {
         return [];
     }
 }
-exports.HisHomCHModel = HisHomCHModel;
+exports.HisVpmHModel = HisVpmHModel;
