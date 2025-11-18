@@ -1,7 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const path = require("path");
-require('dotenv').config({ path: path.join(__dirname, '../../../config') });
+require('dotenv').config({
+    path: path.join(__dirname, '../../../config'),
+    quiet: true,
+    debug: false
+});
 var fastify = require('fastify');
 const moment = require("moment");
 const axios_1 = require("axios");
@@ -10,8 +14,8 @@ const moph_refer_1 = require("../../middleware/moph-refer");
 var fs = require('fs');
 const hcode = process.env.HOSPCODE;
 const resultText = 'sent_result.txt';
-const apiKey = process.env.NREFER_APIKEY || process.env.APIKEY || 'api-key';
-const secretKey = process.env.NREFER_SECRETKEY || process.env.SECRETKEY || 'secret-key';
+const apiKey = process.env?.MOPH_ERP_APIKEY || process.env.NREFER_APIKEY || 'api-key';
+const secretKey = process.env?.MOPH_ERP_SECRETKEY || process.env.NREFER_SECRETKEY || 'secret-key';
 const backwardMonth = process.env.NREFER_DATA_BACKWARD_MONTH;
 const sendEveryMinute = Number(process.env.NREFER_AUTO_SEND_EVERY_MINUTE) || 5;
 let sentContent = '';
@@ -378,48 +382,53 @@ async function sendReferIn(row, sentResult) {
     }
 }
 async function getPerson(db, pid, sentResult) {
-    const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
-    const rows = await hismodel_1.default.getPerson(db, 'hn', pid, hcode);
-    sentContent += '  - person = ' + rows.length + '\r';
-    if (rows && rows.length) {
-        for (const row of rows) {
-            for (let fld in row) {
-                row[fld.toLowerCase()] = row[fld];
+    try {
+        const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
+        const rows = await hismodel_1.default.getPerson(db, 'hn', pid, hcode);
+        sentContent += '  - person = ' + rows.length + '\r';
+        if (rows && rows.length) {
+            for (const row of rows) {
+                for (let fld in row) {
+                    row[fld.toLowerCase()] = row[fld];
+                }
+                const person = {
+                    HOSPCODE: row.hospcode,
+                    CID: row.cid,
+                    PID: row.hn || row.pid,
+                    HID: row.hid || '',
+                    HN: row.hn || row.pid,
+                    PRENAME: row.prename,
+                    NAME: row.name,
+                    LNAME: row.lname,
+                    SEX: row.sex,
+                    BIRTH: row.BIRTH || row.birth,
+                    MSTATUS: row.MSTATUS || row.mstatus,
+                    OCCUPATION_NEW: row.OCCUPATION_NEW || row.occupation_new,
+                    RACE: row.RACE || row.race,
+                    NATION: row.NATION || row.nation,
+                    RELIGION: row.RELIGION || row.religion,
+                    EDUCATION: row.EDUCATION || row.education,
+                    ABOGROUP: row.ABOGROUP || row.abogroup,
+                    TELEPHONE: row.TELEPHONE || row.telephone,
+                    TYPEAREA: row.TYPEAREA || row.typearea,
+                    D_UPDATE: row.D_UPDATE || row.d_update || d_update,
+                };
+                const saveResult = await (0, moph_refer_1.sendingToMoph)('/save-person', person);
+                if (saveResult.statusCode === 200) {
+                    sentResult.person.success += 1;
+                }
+                else {
+                    sentResult.person.fail += 1;
+                    console.log('save-person', person.HN, saveResult.message || saveResult);
+                }
+                sentContent += '    -- PID ' + person.HN + ' ' + (saveResult.result || saveResult.message) + '\r';
             }
-            const person = {
-                HOSPCODE: row.hospcode,
-                CID: row.cid,
-                PID: row.hn || row.pid,
-                HID: row.hid || '',
-                HN: row.hn || row.pid,
-                PRENAME: row.prename,
-                NAME: row.name,
-                LNAME: row.lname,
-                SEX: row.sex,
-                BIRTH: row.BIRTH || row.birth,
-                MSTATUS: row.MSTATUS || row.mstatus,
-                OCCUPATION_NEW: row.OCCUPATION_NEW || row.occupation_new,
-                RACE: row.RACE || row.race,
-                NATION: row.NATION || row.nation,
-                RELIGION: row.RELIGION || row.religion,
-                EDUCATION: row.EDUCATION || row.education,
-                ABOGROUP: row.ABOGROUP || row.abogroup,
-                TELEPHONE: row.TELEPHONE || row.telephone,
-                TYPEAREA: row.TYPEAREA || row.typearea,
-                D_UPDATE: row.D_UPDATE || row.d_update || d_update,
-            };
-            const saveResult = await (0, moph_refer_1.sendingToMoph)('/save-person', person);
-            if (saveResult.statusCode === 200) {
-                sentResult.person.success += 1;
-            }
-            else {
-                sentResult.person.fail += 1;
-                console.log('save-person', person.HN, saveResult.message || saveResult);
-            }
-            sentContent += '    -- PID ' + person.HN + ' ' + (saveResult.result || saveResult.message) + '\r';
         }
+        return rows;
     }
-    return rows;
+    catch (error) {
+        console.log('getPerson error', error.message || error);
+    }
 }
 async function getAddress(db, pid, sentResult) {
     if (pid) {

@@ -15,22 +15,14 @@ export const sendBedOccupancy = async (dateProcess: any = null) => {
   let whatUTC = Intl?.DateTimeFormat().resolvedOptions().timeZone || '';
   let currDate: any;
   if (whatUTC == 'UTC' || whatUTC == 'Etc/UTC') {
-    currDate = moment().locale('TH').add(7, 'hours').subtract(1, 'minutes').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+    currDate = moment().locale('TH').add(7, 'hours').subtract(10, 'minutes').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
   } else {
-    currDate = moment().locale('TH').subtract(1, 'minutes').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+    currDate = moment().locale('TH').subtract(30, 'minutes').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
   }
-
-  // console.log('sendBedOccupancy currDate:', currDate, moment().utc().format('HH:mm:ss'));
-  // console.log(Intl.DateTimeFormat().resolvedOptions().timeZone);
-  // console.log(new Date().getTimezoneOffset());
 
   let date = dateProcess || currDate;
 
   let dateOpd = date; // เฉพาะ OPD Visit
-  if (moment().get('hour') == 3) {  // ทุกๆ ตี 3 ให้ส่งข้อมูลย้อนหลัง 1 เดือน
-    dateOpd = moment().locale('TH').subtract(1, 'month').format('YYYY-MM-DD');
-  }
-
   let clinicResult = null, wardResult = null, opdResult = null;
   do {
     [clinicResult, wardResult] = await Promise.all([

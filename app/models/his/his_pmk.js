@@ -7,6 +7,10 @@ const hcode = process.env.HOSPCODE;
 const dbName = process.env.HIS_DB_NAME;
 const dbClient = process.env.HIS_DB_CLIENT;
 class HisPmkModel {
+    async testConnect(db) {
+        const row = await db('PATIENTS').select('HN').first();
+        return { connection: row ? true : false };
+    }
     getTableName(db) {
         if (dbClient === 'oracledb') {
             return db('ALL_TABLES')
@@ -17,9 +21,6 @@ class HisPmkModel {
                 .select('table_name')
                 .where('table_schema', '=', dbName);
         }
-    }
-    testConnect(db) {
-        return db('PATIENTS').select('HN').limit(1);
     }
     async getReferOut(db, date, hospCode = hcode) {
         date = moment(date).format('YYYY-MM-DD');
@@ -260,6 +261,27 @@ class HisPmkModel {
             .from(tableName)
             .where(columnName, "=", searchNo)
             .limit(5000);
+    }
+    sumReferIn(db, dateStart, dateEnd) {
+        return [];
+    }
+    countBedNo(db) {
+        return { total_bed: 0 };
+    }
+    async getBedNo(db, bedno = null, start = -1, limit = 1000) {
+        return [];
+    }
+    concurrentIPDByWard(db, date) {
+        return [];
+    }
+    concurrentIPDByClinic(db, date) {
+        return [];
+    }
+    sumOpdVisitByClinic(db, date) {
+        return [];
+    }
+    getVisitForMophAlert(db, date) {
+        return [];
     }
 }
 exports.HisPmkModel = HisPmkModel;

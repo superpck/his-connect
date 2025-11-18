@@ -8,6 +8,11 @@ const dbClient = process.env.HIS_DB_CLIENT;
 
 export class HisPmkModel {
 
+    async testConnect(db: Knex) {
+        const row = await db('PATIENTS').select('HN').first();
+        return { connection: row ? true : false };
+    }
+
     getTableName(db: Knex) {
         if (dbClient === 'oracledb') {
             return db('ALL_TABLES')
@@ -19,10 +24,6 @@ export class HisPmkModel {
         }
     }
 
-    testConnect(db: Knex) {
-        return db('PATIENTS').select('HN').limit(1)
-    }
-    
     async getReferOut(db: Knex, date, hospCode = hcode) {
         date = moment(date).format('YYYY-MM-DD');
         let where: any = `REFER_IN_DATETIME BETWEEN TO_DATE('${date} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE('${date} 23:59:59', 'YYYY-MM-DD HH24:MI:SS') AND "referout".REFERTYPE=2`;
@@ -354,5 +355,32 @@ export class HisPmkModel {
             .from(tableName)
             .where(columnName, "=", searchNo)
             .limit(5000);
+    }
+    // Report zone
+    sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
+        return [];
+    }
+
+
+    // MOPH ERP ======================================
+    countBedNo(db: Knex) {
+        return { total_bed: 0 };
+    }
+
+    async getBedNo(db: Knex, bedno: any = null, start = -1, limit: number = 1000) {
+        return [];
+    }
+
+    concurrentIPDByWard(db: Knex, date: any) {
+        return [];
+    }
+    concurrentIPDByClinic(db: Knex, date: any) {
+        return [];
+    }
+    sumOpdVisitByClinic(db: Knex, date: any) {
+        return [];
+    }
+    getVisitForMophAlert(db: Knex, date: any) {
+        return [];
     }
 }

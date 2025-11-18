@@ -781,6 +781,7 @@ export class HisIHospitalModel {
     return sql.groupBy('cliniccode').orderBy('cliniccode');
   }
   sumOpdVisitByClinic(db: Knex, date: any) {
+    date = moment(date).format('YYYY-MM-DD'); // for safety date format
     let sql = db('view_opd_visit as visit')
       .select('visit.date',
         db.raw('CASE WHEN clinic_std IS NULL OR clinic_std = "" THEN "99" ELSE SUBSTRING(visit.clinic_std, 2, 2) END as cliniccode'),
@@ -790,4 +791,51 @@ export class HisIHospitalModel {
       .where('visit.date', date);
     return sql.groupBy('cliniccode').orderBy('cliniccode');
   }
+
+  getVisitForMophAlert(db: Knex, date: any, isRowCount: boolean = false, start = -1, limit: number = 1000) {
+    date = moment(date).locale('th').format('YYYY-MM-DD'); // for safety date format
+
+    // Detect database client for cross-database compatibility
+    const client = db.client.config.client;
+    const isMSSQL = client === 'mssql';
+    const isPostgreSQL = client === 'pg' || client === 'postgres' || client === 'postgresql';
+    const isOracle = client === 'oracledb' || client === 'oracle';
+
+    const lengthCheck = isMSSQL
+      ? 'LEN(no_card) = 13'
+      : 'LENGTH(no_card) = 13';
+
+    const locateCheck = isMSSQL
+      ? "CHARINDEX('เสียชีวิต', opd_result) = 0"
+      : isPostgreSQL
+        ? "POSITION('เสียชีวิต' IN opd_result) = 0"
+        : isOracle
+          ? "INSTR(opd_result, 'เสียชีวิต') = 0"
+          : "LOCATE('เสียชีวิต', opd_result) = 0";
+
+    let query = db('hospdata.view_opd_visit')
+      .where('date', date)
+      .where('visit_grp', 'not in', [16, 19, 7, 3, 13, 7])
+      .where('status', 'not in', [3, 6, 7, 8, 9, 1112, 16, 20, 21, 52, 0, 98, 99])
+      .whereRaw(lengthCheck)
+      .whereRaw(locateCheck)
+      .whereNotIn('dep', [30, 1208, 1209, 1210, 1211, 1213])
+      .where('opd_age', '>', 12)
+      .where('opd_age_type', 1);
+
+    if (isRowCount) {
+      return query.countDistinct('vn as total_rows').first();
+    } else {
+      if (start >= 0) {
+        query = query.offset(start).limit(limit);
+      }
+      return query.select('hn', 'vn', 'no_card as cid',
+        db.raw("CASE WHEN dep IN (1,40) THEN 'ER' ELSE 'OPD' END as department_type"),
+        'dep as department_code', 'dep_name as department_name',
+        db.raw('date(date) as date_service'), db.raw('time as time_service'), 'status',
+        'opd_result as service_status')
+        .groupBy('dep', 'hn');  // 1 HN ส่งครั้งเดียว, กรณีจะให้ตอบทุกรายการ ให้ลบ groupBy ออก
+    }
+  }
+
 }

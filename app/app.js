@@ -3,7 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require('node:fs');
 checkConfigFile();
 const path = require("path");
-require('dotenv').config({ path: path.join(__dirname, '../config') });
+require('dotenv').config({
+    path: path.join(__dirname, '../config'),
+    quiet: true
+});
 const http_status_codes_1 = require("http-status-codes");
 const fastify_1 = require("fastify");
 const moment = require("moment");
@@ -167,10 +170,10 @@ async function connectDB() {
 }
 async function checkConfigFile() {
     if (fs.existsSync('./config')) {
-        console.info('Check config file exist: Successfully');
+        console.info(`✅ Check 'config' file exist: Successfully`);
     }
     else {
-        console.error(`Check config file exist: Not found, please create file 'config' and try again.`);
+        console.error(`❌ Check 'config' file exist: Not found, please create file 'config' and try again.`);
         process.exit(1);
     }
 }

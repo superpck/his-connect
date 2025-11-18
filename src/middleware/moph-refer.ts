@@ -3,13 +3,12 @@ import moment = require('moment');
 import { createHash } from 'crypto';
 import { getIP } from './utils';
 
-const referAPIUrl = 'https://refer.moph.go.th/api/beta';
-// const referAPIUrl = process.env.NREFER_API_URL || 'https://refer.moph.go.th/api/his';
+const referAPIUrl = process.env?.MOPH_ERP_API_URL || 'https://refer.moph.go.th/api/erp';
 const adminAPIUrl = process.env.ADMIN_API_URL || 'https://referlink.moph.go.th/api/admin';
 const erpAPIUrl = process.env.ERP_API_URL || 'https://referlink.moph.go.th/api/moph-erp';
 const hcode = process.env.HOSPCODE;
-const apiKey = process.env.NREFER_APIKEY || process.env.APIKEY || 'api-key';
-const secretKey = process.env.NREFER_SECRETKEY || process.env.SECRETKEY || 'secret-key';
+const apiKey = process.env?.MOPH_ERP_APIKEY || process.env.NREFER_APIKEY || 'api-key';
+const secretKey = process.env?.MOPH_ERP_SECRETKEY || process.env.NREFER_SECRETKEY || 'secret-key';
 let crontabConfig: any = {
   client_ip: '', version: global.appDetail?.version || '',
   subVersion: global.appDetail?.subVersion || ''
@@ -50,7 +49,7 @@ export const getReferToken = async () => {
     nReferToken = data?.token || nReferToken;
     return data;
   } catch (error) {
-    console.log('getNReferToken', error.status || '', error.message);
+    console.log('getNReferToken Error:', error.status || '', error.message);
     return error;
   }
 }
@@ -105,10 +104,10 @@ export const sendingToMoph = async (uri: string, dataArray: any) => {
 }
 
 export const updateHISAlive = async (dataArray: any) => {
-  await getReferToken();
-  if (!nReferToken) {
-    return { status: 500, message: 'No nRefer token' };
-  }
+  // await getReferToken();
+  // if (!nReferToken) {
+  //   return { status: 500, message: 'No nRefer token' };
+  // }
 
   const hashedApiKey = createHash('sha1')
     .update((process.env.REQUEST_KEY || '') + (dataArray.hospcode || '') + (dataArray.his || '') + moment().format('YYYY-MM-DD HH:mm:ss'))
@@ -124,6 +123,10 @@ export const updateHISAlive = async (dataArray: any) => {
   } catch (error) {
     return error;
   }
+}
+
+function updateHisVersion(){
+  // /save-api-config
 }
 
 export const checkAdminRequest = async () => {

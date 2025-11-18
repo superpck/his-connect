@@ -6,10 +6,12 @@
 > - หากฟังก์ชันดึงข้อมูลผ่านวิวหรือตารางที่มีการเลือกทุกคอลัมน์ (`select *`) จะระบุเป็นข้อความไว้แทนตารางรายละเอียด
 > - นิพจน์ที่เป็นค่าคงที่หรือคำนวณจะอธิบายสั้น ๆ ในคอลัมน์ “หมายเหตุ”
 
+# สำหรับ MOPH ERP
 ## getWard
+รายละเอียด: ทะเบียนรหัส Ward
 | column | type | describe |
 | --- | --- | --- |
-| hospcode | string | รหสัสถานพยาบาล |
+| hospcode | string | รหัสสถานพยาบาล |
 | wardcode | string | local code |
 | wardname | string | local name |
 | std_code | string | รหัสตามมาตรฐาน กบรส. |
@@ -23,10 +25,12 @@
 | bed_extra | number | จำนวนเตียงเสริม |
 | lr | number | จำนวนเตียงรอคลอด |
 | clip | number | จำนวน Clip เด็ก |
+| imc | number | จำนวนเตียง IMC/Palliative care (ที่จัดไว้โดยเฉพาะ) |
 | homeward | number | จำนวนเตียง homeward |
 | isactive | 0, 1 | 1=ใช้งาน |
 
 ## getBedNo
+รายละเอียด: ทะเบียนรหัสเตียง
 | column | type | describe |
 | --- | --- | --- |
 | bedno * | string | หมายเลขเตียง |
@@ -39,10 +43,10 @@
 | isactive * | 0, 1 | 1=ใช้งาน |
 
 ## concurrentIPDByWard
-คอลัมน์:
+รายละเอียด: อัตราการคงค้างพยาบาล แยกราย Ward (local code)
 | column | type | describe |
 | --- | --- | --- |
-| hospcode | string | รหสัสถานพยาบาล |
+| hospcode | string | รหัสสถานพยาบาล |
 | date | datetime | เวลาที่ประมวลผล |
 | wardcode | string | local code |
 | std_code | string | รหัสตามมาตรฐาน กบรส. |
@@ -50,17 +54,17 @@
 | new_case | number | รับใหม่ในเวลา |
 | discharge | number | จำหน่ายในเวลา |
 | death | number | เสียชีวิตในเวลา |
-| normal | number | จำนวสามัญ |
-| special | number | จำนวนพิเศษ |
-| icu | number | จำนวน case icu |
-| semi | number | จำนวน case semi-icu |
-| stroke | number | จำนวน case stroke |
-| burn | number | จำนวน case burn |
-| imc | number | จำนวน case IMC/Palliative |
+| normal | number | จำนวนผู้ป่วยสามัญ |
+| special | number | จำนวนผู้ป่วยพิเศษ |
+| icu | number | จำนวนผู้ป่วย icu |
+| semi | number | จำนวนผู้ป่วย semi-icu |
+| stroke | number | จำนวนผู้ป่วย stroke |
+| burn | number | จำนวนผู้ป่วย burn |
+| imc | number | จำนวนผู้ป่วย IMC/Palliative |
 | lr | number | จำนวน รอคลอด |
 | clip | number | จำนวนเด็กแรกเกิด |
-| minithanyaruk | number | จำนวน case minithanyaruk |
-| homeward | number | จำนวน case homeward |
+| minithanyaruk | number | จำนวนผู้ป่วย minithanyaruk |
+| homeward | number | จำนวนผู้ป่วย homeward |
 
 ตัวอย่าง filter
 ```
@@ -71,36 +75,99 @@
 ```
 
 ## concurrentIPDByClinic
-คอลัมน์:
+รายละเอียด: อัตราการคงค้างพยาบาล แยกรายแผนก/สาขา ตาม HDC
 | column | type | describe |
 | --- | --- | --- |
-| hospcode | string | รหสัสถานพยาบาล |
+| hospcode | string | รหัสสถานพยาบาล |
 | date | datetime | เวลาที่ประมวลผล |
 | cliniccode | string | code ตาม HDC |
-| cases | number | คงค้างพยาบาลทั้งหมด (รวม discharge) |
-| new_case | number | รับใหม่ในเวลา |
-| discharge | number | จำหน่ายในเวลา |
-| death | number | เสียชีวิตในเวลา |
-| icu | number | จำนวน case icu |
-| semi | number | จำนวน case semi-icu |
-| homeward | number | จำนวน case homeward |
-| clip | number | จำนวนเด็กแรกเกิด |
+| cases-homeward |  | แบบเดียวกับ concurrentIPDByWard |
 
 ## sumOpdVisitByClinic
-คอลัมน์:
+รายละเอียด: จำนวนการให้บริการผู้ป่วยนอด แยกรายแผนก/สาขา ตาม HDC
 | column | type | describe |
 | --- | --- | --- |
-| hospcode | string | รหสัสถานพยาบาล |
+| hospcode | string | รหัสสถานพยาบาล |
 | date | datetime | เวลาที่ประมวลผล |
 | cliniccode | string | code ตาม HDC |
-| clinicname | string | name ตาม HDC |
 | cases | number | OPD visit (ไม่รวมไม่รอตรวจ ไม่มาตามนัด) |
 | admit | number | จำนวนสั่ง Admission |
 
+# สำหรับ MOPH Alert
+## getVisitForMophAlert
+รายละเอียด: ทะเบียนผู้ป่วยนอกที่สิ้นสุดการรักษาแล้ว เพื่อส่งให้ประเมินความพึงพอใจการรับบริการ
+| column | type | describe |
+| --- | --- | --- |
+| hospcode | string | รหัสสถานพยาบาล |
+| cid | string | เลขที่บัตรประชาชน |
+| hn | string | เลขที่โรงพยาบาล |
+| vn | string | visit no |
+| department_type | string | OPD, ER, IPD, HOMEWARD, OTHER |
+| department_code | string | local code (Clinic or Ward) |
+| department_name | string | local name (Clinic or Ward) |
+| date_service | string | วันที่รับบริการ |
+| time_service | string | เวลารับบริการ (ณ ห้องตรวจ) |
 
+หมายเหตุ
+```
+- ให้ส่งเฉพาะผู้รับบริการที่ต้องการให้ประเมินความพึงพอใจ ไม่ควรส่งไปยังผู้ป่วยกรณีดังต่อไปนี้   
+   1) ผู้ป่วยที่รับไว้รักษา (Admission) ที่ยังไม่จำหน่าย
+   2) ผู้ป่วยที่ไม่รอตรวจ
+   3) ผู้ป่วยที่ไม่มาตามนัด
+   4) ผู้ป่วยเสียชีวิต
+   5) ผู้ป่วยที่เรือนจำ
+   6) ผู้ป่วยที่ทัณฑสถาน
+   7) ผู้ป่วยอื่นๆ ที่ไม่สามารถเข้าถึงหมอพร้อมได้
+- ระบบจะส่ง Alert ไปยังหมอพร้อมหลังส่งข้อมูล ภายใน 5 นาที
+- หลังส่ง Alert ระบบจะเข้ารหัสเลขบัตรประชาชนก่อนการบันทึกลงตารางข้อมูล
+```
+ตัวอย่าง SQL ของ iHospital
+```
+  getVisitForMophAlert(db: Knex, date: any) {
+    date = moment(date).format('YYYY-MM-DD'); // for safety date format
 
+    // Detect database client for cross-database compatibility
+    const client = db.client.config.client;
+    const isMSSQL = client === 'mssql';
+    const isPostgreSQL = client === 'pg' || client === 'postgres' || client === 'postgresql';
+    const isOracle = client === 'oracledb' || client === 'oracle';
 
+    // LENGTH() function - MySQL/PostgreSQL use LENGTH(), MSSQL uses LEN()
+    const lengthCheck = isMSSQL
+      ? 'LEN(no_card) = 13'
+      : 'LENGTH(no_card) = 13';
+
+    // LOCATE/POSITION/CHARINDEX for text search
+    // MySQL: LOCATE(substring, string) = 0
+    // PostgreSQL: POSITION(substring IN string) = 0
+    // MSSQL: CHARINDEX(substring, string) = 0
+    // Oracle: INSTR(string, substring) = 0
+    const locateCheck = isMSSQL
+      ? "CHARINDEX('เสียชีวิต', opd_result) = 0"
+      : isPostgreSQL
+        ? "POSITION('เสียชีวิต' IN opd_result) = 0"
+        : isOracle
+          ? "INSTR(opd_result, 'เสียชีวิต') = 0"
+          : "LOCATE('เสียชีวิต', opd_result) = 0";
+
+    return db('view_opd_visit')
+      .where('date', date)
+      .whereRaw(lengthCheck)
+      .whereRaw(locateCheck)
+      .where('status', 'not in', [3, 6, 8, 20, 98, 99]) // เฉพาะที่ตรวจเสร็จ และไม่ Admit
+      .where('opd_age', '>', 12)  // กรณีไม่สนใจอายุ ให้ลบบรรทัดนี้ทิ้ง
+      .where('opd_age_type', 1)  // กรณีไม่สนใจอายุ ให้ลบบรรทัดนี้ทิ้ง
+      .select('hn', 'vn', 'cid',
+        db.raw("'OPD' as department_type"),
+        'dep as department_code', 'dep_name as department_name',
+        'date as date_service', 'time as time_service')
+      .groupBy('dep', 'hn');  // 1 HN ส่งครั้งเดียว, กรณีจะให้ตอบทุกรายการ ให้ลบ groupBy ออก
+  }
+```
+
+# สำหรับ nRefer และ PHER+
 ## testConnect
+รายละเอียด: สำหรับ his/alive
 | Source / Expression | Output Column | หมายเหตุ |
 | --- | --- | --- |
 | `opdconfig.hospitalname` / `opdconfig.hospitalcode` | `hospname` | ชื่อหรือรพ.โค้ดจากตาราง `opdconfig`; คืนค่า `hospitalname` หากมี ไม่เช่นนั้นใช้ `hospitalcode` |

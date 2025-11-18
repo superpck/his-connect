@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const moment = require("moment");
 const child_process_1 = require("child_process");
 const moph_erp_1 = require("./task/moph-erp");
+const moph_alert_1 = require("./task/moph-alert");
 const shell = require("shelljs");
 const cron = require('node-cron');
 const referCrontab = require('./routes/refer/crontab');
@@ -140,11 +141,12 @@ async function cronjob(fastify) {
     updateProcessState();
     const secondNow = moment().seconds();
     const timingSch = `${secondNow} * * * * *`;
-    let minuteRandom = Math.ceil(Math.random() * 5) || 1;
-    minuteRandom += 10;
+    let timeRandom = 10 + (Math.ceil(Math.random() * 10) || 1);
+    let hourRandom = Math.ceil(Math.random() * 22) || 1;
     const timingSchedule = configureTimingSchedules();
     if (processState.isFirstProcess) {
         console.log(`${getTimestamp()} Start API for Hospcode ${process.env.HOSPCODE}`);
+        console.log(`   ⬜ Random time for alive: every ${timeRandom} minutes, Occupancy: xx:${timeRandom}, ward/bed update: ${hourRandom}:${timeRandom}:${secondNow}`);
         logScheduledServices(timingSchedule);
     }
     if (processState.isFirstProcess) {
@@ -161,16 +163,17 @@ async function cronjob(fastify) {
             if (minuteSinceLastNight % 2 === 1) {
                 logJobStatus();
             }
-            if (minuteNow % minuteRandom == 0) {
+            if (minuteNow != 0 && minuteNow % timeRandom == 0) {
                 (0, moph_erp_1.updateAlive)();
+                (0, moph_alert_1.mophAlertSurvey)();
             }
             if (minuteSinceLastNight % 2 == 0) {
                 (0, moph_erp_1.erpAdminRequest)();
             }
-            if (minuteNow == 58) {
+            if (minuteNow == timeRandom) {
                 (0, moph_erp_1.sendBedOccupancy)();
             }
-            if (moment().hour() % 4 === 0 && minuteNow == 37) {
+            if (moment().hour() == hourRandom && minuteNow == timeRandom) {
                 (0, moph_erp_1.sendWardName)();
                 (0, moph_erp_1.sendBedNo)();
             }

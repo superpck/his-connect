@@ -3,7 +3,7 @@ import { Knex } from 'knex';
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 
-export class HisHomCHModel {
+export class HisVpmHModel {
     async testConnect(db: Knex) {
         const row = await db('Ward').first();
         return { connection: row ? true : false };

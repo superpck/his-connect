@@ -209,7 +209,6 @@ export class HisHiModel {
         , 'idpm.is_active as isactive'
         , db.raw(`if(bedtype.export_code is null, idpm.export_code, concat(substr(idpm.export_code,1,3),bedtype.export_code)) as std_code`)
       );
-    // return []
   }
 
   concurrentIPDByWard(db: Knex, date: any) { // date: datetime
@@ -319,7 +318,8 @@ export class HisHiModel {
       .groupBy('cln.specialty')
       .orderBy('cln.specialty');
   }
-    getVisitForMophAlert(db: Knex, date: any) {
+  
+  getVisitForMophAlert(db: Knex, date: any) {
       date = moment(date).locale('TH').format('YYYY-MM-DD');
       let sql = db('ovst as visit') // ข้อมูลผู้ป่วยนอก
       .innerJoin('pt as patient', 'visit.hn', 'patient.hn') // ข้อมูลประชาชน

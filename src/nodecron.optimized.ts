@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import * as moment from 'moment';
 import { execSync } from 'child_process';
 import { sendWardName, sendBedNo, sendBedOccupancy, updateAlive, erpAdminRequest, mophErpProcessTask } from "./task/moph-erp";
+import { mophAlertSurvey } from "./task/moph-alert";
 
 // Type definitions for better type safety
 interface ServiceSchedule {
@@ -303,8 +304,8 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   // Create cron schedule (run every minute)
   const secondNow = moment().seconds();
   const timingSch = `${secondNow} * * * * *`;
-  let minuteRandom = Math.ceil(Math.random() * 5) || 1;
-  minuteRandom += 10;
+  let timeRandom = 10 + (Math.ceil(Math.random() * 10) || 1);
+  let hourRandom = Math.ceil(Math.random() * 22) || 1;
 
   // Configure timing schedules
   const timingSchedule = configureTimingSchedules();
@@ -312,6 +313,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   // Log startup information if this is the first process
   if (processState.isFirstProcess) {
     console.log(`${getTimestamp()} Start API for Hospcode ${process.env.HOSPCODE}`);
+    console.log(`   ⬜ Random time for alive: every ${timeRandom} minutes, Occupancy: xx:${timeRandom}, ward/bed update: ${hourRandom}:${timeRandom}:${secondNow}`);
     logScheduledServices(timingSchedule);
   }
 
@@ -320,10 +322,8 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
     updateAlive();
     sendWardName();
     sendBedNo();
-    // sendBedOccupancy();
-    // mophErpProcessTask();
   }
-  
+
   // Schedule cron job
   let minuteCount = 0;
   cron.schedule(timingSch, async (req: any, res: any) => {
@@ -338,18 +338,20 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
       if (minuteSinceLastNight % 2 === 1) {
         logJobStatus();
       }
-      if (minuteNow % minuteRandom == 0) {
+      if (minuteNow != 0 && minuteNow % timeRandom == 0) {
         updateAlive();
+        mophAlertSurvey();
       }
 
       if (minuteSinceLastNight % 2 == 0) {
         erpAdminRequest();
       }
 
-      if (minuteNow == 58) {
+      if (minuteNow == timeRandom) {
         sendBedOccupancy();
       }
-      if (moment().hour() % 4 === 0 && minuteNow == 37) {
+
+      if (moment().hour() == hourRandom && minuteNow == timeRandom) {
         sendWardName();
         sendBedNo();
       }
@@ -389,6 +391,3 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
     }
   });
 }
-
-// Initialize process state on module load
-// updateProcessState();

@@ -13,7 +13,7 @@ export class HisHaosModel {
         const patient = await db('patient').first();
         return { connection: patient ? true : false };
     }
- 
+
     getTableName(db: Knex, dbName = process.env.HIS_DB_NAME) {
         return db('information_schema.tables')
             .select('table_name')
@@ -1412,11 +1412,38 @@ export class HisHaosModel {
         return result[0];
     }
 
+    // Report zone
+    sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
+        return [];
+    }
+
     getData(db, tableName, columnName, searchNo, hospCode = hcode) {
         return db(tableName)
             .select(db.raw('"' + hcode + '" as hospcode'))
             .select('*')
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
+    }
+
+    // MOPH ERP ======================================
+    countBedNo(db: Knex) {
+        return { total_bed: 0 };
+    }
+
+    async getBedNo(db: Knex, bedno: any = null, start = -1, limit: number = 1000) {
+        return [];
+    }
+
+    concurrentIPDByWard(db: Knex, date: any) {
+        return [];
+    }
+    concurrentIPDByClinic(db: Knex, date: any) {
+        return [];
+    }
+    sumOpdVisitByClinic(db: Knex, date: any) {
+        return [];
+    }
+    getVisitForMophAlert(db: Knex, date: any) {
+        return [];
     }
 }

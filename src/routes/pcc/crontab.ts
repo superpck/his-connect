@@ -211,8 +211,8 @@ async function sendToApi(path, dataArray) {
 }
 
 async function getToken() {
-  const apiKey = process.env.NREFER_APIKEY || process.env.APIKEY || 'api-key';
-  const secretKey = process.env.NREFER_SECRETKEY || process.env.SECRETKEY || 'secret-key';
+  const apiKey = process.env?.MOPH_ERP_APIKEY || process.env.NREFER_APIKEY || 'api-key';
+  const secretKey = process.env?.MOPH_ERP_SECRETKEY || process.env.NREFER_SECRETKEY || 'secret-key';
 
   const fixedUrl = fastify.mophService.dataCenter || 'http://connect.moph.go.th/dc-api';
   const mophUrl = fixedUrl.split('/');
