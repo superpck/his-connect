@@ -5,6 +5,7 @@ const axios_1 = require("axios");
 const moment = require("moment");
 const crypto_1 = require("crypto");
 const utils_1 = require("./utils");
+const packageJson = require('../../package.json');
 const referAPIUrl = process.env?.MOPH_ERP_API_URL || 'https://refer.moph.go.th/api/erp';
 const adminAPIUrl = process.env.ADMIN_API_URL || 'https://referlink.moph.go.th/api/admin';
 const erpAPIUrl = process.env.ERP_API_URL || 'https://referlink.moph.go.th/api/moph-erp';
@@ -86,14 +87,14 @@ const sendingToMoph = async (uri, dataArray) => {
         ip: crontabConfig['client_ip'] || '127.0.0.1',
         hospcode: hcode, data: JSON.stringify(dataArray),
         processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
-        sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version, subVersion: crontabConfig.subVersion,
+        sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version || packageJson?.version, subVersion: crontabConfig.subVersion || packageJson?.subVersion,
         hisProvider: process.env.HIS_PROVIDER
     };
     const url = referAPIUrl + '/nrefer' + uri;
     const headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + nReferToken,
-        'Source-Agent': 'HISConnect-' + (crontabConfig.version || 'x') + '-' + (crontabConfig.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+        'Source-Agent': 'HISConnect-' + (crontabConfig.version || packageJson?.version || 'x') + '-' + (crontabConfig.subVersion || packageJson?.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
     };
     try {
         const { status, data } = await axios_1.default.post(url, bodyData, { headers });

@@ -240,5 +240,26 @@ WHERE  date(r1.date)="${date}"`;
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
     }
+    getWard(db, wardCode = '', wardName = '') {
+        return [];
+    }
+    countBedNo(db) {
+        return { total_bed: 0 };
+    }
+    async getBedNo(db, bedno = null, start = -1, limit = 1000) {
+        return [];
+    }
+    concurrentIPDByWard(db, date) {
+        return [];
+    }
+    concurrentIPDByClinic(db, date) {
+        return [];
+    }
+    sumOpdVisitByClinic(db, date) {
+        return [];
+    }
+    getVisitForMophAlert(db, date, isRowCount = false, start = -1, limit = 1000) {
+        return [];
+    }
 }
 exports.HisMkhospitalModel = HisMkhospitalModel;

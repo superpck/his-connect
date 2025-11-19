@@ -200,7 +200,7 @@ class HisHiModel {
                 .orWhere('ipt.dchdate', noDate);
         })
             .andWhere(db.raw(`ipt.ward <> ''`))
-            .select(db.raw(`${hcode} as hospcode`), db.raw(`if(ipt.dept = '' or ipt.dept is null,'00',ipt.dept) as cliniccode`), db.raw(`ifnull(spec.namespclty,'ไม่ระบุ') as clinicname`), db.raw(`count(case when concat(rgtdate,' ',time(rgttime*100)) between ?  and ? then ipt.an end) as new_case`, [dateStart, dateEnd]), db.raw(`count(case when concat(dchdate,' ',time(dchtime*100)) between ?  and ? then ipt.an end) as discharge`, [dateStart, dateEnd]), db.raw(`count(case when dchstts in (8,9) and concat(dchdate,' ',time(dchtime*100)) between ?  and ? then ipt.an end) as death`, [dateStart, dateEnd]), db.raw(`
+            .select(db.raw(`${hcode} as hospcode`), db.raw(`if(ipt.dept = '' or ipt.dept is null,'00',ipt.dept) as cliniccode`), db.raw(`ifnull(spclty.namespclty,'ไม่ระบุ') as clinicname`), db.raw(`count(case when concat(rgtdate,' ',time(rgttime*100)) between ?  and ? then ipt.an end) as new_case`, [dateStart, dateEnd]), db.raw(`count(case when concat(dchdate,' ',time(dchtime*100)) between ?  and ? then ipt.an end) as discharge`, [dateStart, dateEnd]), db.raw(`count(case when dchstts in (8,9) and concat(dchdate,' ',time(dchtime*100)) between ?  and ? then ipt.an end) as death`, [dateStart, dateEnd]), db.raw(`
             count(
               case 
                 when concat(rgtdate,' ',time(rgttime*100)) <= ? 
@@ -227,7 +227,26 @@ class HisHiModel {
             .orderBy('cln.specialty');
     }
     getVisitForMophAlert(db, date) {
-        return [];
+        date = moment(date).locale('TH').format('YYYY-MM-DD');
+        let sql = db('ovst as visit')
+            .innerJoin('pt as patient', 'visit.hn', 'patient.hn')
+            .leftJoin('cln as clinic', 'visit.cln', 'clinic.cln')
+            .leftJoin('ipt as admission', 'visit.an', 'admission.an')
+            .leftJoin('idpm as ward', 'admission.ward', 'ward.idpm')
+            .where(db.raw(`((date(visit.vstdttm) = ? and visit.an = 0 and visit.ovstost = '1') or admission.dchdate = ?) `, [date, date]))
+            .andWhere(db.raw(`patient.pop_id <> ''`))
+            .andWhere(db.raw(`patient.pop_id is not null`))
+            .andWhere(db.raw(`length(patient.pop_id) = 13`))
+            .andWhere(db.raw(`length(patient.pop_id) not in (?,?)`, ['1111111111119', '9999999999994']))
+            .andWhere(db.raw(`timestampdiff(year, patient.brthdate, ?) between 15 and 90`, [date]))
+            .andWhere(db.raw(`patient.ntnlty = '99'`));
+        return sql
+            .select('visit.hn', 'visit.vn', 'patient.pop_id as cid', db.raw(`CASE
+              when visit.an > 0 and substr(ward.export_code,4,3) = '606' THEN 'HOMEWARD',
+              WHEN visit.an > 0 and substr(ward.export_code,4,3) <> '606' THEN 'IPD' ,  
+              WHEN visit.an = 0 and visit.cln = '20100' THEN 'ER' 
+              ELSE 'OPD' END as department_type`), 'clinic.cln as department_code', 'clinic.namecln as department_name', db.raw('date(visit.vstdttm) as date_service'), db.raw('time(visit.vstdttm) as time_service'))
+            .groupBy('visit.cln', 'visit.hn');
     }
 }
 exports.HisHiModel = HisHiModel;
