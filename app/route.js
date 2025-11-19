@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = router;
 let rootPrefix = process.env.ROUTE_PREFIX || '';
 rootPrefix = rootPrefix ? ('/' + rootPrefix) : '';
 const hisProvider = (process.env.HIS_PROVIDER || 'not-found').toLowerCase();
@@ -27,3 +26,4 @@ async function router(fastify) {
     fastify.register(require('./routes/pcc/index'), { prefix: `${rootPrefix}/pcc`, logger: true });
     fastify.register(require('./routes/qdrugstore/index'), { prefix: `${rootPrefix}/qdrugstore`, logger: true });
 }
+exports.default = router;
