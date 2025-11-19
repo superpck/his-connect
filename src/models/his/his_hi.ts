@@ -318,10 +318,9 @@ export class HisHiModel {
       .groupBy('cln.specialty')
       .orderBy('cln.specialty');
   }
-  
   getVisitForMophAlert(db: Knex, date: any) {
-      date = moment(date).locale('TH').format('YYYY-MM-DD');
-      let sql = db('ovst as visit') // ข้อมูลผู้ป่วยนอก
+    date = moment(date).locale('TH').format('YYYY-MM-DD');
+    let sql = db('ovst as visit') // ข้อมูลผู้ป่วยนอก
       .innerJoin('pt as patient', 'visit.hn', 'patient.hn') // ข้อมูลประชาชน
       .leftJoin('cln as clinic', 'visit.cln', 'clinic.cln') // ห้องตรวจ
       .leftJoin('ipt as admission', 'visit.an', 'admission.an') // ผู้ป่วยใน
@@ -333,13 +332,12 @@ export class HisHiModel {
       .andWhere(db.raw(`length(patient.pop_id) = 13`)) // ต้องมีความยาว 13 หลัก
       .andWhere(db.raw(`length(patient.pop_id) not in (?,?)`, ['1111111111119', '9999999999994'])) // ไม่เอาหมายเลขประชาชนตัวอย่าง
       .andWhere(db.raw(`timestampdiff(year, patient.brthdate, ?) between 15 and 90`, [date])) // อายุระหว่าง 15-90 ปี
-      .andWhere(db.raw(`patient.ntnlty = '99'`)) // สัญชาติไทย
-      ;
+      .andWhere(db.raw(`patient.ntnlty = '99'`)); // สัญชาติไทย
     return sql
       .select('visit.hn', 'visit.vn', 'patient.pop_id as cid',
         db.raw(`CASE
-              when visit.an > 0 and substr(ward.export_code,4,3) = '606' THEN 'HOMEWARD'
-              WHEN visit.an > 0 and substr(ward.export_code,4,3) <> '606' THEN 'IPD' 
+              when visit.an > 0 and substr(ward.export_code,4,3) = '606' THEN 'HOMEWARD',
+              WHEN visit.an > 0 and substr(ward.export_code,4,3) <> '606' THEN 'IPD' ,  
               WHEN visit.an = 0 and visit.cln = '20100' THEN 'ER' 
               ELSE 'OPD' END as department_type`),
         'clinic.cln as department_code', 'clinic.namecln as department_name',
