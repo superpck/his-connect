@@ -1661,14 +1661,14 @@ export class HisHosxpv4Model {
         'bedno.bed_status_type_id', 'status.bed_status_type_name',
         db.raw("CASE WHEN ward.ward_active !='Y' OR status.is_available !='Y' THEN 0 ELSE 1 END as isactive"),
         db.raw(`
-                    CASE 
-                        WHEN LOWER(bedtype.name) LIKE '%พิเศษ%' THEN 'S'
-                        WHEN LOWER(bedtype.name) LIKE '%icu%' OR bedtype.name LIKE '%ไอซียู%' THEN 'ICU'
-                        WHEN LOWER(bedtype.name) LIKE '%ห้องคลอด%' OR LOWER(bedtype.name) LIKE '%รอคลอด%' THEN 'LR'
-                        WHEN LOWER(bedtype.name) LIKE '%Home Ward%' THEN 'HW'
-                        ELSE 'N'
-                    END as bed_type
-                `)
+            CASE 
+                WHEN LOWER(bedtype.name) LIKE '%พิเศษ%' THEN 'S'
+                WHEN LOWER(bedtype.name) LIKE '%icu%' OR bedtype.name LIKE '%ไอซียู%' THEN 'ICU'
+                WHEN LOWER(bedtype.name) LIKE '%ห้องคลอด%' OR LOWER(bedtype.name) LIKE '%รอคลอด%' THEN 'LR'
+                WHEN LOWER(bedtype.name) LIKE '%Home Ward%' THEN 'HW'
+                ELSE 'N'
+            END as bed_type
+        `)
       )
       .where('ward.ward_active', 'Y');
     if (bedno) {
@@ -1739,7 +1739,7 @@ export class HisHosxpv4Model {
         db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09']))
       .count('ipt.regdate as cases')
       .where('ipt.regdate', '<=', formattedDate)
-      .whereRaw('ipt.spclty is not null and ipt.spclty!= ""')
+      .whereRaw("ipt.spclty is not null and ipt.spclty!= ''")
       .andWhere(function () {
         this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', formattedDate);
       });

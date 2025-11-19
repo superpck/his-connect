@@ -1184,14 +1184,14 @@ class HisHosxpv4Model {
             .leftJoin('bedtype', 'bedno.bedtype', 'bedtype.bedtype')
             .leftJoin('bed_status_type as status', 'bedno.bed_status_type_id', 'status.bed_status_type_id')
             .select('bedno.bedno', 'bedno.bedtype', 'bedtype.name as bedtype_name', 'bedno.roomno', 'roomno.ward as wardcode', 'ward.name as wardname', 'bedno.export_code as std_code', 'bedno.bed_status_type_id', 'status.bed_status_type_name', db.raw("CASE WHEN ward.ward_active !='Y' OR status.is_available !='Y' THEN 0 ELSE 1 END as isactive"), db.raw(`
-                    CASE 
-                        WHEN LOWER(bedtype.name) LIKE '%พิเศษ%' THEN 'S'
-                        WHEN LOWER(bedtype.name) LIKE '%icu%' OR bedtype.name LIKE '%ไอซียู%' THEN 'ICU'
-                        WHEN LOWER(bedtype.name) LIKE '%ห้องคลอด%' OR LOWER(bedtype.name) LIKE '%รอคลอด%' THEN 'LR'
-                        WHEN LOWER(bedtype.name) LIKE '%Home Ward%' THEN 'HW'
-                        ELSE 'N'
-                    END as bed_type
-                `))
+            CASE 
+                WHEN LOWER(bedtype.name) LIKE '%พิเศษ%' THEN 'S'
+                WHEN LOWER(bedtype.name) LIKE '%icu%' OR bedtype.name LIKE '%ไอซียู%' THEN 'ICU'
+                WHEN LOWER(bedtype.name) LIKE '%ห้องคลอด%' OR LOWER(bedtype.name) LIKE '%รอคลอด%' THEN 'LR'
+                WHEN LOWER(bedtype.name) LIKE '%Home Ward%' THEN 'HW'
+                ELSE 'N'
+            END as bed_type
+        `))
             .where('ward.ward_active', 'Y');
         if (bedno) {
             sql = sql.where('bedno.bedno', bedno);
@@ -1245,7 +1245,7 @@ class HisHosxpv4Model {
             .select('ipt.spclty as cliniccode', db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [formattedDate]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [formattedDate]), db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09']))
             .count('ipt.regdate as cases')
             .where('ipt.regdate', '<=', formattedDate)
-            .whereRaw('ipt.spclty is not null and ipt.spclty!= ""')
+            .whereRaw("ipt.spclty is not null and ipt.spclty!= ''")
             .andWhere(function () {
             this.whereNull('ipt.dchdate').orWhere('ipt.dchdate', '>=', formattedDate);
         });
