@@ -318,7 +318,6 @@ export class HisHiModel {
       .groupBy('cln.specialty')
       .orderBy('cln.specialty');
   }
-
   getVisitForMophAlert(db: Knex, date: any) {
     date = moment(date).locale('TH').format('YYYY-MM-DD');
     let sql = db('ovst as visit') // ข้อมูลผู้ป่วยนอก
