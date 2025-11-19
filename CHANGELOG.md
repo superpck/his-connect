@@ -1,7 +1,8 @@
 # 3.9.1
 ## Feature
 ## Bug Fix
-  - Bug: SQL ไม่ได้ระบุ first() ในการนับจำนวน
+  - SQL ไม่ได้ระบุ first() ในการนับจำนวน
+  - ปรับ SQL ipt.spclty!= "" เป็น ipt.spclty!= '' เนื่องจาก pg ไม่รองรับ
 
 # 3.9.0
 ## Feature

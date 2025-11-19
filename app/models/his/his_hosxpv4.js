@@ -1153,7 +1153,7 @@ class HisHosxpv4Model {
             .count('r.vn as cases')
             .whereNotNull('r.vn')
             .whereBetween('r.refer_date', [dateStart, dateEnd])
-            .where('r.refer_hospcode', '!=', "")
+            .where('r.refer_hospcode', '!=', '')
             .whereNotNull('r.refer_hospcode')
             .where('r.refer_hospcode', '!=', hisHospcode)
             .groupBy('r.refer_date')
