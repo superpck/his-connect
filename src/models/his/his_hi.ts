@@ -338,8 +338,8 @@ export class HisHiModel {
     return sql
       .select('visit.hn', 'visit.vn', 'patient.pop_id as cid',
         db.raw(`CASE
-              when visit.an > 0 and substr(ward.export_code,4,3) = '606' THEN 'HOMEWARD',
-              WHEN visit.an > 0 and substr(ward.export_code,4,3) <> '606' THEN 'IPD' ,  
+              when visit.an > 0 and substr(ward.export_code,4,3) = '606' THEN 'HOMEWARD'
+              WHEN visit.an > 0 and substr(ward.export_code,4,3) <> '606' THEN 'IPD' 
               WHEN visit.an = 0 and visit.cln = '20100' THEN 'ER' 
               ELSE 'OPD' END as department_type`),
         'clinic.cln as department_code', 'clinic.namecln as department_name',
