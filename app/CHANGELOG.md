@@ -1,6 +1,6 @@
 # 3.9.1
 ## Feature
-  - ปรับเอกสาร
+  - ปรับ SQL getVisitForMophAlert ใน iHospital ให้รองรับ IPD
 ## Bug Fix
   - SQL ไม่ได้ระบุ first() ในการนับจำนวน
   - ปรับ SQL ipt.spclty!= "" เป็น ipt.spclty!= '' เนื่องจาก pg ไม่รองรับ

@@ -5,6 +5,7 @@ const moment = require("moment");
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
+const dbClient = process.env.HIS_DB_CLIENT ? process.env.HIS_DB_CLIENT.toLowerCase() : 'mysql2';
 class HisIHospitalModel {
     check() {
         return true;
@@ -546,12 +547,11 @@ class HisIHospitalModel {
             .where('visit.date', date);
         return sql.groupBy('cliniccode').orderBy('cliniccode');
     }
-    getVisitForMophAlert(db, date, isRowCount = false, start = -1, limit = 1000) {
+    async getVisitForMophAlert(db, date, isRowCount = false, startRow = -1, limit = 100) {
         date = moment(date).locale('th').format('YYYY-MM-DD');
-        const client = db.client.config.client;
-        const isMSSQL = client === 'mssql';
-        const isPostgreSQL = client === 'pg' || client === 'postgres' || client === 'postgresql';
-        const isOracle = client === 'oracledb' || client === 'oracle';
+        const isMSSQL = dbClient === 'mssql';
+        const isPostgreSQL = dbClient === 'pg' || dbClient === 'postgres' || dbClient === 'postgresql';
+        const isOracle = dbClient === 'oracledb' || dbClient === 'oracle';
         const lengthCheck = isMSSQL
             ? 'LEN(no_card) = 13'
             : 'LENGTH(no_card) = 13';
@@ -575,11 +575,22 @@ class HisIHospitalModel {
             return query.countDistinct('vn as row_count').first();
         }
         else {
-            if (start >= 0) {
-                query = query.offset(start).limit(limit);
+            if (startRow >= 0) {
+                query = query.offset(startRow).limit(limit);
             }
-            return query.select('hn', 'vn', 'no_card as cid', db.raw("CASE WHEN dep IN (1,40) THEN 'ER' ELSE 'OPD' END as department_type"), 'dep as department_code', 'dep_name as department_name', db.raw('date(date) as date_service'), db.raw('time as time_service'), 'status', 'opd_result as service_status')
+            let opdVisit = [];
+            let ipdVisit = [];
+            opdVisit = await query.select('hn', 'vn', 'no_card as cid', db.raw("CASE WHEN dep IN (1,40) THEN 'ER' ELSE 'OPD' END as department_type"), 'dep as department_code', 'dep_name as department_name', db.raw('date(date) as date_service'), db.raw('time as time_service'), 'status', 'opd_result as service_status')
                 .groupBy('dep', 'hn');
+            if (startRow < 1) {
+                ipdVisit = await db('hospdata.view_ipd_ipd')
+                    .where('disc', date)
+                    .whereRaw(lengthCheck)
+                    .where('age', '>', 12)
+                    .where('age_type', 1)
+                    .select('hn', 'vn', 'no_card as cid', db.raw("? as department_type", ['IPD']), 'ward as department_code', 'ward_name as department_name', db.raw('date(disc) as date_service'), db.raw('timedisc as time_service'));
+            }
+            return [...opdVisit, ...ipdVisit];
         }
     }
 }

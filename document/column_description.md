@@ -150,7 +150,10 @@
           ? "INSTR(opd_result, 'เสียชีวิต') = 0"
           : "LOCATE('เสียชีวิต', opd_result) = 0";
 
-    return db('view_opd_visit')
+    let opdVisit = [];
+    let ipdVisit = [];
+
+    opdVisit = await db('view_opd_visit')
       .where('date', date)
       .whereRaw(lengthCheck)
       .whereRaw(locateCheck)
@@ -162,6 +165,20 @@
         'dep as department_code', 'dep_name as department_name',
         'date as date_service', 'time as time_service')
       .groupBy('dep', 'hn');  // 1 HN ส่งครั้งเดียว, กรณีจะให้ตอบทุกรายการ ให้ลบ groupBy ออก
+    
+    if (startRow < 1) { // กรณี select ทั้งหมด หรือ select ครั้งแรก
+      ipdVisit = await db('hospdata.view_ipd_ipd')
+        .where('disc', date)
+        .whereRaw(lengthCheck)
+        .where('age', '>', 12)
+        .where('age_type', 1)
+        .select('hn', 'vn', 'no_card as cid',
+          db.raw("? as department_type", ['IPD']),
+          'ward as department_code', 'ward_name as department_name',
+          db.raw('date(disc) as date_service'), db.raw('timedisc as time_service'));
+    }
+
+    return [...opdVisit, ...ipdVisit];
   }
 ```
 
