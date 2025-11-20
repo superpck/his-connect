@@ -1,11 +1,12 @@
 import { FastifyInstance } from "fastify";
 let rootPrefix = process.env.ROUTE_PREFIX || '';
 rootPrefix = rootPrefix ? ('/' + rootPrefix) : '';
-const hisProvider = (process.env.HIS_PROVIDER || 'not-found').toLowerCase();
+const hisProvider = ((process.env.HIS_PROVIDER || 'not-found') + '').toLowerCase();
 
 export default async function router(fastify: FastifyInstance) {
+  const hisProviderLower = hisProvider.toLowerCase(); // Force lowercase
   fastify.register(require('./routes/index'), { prefix: "/" });
-  fastify.register(require('./routes/his/index'), { prefix: `${rootPrefix}/${hisProvider}` });
+  fastify.register(require('./routes/his/index'), { prefix: `${rootPrefix}/${hisProviderLower}` });
   fastify.register(require('./routes/his/index'), { prefix: `${rootPrefix}/HIS` });
 
   // fastify.register(require('./routes/setup'), { prefix: `${rootPrefix}/setup-api` });

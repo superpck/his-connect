@@ -8,6 +8,7 @@ const cache_db_1 = require("../plugins/cache-db");
 const dbConnection = require('../plugins/db');
 let db = dbConnection('HIS');
 const hospcode = process.env.HOSPCODE || '';
+const limitRow = 100;
 let cacheInitialized = false;
 const mophAlertSurvey = async (date = null) => {
     try {
@@ -38,7 +39,6 @@ async function opdVisit(date = null) {
     console.log(moment().format('HH:mm:ss'), 'MOPH Alert survey: Total rows to process for date', date, ':', totalRows);
     let times = 0;
     let startRow = 0;
-    const limitRow = 100;
     let sentResult = [];
     do {
         const result = await getAndSend(date, startRow, limitRow);
@@ -48,7 +48,7 @@ async function opdVisit(date = null) {
     } while (startRow < totalRows - 1);
     return sentResult;
 }
-async function getAndSend(date, startRow = -1, limitRow = 1000) {
+async function getAndSend(date, startRow = -1, limitRow = 100) {
     let rows = await hismodel_1.default.getVisitForMophAlert(db, date, false, startRow, limitRow);
     if (rows && rows.length > 0) {
         const allVns = rows.map((row) => row.vn).filter((vn) => vn);
@@ -61,8 +61,10 @@ async function getAndSend(date, startRow = -1, limitRow = 1000) {
         }
         console.log(moment().format('HH:mm:ss'), 'Sending', filteredRows.length, 'new VNs to MOPH');
         const rowsToSend = filteredRows.map((item) => { return { ...item, date_service: moment(item.date_service).format('YYYY-MM-DD'), hospcode }; });
-        const result = await (0, moph_refer_1.sendingToMoph)('/save-moph-alert', rowsToSend);
-        console.log(moment().format('HH:mm:ss'), 'send moph alert', result.statusCode || '', result.message || '', result);
+        let result = await (0, moph_refer_1.sendingToMoph)('/save-moph-alert', rowsToSend);
+        console.log(moment().format('HH:mm:ss'), `send moph alert ${rowsToSend.length} rows, result status:`, result.statusCode || '', result.message || '');
+        result.resultList = result?.resultList.map(item => { delete item?.result; return item; });
+        console.log(result);
         if (result.statusCode === 200) {
             const sentVns = filteredRows.map((row) => row.vn);
             await (0, cache_db_1.insertSentVns)(sentVns, hospcode);
