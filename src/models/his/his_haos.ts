@@ -1443,7 +1443,45 @@ export class HisHaosModel {
     sumOpdVisitByClinic(db: Knex, date: any) {
         return [];
     }
-    getVisitForMophAlert(db: Knex, date: any) {
-        return [];
+    async getVisitForMophAlert(db: Knex, date: any, isRowCount: boolean = false, startRow = -1, limit: number = 100) {
+        const formattedDate = moment(date).locale('th').format('YYYY-MM-DD');
+        const baseQuery = db('TB_OPD_SERVICES as a')
+            .leftJoin('TB_PATIENTS as p', 'a.PatientId', 'p.PatientId')
+            .leftJoin('TB_OPD_CLINICS as c', 'a.ServiceId', 'c.ServiceId')
+            .leftJoin('TBM_WORK_PLACES as w', 'c.workid', 'w.workid')
+            .whereRaw('CONVERT(date, a.ServiceDate) = ?', [formattedDate])
+            .whereBetween('p.AgeYear', [10, 99])
+            .whereNotNull('p.IdCard')
+            .whereNotNull('c.CheckinDate')
+            .whereNotNull('c.FinishedDate')
+            .whereIn('c.Checkout', ['01', '02'])
+            .where('w.Mapping1', 'like', 'TE%');
+
+        if (isRowCount) {
+            const [row] = await baseQuery.clone().count<{ row_count: number }>({ row_count: 1 });
+            return row || { row_count: 0 };
+        }
+
+        const dataQuery = baseQuery
+            .clone()
+            .select(db.raw(`'10679' as hospcode`))
+            .select(
+                'p.IdCard as cid',
+                'p.hn as hn',
+                'a.ServiceId as vn',
+                'w.Mapping1 as department_code',
+                'w.Name as department_name'
+            )
+            .select(db.raw(`CASE WHEN w.Mapping1 LIKE 'ER%' THEN 'ER' ELSE 'OPD' END as department_type`))
+            .select(db.raw('CONVERT(date, a.ServiceDate) as date_service'))
+            .select(db.raw('CONVERT(time, c.CheckinDate) as time_service'))
+            .orderBy('a.ServiceDate');
+
+        if (startRow >= 0) {
+            dataQuery.offset(startRow).limit(limit);
+        }
+
+        const rows = await dataQuery;
+        return rows;
     }
 }
