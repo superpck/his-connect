@@ -336,6 +336,7 @@ export class HisHiModel {
       .andWhere(db.raw(`patient.ntnlty = '99'`)); // สัญชาติไทย
 
     if (isRowCount) {
+      console.log(sql.countDistinct('vn as row_count').toString());
       return sql.countDistinct('vn as row_count').first();
     } else {
       if (start >= 0) {
