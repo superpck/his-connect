@@ -241,7 +241,8 @@ class HisHiModel {
             .andWhere(db.raw(`timestampdiff(year, patient.brthdate, ?) between 15 and 90`, [date]))
             .andWhere(db.raw(`patient.ntnlty = '99'`));
         if (isRowCount) {
-            return sql.countDistinct('vn as row_count').first();
+            console.log(sql.countDistinct('visit.vn as row_count').toString());
+            return sql.countDistinct('visit.vn as row_count').first();
         }
         else {
             if (start >= 0) {
