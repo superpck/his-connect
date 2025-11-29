@@ -336,8 +336,8 @@ export class HisHiModel {
       .andWhere(db.raw(`patient.ntnlty = '99'`)); // สัญชาติไทย
 
     if (isRowCount) {
-      console.log(sql.countDistinct('vn as row_count').toString());
-      return sql.countDistinct('vn as row_count').first();
+      console.log(sql.countDistinct('visit.vn as row_count').toString());
+      return sql.countDistinct('visit.vn as row_count').first(); // fix bug 'vn' in field list is ambiguous
     } else {
       if (start >= 0) {
         sql = sql.offset(start).limit(limit);
