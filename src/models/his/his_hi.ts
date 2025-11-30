@@ -331,7 +331,7 @@ export class HisHiModel {
       .andWhere(db.raw(`patient.pop_id <> ''`)) // ต้องมีหมายเลขบัตรประชาชน
       .andWhere(db.raw(`patient.pop_id is not null`)) // ต้องมีหมายเลขบัตรประชาชน
       .andWhere(db.raw(`length(patient.pop_id) = 13`)) // ต้องมีความยาว 13 หลัก
-      .andWhere(db.raw(`length(patient.pop_id) not in (?,?)`, ['1111111111119', '9999999999994'])) // ไม่เอาหมายเลขประชาชนตัวอย่าง
+      .andWhere(db.raw(`patient.pop_id not in (?,?)`, ['1111111111119', '9999999999994'])) // ไม่เอาหมายเลขประชาชนตัวอย่าง
       .andWhere(db.raw(`timestampdiff(year, patient.brthdate, ?) between 15 and 90`, [date])) // อายุระหว่าง 15-90 ปี
       .andWhere(db.raw(`patient.ntnlty = '99'`)) // สัญชาติไทย
       ;
