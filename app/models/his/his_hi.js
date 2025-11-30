@@ -237,7 +237,7 @@ class HisHiModel {
             .andWhere(db.raw(`patient.pop_id <> ''`))
             .andWhere(db.raw(`patient.pop_id is not null`))
             .andWhere(db.raw(`length(patient.pop_id) = 13`))
-            .andWhere(db.raw(`length(patient.pop_id) not in (?,?)`, ['1111111111119', '9999999999994']))
+            .andWhere(db.raw(`patient.pop_id not in (?,?)`, ['1111111111119', '9999999999994'])) // fix old condition is length(patientpop_id) not in
             .andWhere(db.raw(`timestampdiff(year, patient.brthdate, ?) between 15 and 90`, [date]))
             .andWhere(db.raw(`patient.ntnlty = '99'`));
         return sql
