@@ -319,7 +319,7 @@ export class HisHiModel {
       .orderBy('cln.specialty');
   }
 
-  getVisitForMophAlert(db: Knex, date: any, limit: number = 1000, start = -1, isRowCount: boolean = false) {
+  getVisitForMophAlert(db: Knex, date: any, isRowCount: boolean = false, start = -1, limit: number = 1000) { // fix sequence of parameter
     date = moment(date).locale('TH').format('YYYY-MM-DD');
     let sql = db('ovst as visit') // ข้อมูลผู้ป่วยนอก
       .innerJoin('pt as patient', 'visit.hn', 'patient.hn') // ข้อมูลประชาชน
@@ -331,7 +331,7 @@ export class HisHiModel {
       .andWhere(db.raw(`patient.pop_id <> ''`)) // ต้องมีหมายเลขบัตรประชาชน
       .andWhere(db.raw(`patient.pop_id is not null`)) // ต้องมีหมายเลขบัตรประชาชน
       .andWhere(db.raw(`length(patient.pop_id) = 13`)) // ต้องมีความยาว 13 หลัก
-      .andWhere(db.raw(`length(patient.pop_id) not in (?,?)`, ['1111111111119', '9999999999994'])) // ไม่เอาหมายเลขประชาชนตัวอย่าง
+      .andWhere(db.raw(`patient.pop_id not in (?,?)`, ['1111111111119', '9999999999994'])) // ไม่เอาหมายเลขประชาชนตัวอย่าง
       .andWhere(db.raw(`timestampdiff(year, patient.brthdate, ?) between 15 and 90`, [date])) // อายุระหว่าง 15-90 ปี
       .andWhere(db.raw(`patient.ntnlty = '99'`)); // สัญชาติไทย
 
