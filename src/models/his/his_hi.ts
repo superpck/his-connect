@@ -319,7 +319,7 @@ export class HisHiModel {
       .orderBy('cln.specialty');
   }
 
-  getVisitForMophAlert(db: Knex, date: any, limit: number = 1000, start = -1, isRowCount: boolean = false) {
+  getVisitForMophAlert(db: Knex, date: any, isRowCount: boolean = false, start = -1, limit: number = 1000) { // fix sequence of parameter
     date = moment(date).locale('TH').format('YYYY-MM-DD');
     let sql = db('ovst as visit') // ข้อมูลผู้ป่วยนอก
       .innerJoin('pt as patient', 'visit.hn', 'patient.hn') // ข้อมูลประชาชน
