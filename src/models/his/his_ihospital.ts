@@ -57,7 +57,9 @@ export class HisIHospitalModel {
     }
     return sql
       .select('code as wardcode', 'ward as wardname',
-        'standard as std_code', 'bed_nm as bed_normal', 'bed_sp as bed_special',
+        'standard as std_code', 'bed_sp as bed_special',
+        db.raw(`CASE WHEN UPPER(ward) LIKE 'ICU%' THEN 0 ELSE bed_nm END as bed_normal`),
+        db.raw(`CASE WHEN UPPER(ward) LIKE 'ICU%' THEN bed_nm ELSE 0 END as bed_icu`),
         'ward_type', 'ward_typesub as ward_subtype', 'isactive')
       .limit(maxLimit);
   }

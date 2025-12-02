@@ -286,6 +286,12 @@ class HisJhcisModel {
     sumReferOut(db, dateStart, dateEnd) {
         return [];
     }
+    countBedNo(db) {
+        return { total_bed: 0 };
+    }
+    async getBedNo(db, bedno = null, start = -1, limit = 1000) {
+        return [];
+    }
     concurrentIPDByWard(db, date) {
         return [];
     }
@@ -294,6 +300,14 @@ class HisJhcisModel {
     }
     sumOpdVisitByClinic(db, date) {
         return [];
+    }
+    getVisitForMophAlert(db, date, isRowCount = false, limit = 1000, start = -1) {
+        if (isRowCount) {
+            return { row_count: 0 };
+        }
+        else {
+            return [];
+        }
     }
 }
 exports.HisJhcisModel = HisJhcisModel;
