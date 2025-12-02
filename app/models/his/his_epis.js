@@ -34,7 +34,77 @@ class HisEPisModel {
         return result[0];
     }
     concurrentIPDByWard(db, date) {
-        return [];
+        let sql = `
+      select
+          (
+            select phisenv.val from phisenv
+              where phisenv.section = 'HPTENV'
+                    and phisenv.var = 'HPTCODE'
+          ) as hospcode,
+          ward.ward as wardcode,
+          ward.name as wardname,
+          '' as std_code,
+          (
+                  select
+                          count(wardroomhst.bedno)
+                  from
+                          wardroomhst
+                          left outer join bedtype on wardroomhst.bedtype = bedtype.bedtype
+                  where
+                          wardroomhst.ward = ward.ward
+                          and wardroomhst.canceldate is null
+                          and wardroomhst.wardroomst = 10
+                          and Case
+                                  When UPPER(bedtype.var) like '%ICU' Then 'ICU'
+                                  When UPPER(bedtype.var) like 'RESERVE%' Then 'S'
+                                  Else 'N'
+                          End = 'N'
+          ) as bed_normal,
+          0 as bed_special,
+          (
+                  select
+                          count(wardroomhst.bedno)
+                  from
+                          wardroomhst
+                          left outer join bedtype on wardroomhst.bedtype = bedtype.bedtype
+                  where
+                          wardroomhst.ward = ward.ward
+                          and wardroomhst.canceldate is null
+                          and wardroomhst.wardroomst = 10
+                          and Case
+                                  When UPPER(bedtype.var) like '%ICU' Then 'ICU'
+                                  When UPPER(bedtype.var) like 'RESERVE%' Then 'S'
+                                  Else 'N'
+                          End = 'ICU'
+          ) as bed_icu,
+          0 as bed_semi,
+          0 as bed_stroke,
+          0 as bed_burn,
+          0 as bed_minithanyaruk,
+          (
+                  select
+                          count(wardroomhst.bedno)
+                  from
+                          wardroomhst
+                          left outer join bedtype on wardroomhst.bedtype = bedtype.bedtype
+                  where
+                          wardroomhst.ward = ward.ward
+                          and wardroomhst.canceldate is null
+                          and wardroomhst.wardroomst = 10
+                          and Case
+                                  When UPPER(bedtype.var) like '%ICU' Then 'ICU'
+                                  When UPPER(bedtype.var) like 'RESERVE%' Then 'S'
+                                  Else 'N'
+                          End = 'S'
+          ) as bed_extra,
+          0 as lr,
+          0 as clip,
+          0 as imc,
+          0 as homeward
+      from ward
+      where ward.canceldate is null;
+    `;
+        return db.raw(sql).then((result) => result[0]);
     }
     concurrentIPDByClinic_(db, date) {
         return [];

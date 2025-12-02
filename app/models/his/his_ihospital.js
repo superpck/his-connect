@@ -52,7 +52,7 @@ class HisIHospitalModel {
             sql.whereLike('ward', `%${wardName}%`);
         }
         return sql
-            .select('code as wardcode', 'ward as wardname', 'standard as std_code', 'bed_nm as bed_normal', 'bed_sp as bed_special', 'ward_type', 'ward_typesub as ward_subtype', 'isactive')
+            .select('code as wardcode', 'ward as wardname', 'standard as std_code', 'bed_sp as bed_special', db.raw(`CASE WHEN ward_group_moph IS NULL OR ward_group_moph='1' OR ward_group_moph='' THEN bed_nm ELSE 0 END as bed_normal`), db.raw(`CASE WHEN ward_group_moph = '3' THEN bed_nm ELSE 0 END as bed_icu`), db.raw(`CASE WHEN ward_group_moph = '4' THEN bed_nm ELSE 0 END as bed_semi`), db.raw(`CASE WHEN ward_group_moph = '5' THEN bed_nm ELSE 0 END as bed_stroke`), db.raw(`CASE WHEN ward_group_moph = '6' THEN bed_nm ELSE 0 END as bed_burn`), db.raw(`CASE WHEN ward_group_moph = '7' THEN bed_nm ELSE 0 END as bed_minithanyaruk`), db.raw(`CASE WHEN ward_group_moph = '8' THEN bed_nm ELSE 0 END as lr`), db.raw(`CASE WHEN ward_group_moph = '9' THEN bed_nm ELSE 0 END as clip`), db.raw(`CASE WHEN ward_group_moph = '10' THEN bed_nm ELSE 0 END as imc`), db.raw(`CASE WHEN ward_group_moph = '11' THEN bed_nm ELSE 0 END as homeward`), 'ward_type', 'ward_typesub as ward_subtype', 'isactive')
             .limit(maxLimit);
     }
     getDr(db, code, license_no) {
