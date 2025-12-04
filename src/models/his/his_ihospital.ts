@@ -3,6 +3,7 @@ import * as moment from 'moment';
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
+const dbClient = process.env.HIS_DB_CLIENT ? process.env.HIS_DB_CLIENT.toLowerCase() : 'mysql2';
 
 export class HisIHospitalModel {
   check() {
@@ -56,7 +57,17 @@ export class HisIHospitalModel {
     }
     return sql
       .select('code as wardcode', 'ward as wardname',
-        'standard as std_code', 'bed_nm as bed_normal', 'bed_sp as bed_special',
+        'standard as std_code', 'bed_sp as bed_special',
+        db.raw(`CASE WHEN ward_group_moph IS NULL OR ward_group_moph='1' OR ward_group_moph='' THEN bed_nm ELSE 0 END as bed_normal`),
+        db.raw(`CASE WHEN ward_group_moph = '3' THEN bed_nm ELSE 0 END as bed_icu`),
+        db.raw(`CASE WHEN ward_group_moph = '4' THEN bed_nm ELSE 0 END as bed_semi`),
+        db.raw(`CASE WHEN ward_group_moph = '5' THEN bed_nm ELSE 0 END as bed_stroke`),
+        db.raw(`CASE WHEN ward_group_moph = '6' THEN bed_nm ELSE 0 END as bed_burn`),
+        db.raw(`CASE WHEN ward_group_moph = '7' THEN bed_nm ELSE 0 END as bed_minithanyaruk`),
+        db.raw(`CASE WHEN ward_group_moph = '8' THEN bed_nm ELSE 0 END as lr`),
+        db.raw(`CASE WHEN ward_group_moph = '9' THEN bed_nm ELSE 0 END as clip`),
+        db.raw(`CASE WHEN ward_group_moph = '10' THEN bed_nm ELSE 0 END as imc`),
+        db.raw(`CASE WHEN ward_group_moph = '11' THEN bed_nm ELSE 0 END as homeward`),
         'ward_type', 'ward_typesub as ward_subtype', 'isactive')
       .limit(maxLimit);
   }
@@ -735,14 +746,13 @@ export class HisIHospitalModel {
     return sql.groupBy('cliniccode').orderBy('cliniccode');
   }
 
-  getVisitForMophAlert(db: Knex, date: any, isRowCount: boolean = false, start = -1, limit: number = 1000) {
+  async getVisitForMophAlert(db: Knex, date: any, isRowCount: boolean = false, startRow = -1, limit: number = 100) {
     date = moment(date).locale('th').format('YYYY-MM-DD'); // for safety date format
 
     // Detect database client for cross-database compatibility
-    const client = db.client.config.client;
-    const isMSSQL = client === 'mssql';
-    const isPostgreSQL = client === 'pg' || client === 'postgres' || client === 'postgresql';
-    const isOracle = client === 'oracledb' || client === 'oracle';
+    const isMSSQL = dbClient === 'mssql';
+    const isPostgreSQL = dbClient === 'pg' || dbClient === 'postgres' || dbClient === 'postgresql';
+    const isOracle = dbClient === 'oracledb' || dbClient === 'oracle';
 
     const lengthCheck = isMSSQL
       ? 'LEN(no_card) = 13'
@@ -769,15 +779,32 @@ export class HisIHospitalModel {
     if (isRowCount) {
       return query.countDistinct('vn as row_count').first();
     } else {
-      if (start >= 0) {
-        query = query.offset(start).limit(limit);
+      if (startRow >= 0) {
+        query = query.offset(startRow).limit(limit);
       }
-      return query.select('hn', 'vn', 'no_card as cid',
+      let opdVisit = [];
+      let ipdVisit = [];
+
+      opdVisit = await query.select('hn', 'vn', 'no_card as cid',
         db.raw("CASE WHEN dep IN (1,40) THEN 'ER' ELSE 'OPD' END as department_type"),
         'dep as department_code', 'dep_name as department_name',
         db.raw('date(date) as date_service'), db.raw('time as time_service'), 'status',
         'opd_result as service_status')
         .groupBy('dep', 'hn');  // 1 HN ส่งครั้งเดียว, กรณีจะให้ตอบทุกรายการ ให้ลบ groupBy ออก
+
+      if (startRow < 1) { // กรณี select ทั้งหมด หรือ select ครั้งแรก
+        ipdVisit = await db('hospdata.view_ipd_ipd')
+          .where('disc', date)
+          .whereRaw(lengthCheck)
+          .where('age', '>', 12)
+          .where('age_type', 1)
+          .select('hn', 'vn', 'no_card as cid',
+            db.raw("? as department_type", ['IPD']),
+            'ward as department_code', 'ward_name as department_name',
+            db.raw('date(disc) as date_service'), db.raw('timedisc as time_service'));
+      }
+
+      return [...opdVisit, ...ipdVisit];
     }
   }
 }

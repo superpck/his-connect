@@ -1,6 +1,5 @@
 import { Knex } from 'knex';
 const maxLimit = 250;
-const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
 
 export class HisMedical2020Model {

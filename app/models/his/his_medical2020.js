@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisMedical2020Model = void 0;
 const maxLimit = 250;
-const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
 class HisMedical2020Model {
     check() {

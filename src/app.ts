@@ -206,7 +206,7 @@ async function connectDB() {
       date = result[0]?.[0]?.date;
     }
 
-    console.info(`   🔗 PID:${process.pid} >> HIS DB server '${dbClient}' connected, date on DB server: `, moment(date).format('YYYY-MM-DD HH:mm:ss'));
+    console.info(`   🔗 PID:${process.pid} >> HIS DB server '${dbClient}' connected, date/time on DB server:`, moment(date).format('YYYY-MM-DD HH:mm:ss'));
   } catch (error) {
     console.error(`   ❌ PID:${process.pid} >> HIS DB server '${dbClient}' connect error: `, error.message);
   }
@@ -214,9 +214,9 @@ async function connectDB() {
 
 async function checkConfigFile() {
   if (fs.existsSync('./config')) {
-    console.info(`✅ Check 'config' file exist: Successfully`);
+    console.info(`✅ PID:${process.pid} >> Check 'config' file exist: Successfully`);
   } else {
-    console.error(`❌ Check 'config' file exist: Not found, please create file 'config' and try again.`);
+    console.error(`❌ PID:${process.pid} >> Check 'config' file exist: Not found, please create file 'config' and try again.`);
     process.exit(1);
   }
 }

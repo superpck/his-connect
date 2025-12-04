@@ -1814,7 +1814,11 @@ export class HisHospitalOsModel {
         }
         return sql.orderBy('bedno');
     }
-    getVisitForMophAlert(db: Knex, date: any) {
-        return [];
+    getVisitForMophAlert(db: Knex, date: any, isRowCount: boolean = false, limit: number = 1000, start = -1) {
+        if (isRowCount) {
+            return { row_count: 0 };
+        } else {
+            return [];
+        }
     }
 }
