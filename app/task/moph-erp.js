@@ -164,7 +164,9 @@ const sendBedNo = async () => {
         do {
             let rows = await hismodel_1.default.getBedNo(db, null, startRow, limitRow);
             if (rows && rows.length) {
-                rows = rows.map(v => {
+                rows = rows
+                    .filter((row) => row.wardcode != null && row.wardcode != '')
+                    .map((v) => {
                     return {
                         ...v, hospcode: hospcode,
                         hcode5: hospcode.length == 5 ? hospcode : null,

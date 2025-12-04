@@ -479,6 +479,14 @@ export class HisJhcisModel {
         return [];
     }
 
+    countBedNo(db: Knex) {
+        return { total_bed: 0 };
+    }
+
+    async getBedNo(db: Knex, bedno: any = null, start = -1, limit: number = 1000) {
+        return [];
+    }
+
     concurrentIPDByWard(db: Knex, date: any) {
         return [];
     }
@@ -488,5 +496,11 @@ export class HisJhcisModel {
     sumOpdVisitByClinic(db: Knex, date: any) {
         return [];
     }
-
+    getVisitForMophAlert(db: Knex, date: any, isRowCount: boolean = false, limit: number = 1000, start = -1) {
+        if (isRowCount) {
+            return { row_count: 0 };
+        } else {
+            return [];
+        }
+    }
 }
