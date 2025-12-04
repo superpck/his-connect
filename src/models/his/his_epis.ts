@@ -38,84 +38,200 @@ export class HisEPisModel {
     return result[0];
   }
 
-  concurrentIPDByWard(db: Knex, date: any) {
+  async concurrentIPDByWard(db: Knex, date: any) {
     let sql = `
-      select
-          (
-            select phisenv.val from phisenv
-              where phisenv.section = 'HPTENV'
-                    and phisenv.var = 'HPTCODE'
-          ) as hospcode,
-          ward.ward as wardcode,
-          ward.name as wardname,
-          '' as std_code,
-          (
-                  select
-                          count(wardroomhst.bedno)
-                  from
-                          wardroomhst
-                          left outer join bedtype on wardroomhst.bedtype = bedtype.bedtype
-                  where
-                          wardroomhst.ward = ward.ward
-                          and wardroomhst.canceldate is null
-                          and wardroomhst.wardroomst = 10
-                          and Case
-                                  When UPPER(bedtype.var) like '%ICU' Then 'ICU'
-                                  When UPPER(bedtype.var) like 'RESERVE%' Then 'S'
-                                  Else 'N'
-                          End = 'N'
-          ) as bed_normal,
-          0 as bed_special,
-          (
-                  select
-                          count(wardroomhst.bedno)
-                  from
-                          wardroomhst
-                          left outer join bedtype on wardroomhst.bedtype = bedtype.bedtype
-                  where
-                          wardroomhst.ward = ward.ward
-                          and wardroomhst.canceldate is null
-                          and wardroomhst.wardroomst = 10
-                          and Case
-                                  When UPPER(bedtype.var) like '%ICU' Then 'ICU'
-                                  When UPPER(bedtype.var) like 'RESERVE%' Then 'S'
-                                  Else 'N'
-                          End = 'ICU'
-          ) as bed_icu,
-          0 as bed_semi,
-          0 as bed_stroke,
-          0 as bed_burn,
-          0 as bed_minithanyaruk,
-          (
-                  select
-                          count(wardroomhst.bedno)
-                  from
-                          wardroomhst
-                          left outer join bedtype on wardroomhst.bedtype = bedtype.bedtype
-                  where
-                          wardroomhst.ward = ward.ward
-                          and wardroomhst.canceldate is null
-                          and wardroomhst.wardroomst = 10
-                          and Case
-                                  When UPPER(bedtype.var) like '%ICU' Then 'ICU'
-                                  When UPPER(bedtype.var) like 'RESERVE%' Then 'S'
-                                  Else 'N'
-                          End = 'S'
-          ) as bed_extra,
-          0 as lr,
-          0 as clip,
-          0 as imc,
-          0 as homeward
-      from ward
-      where ward.canceldate is null;
+      select         
+        (select phisenv.val from cbh.phisenv
+            where phisenv.section = 'HPTENV'
+                  and phisenv.var = 'HPTCODE'
+            ) as hospcode
+          , sysdate as curdate
+          , wardcode
+          , '' as std_code
+          , count(*) as cases
+          , count(case when iptadmostname = 'รับใหม่' then 1 else null end)  as new_case
+          , count(case when iptadmostname like 'จำหน่าย%' then 1 else null end)  as discharge
+          , count(case when drg in (8,9) then 1 else null end)  as death
+
+          , count(case when lower(bedvar) in ( 'normal' , 'normal2')  then 1 else null end) as normal
+
+          , count(case when lower(bedvar) = 'extra'  then 1 else null end) as special
+
+          , count(case when lower(bedvar)  = 'normalicu'  then 1 else null end) as icu
+          , 0 as semi
+          , 0 as stroke 
+          , 0 as burn
+          , 0 as imc
+          , 0 as lr
+          , 0 as clip
+          , 0 as minithanyaruk
+          , 0 as homeward
+        from 
+        (select  10662 as hospcode
+          , sysdate as dates
+          , iptadm.ward as wardcode
+        ,case 
+          when ipt.ward = iptadm.ward 
+            and (  (ipt.dchconfdate = a.Fdate and ipt.dchconftime >= a.Ftime) or
+                (ipt.dchconfdate > a.Fdate and ipt.dchconfdate < a.Edate) or
+                (ipt.dchconfdate = a.Edate and ipt.dchconftime <= a.Etime) ) 
+            then 'จำหน่าย / '|| dchtype.name 
+          when iptadm.iptadmost = 99 
+            and (  (ipt.dchconfdate = a.Fdate and ipt.dchconftime >= a.Ftime) or
+                (ipt.dchconfdate > a.Fdate and ipt.dchconfdate < a.Edate) or
+                (ipt.dchconfdate = a.Edate and ipt.dchconftime <= a.Etime) ) 
+            then 'จำหน่าย / '|| dchtype.name 
+
+          when iptadm.indate = a.Fdate and iptadm.iptadmist = 1 and iptadm.iptadmost = 2  then 'รับใหม่'
+
+          when iptadm.iptadmost = 90 
+            and (  (iptadm.outdate = a.Fdate and iptadm.outtime >= a.Ftime) or
+                (iptadm.outdate > a.Fdate and iptadm.outdate < a.Edate) or
+                (iptadm.outdate = a.Edate and iptadm.outtime <= a.Etime) ) 
+          then 'ย้ายหอ'  
+              when iptadm.iptadmost = 80 
+            and (  (iptadm.outdate = a.Fdate and iptadm.outtime >= a.Ftime) or
+                (iptadm.outdate > a.Fdate and iptadm.outdate < a.Edate) or
+                (iptadm.outdate = a.Edate and iptadm.outtime <= a.Etime) or
+                                      (iptadm.outdate is null )  ) 
+          then 'ผู้ป่วยกลับบ้าน'  
+          else 'อยู่ที่หอ' end as iptadmostname 
+
+        , case when  iptadm.iptadmost = 99 
+            and (  (ipt.dchconfdate = a.Fdate and ipt.dchconftime >= a.Ftime) or
+                (ipt.dchconfdate > a.Fdate and ipt.dchconfdate < a.Edate) or
+                (ipt.dchconfdate = a.Edate and ipt.dchconftime <= a.Etime) ) 
+            then   iptadm.iptadmost 
+          else 0 end iptadmost
+        , dchtype.drg as drg
+        , bedtype.var as bedvar
+        from cbh.iptadm  left outer join cbh.dct on iptadm.dct = dct.dct  
+                left outer join (select to_date('02/12/2025','dd/mm/yyyy') as  Fdate   ///--- วันที่เริ่มต้น
+                  , 0 as Ftime      //-- เวลาที่เริ่มต้น
+                  , to_date('03/12/2025','dd/mm/yyyy') as Edate   //---วันที่สิ้นสุด
+                  , 235959 as Etime  //-- เวลาที่สิ้นสุด
+                from dual )   a on (1=1)
+              , cbh.ipt   left outer join cbh.dchtype on ipt.dchtype = dchtype.dchtype 
+          , cbh.pt 
+          , cbh.ward 
+          , cbh.bedtype 
+        where iptadm.an = ipt.an 
+        and ipt.canceldate is null 
+        and ipt.hn = pt.hn
+        and iptadm.ward = ward.ward 
+        and iptadm.bedtype = bedtype.bedtype 
+
+        and (iptadm.indate < a.Edate or (iptadm.indate = a.Edate and iptadm.intime <= a.Etime)) 
+        and (iptadm.outdate > a.Fdate or (iptadm.outdate = a.Fdate and iptadm.outtime >= a.Ftime ) or iptadm.outdate is null )
+            and iptadm.firstdate = (select max(x9.firstdate) from cbh.iptadm x9 where x9.an = iptadm.an and x9.ward = iptadm.ward 
+            and (x9.indate < a.Edate or (x9.indate = a.Edate and x9.intime <= a.Etime))  
+            and ( x9.outdate > a.Fdate or (x9.outdate = a.Fdate and x9.outtime >= a.Ftime) or x9.outdate is null))  
+        )
+        group by wardcode
+        order  by wardcode;
     `;
     return db.raw(sql).then((result) => result[0]);
   }
-  concurrentIPDByClinic_(db: Knex, date: any) {
-    return [];
-  }
-  concurrentIPDByClinic(db: Knex, date: any) {
-    return [];
+  async concurrentIPDByClinic(db: Knex, date: any) {
+    const sql = `
+      select (
+            select
+                    phisenv.val
+            from
+                    cbh.phisenv
+            where
+                    phisenv.section = 'HPTENV'
+                    and phisenv.var = 'HPTCODE'
+          ) as hospcode
+        , sysdate as curdate
+        , clliniccode as  clliniccode
+        , '' as std_code
+        , count(*) as cases
+        , count(case when iptadmostname = 'รับใหม่' then 1 else null end)  as new_case
+        , count(case when iptadmostname like 'จำหน่าย%' then 1 else null end)  as discharge
+        , count(case when drg in (8,9) then 1 else null end)  as death
+
+        , count(case when lower(bedvar) in ( 'normal' , 'normal2')  then 1 else null end) as normal
+
+        , count(case when lower(bedvar) = 'extra'  then 1 else null end) as special
+
+        , count(case when lower(bedvar)  = 'normalicu'  then 1 else null end) as icu
+        , 0 as semi
+        , 0 as stroke 
+        , 0 as burn
+        , 0 as imc
+        , 0 as lr
+        , 0 as clip
+        , 0 as minithanyaruk
+        , 0 as homeward
+      from 
+      (
+      select  10662 as hospcode
+        , sysdate as dates
+        , spcltyb.exp43file as clliniccode
+
+      ,case 
+        when ipt.ward = iptadm.ward 
+          and (  (ipt.dchconfdate = a.Fdate and ipt.dchconftime >= a.Ftime) or
+              (ipt.dchconfdate > a.Fdate and ipt.dchconfdate < a.Edate) or
+              (ipt.dchconfdate = a.Edate and ipt.dchconftime <= a.Etime) ) 
+          then 'จำหน่าย / '|| dchtype.name 
+
+        when iptadm.iptadmost = 99 
+          and (  (ipt.dchconfdate = a.Fdate and ipt.dchconftime >= a.Ftime) or
+              (ipt.dchconfdate > a.Fdate and ipt.dchconfdate < a.Edate) or
+              (ipt.dchconfdate = a.Edate and ipt.dchconftime <= a.Etime) ) 
+          then 'จำหน่าย / '|| dchtype.name 
+
+        when iptadm.indate = a.Fdate and iptadm.iptadmist = 1 and iptadm.iptadmost = 2  then 'รับใหม่'
+
+        when iptadm.iptadmost = 90 
+          and (  (iptadm.outdate = a.Fdate and iptadm.outtime >= a.Ftime) or
+              (iptadm.outdate > a.Fdate and iptadm.outdate < a.Edate) or
+              (iptadm.outdate = a.Edate and iptadm.outtime <= a.Etime) ) 
+        then 'ย้ายหอ'  
+            when iptadm.iptadmost = 80 
+          and (  (iptadm.outdate = a.Fdate and iptadm.outtime >= a.Ftime) or
+              (iptadm.outdate > a.Fdate and iptadm.outdate < a.Edate) or
+              (iptadm.outdate = a.Edate and iptadm.outtime <= a.Etime) or
+                                    (iptadm.outdate is null )  ) 
+        then 'ผู้ป่วยกลับบ้าน'  
+        else 'อยู่ที่หอ' end as iptadmostname 
+
+      , case when  iptadm.iptadmost = 99 
+          and (  (ipt.dchconfdate = a.Fdate and ipt.dchconftime >= a.Ftime) or
+              (ipt.dchconfdate > a.Fdate and ipt.dchconfdate < a.Edate) or
+              (ipt.dchconfdate = a.Edate and ipt.dchconftime <= a.Etime) ) 
+          then   iptadm.iptadmost 
+        else 0 end iptadmost
+      , dchtype.drg as drg
+      , bedtype.var as bedvar
+      from cbh.iptadm  left outer join cbh.dct on iptadm.dct = dct.dct  
+              left outer join (select to_date('02/12/2025','dd/mm/yyyy') as  Fdate   ///--- วันที่เริ่มต้น
+                , 0 as Ftime      //-- เวลาที่เริ่มต้น
+                , to_date('03/12/2025','dd/mm/yyyy') as Edate   //---วันที่สิ้นสุด
+                , 235959 as Etime  //-- เวลาที่สิ้นสุด
+              from dual )   a on (1=1)
+            , cbh.ipt   left outer join cbh.dchtype on ipt.dchtype = dchtype.dchtype 
+          left outer join cbh.lct spcltyb on ipt.ward = spcltyb.lct
+        , cbh.pt 
+        , cbh.ward 
+        , cbh.bedtype 
+      where iptadm.an = ipt.an 
+      and ipt.canceldate is null 
+      and ipt.hn = pt.hn
+      and iptadm.ward = ward.ward 
+      and iptadm.bedtype = bedtype.bedtype 
+
+      and (iptadm.indate < a.Edate or (iptadm.indate = a.Edate and iptadm.intime <= a.Etime)) 
+      and (iptadm.outdate > a.Fdate or (iptadm.outdate = a.Fdate and iptadm.outtime >= a.Ftime ) or iptadm.outdate is null )
+          and iptadm.firstdate = (select max(x9.firstdate) from cbh.iptadm x9 where x9.an = iptadm.an and x9.ward = iptadm.ward 
+          and (x9.indate < a.Edate or (x9.indate = a.Edate and x9.intime <= a.Etime))  
+          and ( x9.outdate > a.Fdate or (x9.outdate = a.Fdate and x9.outtime >= a.Ftime) or x9.outdate is null))  
+      )
+      group by clliniccode
+      order  by clliniccode`;
+    return db.raw(sql).then((result) => result[0]);
   }
   sumOpdVisitByClinic(db: Knex, date: any) {
     return [];
@@ -140,13 +256,35 @@ export class HisEPisModel {
   }
 
   // รหัสห้องตรวจ
-  getDepartment(db: Knex, depCode: string = '', depName: string = '') {
-    return [];
+  async getDepartment(db: Knex, depCode: string = '', depName: string = '') {
+    let sql = `select cliniclct.cliniclct as department_code ,
+      cliniclct.dspname as department_name,
+      '-' as moph_code,
+      case when upper(cliniclct.var) = 'ER' then 1 else 0 end as emergency 
+      from cbh.cliniclct 
+      where cliniclct.canceldate is null`;
+    if (depCode) {
+      sql += ` and cliniclct.cliniclct = '${depCode}'`;
+    }
+    if (depName) {
+      sql += ` and cliniclct.dspname like '%${depName}%'`;
+    }
+    return db.raw(sql).then((result) => result[0]);
   }
 
   // รายละเอียดแพทย์
-  getDr(db: Knex, code: string, license_no: string) {
-    return [];
+  async getDr(db: Knex, code: string, license_no: string) {
+    let query = db('dct')
+      .select('dct.dct as dr_code', 'dct.lcno as dr_license_code',
+        db.raw("'' as expire_date"))
+      .whereNotNull('dct.lcno');
+    if (code) {
+      query = query.andWhere('dct.dct', code);
+    }
+    if (license_no) {
+      query = query.andWhere('dct.lcno', license_no);
+    }
+    return await query.orderBy('dct.dct');
   }
 
   async getPerson1(db: Knex, columnName, searchText) {
