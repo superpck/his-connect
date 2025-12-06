@@ -472,6 +472,17 @@ class HisIHospitalModel {
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
     }
+    sumReferIn(db, dateStart, dateEnd) {
+        return db('opd_visit as visit')
+            .select('visit.date')
+            .count('visit.vn as cases')
+            .whereBetween('visit.date', [dateStart, dateEnd])
+            .whereNotNull('visit.refer')
+            .where('visit.refer', '!=', hisHospcode)
+            .whereRaw('LENGTH(visit.refer)=5')
+            .whereNotNull('visit.vn')
+            .groupBy('visit.date');
+    }
     countBedNo(db) {
         return db('app_nis.bed').count('* as total_bed').first();
     }
@@ -496,24 +507,13 @@ class HisIHospitalModel {
         }
         return await query;
     }
-    sumReferIn(db, dateStart, dateEnd) {
-        return db('opd_visit as visit')
-            .select('visit.date')
-            .count('visit.vn as cases')
-            .whereBetween('visit.date', [dateStart, dateEnd])
-            .whereNotNull('visit.refer')
-            .where('visit.refer', '!=', hisHospcode)
-            .whereRaw('LENGTH(visit.refer)=5')
-            .whereNotNull('visit.vn')
-            .groupBy('visit.date');
-    }
     concurrentIPDByWard(db, date) {
         const dateAdmitLimit = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
         let sql = db('view_ipd_ipd as ip')
             .select('ip.ward as wardcode', 'ward_name as wardname', db.raw('SUBSTRING(ip.ward_std,2,2) as clinic'));
         const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
         const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
-        sql = sql.select(db.raw('SUM(CASE WHEN ip.dateadm BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case', [dateStart, dateEnd]), db.raw('SUM(CASE WHEN ip.datedsc BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge', [dateStart, dateEnd]), db.raw("SUM(CASE WHEN ip.refer IS NOT NULL AND ip.refer != '' THEN 1 ELSE 0 END) AS referin"), db.raw('SUM(CASE WHEN ip.datedsc BETWEEN ? AND ? THEN adjrw ELSE 0 END) AS adjrw', [dateStart, dateEnd]), db.raw('SUM(CASE WHEN ip.datedsc BETWEEN ? AND ? AND LEFT(ip.stat_dsc,1) IN ("8","9") THEN 1 ELSE 0 END) AS death', [dateStart, dateEnd]))
+        sql = sql.select(db.raw('SUM(CASE WHEN ip.dateadm BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case', [dateStart, dateEnd]), db.raw('SUM(CASE WHEN ip.datedsc BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge', [dateStart, dateEnd]), db.raw("SUM(CASE WHEN ip.refer IS NOT NULL AND ip.refer != '' THEN 1 ELSE 0 END) AS referin"), db.raw('SUM(CASE WHEN ip.datedsc BETWEEN ? AND ? THEN adjrw ELSE 0 END) AS adjrw', [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN SUBSTRING(ip.std_ward_code,4,1)='2' THEN 1 ELSE 0 END) AS icu`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.std_ward_code,4,1)='3' THEN 1 ELSE 0 END) AS semi`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.std_ward_code,4,1)='5' THEN 1 ELSE 0 END) AS burn`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.std_ward_code,4,3) IN ('601','602') THEN 1 ELSE 0 END) AS imc`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.std_ward_code,4,3)='604' THEN 1 ELSE 0 END) AS minithanyaruk`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.std_ward_code,4,3)='607' THEN 1 ELSE 0 END) AS homeward`), db.raw('SUM(CASE WHEN ip.datedsc BETWEEN ? AND ? AND LEFT(ip.stat_dsc,1) IN ("8","9") THEN 1 ELSE 0 END) AS death', [dateStart, dateEnd]))
             .count('* as cases')
             .sum('ip.pday as los')
             .whereRaw('ip.dateadm <= ?', [dateStart])
@@ -530,7 +530,7 @@ class HisIHospitalModel {
         const dateAdmitLimit = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
         date = moment(date).format('YYYY-MM-DD');
         let sql = db('view_ipd_ipd as ip')
-            .select('clinic_hdc_name as clinicname', db.raw('CASE WHEN clinic_hdc_code IS NULL OR clinic_hdc_code=\'\' OR clinic_hdc_code=\'99\' THEN SUBSTRING(ward_std,2,2) ELSE clinic_hdc_code END AS cliniccode'), db.raw('SUM(CASE WHEN ip.admite = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ip.disc = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ip.refer IS NOT NULL AND ip.refer != \'\' THEN 1 ELSE 0 END) AS referin'), db.raw('SUM(CASE WHEN ip.disc = ? THEN adjrw ELSE 0 END) AS adjrw', [date]), db.raw('SUM(CASE WHEN LEFT(ip.stat_dsc,1) IN ("8","9") THEN 1 ELSE 0 END) AS death'))
+            .select('clinic_hdc_name as clinicname', db.raw('CASE WHEN clinic_hdc_code IS NULL OR clinic_hdc_code=\'\' OR clinic_hdc_code=\'99\' THEN SUBSTRING(ward_std,2,2) ELSE clinic_hdc_code END AS cliniccode'), db.raw('SUM(CASE WHEN ip.admite = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ip.disc = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ip.refer IS NOT NULL AND ip.refer != \'\' THEN 1 ELSE 0 END) AS referin'), db.raw('SUM(CASE WHEN ip.disc = ? THEN adjrw ELSE 0 END) AS adjrw', [date]), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,1)='2' THEN 1 ELSE 0 END) AS icu`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,1)='3' THEN 1 ELSE 0 END) AS semi`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,1)='4' THEN 1 ELSE 0 END) AS stroke`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,1)='5' THEN 1 ELSE 0 END) AS burn`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,3) IN ('601','602') THEN 1 ELSE 0 END) AS imc`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,3)='604' THEN 1 ELSE 0 END) AS minithanyaruk`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,3)='607' THEN 1 ELSE 0 END) AS homeward`), db.raw('SUM(CASE WHEN LEFT(ip.stat_dsc,1) IN ("8","9") THEN 1 ELSE 0 END) AS death'))
             .count('* as cases')
             .sum('ip.pday as los')
             .whereBetween('ip.admite', [dateAdmitLimit, date])

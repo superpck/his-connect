@@ -1730,11 +1730,12 @@ export class HisHosxpv4Model {
           db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? AND ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death`, [dateStart, dateEnd, '08', '09']),
           db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='2' THEN 1 ELSE 0 END) AS icu`),
           db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='3' THEN 1 ELSE 0 END) AS semi`),
+          db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='4' THEN 1 ELSE 0 END) AS stroke`),
           db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='5' THEN 1 ELSE 0 END) AS burn`),
           db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3) IN ('601','602') THEN 1 ELSE 0 END) AS imc`),
           db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3)='604' THEN 1 ELSE 0 END) AS minithanyaruk`),
-          db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3)='607' THEN 1 ELSE 0 END) AS homeward`),
-          db.raw(`SUM(CASE WHEN ipt.dchdate IS NULL OR ${dchdatetime.sql} >= ? THEN 1 ELSE 0 END) AS cases`, [dateEnd]))
+          db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3)='607' THEN 1 ELSE 0 END) AS homeward`))
+        .count('ipt.regdate as cases')
         .whereRaw(`${regdatetime.sql} <= ?`, [dateStart])
         .whereRaw(`(ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ?)`, [dateStart, dateEnd]);
 
@@ -1761,6 +1762,7 @@ export class HisHosxpv4Model {
           db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09']),
           db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='2' THEN 1 ELSE 0 END) AS icu`),
           db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='3' THEN 1 ELSE 0 END) AS semi`),
+          db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='4' THEN 1 ELSE 0 END) AS stroke`),
           db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='5' THEN 1 ELSE 0 END) AS burn`),
           db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3) IN ('601','602') THEN 1 ELSE 0 END) AS imc`),
           db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3)='604' THEN 1 ELSE 0 END) AS minithanyaruk`),

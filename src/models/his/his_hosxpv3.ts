@@ -1539,7 +1539,9 @@ export class HisHosxpv3Model {
 
     const clientType = db.client.config.client;
     let sql = db('ipt')
+      .leftJoin('iptadm', 'ipt.an', 'iptadm.an')
       .leftJoin('ward', 'ipt.ward', 'ward.ward')
+      .leftJoin('bedno', 'iptadm.bedno', 'bedno.bedno')
       .select('ipt.ward as wardcode', 'ward.name as wardname');
 
     // Helper สำหรับ datetime concatenation แบบ cross-database
@@ -1566,7 +1568,14 @@ export class HisHosxpv3Model {
       db.raw(`SUM(CASE WHEN ${regdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case`, [dateStart, dateEnd]),
       db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge`, [dateStart, dateEnd]),
       db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? AND ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death`, [dateStart, dateEnd, '08', '09']),
-      db.raw(`SUM(CASE WHEN ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS cases`, [dateStart, dateEnd]))
+      db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='2' THEN 1 ELSE 0 END) AS icu`),
+      db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='3' THEN 1 ELSE 0 END) AS semi`),
+      db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='4' THEN 1 ELSE 0 END) AS stroke`),
+      db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='5' THEN 1 ELSE 0 END) AS burn`),
+      db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3) IN ('601','602') THEN 1 ELSE 0 END) AS imc`),
+      db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3)='604' THEN 1 ELSE 0 END) AS minithanyaruk`),
+      db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3)='607' THEN 1 ELSE 0 END) AS homeward`))
+      .count('ipt.regdate as cases')
       .whereRaw(`${regdatetime.sql} <= ?`, dateStart)
       .whereRaw(`(ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ?)`, [dateStart, dateEnd]);
 
@@ -1578,13 +1587,22 @@ export class HisHosxpv3Model {
 
   concurrentIPDByClinic(db: Knex, date: any) {
     let sql = db('ipt')
+      .leftJoin('iptadm', 'ipt.an', 'iptadm.an')
       .leftJoin('ward', 'ipt.ward', 'ward.ward')
+      .leftJoin('bedno', 'iptadm.bedno', 'bedno.bedno')
       .leftJoin('spclty as clinic', 'ipt.spclty', 'clinic.spclty')
       .select('ipt.spclty as cliniccode', 'clinic.name as clinicname',
         db.raw('? as date', [date]),
         db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [date]),
         db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [date]),
-        db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death'))
+        db.raw('SUM(CASE WHEN ipt.dchstts IN ("08","09") THEN 1 ELSE 0 END) AS death'),
+        db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='2' THEN 1 ELSE 0 END) AS icu`),
+        db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='3' THEN 1 ELSE 0 END) AS semi`),
+        db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='4' THEN 1 ELSE 0 END) AS stroke`),
+        db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='5' THEN 1 ELSE 0 END) AS burn`),
+        db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3) IN ('601','602') THEN 1 ELSE 0 END) AS imc`),
+        db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3)='604' THEN 1 ELSE 0 END) AS minithanyaruk`),
+        db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3)='607' THEN 1 ELSE 0 END) AS homeward`))
       .count('ipt.regdate as cases')
       .where('ipt.regdate', '<=', date)
       .whereRaw('ipt.spclty is not null and ipt.spclty!= ""')
