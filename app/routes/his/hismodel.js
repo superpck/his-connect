@@ -97,6 +97,7 @@ switch (hisProvider) {
         hisModel = new his_mitnet_1.HisMitnetModel();
         break;
     case 'epis':
+    case 'ephis':
         hisModel = new his_epis_1.HisEPisModel();
         break;
     case 'mbase':

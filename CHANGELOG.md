@@ -1,3 +1,7 @@
+# 3.9.2
+## Feature
+  - ปรับ SQL ให้นับคงค้างตามรหัสมาตรฐาน กบรส.
+
 # 3.9.1
 ## Feature
   - ปรับ SQL getVisitForMophAlert ใน HIS iHospital ให้รองรับ IPD

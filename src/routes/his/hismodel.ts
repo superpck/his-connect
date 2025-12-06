@@ -98,6 +98,7 @@ switch (hisProvider) {
     hisModel = new HisMitnetModel();
     break;
   case 'epis':
+  case 'ephis':
     hisModel = new HisEPisModel();
     break;
   case 'mbase':
