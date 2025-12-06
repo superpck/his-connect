@@ -6,6 +6,21 @@ const maxLimit = 250;
 let hisHospcode = process.env.HOSPCODE;
 const hisVersion = process.env.HIS_PROVIDER.toLowerCase() == 'hosxpv3' ? '3' : '4';
 const dbClient = process.env.HIS_DB_CLIENT ? process.env.HIS_DB_CLIENT.toLowerCase() : 'mysql2';
+const getDatetimeExpr = (db, dateCol, timeCol) => {
+    const clientType = (db.client?.config?.client || dbClient).toLowerCase();
+    switch (clientType) {
+        case 'pg':
+        case 'postgres':
+        case 'postgresql':
+            return db.raw(`${dateCol}::text || ' ' || ${timeCol}::text`);
+        case 'mssql':
+            return db.raw(`CAST(${dateCol} AS VARCHAR) + ' ' + CAST(${timeCol} AS VARCHAR)`);
+        case 'oracledb':
+            return db.raw(`${dateCol} || ' ' || ${timeCol}`);
+        default:
+            return db.raw(`CONCAT(${dateCol}, ' ', ${timeCol})`);
+    }
+};
 const getHospcode = async () => {
     try {
         if (typeof global.dbHIS === 'function') {
@@ -1219,27 +1234,14 @@ class HisHosxpv4Model {
         try {
             const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
             const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
-            const clientType = (db.client?.config?.client || '').toLowerCase();
             let sql = db('ipt')
+                .leftJoin('iptadm', 'ipt.an', 'iptadm.an')
                 .leftJoin('ward', 'ipt.ward', 'ward.ward')
+                .leftJoin('bedno', 'iptadm.bedno', 'bedno.bedno')
                 .select('ipt.ward as wardcode', 'ward.name as wardname');
-            const getDatetimeExpr = (dateCol, timeCol) => {
-                switch (clientType) {
-                    case 'pg':
-                    case 'postgres':
-                    case 'postgresql':
-                        return db.raw(`${dateCol}::text || ' ' || ${timeCol}::text`);
-                    case 'mssql':
-                        return db.raw(`CAST(${dateCol} AS VARCHAR) + ' ' + CAST(${timeCol} AS VARCHAR)`);
-                    case 'oracledb':
-                        return db.raw(`${dateCol} || ' ' || ${timeCol}`);
-                    default:
-                        return db.raw(`CONCAT(${dateCol}, ' ', ${timeCol})`);
-                }
-            };
-            const regdatetime = getDatetimeExpr('ipt.regdate', 'ipt.regtime');
-            const dchdatetime = getDatetimeExpr('ipt.dchdate', 'ipt.dchtime');
-            sql = sql.select(db.raw(`SUM(CASE WHEN ${regdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? AND ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death`, [dateStart, dateEnd, '08', '09']), db.raw(`SUM(CASE WHEN ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS cases`, [dateStart, dateEnd]))
+            const regdatetime = getDatetimeExpr(db, 'ipt.regdate', 'ipt.regtime');
+            const dchdatetime = getDatetimeExpr(db, 'ipt.dchdate', 'ipt.dchtime');
+            sql = sql.select(db.raw(`SUM(CASE WHEN ${regdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? AND ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death`, [dateStart, dateEnd, '08', '09']), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='2' THEN 1 ELSE 0 END) AS icu`), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='3' THEN 1 ELSE 0 END) AS semi`), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='5' THEN 1 ELSE 0 END) AS burn`), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3) IN ('601','602') THEN 1 ELSE 0 END) AS imc`), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3)='604' THEN 1 ELSE 0 END) AS minithanyaruk`), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3)='607' THEN 1 ELSE 0 END) AS homeward`), db.raw(`SUM(CASE WHEN ipt.dchdate IS NULL OR ${dchdatetime.sql} >= ? THEN 1 ELSE 0 END) AS cases`, [dateEnd]))
                 .whereRaw(`${regdatetime.sql} <= ?`, [dateStart])
                 .whereRaw(`(ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ?)`, [dateStart, dateEnd]);
             sql = sql.whereNotNull('ipt.ward')
@@ -1255,9 +1257,11 @@ class HisHosxpv4Model {
         try {
             const formattedDate = moment(date).locale('TH').format('YYYY-MM-DD');
             let sql = db('ipt')
+                .leftJoin('iptadm', 'ipt.an', 'iptadm.an')
                 .leftJoin('ward', 'ipt.ward', 'ward.ward')
+                .leftJoin('bedno', 'iptadm.bedno', 'bedno.bedno')
                 .leftJoin('spclty as clinic', 'ipt.spclty', 'clinic.spclty')
-                .select('ipt.spclty as cliniccode', db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [formattedDate]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [formattedDate]), db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09']))
+                .select('ipt.spclty as cliniccode', db.raw('SUM(CASE WHEN ipt.regdate = ? THEN 1 ELSE 0 END) AS new_case', [formattedDate]), db.raw('SUM(CASE WHEN ipt.dchdate = ? THEN 1 ELSE 0 END) AS discharge', [formattedDate]), db.raw('SUM(CASE WHEN ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death', ['08', '09']), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='2' THEN 1 ELSE 0 END) AS icu`), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='3' THEN 1 ELSE 0 END) AS semi`), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='5' THEN 1 ELSE 0 END) AS burn`), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3) IN ('601','602') THEN 1 ELSE 0 END) AS imc`), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3)='604' THEN 1 ELSE 0 END) AS minithanyaruk`), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3)='607' THEN 1 ELSE 0 END) AS homeward`))
                 .count('ipt.regdate as cases')
                 .where('ipt.regdate', '<=', formattedDate)
                 .whereRaw("ipt.spclty is not null and ipt.spclty!= ''")
