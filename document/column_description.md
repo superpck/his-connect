@@ -34,6 +34,7 @@
 | column | type | describe |
 | --- | --- | --- |
 | bedno * | string | หมายเลขเตียง |
+| bedname | string | ชื่อเตียง |
 | roomno | string | เลขห้อง |
 | wardcode * | string | รหัสวอร์ด |
 | std_code * | string | รหัส 6 หลักตามมาตรฐาน กบรส. |

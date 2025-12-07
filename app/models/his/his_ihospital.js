@@ -497,25 +497,26 @@ class HisIHospitalModel {
         return db('app_nis.bed').count('* as total_bed').first();
     }
     async getBedNo(db, bedno = null, start = -1, limit = 1000) {
-        let query = db('app_nis.bed');
+        let query = db('app_nis.bed')
+            .leftJoin('hospdata.lib_ward as ward', 'bed.ward_code', 'ward.code');
         if (start >= 0) {
             query = query.offset(start).limit(limit);
         }
-        query = query.select('bed_id', 'ward_code as wardcode', 'bed_name', db.raw(`CONCAT(ward_code, '-',bed_number) as bedno`), 'room as roomno', 'bed_status as isactive', db.raw(`
-            CASE 
-                WHEN std_type = 2 THEN 'ICU'
-                WHEN std_type = 3 THEN 'SEMIICU'
-                WHEN std_type = 4 THEN 'STROKE'
-                WHEN bed_type = 2 THEN 'S'
-                WHEN bed_type = 5 THEN 'CLIP'
-                WHEN bed_name LIKE '%รอคลอด%' THEN 'LR'
-                ELSE 'N'
-            END as bed_type
-        `)).where('bed_status', 1).whereNotNull('ward_code').where('ward_code', '!=', 0);
+        query = query.select('bed.bed_id', 'bed.ward_code as wardcode', 'bed.bed_name', db.raw(`CONCAT(bed.ward_code, '-', bed.bed_number) as bedno`), 'bed.room as roomno', 'bed.moph_code as std_code', 'ward.moph_code as ward_std_code', 'bed.bed_status as isactive')
+            .whereNotNull('bed.ward_code')
+            .whereNotIn('bed.ward_code', ['0', '']);
         if (bedno) {
-            query = query.whereRaw(`CONCAT(ward_code, '-',bed_number) = ?`, bedno);
+            query = query.whereRaw(`CONCAT(bed.ward_code, '-',bed.bed_number) = ?`, bedno);
         }
-        return await query;
+        const result = await query;
+        return result.map((item) => {
+            item = {
+                ...item,
+                std_code: item.std_code ? item.std_code.trim() : (item.ward_std_code || '199100')
+            };
+            delete item.ward_std_code;
+            return item;
+        });
     }
     concurrentIPDByWard(db, date) {
         const dateAdmitLimit = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
