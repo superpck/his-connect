@@ -36,7 +36,6 @@
 | bedno * | string | หมายเลขเตียง |
 | roomno | string | เลขห้อง |
 | wardcode * | string | รหัสวอร์ด |
-| wardname | string | ชื่อวอร์ด |
 | std_code * | string | รหัส 6 หลักตามมาตรฐาน กบรส. |
 | isactive * | 0, 1 | 1=ใช้งาน |
 
