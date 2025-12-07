@@ -258,8 +258,13 @@ export const erpAdminRequest = async () => {
           requestResult = await updateAlive();
           console.log('ERP admin request send alive status.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
         } else if (req.request_type == 'occupancy') {
-          // requestResult = await sendBedOccupancy();
-          // console.log('erpAdminRequest occupancy', requestResult);
+          requestResult = await sendBedOccupancy();
+          console.log('erpAdminRequest occupancy', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+          await updateAdminRequest({
+            request_id: req.request_id,
+            status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
+            isactive: 0
+          });
         }
       }
     } else {

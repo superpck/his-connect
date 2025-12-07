@@ -43,7 +43,7 @@ class HisIHospitalModel {
             .orderBy('clinic')
             .limit(maxLimit);
     }
-    getWard(db, wardCode = '', wardName = '') {
+    async getWard(db, wardCode = '', wardName = '') {
         let sql = db('lib_ward').where('code', '!=', 0);
         if (wardCode) {
             sql.where('code', wardCode);
@@ -51,9 +51,19 @@ class HisIHospitalModel {
         else if (wardName) {
             sql.whereLike('ward', `%${wardName}%`);
         }
-        return sql
-            .select('code as wardcode', 'ward as wardname', 'standard as std_code', 'bed_sp as bed_special', db.raw(`CASE WHEN ward_group_moph IS NULL OR ward_group_moph='1' OR ward_group_moph='' THEN bed_nm ELSE 0 END as bed_normal`), db.raw(`CASE WHEN ward_group_moph = '3' THEN bed_nm ELSE 0 END as bed_icu`), db.raw(`CASE WHEN ward_group_moph = '4' THEN bed_nm ELSE 0 END as bed_semi`), db.raw(`CASE WHEN ward_group_moph = '5' THEN bed_nm ELSE 0 END as bed_stroke`), db.raw(`CASE WHEN ward_group_moph = '6' THEN bed_nm ELSE 0 END as bed_burn`), db.raw(`CASE WHEN ward_group_moph = '7' THEN bed_nm ELSE 0 END as bed_minithanyaruk`), db.raw(`CASE WHEN ward_group_moph = '8' THEN bed_nm ELSE 0 END as lr`), db.raw(`CASE WHEN ward_group_moph = '9' THEN bed_nm ELSE 0 END as clip`), db.raw(`CASE WHEN ward_group_moph = '10' THEN bed_nm ELSE 0 END as imc`), db.raw(`CASE WHEN ward_group_moph = '11' THEN bed_nm ELSE 0 END as homeward`), 'ward_type', 'ward_typesub as ward_subtype', 'isactive')
+        const result = await sql
+            .select('code as wardcode', 'ward as wardname', 'standard as std_code', 'moph_code', 'bed_nm as bed_normal', 'bed_sp as bed_special', db.raw(`CASE WHEN SUBSTRING(moph_code,4,1) = '2' THEN bed_nm ELSE 0 END as bed_icu`), db.raw(`CASE WHEN SUBSTRING(moph_code,4,1) = '3' THEN bed_nm ELSE 0 END as bed_semi`), db.raw(`CASE WHEN SUBSTRING(moph_code,4,1) = '4' THEN bed_nm ELSE 0 END as bed_stroke`), db.raw(`CASE WHEN SUBSTRING(moph_code,4,1) = '5' THEN bed_nm ELSE 0 END as bed_burn`), db.raw(`CASE WHEN SUBSTRING(moph_code,4,3) = '604' THEN bed_nm ELSE 0 END as bed_minithanyaruk`), db.raw(`CASE WHEN SUBSTRING(moph_code,4,3) = '610' THEN bed_nm ELSE 0 END as lr`), db.raw(`CASE WHEN SUBSTRING(moph_code,4,3) = '611' THEN bed_nm ELSE 0 END as clip`), db.raw(`CASE WHEN SUBSTRING(moph_code,4,3) IN ('601','602') THEN bed_nm ELSE 0 END as imc`), db.raw(`CASE WHEN SUBSTRING(moph_code,4,3) = '607' THEN bed_nm ELSE 0 END as homeward`), 'ward_type', 'ward_typesub as ward_subtype', 'isactive')
             .limit(maxLimit);
+        let rows = result.map(row => {
+            return {
+                ...row,
+                std_code: row.moph_code || row.std_code,
+                bed_normal: row.bed_normal - (row.bed_icu + row.bed_semi +
+                    row.bed_stroke + row.bed_burn + row.bed_minithanyaruk + row.lr +
+                    row.clip + row.imc + row.homeward)
+            };
+        });
+        return rows;
     }
     getDr(db, code, license_no) {
         if (code || license_no) {
@@ -501,7 +511,7 @@ class HisIHospitalModel {
                 WHEN bed_name LIKE '%รอคลอด%' THEN 'LR'
                 ELSE 'N'
             END as bed_type
-        `)).where('bed_status', 1);
+        `)).where('bed_status', 1).whereNotNull('ward_code').where('ward_code', '!=', 0);
         if (bedno) {
             query = query.whereRaw(`CONCAT(ward_code, '-',bed_number) = ?`, bedno);
         }

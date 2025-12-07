@@ -694,7 +694,7 @@ export class HisIHospitalModel {
                 ELSE 'N'
             END as bed_type
         `)
-    ).where('bed_status', 1);
+    ).where('bed_status', 1).whereNotNull('ward_code').where('ward_code','!=',0);
     if (bedno) {
       query = query.whereRaw(`CONCAT(ward_code, '-',bed_number) = ?`, bedno);
     }
