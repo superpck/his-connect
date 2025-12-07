@@ -1,6 +1,7 @@
 # 3.9.2
 ## Feature
   - ปรับ SQL ให้นับคงค้างตามรหัสมาตรฐาน กบรส.
+  - Request process occpancy (เฉพาะส่วนกลาง)
 
 # 3.9.1
 ## Feature
