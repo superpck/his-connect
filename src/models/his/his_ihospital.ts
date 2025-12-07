@@ -713,12 +713,12 @@ export class HisIHospitalModel {
       db.raw('SUM(CASE WHEN ip.datedsc BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge', [dateStart, dateEnd]),
       db.raw("SUM(CASE WHEN ip.refer IS NOT NULL AND ip.refer != '' THEN 1 ELSE 0 END) AS referin"),
       db.raw('SUM(CASE WHEN ip.datedsc BETWEEN ? AND ? THEN adjrw ELSE 0 END) AS adjrw', [dateStart, dateEnd]),
-      db.raw(`SUM(CASE WHEN SUBSTRING(ip.std_ward_code,4,1)='2' THEN 1 ELSE 0 END) AS icu`),
-      db.raw(`SUM(CASE WHEN SUBSTRING(ip.std_ward_code,4,1)='3' THEN 1 ELSE 0 END) AS semi`),
-      db.raw(`SUM(CASE WHEN SUBSTRING(ip.std_ward_code,4,1)='5' THEN 1 ELSE 0 END) AS burn`),
-      db.raw(`SUM(CASE WHEN SUBSTRING(ip.std_ward_code,4,3) IN ('601','602') THEN 1 ELSE 0 END) AS imc`),
-      db.raw(`SUM(CASE WHEN SUBSTRING(ip.std_ward_code,4,3)='604' THEN 1 ELSE 0 END) AS minithanyaruk`),
-      db.raw(`SUM(CASE WHEN SUBSTRING(ip.std_ward_code,4,3)='607' THEN 1 ELSE 0 END) AS homeward`),
+      db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,1)='2' THEN 1 ELSE 0 END) AS icu`),
+      db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,1)='3' THEN 1 ELSE 0 END) AS semi`),
+      db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,1)='5' THEN 1 ELSE 0 END) AS burn`),
+      db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,3) IN ('601','602') THEN 1 ELSE 0 END) AS imc`),
+      db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,3)='604' THEN 1 ELSE 0 END) AS minithanyaruk`),
+      db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,3)='607' THEN 1 ELSE 0 END) AS homeward`),
       db.raw('SUM(CASE WHEN ip.datedsc BETWEEN ? AND ? AND LEFT(ip.stat_dsc,1) IN ("8","9") THEN 1 ELSE 0 END) AS death', [dateStart, dateEnd]))
       .count('* as cases')
       .sum('ip.pday as los')
@@ -729,7 +729,6 @@ export class HisIHospitalModel {
       });
     sql = sql.where('ip.admite', '>', dateAdmitLimit)   // Protect ไม่นับ admit เกิน 1 ปี
       .whereRaw('ip.ward is not null and ip.ward>0')
-    console.log(sql.groupBy('ip.ward').orderBy('ip.ward').toString());
     return sql.groupBy('ip.ward').orderBy('ip.ward');
   }
   concurrentIPDByClinic(db: Knex, date: any) {

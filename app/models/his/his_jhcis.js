@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisJhcisModel = void 0;
+const moment = require("moment");
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
@@ -301,12 +302,29 @@ class HisJhcisModel {
     sumOpdVisitByClinic(db, date) {
         return [];
     }
-    getVisitForMophAlert(db, date, isRowCount = false, limit = 1000, start = -1) {
+    async getVisitForMophAlert(db, date, isRowCount = false, limit = 1000, start = -1) {
+        date = moment(date).locale('th').format('YYYY-MM-DD');
+        let sql = ` FROM visit
+                LEFT JOIN person ON visit.pid=person.pid
+            WHERE visit.visitdate = ? AND LENGTH(person.idcard)==13 AND visit.flagservice='03'`;
         if (isRowCount) {
-            return { row_count: 0 };
+            sql = `SELECT count(*) AS row_count ` + sql;
+            const result = await db.raw(sql, [date]);
+            return { row_count: result && result.length > 0 ? result[0][0].row_count : 0 };
         }
         else {
-            return [];
+            sql = `SELECT visit.visitno AS vn, visit.pid AS hn
+                    , person.idcard AS cid
+                    , visit.visitdate AS date_service, visit.timestart AS time_service ` + sql;
+            const result = await db.raw(sql, [date]);
+            return result.map((row) => {
+                return {
+                    ...row,
+                    department_type: 'OPD',
+                    department_code: '00',
+                    department_name: 'ผู้ป่วยนอก'
+                };
+            });
         }
     }
 }
