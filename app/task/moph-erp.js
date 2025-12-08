@@ -48,7 +48,7 @@ const sendBedOccupancyByWard = async (date) => {
                 return { ...v, occupancy_date, date, hospcode, his: hisProvider || '' };
             });
             const result = await (0, moph_refer_1.sendingToMoph)('/save-occupancy-rate-by-ward', rows);
-            console.log(moment().format('HH:mm:ss'), 'send Occ Rate by ward', date, result.status || '', result.message || '', rows.length, 'rows', rows[0]);
+            console.log(moment().format('HH:mm:ss'), 'send Occ Rate by ward', date, result.status || '', result.message || '', rows.length, 'rows');
         }
         return rows;
     }
