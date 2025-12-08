@@ -15,10 +15,10 @@ const sendBedOccupancy = async (dateProcess = null) => {
     let whatUTC = Intl?.DateTimeFormat().resolvedOptions().timeZone || '';
     let currDate;
     if (whatUTC == 'UTC' || whatUTC == 'Etc/UTC') {
-        currDate = moment().locale('TH').add(7, 'hours').subtract(10, 'minutes').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        currDate = moment().locale('TH').add(7, 'hours').subtract(1, 'hours').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
     }
     else {
-        currDate = moment().locale('TH').subtract(30, 'minutes').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        currDate = moment().locale('TH').subtract(1, 'hours').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
     }
     let date = dateProcess || currDate;
     let dateOpd = date;
@@ -41,13 +41,14 @@ const sendBedOccupancy = async (dateProcess = null) => {
 exports.sendBedOccupancy = sendBedOccupancy;
 const sendBedOccupancyByWard = async (date) => {
     try {
+        const occupancy_date = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
         let rows = await hismodel_1.default.concurrentIPDByWard(db, date);
         if (rows && rows.length) {
-            rows = rows.map(v => {
-                return { ...v, date, hospcode, his: hisProvider || '' };
+            rows = rows.map((v) => {
+                return { ...v, occupancy_date, date, hospcode, his: hisProvider || '' };
             });
             const result = await (0, moph_refer_1.sendingToMoph)('/save-occupancy-rate-by-ward', rows);
-            console.log(moment().format('HH:mm:ss'), 'send Occ Rate by ward', date, result.status || '', result.message || '', rows.length, 'rows');
+            console.log(moment().format('HH:mm:ss'), 'send Occ Rate by ward', date, result.status || '', result.message || '', rows.length, 'rows', rows[0]);
         }
         return rows;
     }
