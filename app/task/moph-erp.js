@@ -184,6 +184,7 @@ const sendBedNo = async () => {
             times++;
         } while (startRow < countBed && countBed != 0);
         console.log(moment().format('HH:mm:ss'), `sendBedNo ${countBed} rows (${times})`, error);
+        return { statusCode: 200, sentResult };
     }
     catch (error) {
         console.log(moment().format('HH:mm:ss'), 'getBedNo error', error.message);
@@ -223,13 +224,13 @@ exports.updateAlive = updateAlive;
 const erpAdminRequest = async () => {
     try {
         const result = await (0, moph_refer_1.checkAdminRequest)();
-        if (result.status == 200 || result.statusCode == 200) {
-            const rows = result?.rows || result?.data || [];
+        const rows = result?.rows || result?.data || [];
+        if (rows && rows.length > 0) {
             let requestResult;
             for (let req of rows) {
                 if (req.request_type == 'bed') {
                     requestResult = await (0, exports.sendBedNo)();
-                    console.log('ERP admin request get bed no.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+                    console.log(moment().format('HH:mm:ss'), 'ERP admin request get bed no.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
                     await (0, moph_refer_1.updateAdminRequest)({
                         request_id: req.request_id,
                         status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
@@ -238,7 +239,7 @@ const erpAdminRequest = async () => {
                 }
                 else if (req.request_type == 'ward') {
                     requestResult = await (0, exports.sendWardName)();
-                    console.log('ERP admin request get ward name.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+                    console.log(moment().format('HH:mm:ss'), 'ERP admin request get ward name.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
                     await (0, moph_refer_1.updateAdminRequest)({
                         request_id: req.request_id,
                         status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
@@ -247,11 +248,11 @@ const erpAdminRequest = async () => {
                 }
                 else if (req.request_type == 'alive') {
                     requestResult = await (0, exports.updateAlive)();
-                    console.log('ERP admin request send alive status.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+                    console.log(moment().format('HH:mm:ss'), 'ERP admin request send alive status.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
                 }
                 else if (req.request_type == 'occupancy') {
                     requestResult = await (0, exports.sendBedOccupancy)();
-                    console.log('erpAdminRequest occupancy', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+                    console.log(moment().format('HH:mm:ss'), 'erpAdminRequest occupancy', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
                     await (0, moph_refer_1.updateAdminRequest)({
                         request_id: req.request_id,
                         status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,

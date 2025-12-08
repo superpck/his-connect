@@ -181,12 +181,12 @@ export const sendBedNo = async () => {
         rows = rows
           .filter((row: any) => row.wardcode != null && row.wardcode != '')
           .map((v: any) => {
-          return {
-            ...v, hospcode: hospcode,
-            hcode5: hospcode.length == 5 ? hospcode : null,
-            hcode9: hospcode.length == 9 ? hospcode : null
-          };
-        });
+            return {
+              ...v, hospcode: hospcode,
+              hcode5: hospcode.length == 5 ? hospcode : null,
+              hcode9: hospcode.length == 9 ? hospcode : null
+            };
+          });
         result = await sendingToMoph('/save-bed-no', rows);
         if (result?.status != 200 && result?.statusCode != 200) {
           error = result?.message || result?.status || result?.statusCode || null;
@@ -197,6 +197,7 @@ export const sendBedNo = async () => {
       times++;
     } while (startRow < countBed && countBed != 0);
     console.log(moment().format('HH:mm:ss'), `sendBedNo ${countBed} rows (${times})`, error);
+    return { statusCode: 200, sentResult };
   } catch (error) {
     console.log(moment().format('HH:mm:ss'), 'getBedNo error', error.message);
     return { statusCode: error.status || 500, message: error.message || error };
@@ -237,13 +238,13 @@ export const updateAlive = async () => {
 export const erpAdminRequest = async () => {
   try {
     const result: any = await checkAdminRequest();
-    if (result.status == 200 || result.statusCode == 200) {
-      const rows = result?.rows || result?.data || [];
+    const rows = result?.rows || result?.data || [];
+    if (rows && rows.length > 0) {
       let requestResult: any;
       for (let req of rows) {
         if (req.request_type == 'bed') {
           requestResult = await sendBedNo();
-          console.log('ERP admin request get bed no.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+          console.log(moment().format('HH:mm:ss'), 'ERP admin request get bed no.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
           await updateAdminRequest({
             request_id: req.request_id,
             status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
@@ -251,7 +252,7 @@ export const erpAdminRequest = async () => {
           });
         } else if (req.request_type == 'ward') {
           requestResult = await sendWardName();
-          console.log('ERP admin request get ward name.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+          console.log(moment().format('HH:mm:ss'), 'ERP admin request get ward name.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
           await updateAdminRequest({
             request_id: req.request_id,
             status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
@@ -259,10 +260,10 @@ export const erpAdminRequest = async () => {
           });
         } else if (req.request_type == 'alive') {
           requestResult = await updateAlive();
-          console.log('ERP admin request send alive status.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+          console.log(moment().format('HH:mm:ss'), 'ERP admin request send alive status.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
         } else if (req.request_type == 'occupancy') {
           requestResult = await sendBedOccupancy();
-          console.log('erpAdminRequest occupancy', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+          console.log(moment().format('HH:mm:ss'), 'erpAdminRequest occupancy', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
           await updateAdminRequest({
             request_id: req.request_id,
             status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,

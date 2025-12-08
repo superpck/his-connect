@@ -143,7 +143,7 @@ const checkAdminRequest = async () => {
     };
     try {
         const { status, data } = await axios_1.default.get(url, { headers });
-        return { statusCode: status, ...data };
+        return data;
     }
     catch (error) {
         return error;
