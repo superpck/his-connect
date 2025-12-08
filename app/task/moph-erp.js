@@ -15,10 +15,10 @@ const sendBedOccupancy = async (dateProcess = null) => {
     let whatUTC = Intl?.DateTimeFormat().resolvedOptions().timeZone || '';
     let currDate;
     if (whatUTC == 'UTC' || whatUTC == 'Etc/UTC') {
-        currDate = moment().locale('TH').add(7, 'hours').subtract(10, 'minutes').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        currDate = moment().locale('TH').add(7, 'hours').subtract(1, 'hours').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
     }
     else {
-        currDate = moment().locale('TH').subtract(30, 'minutes').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        currDate = moment().locale('TH').subtract(1, 'hours').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
     }
     let date = dateProcess || currDate;
     let dateOpd = date;
@@ -41,13 +41,14 @@ const sendBedOccupancy = async (dateProcess = null) => {
 exports.sendBedOccupancy = sendBedOccupancy;
 const sendBedOccupancyByWard = async (date) => {
     try {
+        const occupancy_date = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
         let rows = await hismodel_1.default.concurrentIPDByWard(db, date);
         if (rows && rows.length) {
-            rows = rows.map(v => {
-                return { ...v, date, hospcode, his: hisProvider || '' };
+            rows = rows.map((v) => {
+                return { ...v, occupancy_date, date, hospcode, his: hisProvider || '' };
             });
             const result = await (0, moph_refer_1.sendingToMoph)('/save-occupancy-rate-by-ward', rows);
-            console.log(moment().format('HH:mm:ss'), 'send Occ Rate by ward', date, result.status || '', result.message || '', rows.length, 'rows');
+            console.log(moment().format('HH:mm:ss'), 'send Occ Rate by ward', date, result.status || '', result.message || '', rows.length, 'rows', rows[0]);
         }
         return rows;
     }
@@ -183,6 +184,7 @@ const sendBedNo = async () => {
             times++;
         } while (startRow < countBed && countBed != 0);
         console.log(moment().format('HH:mm:ss'), `sendBedNo ${countBed} rows (${times})`, error);
+        return { statusCode: 200, sentResult };
     }
     catch (error) {
         console.log(moment().format('HH:mm:ss'), 'getBedNo error', error.message);
@@ -222,13 +224,13 @@ exports.updateAlive = updateAlive;
 const erpAdminRequest = async () => {
     try {
         const result = await (0, moph_refer_1.checkAdminRequest)();
-        if (result.status == 200 || result.statusCode == 200) {
-            const rows = result?.rows || result?.data || [];
+        const rows = result?.rows || result?.data || [];
+        if (rows && rows.length > 0) {
             let requestResult;
             for (let req of rows) {
                 if (req.request_type == 'bed') {
                     requestResult = await (0, exports.sendBedNo)();
-                    console.log('ERP admin request get bed no.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+                    console.log(moment().format('HH:mm:ss'), 'ERP admin request get bed no.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
                     await (0, moph_refer_1.updateAdminRequest)({
                         request_id: req.request_id,
                         status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
@@ -237,7 +239,7 @@ const erpAdminRequest = async () => {
                 }
                 else if (req.request_type == 'ward') {
                     requestResult = await (0, exports.sendWardName)();
-                    console.log('ERP admin request get ward name.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+                    console.log(moment().format('HH:mm:ss'), 'ERP admin request get ward name.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
                     await (0, moph_refer_1.updateAdminRequest)({
                         request_id: req.request_id,
                         status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
@@ -246,11 +248,11 @@ const erpAdminRequest = async () => {
                 }
                 else if (req.request_type == 'alive') {
                     requestResult = await (0, exports.updateAlive)();
-                    console.log('ERP admin request send alive status.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+                    console.log(moment().format('HH:mm:ss'), 'ERP admin request send alive status.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
                 }
                 else if (req.request_type == 'occupancy') {
                     requestResult = await (0, exports.sendBedOccupancy)();
-                    console.log('erpAdminRequest occupancy', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+                    console.log(moment().format('HH:mm:ss'), 'erpAdminRequest occupancy', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
                     await (0, moph_refer_1.updateAdminRequest)({
                         request_id: req.request_id,
                         status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,

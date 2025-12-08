@@ -14,10 +14,12 @@ const hospcode = process.env.HOSPCODE || '';
 export const sendBedOccupancy = async (dateProcess: any = null) => {
   let whatUTC = Intl?.DateTimeFormat().resolvedOptions().timeZone || '';
   let currDate: any;
+
+  // ประมวลหลัง 1 ชั่วโมงเสมอ
   if (whatUTC == 'UTC' || whatUTC == 'Etc/UTC') {
-    currDate = moment().locale('TH').add(7, 'hours').subtract(10, 'minutes').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+    currDate = moment().locale('TH').add(7, 'hours').subtract(1, 'hours').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
   } else {
-    currDate = moment().locale('TH').subtract(30, 'minutes').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+    currDate = moment().locale('TH').subtract(1, 'hours').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
   }
 
   let date = dateProcess || currDate;
@@ -44,13 +46,14 @@ export const sendBedOccupancy = async (dateProcess: any = null) => {
 
 const sendBedOccupancyByWard = async (date: any) => {
   try {
+    const occupancy_date = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
     let rows: any = await hisModel.concurrentIPDByWard(db, date);
     if (rows && rows.length) {
-      rows = rows.map(v => {
-        return { ...v, date, hospcode, his: hisProvider || '' };
+      rows = rows.map((v: any) => {
+        return { ...v, occupancy_date, date, hospcode, his: hisProvider || '' };
       });
       const result: any = await sendingToMoph('/save-occupancy-rate-by-ward', rows);
-      console.log(moment().format('HH:mm:ss'), 'send Occ Rate by ward', date, result.status || '', result.message || '', rows.length, 'rows');
+      console.log(moment().format('HH:mm:ss'), 'send Occ Rate by ward', date, result.status || '', result.message || '', rows.length, 'rows', rows[0]);
     }
     return rows;
   } catch (error) {
@@ -178,12 +181,12 @@ export const sendBedNo = async () => {
         rows = rows
           .filter((row: any) => row.wardcode != null && row.wardcode != '')
           .map((v: any) => {
-          return {
-            ...v, hospcode: hospcode,
-            hcode5: hospcode.length == 5 ? hospcode : null,
-            hcode9: hospcode.length == 9 ? hospcode : null
-          };
-        });
+            return {
+              ...v, hospcode: hospcode,
+              hcode5: hospcode.length == 5 ? hospcode : null,
+              hcode9: hospcode.length == 9 ? hospcode : null
+            };
+          });
         result = await sendingToMoph('/save-bed-no', rows);
         if (result?.status != 200 && result?.statusCode != 200) {
           error = result?.message || result?.status || result?.statusCode || null;
@@ -194,6 +197,7 @@ export const sendBedNo = async () => {
       times++;
     } while (startRow < countBed && countBed != 0);
     console.log(moment().format('HH:mm:ss'), `sendBedNo ${countBed} rows (${times})`, error);
+    return { statusCode: 200, sentResult };
   } catch (error) {
     console.log(moment().format('HH:mm:ss'), 'getBedNo error', error.message);
     return { statusCode: error.status || 500, message: error.message || error };
@@ -234,13 +238,13 @@ export const updateAlive = async () => {
 export const erpAdminRequest = async () => {
   try {
     const result: any = await checkAdminRequest();
-    if (result.status == 200 || result.statusCode == 200) {
-      const rows = result?.rows || result?.data || [];
+    const rows = result?.rows || result?.data || [];
+    if (rows && rows.length > 0) {
       let requestResult: any;
       for (let req of rows) {
         if (req.request_type == 'bed') {
           requestResult = await sendBedNo();
-          console.log('ERP admin request get bed no.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+          console.log(moment().format('HH:mm:ss'), 'ERP admin request get bed no.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
           await updateAdminRequest({
             request_id: req.request_id,
             status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
@@ -248,7 +252,7 @@ export const erpAdminRequest = async () => {
           });
         } else if (req.request_type == 'ward') {
           requestResult = await sendWardName();
-          console.log('ERP admin request get ward name.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+          console.log(moment().format('HH:mm:ss'), 'ERP admin request get ward name.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
           await updateAdminRequest({
             request_id: req.request_id,
             status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
@@ -256,10 +260,10 @@ export const erpAdminRequest = async () => {
           });
         } else if (req.request_type == 'alive') {
           requestResult = await updateAlive();
-          console.log('ERP admin request send alive status.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+          console.log(moment().format('HH:mm:ss'), 'ERP admin request send alive status.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
         } else if (req.request_type == 'occupancy') {
           requestResult = await sendBedOccupancy();
-          console.log('erpAdminRequest occupancy', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+          console.log(moment().format('HH:mm:ss'), 'erpAdminRequest occupancy', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
           await updateAdminRequest({
             request_id: req.request_id,
             status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,

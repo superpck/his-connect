@@ -1,8 +1,13 @@
+# 3.9.3
+## Feature
+  - เพิ่มการตรวจสอบและคืนค่า Request process Bedno และ Ward
+
 # 3.9.2
 ## Feature
   - ปรับ SQL ให้นับคงค้างตามรหัสมาตรฐาน กบรส.
   - Request process occpancy (เฉพาะส่วนกลาง)
   - เพิ่ม SQL ประเมินความพึงพอใจ HIS: JHCIS
+  - เพิ่มการบันทึก occupancy_date เป็นเวลาสุดท้ายของข้อมูล
 
 # 3.9.1
 ## Feature
