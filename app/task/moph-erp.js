@@ -4,6 +4,7 @@ exports.erpAdminRequest = exports.updateAlive = exports.sendBedNo = exports.send
 const moment = require("moment");
 const moph_refer_1 = require("../middleware/moph-refer");
 const hismodel_1 = require("./../routes/his/hismodel");
+const os_1 = require("os");
 const utils_1 = require("../middleware/utils");
 const packageJson = require('../../package.json');
 const dbConnection = require('../plugins/db');
@@ -203,7 +204,10 @@ const updateAlive = async () => {
             subversion: packageJson.subVersion || '',
             port: process.env.PORT || 0,
             ip: ipServer.ip,
-            his: hisProvider, ssl: process.env?.SSL_ENABLE || null,
+            nodejs: process.version || '',
+            platform: (0, os_1.platform)() || '',
+            os_version: (0, os_1.release)() || '',
+            his: hisProvider, ssl: process.env?.SSL_ENABLE || 0,
         };
         const result = await (0, moph_refer_1.updateHISAlive)(data);
         const status = result.status == 200 || result.statusCode == 200 ? true : false;
@@ -211,12 +215,12 @@ const updateAlive = async () => {
             console.log(moment().format('HH:mm:ss'), '✅ Sent API Alive status result', result.status || '', result.statusCode || '', result?.message || '');
         }
         else {
-            console.log(moment().format('HH:mm:ss'), '❌ Sent API Alive status result', result.status || '', result.statusCode || '', result?.message || '');
+            console.error(moment().format('HH:mm:ss'), '❌ Sent API Alive status result', result.status || '', result.statusCode || '', result?.message || '');
         }
         return result;
     }
     catch (error) {
-        console.log(moment().format('HH:mm:ss'), '❌ Sent API Alive status error:', error?.status || error?.statusCode || '', error?.message || error || '');
+        console.error(moment().format('HH:mm:ss'), '❌ Sent API Alive status error:', error?.status || error?.statusCode || '', error?.message || error || '');
         return [];
     }
 };

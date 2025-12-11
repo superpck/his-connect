@@ -2,6 +2,7 @@ import moment = require("moment");
 import { sendingToMoph, updateHISAlive, checkAdminRequest, updateAdminRequest, taskFunction } from "../middleware/moph-refer";
 import hisModel from './../routes/his/hismodel';
 import { Knex } from 'knex';
+import { platform, release } from "os";
 import { getIP } from "../middleware/utils";
 const packageJson = require('../../package.json');
 
@@ -215,9 +216,11 @@ export const updateAlive = async () => {
       subversion: packageJson.subVersion || '',
       port: process.env.PORT || 0,
       ip: ipServer.ip,
-      his: hisProvider, ssl: process.env?.SSL_ENABLE || null,
+      nodejs: process.version || '',
+      platform: platform() || '',
+      os_version: release() || '',
+      his: hisProvider, ssl: process.env?.SSL_ENABLE || 0,
       /* 
-        `ssl` tinyint unsigned DEFAULT NULL,
         `dbconnect` tinyint unsigned DEFAULT NULL,
       */
     };
@@ -226,11 +229,11 @@ export const updateAlive = async () => {
     if (status) {
       console.log(moment().format('HH:mm:ss'), '✅ Sent API Alive status result', result.status || '', result.statusCode || '', result?.message || '');
     } else {
-      console.log(moment().format('HH:mm:ss'), '❌ Sent API Alive status result', result.status || '', result.statusCode || '', result?.message || '');
+      console.error(moment().format('HH:mm:ss'), '❌ Sent API Alive status result', result.status || '', result.statusCode || '', result?.message || '');
     }
     return result;
   } catch (error) {
-    console.log(moment().format('HH:mm:ss'), '❌ Sent API Alive status error:', error?.status || error?.statusCode || '', error?.message || error || '');
+    console.error(moment().format('HH:mm:ss'), '❌ Sent API Alive status error:', error?.status || error?.statusCode || '', error?.message || error || '');
     return [];
   }
 }

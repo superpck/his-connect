@@ -1,7 +1,7 @@
 {
   "name": "his-connect",
   "version": "3.9.3",
-  "subVersion": "2025.12.09-1",
+  "subVersion": "2025.12.11-1",
   "private": true,
   "license": "MIT",
   "scripts": {
@@ -16,7 +16,7 @@
     "@fastify/jwt": "^10.0.0",
     "@fastify/view": "^11.1.1",
     "axios": "^1.12.2",
-    "better-sqlite3": "^12.4.1",
+    "better-sqlite3": "^12.5.0",
     "dayjs": "^1.11.19",
     "dotenv": "^17.2.2",
     "ejs": "^3.1.10",
@@ -55,6 +55,6 @@
     "@types/knex": "^0.16.1",
     "@types/node": "^24.5.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
   }
 }
