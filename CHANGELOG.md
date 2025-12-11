@@ -1,6 +1,7 @@
 # 3.9.3
 ## Feature
   - เพิ่มการตรวจสอบและคืนค่า Request process Bedno และ Ward
+  - เพิ่มการบันทึก NodeJS version ใน Alive
 
 # 3.9.2
 ## Feature

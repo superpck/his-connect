@@ -2,6 +2,8 @@ import moment = require("moment");
 import { sendingToMoph, updateHISAlive, checkAdminRequest, updateAdminRequest, taskFunction } from "../middleware/moph-refer";
 import hisModel from './../routes/his/hismodel';
 import { Knex } from 'knex';
+import { platform, release } from "os";
+const fs = require('fs');
 import { getIP } from "../middleware/utils";
 const packageJson = require('../../package.json');
 
@@ -207,6 +209,8 @@ export const sendBedNo = async () => {
 export const updateAlive = async () => {
   const ipServer: any = getIP();
   try {
+    const apiEnv = await detectRuntimeEnvironment();
+
     let data = {
       api_date: global.apiStartTime,
       server_date: moment().format('YYYY-MM-DD HH:mm:ss'),
@@ -215,9 +219,12 @@ export const updateAlive = async () => {
       subversion: packageJson.subVersion || '',
       port: process.env.PORT || 0,
       ip: ipServer.ip,
-      his: hisProvider, ssl: process.env?.SSL_ENABLE || null,
+      host_type: apiEnv || 'host',
+      nodejs: process.version || '',
+      platform: platform() || '',
+      os_version: release() || '',
+      his: hisProvider, ssl: process.env?.SSL_ENABLE || 0,
       /* 
-        `ssl` tinyint unsigned DEFAULT NULL,
         `dbconnect` tinyint unsigned DEFAULT NULL,
       */
     };
@@ -226,11 +233,11 @@ export const updateAlive = async () => {
     if (status) {
       console.log(moment().format('HH:mm:ss'), '✅ Sent API Alive status result', result.status || '', result.statusCode || '', result?.message || '');
     } else {
-      console.log(moment().format('HH:mm:ss'), '❌ Sent API Alive status result', result.status || '', result.statusCode || '', result?.message || '');
+      console.error(moment().format('HH:mm:ss'), '❌ Sent API Alive status result', result.status || '', result.statusCode || '', result?.message || '');
     }
     return result;
   } catch (error) {
-    console.log(moment().format('HH:mm:ss'), '❌ Sent API Alive status error:', error?.status || error?.statusCode || '', error?.message || error || '');
+    console.error(moment().format('HH:mm:ss'), '❌ Sent API Alive status error:', error?.status || error?.statusCode || '', error?.message || error || '');
     return [];
   }
 }
@@ -347,4 +354,50 @@ function toSnakeCase(value: string) {
   }
 
   return value.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+}
+
+async function detectRuntimeEnvironment() {
+  // Default = host
+  let env: "docker" | "kubernetes" | "wsl" | "host" = "host";
+
+  // -------------------------------
+  // 1) ตรวจ Docker แบบชัวร์ที่สุด
+  // -------------------------------
+  if (fs.existsSync("/.dockerenv")) {
+    env = "docker";
+  } else {
+    try {
+      const cgroup = fs.readFileSync("/proc/1/cgroup", "utf8");
+
+      // Docker / containerd
+      if (/docker|containerd/i.test(cgroup)) {
+        env = "docker";
+      }
+
+      // Kubernetes pod
+      if (/kubepods/i.test(cgroup)) {
+        env = "kubernetes";
+      }
+    } catch {}
+  }
+
+  // -------------------------------
+  // 2) ตรวจ WSL (WSL1 / WSL2)
+  // -------------------------------
+  const r = release().toLowerCase();
+  try {
+    const version = fs.readFileSync("/proc/version", "utf8").toLowerCase();
+    if (
+      r.includes("microsoft") ||
+      r.includes("wsl") ||
+      version.includes("microsoft")
+    ) {
+      env = "wsl";
+    }
+  } catch {}
+
+  // -------------------------------
+  // 3) Return พร้อมข้อมูลเพิ่มเติม
+  // -------------------------------
+  return env;
 }
