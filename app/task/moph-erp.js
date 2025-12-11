@@ -5,6 +5,7 @@ const moment = require("moment");
 const moph_refer_1 = require("../middleware/moph-refer");
 const hismodel_1 = require("./../routes/his/hismodel");
 const os_1 = require("os");
+const fs = require('fs');
 const utils_1 = require("../middleware/utils");
 const packageJson = require('../../package.json');
 const dbConnection = require('../plugins/db');
@@ -196,6 +197,7 @@ exports.sendBedNo = sendBedNo;
 const updateAlive = async () => {
     const ipServer = (0, utils_1.getIP)();
     try {
+        const apiEnv = await detectRuntimeEnvironment();
         let data = {
             api_date: global.apiStartTime,
             server_date: moment().format('YYYY-MM-DD HH:mm:ss'),
@@ -204,6 +206,7 @@ const updateAlive = async () => {
             subversion: packageJson.subVersion || '',
             port: process.env.PORT || 0,
             ip: ipServer.ip,
+            host_type: apiEnv || 'host',
             nodejs: process.version || '',
             platform: (0, os_1.platform)() || '',
             os_version: (0, os_1.release)() || '',
@@ -329,4 +332,33 @@ function toSnakeCase(value) {
         return value;
     }
     return value.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+}
+async function detectRuntimeEnvironment() {
+    let env = "host";
+    if (fs.existsSync("/.dockerenv")) {
+        env = "docker";
+    }
+    else {
+        try {
+            const cgroup = fs.readFileSync("/proc/1/cgroup", "utf8");
+            if (/docker|containerd/i.test(cgroup)) {
+                env = "docker";
+            }
+            if (/kubepods/i.test(cgroup)) {
+                env = "kubernetes";
+            }
+        }
+        catch { }
+    }
+    const r = (0, os_1.release)().toLowerCase();
+    try {
+        const version = fs.readFileSync("/proc/version", "utf8").toLowerCase();
+        if (r.includes("microsoft") ||
+            r.includes("wsl") ||
+            version.includes("microsoft")) {
+            env = "wsl";
+        }
+    }
+    catch { }
+    return env;
 }
