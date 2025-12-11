@@ -21,6 +21,15 @@ RUN --mount=type=cache,target=/root/.npm \
     && npm config set fetch-retries 5 \
     && npm ci --prefer-offline --no-audit
 
+# Copy TypeScript configuration and source files
+COPY package.json tsconfig.json ./
+
+# Copy source files
+COPY src ./src
+
+# Build the application
+RUN npm run build
+
 # Remove build dependencies to reduce image size (keep runtime deps)
 RUN apk del .build-deps
 
@@ -29,8 +38,8 @@ RUN --mount=type=cache,target=/root/.npm \
     npm install -g pm2 nodemon typescript ts-node
 
 # Copy application code
-RUN mkdir -p ./app
-COPY app/. ./app
+# RUN mkdir -p ./app
+# COPY app/. ./app
 
 EXPOSE 3004
 
