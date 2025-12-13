@@ -226,7 +226,7 @@ class HisHiModel {
             .groupBy('cln.specialty')
             .orderBy('cln.specialty');
     }
-    getVisitForMophAlert(db, date, limit = 1000, start = -1, isRowCount = false) {
+    getVisitForMophAlert(db, date, isRowCount = false, start = -1, limit = 1000) {
         date = moment(date).locale('TH').format('YYYY-MM-DD');
         let sql = db('ovst as visit')
             .innerJoin('pt as patient', 'visit.hn', 'patient.hn')
