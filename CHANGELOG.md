@@ -1,7 +1,12 @@
+# 3.9.4
+## Feature
+  - ปรับ SQL ให้ใช้ std code จาก ward กรณีไม่มีใน Bedno
+
 # 3.9.3
 ## Feature
   - เพิ่มการตรวจสอบและคืนค่า Request process Bedno และ Ward
   - เพิ่มการบันทึก NodeJS version ใน Alive
+  - ปรับ SQL ให้ใช้ std code จาก ward กรณีไม่มีใน Bedno
 
 # 3.9.2
 ## Feature

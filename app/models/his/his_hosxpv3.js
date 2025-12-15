@@ -5,6 +5,7 @@ const moment = require("moment");
 const maxLimit = 250;
 const hn_len = +process.env.HN_LENGTH || 6;
 let hisHospcode = process.env.HOSPCODE;
+const dbClient = process.env.HIS_DB_CLIENT ? process.env.HIS_DB_CLIENT.toLowerCase() : 'mysql2';
 const getHospcode = async () => {
     try {
         if (typeof global.dbHIS === 'function') {
@@ -19,6 +20,21 @@ const getHospcode = async () => {
     catch (error) {
         console.error('Error in getHospcode:', error);
         console.log('Default HOSPCODE:', hisHospcode);
+    }
+};
+const getDatetimeExpr = (db, dateCol, timeCol) => {
+    const clientType = (db.client?.config?.client || dbClient).toLowerCase();
+    switch (clientType) {
+        case 'pg':
+        case 'postgres':
+        case 'postgresql':
+            return db.raw(`${dateCol}::text || ' ' || ${timeCol}::text`);
+        case 'mssql':
+            return db.raw(`CAST(${dateCol} AS VARCHAR) + ' ' + CAST(${timeCol} AS VARCHAR)`);
+        case 'oracledb':
+            return db.raw(`${dateCol} || ' ' || ${timeCol}`);
+        default:
+            return db.raw(`CONCAT(${dateCol}, ' ', ${timeCol})`);
     }
 };
 class HisHosxpv3Model {
@@ -1372,7 +1388,7 @@ class HisHosxpv3Model {
             .whereNotNull('roomno.ward')
             .orderBy('bedno.bedno');
     }
-    concurrentIPDByWard(db, date) {
+    concurrentIPDByWard_(db, date) {
         const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
         const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
         const clientType = db.client.config.client;
@@ -1405,6 +1421,52 @@ class HisHosxpv3Model {
             .whereNot('ipt.ward', '')
             .where("ward.ward_active", "Y");
         return sql.groupBy(['ipt.ward', 'ward.name']).orderBy('ipt.ward');
+    }
+    concurrentIPDByWard(db, date) {
+        try {
+            const dateStart = moment(date)
+                .locale('TH')
+                .startOf('hour')
+                .format('YYYY-MM-DD HH:mm:ss');
+            const dateEnd = moment(date)
+                .locale('TH')
+                .endOf('hour')
+                .format('YYYY-MM-DD HH:mm:ss');
+            const regdatetime = getDatetimeExpr(db, 'regdate', 'regtime');
+            const dchdatetime = getDatetimeExpr(db, 'dchdate', 'dchtime');
+            const base = db('ipt')
+                .leftJoin('iptadm', 'ipt.an', 'iptadm.an')
+                .leftJoin('ward', 'ipt.ward', 'ward.ward')
+                .leftJoin('bedno', 'iptadm.bedno', 'bedno.bedno')
+                .select('ipt.ward as wardcode', 'ward.name as wardname', db.raw(`
+          COALESCE(
+            SUBSTRING(bedno.export_code,4,3),
+            SUBSTRING(ward.ward_export_code,4,3),
+            ''
+          ) AS care_code
+        `), 'ipt.regdate', 'ipt.regtime', 'ipt.dchdate', 'ipt.dchtime', 'ipt.dchstts')
+                .whereNotNull('ipt.ward')
+                .whereNot('ipt.ward', '')
+                .where('ward.ward_active', 'Y');
+            const sql = db
+                .from(base.as('x'))
+                .select('wardcode', 'wardname', db.raw(`SUM(CASE WHEN ${regdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge`, [dateStart, dateEnd]), db.raw(`SUM(
+            CASE 
+              WHEN ${dchdatetime.sql} BETWEEN ? AND ?
+                   AND dchstts IN (?, ?)
+              THEN 1 ELSE 0 
+            END
+          ) AS death`, [dateStart, dateEnd, '08', '09']), db.raw(`SUM(CASE WHEN LEFT(care_code,1)='2' THEN 1 ELSE 0 END) AS icu`), db.raw(`SUM(CASE WHEN LEFT(care_code,1)='3' THEN 1 ELSE 0 END) AS semi`), db.raw(`SUM(CASE WHEN LEFT(care_code,1)='4' THEN 1 ELSE 0 END) AS stroke`), db.raw(`SUM(CASE WHEN LEFT(care_code,1)='5' THEN 1 ELSE 0 END) AS burn`), db.raw(`SUM(CASE WHEN care_code IN ('601','602') THEN 1 ELSE 0 END) AS imc`), db.raw(`SUM(CASE WHEN care_code='604' THEN 1 ELSE 0 END) AS minithanyaruk`), db.raw(`SUM(CASE WHEN care_code='607' THEN 1 ELSE 0 END) AS homeward`))
+                .count('* as cases')
+                .whereRaw(`${regdatetime.sql} <= ?`, [dateStart])
+                .whereRaw(`(dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ?)`, [dateStart, dateEnd])
+                .groupBy(['wardcode', 'wardname'])
+                .orderBy('wardcode');
+            return sql;
+        }
+        catch (error) {
+            throw error;
+        }
     }
     concurrentIPDByClinic(db, date) {
         let sql = db('ipt')
