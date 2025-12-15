@@ -86,6 +86,15 @@ function getCurrentMinute(): number {
 }
 
 /**
+ * Helper to calculate remaining minutes for interval tasks
+ */
+function getRemainingMinutes(currentMinute: number, interval: number): number {
+  const remainder = currentMinute % interval;
+  // ถ้าเศษเป็น 0 คือถึงเวลาพอดี (เหลือ 0 นาที), ถ้าไม่ใช่ เอา interval - เศษ
+  return remainder === 0 ? 0 : interval - remainder;
+}
+
+/**
  * Get PM2 processes with caching to reduce shell executions
  */
 function getPM2Processes(): PM2Process[] {
@@ -119,9 +128,6 @@ function getMyPM2Name(processes: PM2Process[], myPid: number): string {
 function getFirstPidOfName(processes: PM2Process[], name: string): number {
   const matches = processes
     .filter(p => p.name === name && p.pm2_env.status === 'online');
-  // const matches = processes
-  //   .filter(p => p.name === name && p.pm2_env.status === 'online')
-  //   .sort((a, b) => a.pid - b.pid);
   return matches[0]?.pid || process.pid;
 }
 
@@ -146,7 +152,6 @@ function updateProcessState(): void {
   // Check if this is the first process
   processState.isFirstProcess = processState.firstProcessPid === myPid;
 
-  // console.log(moment().format('HH:mm:ss'), instanceId, process.pid, 'nodecron.optimized PM2 process list: ====> ', sameNameProcesses.map(p => p.pid), processState.pm2Name);
   console.log(`   ⬜ Instance: ${instanceId}.${processState.pm2Name} (PID: ${myPid}), First PID: ${processState.firstProcessPid}`);
 }
 
@@ -303,7 +308,9 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
 
   // Create cron schedule (run every minute)
   const secondNow = moment().seconds();
+  // รันที่วินาทีที่ start process ของทุกนาที
   const timingSch = `${secondNow} * * * * *`;
+  
   let timeRandom = 10 + (Math.ceil(Math.random() * 10) || 1);
   let hourRandom = Math.ceil(Math.random() * 22) || 1;
 
@@ -313,7 +320,10 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   // Log startup information if this is the first process
   if (processState.isFirstProcess) {
     console.log(`${getTimestamp()} Start API for Hospcode ${process.env.HOSPCODE}`);
-    console.log(`   ⬜ Random time for alive: every ${timeRandom} minutes, Occupancy: xx:${timeRandom}, ward/bed update: ${hourRandom}:${timeRandom}:${secondNow}`);
+    console.log(`   ⬜ Random time config:`);
+    console.log(`      - Alive/Alert: Every ${timeRandom} minutes`);
+    console.log(`      - Bed Occupancy: At minute ${timeRandom}`);
+    console.log(`      - Ward/Bed Update: At ${hourRandom}:${timeRandom}:${secondNow}`);
     logScheduledServices(timingSchedule);
   }
 
@@ -324,6 +334,14 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
     sendBedNo();
   }
 
+  // Optional: Real-time Debug Countdown (ระวัง Log เยอะเกินไปหากเปิดใช้)
+  // setInterval(() => {
+  //    if (!processState.isFirstProcess) return;
+  //    const sec = moment().seconds();
+  //    const nextRunSec = secondNow > sec ? secondNow - sec : (60 - sec) + secondNow;
+  //    process.stdout.write(`\r⏳ Next Cycle: ${nextRunSec}s `);
+  // }, 1000);
+
   // Schedule cron job
   let minuteCount = 0;
   cron.schedule(timingSch, async (req: any, res: any) => {
@@ -332,26 +350,56 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
     // Get current time info
     const minuteSinceLastNight = getMinutesSinceMidnight();
     const minuteNow = moment().get('minute');
+    const hourNow = moment().hour();
 
     // Only run on the first process
     if (processState.isFirstProcess) {
+
+      // --- 🚀 NEW: LOG STATUS & COUNTDOWN ---
+      console.log(`\n--- ⏱️  Cron Tick: ${getTimestamp()} (Minute: ${minuteNow}) ---`);
+      
+      // 1. Alive Status
+      const aliveRem = getRemainingMinutes(minuteNow, timeRandom);
+      const aliveStatus = aliveRem === 0 && minuteNow !== 0 
+        ? `✅ RUNNING NOW` 
+        : `⏳ in ${aliveRem} min(s)`;
+      console.log(`   ► Alive/Alert (Every ${timeRandom}m): ${aliveStatus}`);
+
+      // 2. Bed Occupancy Status
+      let occRem = timeRandom - minuteNow;
+      if (occRem < 0) occRem += 60;
+      const occStatus = minuteNow === timeRandom 
+        ? `✅ RUNNING NOW` 
+        : `⏳ in ${occRem} min(s)`;
+      console.log(`   ► Bed Occupancy (At :${timeRandom}): ${occStatus}`);
+      
+      // --------------------------------------
+
       if (minuteSinceLastNight % 2 === 1) {
         logJobStatus();
       }
+      
+      // 1. Alive / Alert Logic
       if (minuteNow != 0 && minuteNow % timeRandom == 0) {
+        // console.log("   --> Executing Update Alive & Alert...");
         updateAlive();
         mophAlertSurvey();
       }
 
+      // 2. ERP Request Logic
       if (minuteSinceLastNight % 2 == 0) {
         erpAdminRequest();
       }
 
+      // 3. Bed Occupancy Logic
       if (minuteNow == timeRandom) {
+        // console.log("   --> Executing Bed Occupancy...");
         sendBedOccupancy();
       }
 
+      // 4. Ward/Bed Daily Logic
       if (moment().hour() == hourRandom && minuteNow == timeRandom) {
+        console.log(`   --> 📅 Daily Task: Executing Ward Name & Bed No...`);
         sendWardName();
         sendBedNo();
       }
@@ -385,9 +433,9 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
       }
 
       // Update MOPH URL at the top of each hour
-      if (minuteNow === 60) {
+      if (minuteNow === 0 || minuteNow === 60) {
         runJob('getmophUrl', getmophUrl);
       }
     }
   });
-}
+    }

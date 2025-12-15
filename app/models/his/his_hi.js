@@ -226,7 +226,7 @@ class HisHiModel {
             .groupBy('cln.specialty')
             .orderBy('cln.specialty');
     }
-    getVisitForMophAlert(db, date, limit = 1000, start = -1, isRowCount = false) {
+    getVisitForMophAlert(db, date, isRowCount = false, start = -1, limit = 1000) {
         date = moment(date).locale('TH').format('YYYY-MM-DD');
         let sql = db('ovst as visit')
             .innerJoin('pt as patient', 'visit.hn', 'patient.hn')
@@ -237,7 +237,7 @@ class HisHiModel {
             .andWhere(db.raw(`patient.pop_id <> ''`))
             .andWhere(db.raw(`patient.pop_id is not null`))
             .andWhere(db.raw(`length(patient.pop_id) = 13`))
-            .andWhere(db.raw(`length(patient.pop_id) not in (?,?)`, ['1111111111119', '9999999999994']))
+            .andWhere(db.raw(`patient.pop_id not in (?,?)`, ['1111111111119', '9999999999994'])) // fix old condition is length(patientpop_id) not in
             .andWhere(db.raw(`timestampdiff(year, patient.brthdate, ?) between 15 and 90`, [date]))
             .andWhere(db.raw(`patient.ntnlty = '99'`));
         if (isRowCount) {
