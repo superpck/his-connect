@@ -353,7 +353,7 @@ export class HisHiModel {
       console.log(opdCount.toString());
       console.log(ipdCount.toString());
       let [opdResult, ipdResult] = await Promise.all([opdCount, ipdCount]);
-      let totalCount = (opdResult?.row_count || 0) + (ipdResult?.row_count || 0);
+      let totalCount = Number(opdResult?.row_count || 0) + Number(ipdResult?.row_count || 0);
       return { row_count: totalCount };
     } else { // ดึงข้อมูลรายละเอียด
 
