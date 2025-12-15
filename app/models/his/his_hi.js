@@ -226,35 +226,52 @@ class HisHiModel {
             .groupBy('cln.specialty')
             .orderBy('cln.specialty');
     }
-    getVisitForMophAlert(db, date, isRowCount = false, start = -1, limit = 1000) {
+    async getVisitForMophAlert(db, date, isRowCount = false, start = -1, limit = 1000) {
         date = moment(date).locale('TH').format('YYYY-MM-DD');
-        let sql = db('ovst as visit')
+        let opdQuery = db('ovst as visit')
             .innerJoin('pt as patient', 'visit.hn', 'patient.hn')
             .leftJoin('cln as clinic', 'visit.cln', 'clinic.cln')
-            .leftJoin('ipt as admission', 'visit.an', 'admission.an')
-            .leftJoin('idpm as ward', 'admission.ward', 'ward.idpm')
-            .where(db.raw(`((date(visit.vstdttm) = ? and visit.an = 0 and visit.ovstost = '1') or admission.dchdate = ?) `, [date, date]))
+            .where(db.raw(`date(visit.vstdttm) = ? and visit.an = 0 and visit.ovstost = '1'`, [date]))
             .andWhere(db.raw(`patient.pop_id <> ''`))
             .andWhere(db.raw(`patient.pop_id is not null`))
             .andWhere(db.raw(`length(patient.pop_id) = 13`))
-            .andWhere(db.raw(`patient.pop_id not in (?,?)`, ['1111111111119', '9999999999994'])) // fix old condition is length(patientpop_id) not in
+            .andWhere(db.raw(`patient.pop_id not in (?,?)`, ['1111111111119', '9999999999994']))
+            .andWhere(db.raw(`timestampdiff(year, patient.brthdate, ?) between 15 and 90`, [date]))
+            .andWhere(db.raw(`patient.ntnlty = '99'`));
+        let ipdQuery = db('ipt as admission')
+            .innerJoin('pt as patient', 'admission.hn', 'patient.hn')
+            .leftJoin('idpm as ward', 'admission.ward', 'ward.idpm')
+            .where(db.raw(`admission.dchdate = ?`, [date]))
+            .andWhere(db.raw(`patient.pop_id <> ''`))
+            .andWhere(db.raw(`patient.pop_id is not null`))
+            .andWhere(db.raw(`length(patient.pop_id) = 13`))
+            .andWhere(db.raw(`patient.pop_id not in (?,?)`, ['1111111111119', '9999999999994']))
             .andWhere(db.raw(`timestampdiff(year, patient.brthdate, ?) between 15 and 90`, [date]))
             .andWhere(db.raw(`patient.ntnlty = '99'`));
         if (isRowCount) {
-            console.log(sql.countDistinct('visit.vn as row_count').toString());
-            return sql.countDistinct('visit.vn as row_count').first();
+            let opdCount = opdQuery.countDistinct('visit.vn as row_count').first();
+            let ipdCount = ipdQuery.countDistinct('admission.vn as row_count').first();
+            console.log(opdCount.toString());
+            console.log(ipdCount.toString());
+            let [opdResult, ipdResult] = await Promise.all([opdCount, ipdCount]);
+            let totalCount = Number(opdResult?.row_count || 0) + Number(ipdResult?.row_count || 0);
+            return { row_count: totalCount };
         }
         else {
-            if (start >= 0) {
-                sql = sql.offset(start).limit(limit);
-            }
-            return sql
-                .select('visit.hn', 'visit.vn', 'patient.pop_id as cid', db.raw(`CASE
-              when visit.an > 0 and substr(ward.export_code,4,3) = '606' THEN 'HOMEWARD'
-              WHEN visit.an > 0 and substr(ward.export_code,4,3) <> '606' THEN 'IPD' 
-              WHEN visit.an = 0 and visit.cln = '20100' THEN 'ER' 
-              ELSE 'OPD' END as department_type`), 'clinic.cln as department_code', 'clinic.namecln as department_name', db.raw('date(visit.vstdttm) as date_service'), db.raw('time(visit.vstdttm) as time_service'))
+            let opdData = opdQuery
+                .select('visit.hn', 'visit.vn', 'patient.pop_id as cid', db.raw(`'OPD' as department_type`), 'clinic.cln as department_code', 'clinic.namecln as department_name', db.raw('date(visit.vstdttm) as date_service'), db.raw('time(visit.vstdttm) as time_service'))
                 .groupBy('visit.cln', 'visit.hn');
+            let ipdData = ipdQuery
+                .select('admission.hn', 'admission.an as vn', 'patient.pop_id as cid', db.raw(`CASE
+              when substr(ward.export_code,4,3) = '606' THEN 'HOMEWARD' 
+              WHEN substr(ward.export_code,4,3) <> '606' THEN 'IPD' 
+              END as department_type`), 'ward.op56 as department_code', 'ward.nameidpm as department_name', db.raw('date(admission.dchdate) as date_service'), db.raw(`time(concat(admission.dchdate,' ',admission.dchtime*100)) as time_service`))
+                .groupBy('admission.vn');
+            let unionQuery = opdData.unionAll([ipdData]);
+            if (start >= 0) {
+                unionQuery = unionQuery.offset(start).limit(limit);
+            }
+            return unionQuery;
         }
     }
 }
