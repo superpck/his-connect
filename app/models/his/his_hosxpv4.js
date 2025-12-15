@@ -1232,23 +1232,45 @@ class HisHosxpv4Model {
     }
     concurrentIPDByWard(db, date) {
         try {
-            const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
-            const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
-            let sql = db('ipt')
+            const dateStart = moment(date)
+                .locale('TH')
+                .startOf('hour')
+                .format('YYYY-MM-DD HH:mm:ss');
+            const dateEnd = moment(date)
+                .locale('TH')
+                .endOf('hour')
+                .format('YYYY-MM-DD HH:mm:ss');
+            const regdatetime = getDatetimeExpr(db, 'regdate', 'regtime');
+            const dchdatetime = getDatetimeExpr(db, 'dchdate', 'dchtime');
+            const base = db('ipt')
                 .leftJoin('iptadm', 'ipt.an', 'iptadm.an')
                 .leftJoin('ward', 'ipt.ward', 'ward.ward')
                 .leftJoin('bedno', 'iptadm.bedno', 'bedno.bedno')
-                .select('ipt.ward as wardcode', 'ward.name as wardname');
-            const regdatetime = getDatetimeExpr(db, 'ipt.regdate', 'ipt.regtime');
-            const dchdatetime = getDatetimeExpr(db, 'ipt.dchdate', 'ipt.dchtime');
-            sql = sql.select(db.raw(`SUM(CASE WHEN ${regdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? AND ipt.dchstts IN (?, ?) THEN 1 ELSE 0 END) AS death`, [dateStart, dateEnd, '08', '09']), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='2' THEN 1 ELSE 0 END) AS icu`), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='3' THEN 1 ELSE 0 END) AS semi`), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='4' THEN 1 ELSE 0 END) AS stroke`), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,1)='5' THEN 1 ELSE 0 END) AS burn`), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3) IN ('601','602') THEN 1 ELSE 0 END) AS imc`), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3)='604' THEN 1 ELSE 0 END) AS minithanyaruk`), db.raw(`SUM(CASE WHEN SUBSTRING(bedno.export_code,4,3)='607' THEN 1 ELSE 0 END) AS homeward`))
-                .count('ipt.regdate as cases')
-                .whereRaw(`${regdatetime.sql} <= ?`, [dateStart])
-                .whereRaw(`(ipt.dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ?)`, [dateStart, dateEnd]);
-            sql = sql.whereNotNull('ipt.ward')
+                .select('ipt.ward as wardcode', 'ward.name as wardname', db.raw(`
+          COALESCE(
+            SUBSTRING(bedno.export_code,4,3),
+            SUBSTRING(ward.ward_export_code,4,3),
+            ''
+          ) AS care_code
+        `), 'ipt.regdate', 'ipt.regtime', 'ipt.dchdate', 'ipt.dchtime', 'ipt.dchstts')
+                .whereNotNull('ipt.ward')
                 .whereNot('ipt.ward', '')
-                .where("ward.ward_active", "Y");
-            return sql.groupBy(['ipt.ward', 'ward.name']).orderBy('ipt.ward');
+                .where('ward.ward_active', 'Y');
+            const sql = db
+                .from(base.as('x'))
+                .select('wardcode', 'wardname', db.raw(`SUM(CASE WHEN ${regdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case`, [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN ${dchdatetime.sql} BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge`, [dateStart, dateEnd]), db.raw(`SUM(
+            CASE 
+              WHEN ${dchdatetime.sql} BETWEEN ? AND ?
+                   AND dchstts IN (?, ?)
+              THEN 1 ELSE 0 
+            END
+          ) AS death`, [dateStart, dateEnd, '08', '09']), db.raw(`SUM(CASE WHEN LEFT(care_code,1)='2' THEN 1 ELSE 0 END) AS icu`), db.raw(`SUM(CASE WHEN LEFT(care_code,1)='3' THEN 1 ELSE 0 END) AS semi`), db.raw(`SUM(CASE WHEN LEFT(care_code,1)='4' THEN 1 ELSE 0 END) AS stroke`), db.raw(`SUM(CASE WHEN LEFT(care_code,1)='5' THEN 1 ELSE 0 END) AS burn`), db.raw(`SUM(CASE WHEN care_code IN ('601','602') THEN 1 ELSE 0 END) AS imc`), db.raw(`SUM(CASE WHEN care_code='604' THEN 1 ELSE 0 END) AS minithanyaruk`), db.raw(`SUM(CASE WHEN care_code='607' THEN 1 ELSE 0 END) AS homeward`))
+                .count('* as cases')
+                .whereRaw(`${regdatetime.sql} <= ?`, [dateStart])
+                .whereRaw(`(dchdate IS NULL OR ${dchdatetime.sql} BETWEEN ? AND ?)`, [dateStart, dateEnd])
+                .groupBy(['wardcode', 'wardname'])
+                .orderBy('wardcode');
+            return sql;
         }
         catch (error) {
             throw error;
