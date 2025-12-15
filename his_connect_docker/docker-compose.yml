@@ -1,6 +1,7 @@
 services:
 
   api:
+  # ใช้จาก Image เท่านั้น
     image: superpck/his-connect:linux-latest
     container_name: his-connect-api
     environment:
