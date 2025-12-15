@@ -1,10 +1,11 @@
 services:
 
   api:
-    #image: superpck/his-connect:linux-latest
-    build:
-      context: ../
-      dockerfile: Dockerfile
+  # ใช้จาก Image เท่านั้น
+    image: superpck/his-connect:linux-latest
+  #  build:
+  #    context: ../
+  #    dockerfile: Dockerfile
     container_name: his-connect-api
     environment:
       - TZ=Asia/Bangkok
