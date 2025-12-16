@@ -13,6 +13,7 @@ const moment = require("moment");
 const nodecron_optimized_1 = require("./nodecron.optimized");
 const serveStatic = require('serve-static');
 var crypto = require('crypto');
+const utils_1 = require("./middleware/utils");
 const helmet = require("@fastify/helmet");
 var serverOption = {};
 if (process.env.SSL_ENABLE && process.env.SSL_ENABLE == '1' && process.env.SSL_KEY) {
@@ -101,8 +102,12 @@ app.addHook('onRequest', async (req, reply) => {
     let ipAddr = req.headers["x-real-ip"] || req.headers["x-forwarded-for"] || req.ip;
     ipAddr = ipAddr ? ipAddr.split(',') : [''];
     req.ipAddr = ipAddr[0].trim();
+    let isSubnet = true;
+    if (process.env.ALLOW_API_SUBNET || false) {
+        isSubnet = await isIPInSubnet(req.ipAddr);
+    }
     var geo = geoip.lookup(req.ipAddr);
-    if (geo && geo.country && geo.country != 'TH' && req.ipAddr != process.env.HOST && !unBlockIP.includes(req.ipAddr)) {
+    if (!isSubnet && geo && geo.country && geo.country != 'TH' && req.ipAddr != process.env.HOST && !unBlockIP.includes(req.ipAddr)) {
         console.log(req.ipAddr, `Unacceptable country: ${geo.country}`);
         return reply.send({ status: http_status_codes_1.StatusCodes.NOT_ACCEPTABLE, ip: req.ipAddr, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.NOT_ACCEPTABLE) });
     }
@@ -176,4 +181,18 @@ async function checkConfigFile() {
         console.error(`❌ PID:${process.pid} >> Check 'config' file exist: Not found, please create file 'config' and try again.`);
         process.exit(1);
     }
+}
+async function isIPInSubnet(ip) {
+    if (ip === '::1' || ip === '127.0.0.1' || ip === 'localhost') {
+        return true;
+    }
+    let localIP = (0, utils_1.getIP)();
+    if (!localIP || !localIP?.ip || !ip) {
+        return true;
+    }
+    localIP = (localIP?.ip || '').split('.');
+    ip = (ip || '').split('.');
+    const isValidIP = ip[0] === localIP[0] && ip[1] === localIP[1] && ip[2] === localIP[2];
+    console.log('localIP', localIP, ip, isValidIP);
+    return isValidIP;
 }
