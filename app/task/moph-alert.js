@@ -63,8 +63,7 @@ async function getAndSend(date, startRow = -1, limitRow = 100) {
         const rowsToSend = filteredRows.map((item) => { return { ...item, date_service: moment(item.date_service).format('YYYY-MM-DD'), hospcode }; });
         let result = await (0, moph_refer_1.sendingToMoph)('/save-moph-alert', rowsToSend);
         console.log(moment().format('HH:mm:ss'), `send moph alert ${rowsToSend.length} rows, result status:`, result.statusCode || '', result.message || '');
-        result.resultList = result?.resultList.map(item => { delete item?.result; return item; });
-        console.log(result);
+        result.resultList = result?.resultList.map((item) => { delete item?.result; return item; });
         if (result.statusCode === 200) {
             const sentVns = filteredRows.map((row) => row.vn);
             await (0, cache_db_1.insertSentVns)(sentVns, hospcode);
