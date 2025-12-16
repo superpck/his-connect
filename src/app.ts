@@ -17,6 +17,7 @@ import cronjob from './nodecron.optimized';
 const serveStatic = require('serve-static');
 var crypto = require('crypto');
 
+import { getIP } from './middleware/utils';
 import helmet = require('@fastify/helmet');
 
 var serverOption = {}
@@ -121,8 +122,12 @@ app.addHook('onRequest', async (req: any, reply) => {
   ipAddr = ipAddr ? ipAddr.split(',') : [''];
   req.ipAddr = ipAddr[0].trim();
 
+  let isSubnet = true;
+  if (process.env.ALLOW_API_SUBNET || false){
+    isSubnet = await isIPInSubnet(req.ipAddr);
+  }
   var geo = geoip.lookup(req.ipAddr);
-  if (geo && geo.country && geo.country != 'TH' && req.ipAddr != process.env.HOST && !unBlockIP.includes(req.ipAddr)) {
+  if (!isSubnet && geo && geo.country && geo.country != 'TH' && req.ipAddr != process.env.HOST && !unBlockIP.includes(req.ipAddr)) {
     console.log(req.ipAddr, `Unacceptable country: ${geo.country}`);
     return reply.send({ status: StatusCodes.NOT_ACCEPTABLE, ip: req.ipAddr, message: getReasonPhrase(StatusCodes.NOT_ACCEPTABLE) });
   }
@@ -219,4 +224,19 @@ async function checkConfigFile() {
     console.error(`❌ PID:${process.pid} >> Check 'config' file exist: Not found, please create file 'config' and try again.`);
     process.exit(1);
   }
+}
+
+async function isIPInSubnet(ip: any) {
+  if (ip === '::1' || ip === '127.0.0.1' || ip === 'localhost') {
+    return true;
+  }
+  let localIP: any = getIP();
+  if (!localIP || !localIP?.ip || !ip) {
+    return true;
+  }
+  localIP = (localIP?.ip || '').split('.');
+  ip = (ip || '').split('.');
+  const isValidIP = ip[0] === localIP[0] && ip[1] === localIP[1] && ip[2] === localIP[2];
+  console.log('localIP', localIP, ip, isValidIP);
+  return isValidIP;  
 }

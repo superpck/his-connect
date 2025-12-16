@@ -7,6 +7,10 @@ HOST=0.0.0.0
 ROUTE_PREFIX=
 START_TOOL=pm2
 
+# ระบุเป็น 1 กรณีมีการ Set private IP ไปตรงกับ IP ต่างประเทศ (ใช้ Subnet /24)
+# โปรดระมัดระวังการแก้ไขค่าในส่วนนี้
+ALLOW_API_SUBNET=0
+
 # [HTTPS]
 SSL_ENABLE=0
 SSL_KEY=public/ssl/localhost.key
