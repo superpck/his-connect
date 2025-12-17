@@ -1,6 +1,7 @@
 # 3.9.5
 ## Feature
   - เพิ่มการ set ALLOW_API_SUBNET เพื่อให้ลูกข่ายใช้งานได้ ในกรณี Set private IP ไปตรงกับ IP ต่างประเทศ
+  - ปรับ SQL HIS: iHospital
 
 # 3.9.4
 ## Feature
