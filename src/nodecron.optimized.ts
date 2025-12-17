@@ -329,10 +329,9 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
 
   // Initial tasks on first process
   if (processState.isFirstProcess) {
-    // updateAlive();
-    // sendWardName();
-    // sendBedNo();
-    sendBedOccupancy();
+    updateAlive();
+    sendWardName();
+    sendBedNo();
   }
 
   // Optional: Real-time Debug Countdown (ระวัง Log เยอะเกินไปหากเปิดใช้)
