@@ -63,6 +63,10 @@
 | clip | number | จำนวนเด็กแรกเกิด |
 | minithanyaruk | number | จำนวนผู้ป่วย minithanyaruk |
 | homeward | number | จำนวนผู้ป่วย homeward |
+```
+หมายเหตุ 
+cases=normal+special+icu+semi+stroke+burn+imc+lr+clip+minithanyaruk+homeward
+```
 
 ตัวอย่าง filter
 ```
