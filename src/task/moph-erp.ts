@@ -151,7 +151,7 @@ export const sendWardName = async () => {
         return { ...v, hospcode: process.env.HOSPCODE || '' };
       });
       const result: any = await sendingToMoph('/save-ward', rows);
-      console.log(moment().format('HH:mm:ss'), 'sendWardName', result.status || '', result.message || '', rows.length);
+      console.log(moment().format('HH:mm:ss'), 'sendWardName', result.status || '', result.message || '', rows.length, 'rows');
       return result;
     } else {
       console.log(moment().format('HH:mm:ss'), 'sendWardName', 'No ward data');
@@ -198,7 +198,7 @@ export const sendBedNo = async () => {
       startRow += limitRow;
       times++;
     } while (startRow < countBed && countBed != 0);
-    console.log(moment().format('HH:mm:ss'), `sendBedNo ${countBed} rows (${times})`, error);
+    console.log(moment().format('HH:mm:ss'), `sendBedNo ${countBed} rows (${times} times)`, error);
     return { statusCode: 200, sentResult };
   } catch (error) {
     console.log(moment().format('HH:mm:ss'), 'getBedNo error', error.message);

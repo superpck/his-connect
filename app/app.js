@@ -183,11 +183,11 @@ async function checkConfigFile() {
     }
 }
 async function isIPInSubnet(ip) {
-    if (ip === '::1' || ip === '127.0.0.1' || ip === 'localhost') {
+    if (!ip || ip === '::1' || ip === '127.0.0.1' || ip === 'localhost') {
         return true;
     }
     let localIP = (0, utils_1.getIP)();
-    if (!localIP || !localIP?.ip || !ip) {
+    if (!localIP || !localIP?.ip) {
         return true;
     }
     localIP = (localIP?.ip || '').split('.');

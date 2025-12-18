@@ -85,8 +85,7 @@ async function getAndSend(date: any, startRow: number = -1, limitRow: number = 1
     // Send to MOPH
     let result: any = await sendingToMoph('/save-moph-alert', rowsToSend);
     console.log(moment().format('HH:mm:ss'), `send moph alert ${rowsToSend.length} rows, result status:`, result.statusCode || '', result.message || '');
-    result.resultList = result?.resultList.map(item => { delete item?.result; return item; })
-    console.log(result);
+    result.resultList = result?.resultList.map((item: any) => { delete item?.result; return item; })
 
     // If successful, insert sent VNs into cache
     if (result.statusCode === 200) {

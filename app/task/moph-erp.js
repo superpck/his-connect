@@ -137,7 +137,7 @@ const sendWardName = async () => {
                 return { ...v, hospcode: process.env.HOSPCODE || '' };
             });
             const result = await (0, moph_refer_1.sendingToMoph)('/save-ward', rows);
-            console.log(moment().format('HH:mm:ss'), 'sendWardName', result.status || '', result.message || '', rows.length);
+            console.log(moment().format('HH:mm:ss'), 'sendWardName', result.status || '', result.message || '', rows.length, 'rows');
             return result;
         }
         else {
@@ -185,7 +185,7 @@ const sendBedNo = async () => {
             startRow += limitRow;
             times++;
         } while (startRow < countBed && countBed != 0);
-        console.log(moment().format('HH:mm:ss'), `sendBedNo ${countBed} rows (${times})`, error);
+        console.log(moment().format('HH:mm:ss'), `sendBedNo ${countBed} rows (${times} times)`, error);
         return { statusCode: 200, sentResult };
     }
     catch (error) {
