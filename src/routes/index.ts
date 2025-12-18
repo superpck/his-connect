@@ -1,58 +1,83 @@
-import * as fastify from 'fastify';
 import * as moment from 'moment'
-import * as HttpStatus from 'http-status-codes';
+import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 let shell = require("shelljs");
 var crypto = require('crypto');
 var fs = require('fs');
 
-const hisProvider = process.env.HIS_PROVIDER;
+import { Jwt } from './../plugins/jwt';
+var jwt = new Jwt();
+
+const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 const resultText = './sent_result.txt';
 
 const router = (fastify, { }, next) => {
   var startServer = fastify.startServerTime;
 
-  fastify.register(require('@fastify/cookie'), {
-    secret: process.env.SECRET_KEY,
-    parseOptions: {}
-  })
-
-  fastify.get('/', async (req, reply: any) => {
-    const cookieValue = req.cookies;
+  fastify.get('/', async (req: any, reply: any) => {
     reply.send({
-      ok: true,
-      apiCode: 'HISCONNECT',
-      apiName: fastify.apiName,
-      apiDesc: 'API for IS-Online, nRefer, PCC, CMI',
+      status: 200, statusCode: 200, ok: true,
+      date: moment().format('YYYY-MM-DD HH:mm:ss'),
+      apiName: global.appDetail.name,
       version: global.appDetail.version,
       subVersion: global.appDetail.subVersion,
-      serviceName: "isonline",   // for isonline only
-      his_provider: process.env.HIS_PROVIDER,
-      hospcode: process.env.HOSPCODE,
-      timer: (+moment().get('hour')) * 60 + (+moment().get('minute'))
-      // session: cookieValue
+      apiStartTime: global.apiStartTime
     });
   })
 
+  fastify.post('/', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
+    let res: any = {
+      statusCode: 200,
+      date: moment().format('YYYY-MM-DD HH:mm:ss'),
+      apiName: global.appDetail.name,
+      version: global.appDetail.version,
+      subVersion: global.appDetail.subVersion,
+      hospcode: process.env.HOSPCODE,
+      his: process.env.HIS_PROVIDER
+    }
+    reply.send(res);
+  })
+
+  fastify.get('/create-token/:source/:key', async (req: any, reply: any) => {
+    const ip = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;
+    const source = req.params.source || '';
+    const key = req.params.key || '';
+    const trust = req.headers.host.search('localhost|127.0.0.1|192.168.0.89') > -1 || ip.indexOf('203.157.')>=0;
+    if (trust) {
+      const token = fastify.jwt.sign({
+        uid: 0,
+        api: 'his-connect', source
+      }, { expiresIn: '4h' });
+      reply.send({
+        statusCode: 200,
+        token, key
+      });
+    } else {
+      reply.send({ ok: false, message: `request unreliable.` });
+    }
+  })
+
   fastify.get('/get-token/:key', async (req: any, reply: any) => {
+    const ip = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;
+    const source = req.params.source || '';
     const key = req.params.key;
-    const trust = req.headers.host.search('localhost|127.0.0.1|192.168.0.89') > -1;
+    const trust = req.headers.host.search('localhost|127.0.0.1|192.168.0.89') > -1 || ip.indexOf('203.157.')>=0;
     if (trust) {
       const now = moment().locale('th').format('YYYYMMDDTHHmmss');
       var appkey = crypto.createHash('sha256').update(now + process.env.REQUEST_KEY).digest('hex');
       var skey = crypto.createHash('md5').update(now + key).digest('hex');
       const token = fastify.jwt.sign({
         uid: 0,
-        api: 'his-connect'
-      }, { expiresIn: '3h' });
+        api: 'his-connect', source
+      }, { expiresIn: '4h' });
       reply.send({
         statusCode: 200,
-        message: 'test generation',
-        token: token,
+        // message: 'test generation',
+        token,
         key: now + appkey,
         secret_key: skey.substr(1, 10)
       });
     } else {
-      reply.send({ ok: false, message: 'request unreliable.' });
+      reply.send({ ok: false, message: `request unreliable.` });
     }
   })
 
@@ -63,15 +88,15 @@ const router = (fastify, { }, next) => {
       const token = fastify.jwt.sign({
         api: 'his-connect'
       }, { expiresIn: '3h' });
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, token: token })
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, token: token })
     } else {
-      reply.status(HttpStatus.UNAUTHORIZED).send({ statusCode: HttpStatus.UNAUTHORIZED, message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED) })
+      reply.status(StatusCodes.UNAUTHORIZED).send({ statusCode: StatusCodes.UNAUTHORIZED, message: getReasonPhrase(StatusCodes.UNAUTHORIZED) })
     }
   })
 
   fastify.get('/env', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
-    reply.status(HttpStatus.OK).send({
-      statusCode: HttpStatus.OK,
+    reply.status(StatusCodes.OK).send({
+      statusCode: StatusCodes.OK,
       env: {
         hospcode: process.env.HOSPCODE,
         apiPort: process.env.PORT,
@@ -91,8 +116,8 @@ const router = (fastify, { }, next) => {
         },
         nrefer: {
           autoSend: +process.env.NREFER_AUTO_SEND == 1,
-          minute: +process.env.NREFER_AUTO_SEND_EVERY_MINUTE,
-          hour: +process.env.NREFER_AUTO_SEND_EVERY_HOUR,
+          minute: +process.env.NREFER_AUTO_SEND_EVERY_MINUTE || 50,
+          hour: 0,
         },
         notifyChanel: process.env.NOTIFY_CHANNEL,
       }
@@ -110,9 +135,9 @@ const router = (fastify, { }, next) => {
       && ((+status === 15 && +province === 0)
         || ((+status === 25 || +status === 35) && +province === 1))
     ) {
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, config: process.env })
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, config: process.env })
     } else {
-      reply.status(HttpStatus.UNAUTHORIZED).send({ statusCode: HttpStatus.UNAUTHORIZED, message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED) })
+      reply.status(StatusCodes.UNAUTHORIZED).send({ statusCode: StatusCodes.UNAUTHORIZED, message: getReasonPhrase(StatusCodes.UNAUTHORIZED) })
     }
   })
 
@@ -142,22 +167,22 @@ const router = (fastify, { }, next) => {
         reloadPM2(body.api)
           .then(resultRestartPm2 => {
             console.log('====> resultRestartPM2', resultRestartPm2, moment().locale('th').format('HH:mm:ss.SS'));
-            reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, message: resultRestartPm2 })
+            reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, message: resultRestartPm2 })
           })
           .catch(err => {
             console.log('====> resultRestartPM2', err, moment().locale('th').format('HH:mm:ss.SS'));
-            reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, message: err })
+            reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, message: err })
           });
 
       } else {
-        reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK })
+        reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK })
       }
     } else {
-      reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.UNAUTHORIZED, message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED) })
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.UNAUTHORIZED, message: getReasonPhrase(StatusCodes.UNAUTHORIZED) })
     }
   })
 
-  fastify.get('/status', async (req: any, reply: any) => {
+  fastify.get('/status', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     var ua = req.headers['user-agent'];
     let browserDevice = 'desktop';
     let mobileType = null;
@@ -242,16 +267,16 @@ const router = (fastify, { }, next) => {
   fastify.get('/autosent-result', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     try {
       var contents = fs.readFileSync(resultText);
-      reply.status(HttpStatus.OK).send({
-        statusCode: HttpStatus.OK,
+      reply.status(StatusCodes.OK).send({
+        statusCode: StatusCodes.OK,
         is_set: process.env.NREFER_AUTO_SEND,
         time: process.env.NREFER_CRON_SEND,
         message: contents.toString()
       })
 
     } catch (error) {
-      reply.status(HttpStatus.NO_CONTENT).send({
-        statusCode: HttpStatus.NO_CONTENT,
+      reply.status(StatusCodes.NO_CONTENT).send({
+        statusCode: StatusCodes.NO_CONTENT,
         message: error.message
       })
     }
@@ -388,6 +413,25 @@ const router = (fastify, { }, next) => {
           }
         });
     });
+  }
+
+  async function decodeToken(req: any) {
+    let token: string = null;
+    console.log('body',req.body);
+    if (req.body && req.body.token) {
+      token = req.body.token;
+    } else  if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+      token = req.headers.authorization.split(' ')[1];
+    }
+    console.log('token', token);
+    try {
+      req.authenDecoded = await jwt.verify(token);
+      console.log(req.authenDecoded );
+      return req.authenDecoded;
+    } catch (error) {
+      console.log('jwtVerify', error);
+      return null;
+    }
   }
 
   next();
