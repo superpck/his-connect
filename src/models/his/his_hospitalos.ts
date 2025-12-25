@@ -25,8 +25,6 @@ export class HisHospitalOsModel {
     }
 
     async testConnect_(db: Knex) {
-        const clientType = ((db as any).client?.config?.client || '').toLowerCase();
-
         const opdConfig = await global.dbHIS('opdconfig').first();
         const hospname = opdConfig?.hospitalname || opdConfig?.hospitalcode || null;
 
@@ -35,29 +33,10 @@ export class HisHospitalOsModel {
 
         let charset = '';
         try {
-            if (clientType.includes('mysql')) {
-                const schema = await db('information_schema.SCHEMATA')
-                    .select('DEFAULT_CHARACTER_SET_NAME as charset')
-                    .where('SCHEMA_NAME', process.env.HIS_DB_NAME)
-                    .first();
-                charset = schema?.charset || '';
-            } else if (clientType.includes('pg')) {
-                const result = await db.raw(
-                    'SELECT pg_encoding_to_char(encoding) AS charset FROM pg_database LIMIT 1'
-                );
-                charset = result?.rows?.[0]?.charset || '';
-            } else if (clientType.includes('mssql')) {
-                const result = await db.raw(
-                    'SELECT collation_name AS charset FROM sys.databases WHERE name = ?',
-                    [process.env.HIS_DB_NAME]
-                );
-                charset = result?.recordset?.[0]?.charset || '';
-            } else if (clientType.includes('oracledb')) {
-                const result = await db.raw(
-                    "SELECT value AS charset FROM nls_database_parameters WHERE parameter = 'NLS_CHARACTERSET'"
-                );
-                charset = result?.rows?.[0]?.CHARSET || result?.rows?.[0]?.charset || '';
-            }
+            const result = await db.raw(
+                'SELECT pg_encoding_to_char(encoding) AS charset FROM pg_database LIMIT 1'
+            );
+            charset = result?.rows?.[0]?.charset || '';
         } catch (error) {
             console.warn('testConnect: charset lookup failed', error);
         }
@@ -66,46 +45,11 @@ export class HisHospitalOsModel {
     }
 
     getTableName_(db: Knex, dbName = process.env.HIS_DB_NAME) {
-        const clientType = ((db as any).client?.config?.client || '').toLowerCase();
         const schemaName = process.env.HIS_DB_SCHEMA || 'public';
-        const dbUser = (process.env.HIS_DB_USER || '').toUpperCase();
-
-        if (clientType.includes('mysql')) {
-            return db('information_schema.tables')
-                .select('table_name')
-                .where('table_schema', dbName);
-        }
-
-        if (clientType.includes('pg')) {
-            return db('information_schema.tables')
-                .select('table_name')
-                .where('table_catalog', dbName)
-                .andWhere('table_schema', schemaName);
-        }
-
-        if (clientType.includes('mssql')) {
-            const query = db('INFORMATION_SCHEMA.TABLES')
-                .select('TABLE_NAME as table_name')
-                .where('TABLE_TYPE', 'BASE TABLE');
-
-            if (dbName) {
-                query.andWhere('TABLE_CATALOG', dbName);
-            }
-
-            return query;
-        }
-
-        if (clientType.includes('oracledb')) {
-            const query = db('ALL_TABLES').select('TABLE_NAME as table_name');
-
-            if (dbUser) {
-                query.where('OWNER', dbUser);
-            }
-
-            return query;
-        }
-
-        return db.select(db.raw('NULL as table_name')).whereRaw('1 = 0');
+        return db('information_schema.tables')
+            .select('table_name')
+            .where('table_catalog', dbName)
+            .andWhere('table_schema', schemaName);
     }
 
     // รหัสห้องตรวจ
@@ -116,16 +60,7 @@ export class HisHospitalOsModel {
         } else if (depName) {
             sql.whereLike('visit_clinic_description', `%${depName}%`)
         }
-        const clientType = ((db as any).client?.config?.client || '').toLowerCase();
-        let emergencyExpr = "CASE WHEN LOCATE('ฉุกเฉิน', visit_clinic_description) > 0 THEN 1 ELSE 0 END";
-
-        if (clientType.includes('pg')) {
-            emergencyExpr = "CASE WHEN POSITION('ฉุกเฉิน' IN visit_clinic_description) > 0 THEN 1 ELSE 0 END";
-        } else if (clientType.includes('mssql')) {
-            emergencyExpr = "CASE WHEN CHARINDEX(N'ฉุกเฉิน', visit_clinic_description) > 0 THEN 1 ELSE 0 END";
-        } else if (clientType.includes('oracledb')) {
-            emergencyExpr = "CASE WHEN INSTR(visit_clinic_description, 'ฉุกเฉิน') > 0 THEN 1 ELSE 0 END";
-        }
+        const emergencyExpr = "CASE WHEN POSITION('ฉุกเฉิน' IN visit_clinic_description) > 0 THEN 1 ELSE 0 END";
 
         return sql
             .select('b_visit_clinic_id as department_code', 'visit_clinic_description as department_name',
@@ -902,20 +837,8 @@ export class HisHospitalOsModel {
             .where({ 'bed.active': '1', 'ward.visit_ward_active': '1' }).first();
     }
     async getBedNo(db: Knex, bedno: any = null, start = -1, limit: number = 1000) {
-        const clientType = ((db as any).client?.config?.client || '').toLowerCase();
         const createQueryConcat = (wardCode: string, bedNumber: string): any => {
-            switch (clientType) {
-                case 'pg':
-                case 'postgres':
-                case 'postgresql':
-                    return db.raw(`${wardCode}::text || '-' || ${bedNumber}::text`);
-                case 'mssql':
-                    return db.raw(`CAST(${wardCode} AS VARCHAR) + '-' + CAST(${bedNumber} AS VARCHAR)`);
-                case 'oracledb':
-                    return db.raw(`${wardCode} || '-' || ${bedNumber}`);
-                default:
-                    return db.raw(`CONCAT(${wardCode}, '-', ${bedNumber})`);
-            }
+            return db.raw(`${wardCode}::text || '-' || ${bedNumber}::text`);
         };
         const BedNnumberSql = createQueryConcat('ward.visit_ward_number', 'bed.bed_number');
         let sql = db('b_visit_bed as bed')

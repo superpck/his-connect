@@ -13,7 +13,6 @@ export class HisHospitalOsModel {
 
     async testConnect(db: Knex) {
         try {
-            const clientType = (db.client?.config?.client || '').toLowerCase();
             let result = await db('b_site').first();
             const hospname = result?.site_full_name || null;
             hospcode = result?.b_visit_office_id || hospcode;
@@ -22,18 +21,11 @@ export class HisHospitalOsModel {
             const connection = result && (result.patient_hn) ? true : false;
 
             let charset = '';
-            if (clientType.includes('mysql')) {
-                const schema = await db('information_schema.SCHEMATA')
-                    .select('DEFAULT_CHARACTER_SET_NAME as charset')
-                    .where('SCHEMA_NAME', process.env.HIS_DB_NAME)
-                    .first();
-                charset = schema?.charset || '';
-            } else if (clientType.includes('pg')) {
-                const result = await db.raw(
-                    'SELECT pg_encoding_to_char(encoding) AS charset FROM pg_database LIMIT 1'
-                );
-                charset = result?.rows?.[0]?.charset || '';
-            }
+            const resultRaw = await db.raw(
+                'SELECT pg_encoding_to_char(encoding) AS charset FROM pg_database LIMIT 1'
+            );
+            charset = resultRaw?.rows?.[0]?.charset || '';
+            
             return { connection, hospname, charset };
         } catch (error) {
             throw new Error(error);
@@ -239,8 +231,8 @@ export class HisHospitalOsModel {
                 to_timestamp(CASE WHEN t_visit.f_visit_type_id = '1' then t_accident.accident_staff_record_date_time else t_visit.visit_financial_discharge_time end ,'YYYY-mm-dd HH24:MI:SS') - INTERVAL '543 years' as disc_date_er,
                 CASE WHEN t_visit.f_visit_opd_discharge_status_id IN ('51') THEN '2' WHEN t_visit.f_visit_opd_discharge_status_id IN ('52') THEN '6' WHEN t_visit.f_visit_opd_discharge_status_id IN ('54') THEN '3' WHEN t_visit.f_visit_opd_discharge_status_id IN ('55') THEN '1' WHEN LENGTH(t_visit.f_visit_ipd_discharge_status_id)>0 THEN '7' ELSE '' END AS staer,
                 CASE WHEN t_visit.f_visit_ipd_discharge_type_id in ('1') THEN '1' WHEN t_visit.f_visit_ipd_discharge_type_id in ('4') THEN '2' WHEN t_visit.f_visit_ipd_discharge_type_id in ('2') THEN '3' WHEN t_visit.f_visit_ipd_discharge_type_id in ('3') THEN '4' WHEN t_visit.f_visit_ipd_discharge_type_id in ('8','9') THEN '5' WHEN t_visit.f_visit_ipd_discharge_type_id in ('5','6') THEN '6' ELSE '' END AS staward`))
-            .select(db.raw('if(t_visit_diagnosis.f_visit_diagnosis_type_id=\'1\',t_visit_diagnosis.visit_diagnosis_icd10,null) as diag1'))
-            .select(db.raw('if(t_visit_diagnosis.f_visit_diagnosis_type_id=\'2\',t_visit_diagnosis.visit_diagnosis_icd10,null) as diag2'))
+            .select(db.raw("CASE WHEN t_visit_diagnosis.f_visit_diagnosis_type_id='1' THEN t_visit_diagnosis.visit_diagnosis_icd10 ELSE NULL END as diag1"))
+            .select(db.raw("CASE WHEN t_visit_diagnosis.f_visit_diagnosis_type_id='2' THEN t_visit_diagnosis.visit_diagnosis_icd10 ELSE NULL END as diag2"))
             .limit(maxLimit);
     }
 
