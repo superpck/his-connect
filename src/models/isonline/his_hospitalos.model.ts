@@ -190,6 +190,84 @@ export class HisHospitalOsModel {
 
     }
 
+    getOpdServiceByVN(db: Knex, vn: any) {
+        let sql = db('t_visit');
+        if (typeof vn === 'string') {
+            sql.where('t_visit.visit_vn', vn);
+        } else {
+            sql.whereIn('t_visit.visit_vn', vn)
+        };
+
+        return sql.leftJoin(`t_accident`, 't_accident.t_visit_id', 't_visit.t_visit_id')
+            .leftJoin(`t_visit_vital_sign`, 't_visit_vital_sign.t_visit_id', 't_visit.t_visit_id')
+            .leftJoin('t_visit_service', 't_visit_service.t_visit_id', 't_visit.t_visit_id')
+            .leftJoin('t_visit_diagnosis', 't_visit_diagnosis.t_visit_id', 't_visit.t_visit_id')
+            .select('t_visit.visit_hn as hn', 't_visit.visit_vn as visitno', 't_accident.accident_time as time')
+            .select(db.raw(`concat(to_number(substr(t_accident.accident_date,1,4),'9999')-543 ,'-',substr(t_accident.accident_date,6),' ',t_accident.accident_time,':00') as adate,
+                cast(substring(t_visit_vital_sign.visit_vital_sign_blood_presure,1,(position('/' in t_visit_vital_sign.visit_vital_sign_blood_presure)-1)) as numeric) as bp_systolic,
+                cast(substring(t_visit_vital_sign.visit_vital_sign_blood_presure,(position('/' in t_visit_vital_sign.visit_vital_sign_blood_presure)+1)) as numeric) as bp_diastolic,
+                t_visit_vital_sign.visit_vital_sign_heart_rate as pr,
+                t_visit_vital_sign.visit_vital_sign_respiratory_rate as rr,
+                concat(to_number(substr(t_accident.accident_to_hos_date,1,4),'9999')-543, '-', substr(t_accident.accident_to_hos_date,6)) as hdate,
+                t_accident.accident_to_hos_time as htime,
+                t_accident.accident_moo as mooban,
+                t_accident.accident_road_name as apointname,
+                substr(t_accident.f_address_id_accident_tambon,5,2) as atumbon,
+                substr(t_accident.f_address_id_accident_amphur,3,2) as aampur,
+                substr(t_accident.f_address_id_accident_changwat,1,2) as aplace,
+                CASE t_accident.accident_emergency_type WHEN '0' THEN '6' WHEN '1' THEN '5' WHEN '2' THEN '3' WHEN '3' THEN '2' WHEN '4' THEN '1' WHEN '5' THEN '4' ELSE 'N' END as cause_t,
+                t_accident.f_accident_symptom_eye_id as gsc_e,
+                t_accident.f_accident_symptom_speak_id as gsc_v,
+                t_accident.f_accident_symptom_movement_id as gsc_m,
+                t_accident.f_accident_symptom_eye_id as eye,
+                t_accident.f_accident_symptom_speak_id as verbal,
+                t_accident.f_accident_symptom_movement_id as motor,
+                CASE WHEN t_accident.accident_accident_type IN ('V') THEN '1' WHEN t_accident.accident_accident_type IN ('00') THEN 'N' ELSE '2' END as cause,
+                CASE WHEN t_accident.f_accident_place_id IN ('1') THEN '1' WHEN t_accident.f_accident_place_id IN ('2','3') THEN '7' WHEN t_accident.f_accident_place_id IN ('4') THEN '6' WHEN t_accident.f_accident_place_id IN ('5') THEN '4' WHEN t_accident.f_accident_place_id IN ('6') THEN '8' WHEN t_accident.f_accident_place_id IN ('7','8') THEN '5' WHEN t_accident.f_accident_place_id IN ('9','10','11','98') THEN '9' ELSE 'N' END as apoint,
+                CASE WHEN t_accident.f_accident_patient_vechicle_type_id IN ('0') THEN 'N' WHEN t_accident.f_accident_patient_vechicle_type_id IN ('2') THEN '01' WHEN t_accident.f_accident_patient_vechicle_type_id IN ('3') THEN '02' WHEN t_accident.f_accident_patient_vechicle_type_id IN ('4') THEN '04' WHEN t_accident.f_accident_patient_vechicle_type_id IN ('5') THEN '05' WHEN t_accident.f_accident_patient_vechicle_type_id IN ('6') THEN '06' WHEN t_accident.f_accident_patient_vechicle_type_id IN ('7','9') THEN '08' WHEN t_accident.f_accident_patient_vechicle_type_id IN ('8') THEN '09' WHEN t_accident.f_accident_patient_vechicle_type_id IN ('10') THEN '03' WHEN t_accident.f_accident_patient_vechicle_type_id IN ('11') THEN '17' WHEN t_accident.f_accident_patient_vechicle_type_id IN ('12') THEN '16' WHEN t_accident.f_accident_patient_vechicle_type_id IN ('13') THEN '11' WHEN t_accident.f_accident_patient_vechicle_type_id IN ('14') THEN '18' WHEN t_accident.f_accident_patient_vechicle_type_id IN ('15','16') THEN '14' WHEN t_accident.f_accident_patient_vechicle_type_id IN ('17') THEN '13' ELSE '99' END as injt,
+                CASE WHEN t_visit.f_visit_service_type_id IN ('3') THEN '3' WHEN t_visit.f_visit_service_type_id IN ('1','2','4') THEN '2' ELSE '' END AS pmi,
+                CASE WHEN substr(t_accident.f_accident_visit_type_id,1,1) IN ('1') THEN '0' WHEN substr(t_accident.f_accident_visit_type_id,1,1) IN ('2','3','4','5') THEN '3' WHEN substr(t_accident.f_accident_visit_type_id,1,1) IN ('9') THEN 'N' ELSE '9' END AS atohosp,
+                CASE WHEN t_accident.accident_airway = '1' THEN '1' WHEN t_accident.accident_airway = '2' THEN '0' WHEN t_accident.accident_airway = '3' THEN '3' ELSE '0' END as airway,
+                CASE WHEN t_accident.accident_alcohol IN ('1') THEN '1' ELSE '0' END as risk1,
+                '0' as risk2,
+                CASE WHEN t_accident.f_accident_protection_type_id IN ('1') THEN '0' WHEN t_accident.f_accident_protection_type_id IN ('2') THEN '1' ELSE 'N' END as risk3,
+                CASE WHEN t_accident.f_accident_protection_type_id IN ('1') THEN '0' WHEN t_accident.f_accident_protection_type_id IN ('2') THEN '1' ELSE 'N' END as risk4,
+                CASE WHEN t_accident.accident_stopbleed = '1' THEN '1' WHEN t_accident.accident_stopbleed = '2' THEN '0' WHEN t_accident.accident_stopbleed = '3' THEN '3' ELSE '0' END as blood,
+                CASE WHEN substr(t_accident.accident_splint,1,1) IN ('1') THEN '1' WHEN substr(t_accident.accident_splint,1,1) IN ('2') THEN '0' WHEN substr(t_accident.accident_splint,1,1) IN ('3') THEN '3' ELSE '0' END as splintc,
+                CASE WHEN t_accident.accident_splint = '1' THEN '1' WHEN t_accident.accident_splint = '2' THEN '0' WHEN t_accident.accident_splint = '3' THEN '3' ELSE '0' END AS splint,
+                CASE WHEN t_accident.accident_fluid = '1' THEN '1' WHEN t_accident.accident_fluid = '2' THEN '0' WHEN t_accident.accident_fluid = '3' THEN '3' ELSE '3' END as iv,
+                to_timestamp(CASE WHEN t_visit.f_visit_type_id = '1' then t_accident.accident_staff_record_date_time else t_visit.visit_financial_discharge_time end ,'YYYY-mm-dd HH24:MI:SS') - INTERVAL '543 years' as disc_date_er,
+                CASE WHEN t_visit.f_visit_opd_discharge_status_id IN ('51') THEN '2' WHEN t_visit.f_visit_opd_discharge_status_id IN ('52') THEN '6' WHEN t_visit.f_visit_opd_discharge_status_id IN ('54') THEN '3' WHEN t_visit.f_visit_opd_discharge_status_id IN ('55') THEN '1' WHEN LENGTH(t_visit.f_visit_ipd_discharge_status_id)>0 THEN '7' ELSE '' END AS staer,
+                CASE WHEN t_visit.f_visit_ipd_discharge_type_id in ('1') THEN '1' WHEN t_visit.f_visit_ipd_discharge_type_id in ('4') THEN '2' WHEN t_visit.f_visit_ipd_discharge_type_id in ('2') THEN '3' WHEN t_visit.f_visit_ipd_discharge_type_id in ('3') THEN '4' WHEN t_visit.f_visit_ipd_discharge_type_id in ('8','9') THEN '5' WHEN t_visit.f_visit_ipd_discharge_type_id in ('5','6') THEN '6' ELSE '' END AS staward`))
+            .select(db.raw('if(t_visit_diagnosis.f_visit_diagnosis_type_id=\'1\',t_visit_diagnosis.visit_diagnosis_icd10,null) as diag1'))
+            .select(db.raw('if(t_visit_diagnosis.f_visit_diagnosis_type_id=\'2\',t_visit_diagnosis.visit_diagnosis_icd10,null) as diag2'))
+            .limit(maxLimit);
+    }
+
+    async getDiagnosisOpdVWXY(db: Knex, date: any) {
+        let sql = `SELECT visit_hn as hn, visit_vn AS visitno, 
+                concat(to_number(substr(visit_diagnosis_record_date_time,1,4),'9999')-543 ,'-',substr(visit_diagnosis_record_date_time,6,5)) as date, 
+                visit_diagnosis_icd10 AS diagcode,
+                icd10_description AS diag_name,
+                f_visit_diagnosis_type_id AS diag_type, 
+                visit_diagnosis_staff_record AS dr,
+                'IT' as codeset, 
+                visit_diagnosis_record_date_time as d_update
+            FROM t_visit_diagnosis as dx
+                LEFT JOIN b_icd10 as icd ON dx.visit_diagnosis_icd10 = icd.icd10_number
+                INNER JOIN t_visit as v ON dx.t_visit_id = v.t_visit_id
+            WHERE v.t_visit_id IN (
+                SELECT t_visit_id FROM t_visit_diagnosis as dx
+                WHERE concat(to_number(substr(visit_diagnosis_record_date_time,1,4),'9999')-543 ,'-',substr(visit_diagnosis_record_date_time,6,5)) = ? 
+                    AND LEFT(visit_diagnosis_icd10,1) IN ('V','W','X','Y'))
+                AND LEFT(visit_diagnosis_icd10,1) IN ('S','T','V','W','X','Y')
+            ORDER BY visit_vn, f_visit_diagnosis_type_id, visit_diagnosis_record_date_time LIMIT ` + maxLimit;
+
+        const result = await db.raw(sql, [date]);
+        return result?.rows || result[0];
+    }
+
+
     getDiagnosisOpd(knex, visitno) {
         return knex('t_accident')
             .select('t_visit.visit_vn as visitno', 't_accident.icd10_number as diagcode')
