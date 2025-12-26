@@ -220,6 +220,11 @@ export class HisHospitalOsModel {
     }
     // ✅ เรียกใช้: routes/his/index.ts
     // ใช้ view_diagnosis_opd_vwxy - view กรอง S,T,V,W,X,Y ไว้แล้ว และมี is_primary_vwxy flag
+    // 
+    // ⚡ Subquery Pattern: 
+    //   1) Subquery หา visit_id ที่มี "อย่างน้อย 1 รหัสอุบัติเหตุ V,W,X,Y"
+    //   2) Main query ดึง "ทุก diagnosis (S,T,V,W,X,Y)" ของ visits เหล่านั้น
+    //   → ผลลัพธ์: ได้ภาพรวมการบาดเจ็บทั้งหมด ไม่ใช่แค่รหัสอุบัติเหตุอย่างเดียว
     async getDiagnosisOpdVWXY(db: Knex, date: any) {
         // ค้นหา visit_id ที่มี primary ค่า (V,W,X,Y) ในวันที่กำหนด
         const subquery = db('his_connect.view_diagnosis_opd_vwxy')
@@ -235,40 +240,53 @@ export class HisHospitalOsModel {
             .limit(maxLimit);
     }
     // ✅ เรียกใช้: routes/his/index.ts
-    // ใช้ view_diagnosis_sepsis_opd
+    // ใช้ view_diagnosis_sepsis - filter ด้วย is_opd = true
+    //
+    // ⚡ Subquery Pattern:
+    //   1) Subquery หา visit_id ที่มี "อย่างน้อย 1 รหัส sepsis (R651,R572,A40,A41)"
+    //   2) Main query ดึง "ทุก diagnosis" ของ visits เหล่านั้น
+    //   → ผลลัพธ์: ได้ทั้ง sepsis, สาเหตุ (เช่น pneumonia), และภาวะแทรกซ้อน (เช่น kidney injury)
     async getDiagnosisSepsisOpd(db: Knex, date: any) {
         // ค้นหา visit_id ที่มี sepsis code (R651, R572, A40, A41) ในวันที่กำหนด
-        const subquery = db('his_connect.view_diagnosis_sepsis_opd')
+        const subquery = db('his_connect.view_diagnosis_sepsis')
             .select('t_visit_id')
             .where('date', date)
+            .where('is_opd', true)
             .where('is_sepsis_code', true);
 
-        return db('his_connect.view_diagnosis_sepsis_opd')
+        return db('his_connect.view_diagnosis_sepsis')
             .select(
                 db.raw('? as hospcode', [hisHospcode]),
                 'hn', 'visitno', 'date', 'diagcode', 'diag_name', 'diag_type', 'dr', 'episode', 'codeset', 'd_update'
             )
+            .where('is_opd', true)
             .whereIn('t_visit_id', subquery)
             .orderBy(['visitno', 'diag_type', 'd_update'])
             .limit(maxLimit);
     }
     // ✅ เรียกใช้: routes/his/index.ts
-    // ใช้ view_diagnosis_sepsis_ipd
+    // ใช้ view_diagnosis_sepsis - filter ด้วย is_ipd = true
+    //
+    // ⚡ Subquery Pattern:
+    //   1) Subquery หา visit_id ที่มี "อย่างน้อย 1 รหัส sepsis (R651,R572,A40,A41)"
+    //   2) Main query ดึง "ทุก diagnosis" ของ visits เหล่านั้น
+    //   → ผลลัพธ์: ได้ทั้ง sepsis, สาเหตุ, และภาวะแทรกซ้อนสำหรับผู้ป่วยใน
     async getDiagnosisSepsisIpd(db: Knex, dateStart: any, dateEnd: any) {
         // ค้นหา visit_id ที่เป็น IPD และมี sepsis code
-        const subquery = db('his_connect.view_diagnosis_sepsis_ipd')
+        const subquery = db('his_connect.view_diagnosis_sepsis')
             .select('t_visit_id')
-            .where('f_visit_type_id', '1')
+            .where('is_ipd', true)
             .whereBetween('date', [dateStart, dateEnd])
             .where('is_sepsis_code', true);
 
-        return db('his_connect.view_diagnosis_sepsis_ipd')
+        return db('his_connect.view_diagnosis_sepsis')
             .select(
                 db.raw('? as hospcode', [hisHospcode]),
                 'hn', 'visitno', 'an', 'date', 'diagcode', 'diag_name', 'diag_type', 'dr',
                 'patient_prename', 'patient_fname', 'patient_lname',
                 'wardcode', 'wardname', 'codeset', 'd_update'
             )
+            .where('is_ipd', true)
             .whereIn('t_visit_id', subquery)
             .orderBy(['visitno', 'diag_type', 'd_update'])
             .limit(maxLimit);
