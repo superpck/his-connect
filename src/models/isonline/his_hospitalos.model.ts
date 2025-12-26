@@ -77,8 +77,9 @@ export class HisHospitalOsModel {
 
     // ✅ เรียกใช้: routes/isonline/his.ts (L240)
     // Columns based on his_hosxpv4.model.ts getOpdServiceByVN
+    // ใช้ view_opd_service - filter ด้วย visit_vn
     getOpdServiceByVN(db: Knex, vn: any) {
-        let sql = db('his_connect.view_opd_service_by_vn')
+        let sql = db('his_connect.view_opd_service')
             .select(
                 'hn', 'visitno', 'date', 'time',
                 'clinic_local_code', 'clinic_local_name',
