@@ -8,10 +8,12 @@ export class HisHospitalOsModel {
     constructor() {
     }
 
+    // ❌ ไม่พบการเรียกใช้งาน
     check() {
         return true;
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts
     getTableName(knex: Knex) {
         return knex('information_schema.tables')
             .select('table_name')
@@ -19,11 +21,13 @@ export class HisHospitalOsModel {
 
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/isonline/his.ts (hisReferModel)
     async testConnect(db: Knex) {
         console.log('nRefer: Testing DB connection... from t_patient');
         return await db('t_patient').select('patient_hn').limit(1)
     }
 
+    // ⚙️ Internal - เรียกจาก testConnect()
     async testConnect_(db: Knex) {
         const opdConfig = await global.dbHIS('opdconfig').first();
         const hospname = opdConfig?.hospitalname || opdConfig?.hospitalcode || null;
@@ -44,6 +48,7 @@ export class HisHospitalOsModel {
         return { hospname, connection, charset };
     }
 
+    // ⚙️ Internal - เรียกจาก getTableName()
     getTableName_(db: Knex, dbName = process.env.HIS_DB_NAME) {
         const schemaName = process.env.HIS_DB_SCHEMA || 'public';
         return db('information_schema.tables')
@@ -52,421 +57,290 @@ export class HisHospitalOsModel {
             .andWhere('table_schema', schemaName);
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/refer/v3.ts
+    // ใช้ view_department
     // รหัสห้องตรวจ
     getDepartment(db: Knex, depCode: string = '', depName: string = '') {
-        let sql = db('b_visit_clinic');
+        let sql = db('his_connect.view_department')
+            .select(
+                db.raw('? as hospcode', [hisHospcode]),
+                'department_code', 'department_name', 'moph_code', 'emergency'
+            )
+            .where('isactive', '1');
+        
         if (depCode) {
-            sql.where('b_visit_clinic_id', depCode);
+            sql.where('department_code', depCode);
         } else if (depName) {
-            sql.whereLike('visit_clinic_description', `%${depName}%`)
+            sql.whereLike('department_name', `%${depName}%`);
         }
-        const emergencyExpr = "CASE WHEN POSITION('ฉุกเฉิน' IN visit_clinic_description) > 0 THEN 1 ELSE 0 END";
-
-        return sql
-            .select('b_visit_clinic_id as department_code', 'visit_clinic_description as department_name',
-                `'-' as moph_code`)
-            .select(db.raw(`${emergencyExpr} as emergency`))
-            .where('visit_clinic_active', '1')
-            .orderBy('visit_clinic_description')
-            .limit(maxLimit);
+        
+        return sql.orderBy('department_name').limit(maxLimit);
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/refer/v3.ts
+    // ใช้ view_dr
     // รายละเอียดแพทย์
     getDr(db: Knex, drCode: string = '', drName: string = '') {
-        let sql = db('b_employee');
+        let sql = db('his_connect.view_dr')
+            .select(
+                db.raw('? as hospcode', [hisHospcode]),
+                'dr_code', 'dr_license_code', 'dr_name', 'expire_date'
+            )
+            .where('isactive', '1');
+        
         if (drCode) {
-            sql.where('b_employee_id', drCode);
+            sql.where('dr_code', drCode);
         } else if (drName) {
             sql.where(function () {
                 this.whereLike('employee_firstname', `%${drName}%`)
-                    .orWhereLike('employee_lastname', `%${drName}%`)
-            })
+                    .orWhereLike('employee_lastname', `%${drName}%`);
+            });
         }
-        return sql
-            .select('b_employee_id as dr_code', 'employee_licenseno as dr_license_code',
-                db.raw("concat(employee_firstname, ' ', employee_lastname) as dr_name"), 'employee_resignation_date as expire_date')
-            .where('employee_active', '1')
-            .limit(maxLimit);
+        
+        return sql.limit(maxLimit);
     }
 
+    // ✅ เรียกใช้: routes/refer/crontab.ts, routes/his/index.ts
+    // ใช้ view_refer_out
     //select รายชื่อเพื่อแสดงทะเบียน refer
     getReferOut(db: Knex, date: any, hospCode = hisHospcode, visitNo: string = null) {
-        let sql = db('t_visit_refer_out as r').innerJoin('t_patient as pt', 'pt.t_patient_id', 'r.t_patient_id')
-            .innerJoin('t_visit as v', 'r.t_visit_id', 'v.t_visit_id')
-            .leftJoin('b_employee as dr', 'r.visit_refer_out_staff_doctor', 'dr.b_employee_id')
-            .select(db.raw(`"${hisHospcode}" as hospcode`));
+        let sql = db('his_connect.view_refer_out')
+            .select(
+                db.raw('? as hospcode', [hisHospcode]),
+                'refer_date', 'referid', 'hosp_destination',
+                'PID', 'hn', 'CID', 'vn', 'SEQ', 'AN',
+                'fname', 'lname', 'dob', 'sex', 'EMERGENCY', 'dr', 'provider', 'clinic'
+            );
+        
         if (visitNo) {
-            sql.where('v.visit_vn', visitNo);
+            sql.where('visit_vn', visitNo);
         } else {
-            sql.whereRaw(`concat(to_number(substr(r.visit_refer_out_date_time,1,4),'9999')-543 ,'-',substr(r.visit_refer_out_date_time,6,5)) = ?`, [date]);
+            sql.where('refer_date_formatted', date);
         }
-        return sql.select('r.visit_refer_out_date_time AS refer_date',
-            'r.visit_refer_out_number AS referid', 'r.visit_refer_out_off_id AS hosp_destination',
-            'pt.patient_hn AS PID', 'pt.patient_hn AS hn', 'pt.patient_pid AS CID', 'v.visit_vn as vn', 'v.visit_vn as SEQ',
-            'v.visit_vn as AN', 'pt.patient_firstname AS fname',
-            'pt.patient_lastname as lname', 'pt.patient_birthday AS dob',
-            'pt.f_sex_id as sex', 'r.f_visit_refer_out_emergency_type_id as EMERGENCY',
-            'r.visit_refer_out_staff_doctor as dr', 'dr.employee_licenseno as provider',
-            'v.b_visit_clinic_id as clinic')
-            .whereNotNull('v.visit_vn')
-            .where('r.visit_refer_out_off_id', '!=', "")
-            .whereNotNull('r.visit_refer_out_off_id')
-            .where('r.visit_refer_out_off_id', '!=', hisHospcode)
-            .orderBy('r.visit_refer_out_date_time');
+        
+        return sql
+            .whereNot('visit_refer_out_off_id', hisHospcode)
+            .orderBy('refer_date');
     }
 
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/refer/v3.ts, routes/pcc/index.ts
+    // ใช้ view_person
     async getPerson(db: Knex, columnName, searchText, hospCode = hisHospcode) {
-        columnName = columnName == 'hn' ? 'pt.patient_hn' : columnName;
-        columnName = columnName == 'cid' ? 'pt.patient_pid' : columnName;
-        columnName = columnName == 'name' ? 'pt.patient_firstname' : columnName;
+        columnName = columnName == 'hn' ? 'HN' : columnName;
+        columnName = columnName == 'cid' ? 'CID' : columnName;
+        columnName = columnName == 'name' ? 'NAME' : columnName;
 
-        const result = await db('t_patient as pt')
-            .leftJoin('f_patient_prefix as pre', 'pt.f_patient_prefix_id', 'pre.f_patient_prefix_id')
-            .leftJoin('f_patient_occupation as occ', 'pt.f_patient_occupation_id', 'occ.f_patient_occupation_id')
+        const result = await db('his_connect.view_person')
             .select(
                 db.raw('? as HOSPCODE', [hisHospcode]),
-                'pt.patient_hn as HN',
-                'pt.patient_hn as PID',
-                'pt.patient_pid as CID',
-                'pre.patient_prefix_description as PRENAME',
-                'pt.patient_firstname as NAME',
-                'pt.patient_lastname as LNAME',
-                'pt.f_sex_id as SEX',
-                'pt.patient_birthday as BIRTH',
-                'pt.f_patient_marriage_status_id as MSTATUS',
-                'occ.f_patient_occupation_id as OCCUPATION_OLD',
-                'occ.f_patient_occupation_id as OCCUPATION_NEW',
-                'pt.f_patient_nation_id as NATION',
-                'pt.f_patient_race_id as RACE',
-                'pt.f_patient_religion_id as RELIGION',
-                'pt.f_patient_education_id as EDUCATION',
-                'pt.patient_father_firstname as FATHER',
-                'pt.patient_mother_firstname as MOTHER',
-                'pt.patient_phone_number as MOBILE',
-                'pt.patient_record_date_time as D_UPDATE'
+                'HID', 'CID', 'PRENAME', 'NAME', 'LNAME', 'HN', 'PID', 'SEX', 'BIRTH',
+                'MSTATUS', 'OCCUPATION_OLD', 'OCCUPATION_NEW', 'NATION', 'RACE',
+                'RELIGION', 'EDUCATION', 'FATHER', 'MOTHER', 'MOBILE', 'D_UPDATE'
+            )
+            .where(columnName, searchText)
+            .first();
+
+        return result;
+    }
+    // ✅ เรียกใช้: routes/refer/crontab.ts
+    // ใช้ view_address
+    async getAddress(db: Knex, columnName, searchText, hospCode = hisHospcode) {
+        columnName = columnName === 'hn' ? 'patient_hn' : columnName;
+        
+        return db('his_connect.view_address')
+            .select(
+                db.raw('? as hospcode', [hisHospcode]),
+                'cid', 'hn', 'pid', 'addresstype', 'house_id', 'housetype',
+                'roomno', 'condo', 'houseno', 'soisub', 'soimain', 'road',
+                'villaname', 'village', 'tambon', 'ampur', 'changwat', 'd_update'
             )
             .where(columnName, searchText);
-
-        return result[0];
     }
-    async getAddress(db: Knex, columnName, searchText, hospCode = hisHospcode) {
-        //columnName => hn
-        const sql = `
-            SELECT
-                "${hisHospcode}" AS hospcode,
-                pt.cid,
-                pt.hn, pt.hn as pid,
-                IF (p.house_regist_type_id IN (1, 2),'1','2') addresstype,
-                CASE WHEN h.census_id IS NULL THEN '' ELSE h.census_id END AS house_id,
-                IF(p.house_regist_type_id IN (4),'9',h.house_type_id) housetype,
-                h.house_condo_roomno roomno,
-                h.house_condo_name condo,
-                IF(p.house_regist_type_id IN (4),pt.addrpart,h.address) houseno,
-                '' soisub,
-                '' soimain,
-                IF(p.house_regist_type_id IN (4),pt.road,h.road) road,
-                IF(p.house_regist_type_id IN (4),'',v.village_name)  villaname,
-                IF(p.house_regist_type_id IN (4),pt.moopart,v.village_moo) village,
-                IF(p.house_regist_type_id IN (4),pt.tmbpart,t.tmbpart) tambon,
-                IF(p.house_regist_type_id IN (4),pt.amppart,t.amppart) ampur,
-                IF(p.house_regist_type_id IN (4),pt.chwpart,t.chwpart) changwat,
-                p.last_update D_Update
-            FROM
-                person p
-                LEFT JOIN patient pt ON p.cid = pt.cid
-                LEFT JOIN house h ON h.house_id = p.house_id
-                LEFT JOIN village v ON v.village_id = h.village_id
-                LEFT JOIN thaiaddress t ON t.addressid=v.address_id
-                LEFT JOIN person_address pa ON pa.person_id = p.person_id
-
-            where ${columnName}=?
-        `;
-        const result = await db.raw(sql, [searchText]);
-        return result[0];
-    }
+    // ✅ เรียกใช้: routes/his/index.ts, routes/refer/v3.ts, routes/refer/crontab.ts
+    // ใช้ view_service
     async getService(db: Knex, columnName: string, searchText: any, hospCode = hisHospcode) {
-        columnName = columnName === 'visitNo' ? 'v.visit_vn' : columnName;
-        columnName = columnName === 'vn' ? 'v.visit_vn' : columnName;
-        columnName = columnName === 'hn' ? 'v.visit_hn' : columnName;
+        columnName = columnName === 'visitNo' ? 'visit_vn' : columnName;
+        columnName = columnName === 'vn' ? 'visit_vn' : columnName;
+        columnName = columnName === 'hn' ? 'visit_hn' : columnName;
+        columnName = columnName === 'date_serv' ? 'DATE_SERV' : columnName;
 
-        if (columnName === 'date_serv') {
-            columnName = <any>db.raw(`concat(to_number(substr(v.visit_begin_visit_time,1,4),'9999')-543 ,'-',substr(v.visit_begin_visit_time,6,5))`);
-        }
-
-        const sql = `
-            select 
-                ? as HOSPCODE,
-                v.visit_hn as PID,
-                v.visit_hn as HN,
-                pt.patient_pid as CID,
-                v.visit_vn as seq_id,
-                v.visit_vn as SEQ,
-                concat(to_number(substr(v.visit_begin_visit_time,1,4),'9999')-543 ,'-',substr(v.visit_begin_visit_time,6,5)) as DATE_SERV,
-                substr(v.visit_begin_visit_time,12,8) as TIME_SERV,
-                '1' as LOCATION,
-                case v.f_visit_type_id when '1' then '1' else '2' end as INTIME,
-                '9100' as INSTYPE,
-                '' as MAIN,
-                '1' as TYPEIN,
-                '' as REFEROUTHOSP,
-                '' as CAUSEOUT,
-                vs.visit_vital_sign_waist as waist,
-                vs.visit_vital_sign_checkup as cc,
-                '' as pe,
-                v.visit_note as ph,
-                v.visit_note as pi,
-                v.visit_note as nurse_note,
-                '1' as SERVPLACE,
-                vs.visit_vital_sign_temperature as BTEMP,
-                vs.visit_vital_sign_blood_presure as BP,
-                vs.visit_vital_sign_heart_rate as PR,
-                vs.visit_vital_sign_respiratory_rate as RR,
-                '' as o2sat,
-                vs.visit_vital_sign_weight as weight,
-                vs.visit_vital_sign_height as height,
-                '' as gcs_e, '' as gcs_v, '' as gcs_m, '' as pupil_left, '' as pupil_right,
-                '1' as TYPEOUT,
-                v.visit_vn as AN,
-                dr.b_employee_id as dr,
-                dr.employee_licenseno as provider,
-                '0.00' as COST,
-                '0.00' as PRICE,
-                '0.00' as PAYPRICE,
-                '0.00' as ACTUALPAY,
-                v.visit_begin_visit_time as D_UPDATE,
-                '' as hsub
-            from 
-                t_visit v
-                left join t_patient pt on v.t_patient_id = pt.t_patient_id
-                left join t_visit_vital_sign vs on v.t_visit_id = vs.t_visit_id
-                left join b_employee dr on v.visit_staff_doctor = dr.b_employee_id
-            where ${columnName}=?
-            `;
-
-        const result = await db.raw(sql, [hisHospcode, searchText]);
-        return result[0] || result.rows || result;
+        return db('his_connect.view_service')
+            .select(
+                db.raw('? as HOSPCODE', [hisHospcode]),
+                'PID', 'HN', 'CID', 'seq_id', 'SEQ', 'DATE_SERV', 'TIME_SERV',
+                'LOCATION', 'INTIME', 'INSTYPE', 'MAIN', 'TYPEIN', 'REFEROUTHOSP', 'CAUSEOUT',
+                'waist', 'cc', 'pe', 'ph', 'pi', 'nurse_note', 'SERVPLACE',
+                'BTEMP', 'BP', 'PR', 'RR', 'o2sat', 'weight', 'height',
+                'gcs_e', 'gcs_v', 'gcs_m', 'pupil_left', 'pupil_right',
+                'TYPEOUT', 'AN', 'dr', 'provider',
+                'COST', 'PRICE', 'PAYPRICE', 'ACTUALPAY', 'D_UPDATE', 'hsub'
+            )
+            .where(columnName, searchText);
     }
 
+    // ❌ ไม่พบการเรียกใช้จาก models/his (routes/isonline/his.ts ใช้ isonline model)
     getOpdServiceByVN(db: Knex, vn: any) {
-        let sql = db('t_visit as v');
+        let sql = db('his_connect.view_opd_service_by_vn');
         if (typeof vn === 'string') {
-            sql.where('v.visit_vn', vn);
+            sql.where('visit_vn', vn);
         } else {
-            sql.whereIn('v.visit_vn', vn)
+            sql.whereIn('visit_vn', vn)
         };
-
-        return sql.leftJoin(`t_accident as acc`, 'acc.t_visit_id', 'v.t_visit_id')
-            .leftJoin(`t_visit_vital_sign as vs`, 'vs.t_visit_id', 'v.t_visit_id')
-            .leftJoin('t_patient as pt', 'v.t_patient_id', 'pt.t_patient_id')
-            .leftJoin('b_visit_clinic as c', 'v.b_visit_clinic_id', 'c.b_visit_clinic_id')
-            .select('pt.patient_hn as hn', 'v.visit_vn as visitno', 'v.visit_begin_visit_time as time')
-            .select(db.raw(`concat(to_number(substr(v.visit_begin_visit_time,1,4),'9999')-543 ,'-',substr(v.visit_begin_visit_time,6,5)) as date,
-                vs.visit_vital_sign_blood_presure as bp,
-                vs.visit_vital_sign_heart_rate as pr,
-                vs.visit_vital_sign_respiratory_rate as rr,
-                v.b_visit_clinic_id as clinic_local_code,
-                c.visit_clinic_description as clinic_local_name`))
-            .limit(maxLimit);
+        return sql.limit(maxLimit);
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/refer/v3.ts, routes/refer/crontab.ts
+    // ใช้ view_diagnosis_opd
     async getDiagnosisOpd(db: Knex, visitNo, hospCode = hisHospcode) {
-        const sql = `
-            SELECT ? AS HOSPCODE,
-                pt.patient_pid CID,
-                v.visit_hn PID,
-                v.visit_hn,
-                v.visit_vn SEQ, v.visit_vn as VN,
-                concat(to_number(substr(v.visit_begin_visit_time,1,4),'9999')-543 ,'-',substr(v.visit_begin_visit_time,6,5)) DATE_SERV,
-                CASE WHEN dx.f_visit_diagnosis_type_id IS NULL THEN '' ELSE dx.f_visit_diagnosis_type_id END AS DIAGTYPE,
-                dx.visit_diagnosis_icd10 DIAGCODE,
-                v.b_visit_clinic_id AS CLINIC,
-                dx.visit_diagnosis_staff_record PROVIDER,
-                dx.visit_diagnosis_record_date_time D_UPDATE
-            FROM
-                t_visit v
-            LEFT JOIN t_visit_diagnosis dx ON dx.t_visit_id = v.t_visit_id
-            LEFT JOIN t_patient pt ON pt.t_patient_id = v.t_patient_id
-            WHERE
-                v.visit_vn =?
-                AND dx.visit_diagnosis_icd10 IS NOT NULL
-            `;
-        const result = await db.raw(sql, [hisHospcode, visitNo]);
-        return result[0] || result.rows || result;
+        return db('his_connect.view_diagnosis_opd')
+            .select(
+                db.raw('? as HOSPCODE', [hisHospcode]),
+                'CID', 'PID', 'visit_vn as visit_hn', 'seq_id', 'SEQ', 'VN',
+                'DATE_SERV', 'DIAGTYPE', 'DIAGCODE', 'CLINIC', 'PROVIDER', 'D_UPDATE'
+            )
+            .where('visit_vn', visitNo);
     }
+    // ✅ เรียกใช้: routes/his/index.ts
+    // ใช้ view_diagnosis_opd_accident
     async getDiagnosisOpdAccident(db: Knex, dateStart: any, dateEnd: any, hospCode = hisHospcode) {
         if (dateStart && dateEnd) {
-            return db('t_visit_diagnosis as dx')
-                .leftJoin('t_visit as v', 'dx.t_visit_id', 'v.t_visit_id')
-                .whereBetween(<any>db.raw(`concat(to_number(substr(dx.visit_diagnosis_record_date_time,1,4),'9999')-543 ,'-',substr(dx.visit_diagnosis_record_date_time,6,5))`), [dateStart, dateEnd])
-                .whereRaw(`left(visit_diagnosis_icd10,1) in ('V','W','X','Y')`)
+            return db('his_connect.view_diagnosis_opd_accident')
+                .select(
+                    db.raw('? as hospcode', [hisHospcode]),
+                    't_visit_diagnosis_id', 't_visit_id', 'visit_diagnosis_icd10',
+                    'f_visit_diagnosis_type_id', 'visit_diagnosis_staff_record',
+                    'visit_diagnosis_record_date_time', 'visit_vn', 'visit_hn', 'diagnosis_date'
+                )
+                .whereBetween('diagnosis_date', [dateStart, dateEnd])
                 .limit(maxLimit);
         } else {
             throw new Error('Invalid parameters');
         }
     }
+    // ✅ เรียกใช้: routes/his/index.ts
+    // ใช้ view_diagnosis_opd_vwxy - view กรอง S,T,V,W,X,Y ไว้แล้ว และมี is_primary_vwxy flag
     async getDiagnosisOpdVWXY(db: Knex, date: any) {
-        let sql = `SELECT pt.patient_hn as hn, v.visit_vn AS visitno, 
-                concat(to_number(substr(dx.visit_diagnosis_record_date_time,1,4),'9999')-543 ,'-',substr(dx.visit_diagnosis_record_date_time,6,5)) as date, 
-                dx.visit_diagnosis_icd10 AS diagcode,
-                icd.icd10_description AS diag_name,
-                dx.f_visit_diagnosis_type_id AS diag_type, 
-                dx.visit_diagnosis_staff_record AS dr,
-                'IT' as codeset, 
-                dx.visit_diagnosis_record_date_time as d_update
-            FROM t_visit_diagnosis as dx
-                LEFT JOIN b_icd10 as icd ON dx.visit_diagnosis_icd10 = icd.icd10_number
-                INNER JOIN t_visit as v ON dx.t_visit_id = v.t_visit_id
-                LEFT JOIN t_patient pt ON pt.t_patient_id = v.t_patient_id
-            WHERE v.t_visit_id IN (
-                SELECT t_visit_id FROM t_visit_diagnosis as dx
-                WHERE concat(to_number(substr(dx.visit_diagnosis_record_date_time,1,4),'9999')-543 ,'-',substr(dx.visit_diagnosis_record_date_time,6,5)) = ? 
-                    AND LEFT(dx.visit_diagnosis_icd10,1) IN ('V','W','X','Y'))
-                AND LEFT(dx.visit_diagnosis_icd10,1) IN ('S','T','V','W','X','Y')
-            ORDER BY v.visit_vn, dx.f_visit_diagnosis_type_id, dx.visit_diagnosis_record_date_time LIMIT ` + maxLimit;
+        // ค้นหา visit_id ที่มี primary ค่า (V,W,X,Y) ในวันที่กำหนด
+        const subquery = db('his_connect.view_diagnosis_opd_vwxy')
+            .select('t_visit_id')
+            .where('date', date)
+            .where('is_primary_vwxy', true);
 
-        const result = await db.raw(sql, [date]);
-        return result?.rows || result[0] || result;
+        // ดึงข้อมูลทั้งหมดสำหรับ visit_id ที่พบ (S,T,V,W,X,Y ถูก filter ใน view แล้ว)
+        return db('his_connect.view_diagnosis_opd_vwxy')
+            .select('hn', 'visitno', 'date', 'diagcode', 'diag_name', 'diag_type', 'dr', 'episode', 'codeset', 'd_update')
+            .whereIn('t_visit_id', subquery)
+            .orderBy(['visitno', 'diag_type', 'd_update'])
+            .limit(maxLimit);
     }
+    // ✅ เรียกใช้: routes/his/index.ts
+    // ใช้ view_diagnosis_sepsis_opd
     async getDiagnosisSepsisOpd(db: Knex, date: any) {
-        let sql = `SELECT pt.patient_hn as hn, v.visit_vn AS visitno, 
-                concat(to_number(substr(dx.visit_diagnosis_record_date_time,1,4),'9999')-543 ,'-',substr(dx.visit_diagnosis_record_date_time,6,5)) as date, 
-                dx.visit_diagnosis_icd10 AS diagcode,
-                icd.icd10_description AS diag_name,
-                dx.f_visit_diagnosis_type_id AS diag_type, 
-                dx.visit_diagnosis_staff_record AS dr,
-                'IT' as codeset, 
-                dx.visit_diagnosis_record_date_time as d_update
-            FROM t_visit_diagnosis as dx
-                LEFT JOIN b_icd10 as icd ON dx.visit_diagnosis_icd10 = icd.icd10_number
-                INNER JOIN t_visit as v ON dx.t_visit_id = v.t_visit_id
-                LEFT JOIN t_patient pt ON pt.t_patient_id = v.t_patient_id
-            WHERE v.t_visit_id IN (
-                SELECT t_visit_id FROM t_visit_diagnosis as dx
-                WHERE concat(to_number(substr(dx.visit_diagnosis_record_date_time,1,4),'9999')-543 ,'-',substr(dx.visit_diagnosis_record_date_time,6,5)) = ? 
-                    AND (LEFT(dx.visit_diagnosis_icd10,4) IN ('R651','R572') OR LEFT(dx.visit_diagnosis_icd10,3) IN ('A40','A41')))
-            ORDER BY v.visit_vn, dx.f_visit_diagnosis_type_id, dx.visit_diagnosis_record_date_time LIMIT ` + maxLimit;
+        // ค้นหา visit_id ที่มี sepsis code (R651, R572, A40, A41) ในวันที่กำหนด
+        const subquery = db('his_connect.view_diagnosis_sepsis_opd')
+            .select('t_visit_id')
+            .where('date', date)
+            .where('is_sepsis_code', true);
 
-        const result = await db.raw(sql, [date]);
-        return result?.rows || result[0] || result;
+        return db('his_connect.view_diagnosis_sepsis_opd')
+            .select(
+                db.raw('? as hospcode', [hisHospcode]),
+                'hn', 'visitno', 'date', 'diagcode', 'diag_name', 'diag_type', 'dr', 'episode', 'codeset', 'd_update'
+            )
+            .whereIn('t_visit_id', subquery)
+            .orderBy(['visitno', 'diag_type', 'd_update'])
+            .limit(maxLimit);
     }
+    // ✅ เรียกใช้: routes/his/index.ts
+    // ใช้ view_diagnosis_sepsis_ipd
     async getDiagnosisSepsisIpd(db: Knex, dateStart: any, dateEnd: any) {
-        let sql = `SELECT pt.patient_hn as hn, v.visit_vn AS visitno, v.visit_vn as an, 
-                concat(to_number(substr(v.visit_financial_discharge_time,1,4),'9999')-543 ,'-',substr(v.visit_financial_discharge_time,6,5)) as date,
-                dx.visit_diagnosis_icd10 AS diagcode,
-                icd.icd10_description AS diag_name,
-                dx.f_visit_diagnosis_type_id AS diag_type, 
-                dx.visit_diagnosis_staff_record AS dr,
-                pre.patient_prefix_description AS patient_prename,
-                pt.patient_firstname AS patient_fname,
-                pt.patient_lastname AS patient_lastname,
-                v.b_visit_ward_id as wardcode, ward.visit_ward_description as wardname,
-                'IT' as codeset, dx.visit_diagnosis_record_date_time as d_update
-            FROM t_visit_diagnosis as dx
-                LEFT JOIN b_icd10 as icd ON dx.visit_diagnosis_icd10 = icd.icd10_number
-                INNER JOIN t_visit as v ON dx.t_visit_id = v.t_visit_id
-                LEFT JOIN t_patient pt on v.t_patient_id = pt.t_patient_id
-                LEFT JOIN f_patient_prefix pre on pt.f_patient_prefix_id = pre.f_patient_prefix_id
-                LEFT JOIN b_visit_ward ward on v.b_visit_ward_id = ward.b_visit_ward_id
-                WHERE v.t_visit_id IN (
-                    SELECT t_visit_id FROM t_visit_diagnosis as dx
-                    INNER JOIN t_visit as v2 on dx.t_visit_id = v2.t_visit_id
-                    WHERE v2.f_visit_type_id = '1' AND 
-                        concat(to_number(substr(v2.visit_financial_discharge_time,1,4),'9999')-543 ,'-',substr(v2.visit_financial_discharge_time,6,5)) BETWEEN ? AND ? 
-                        AND (LEFT(dx.visit_diagnosis_icd10,4) IN ('R651','R572') OR LEFT(dx.visit_diagnosis_icd10,3) IN ('A40','A41')))
-            ORDER BY v.visit_vn, dx.f_visit_diagnosis_type_id, v.visit_begin_visit_time LIMIT ` + maxLimit;
-        const result = await db.raw(sql, [dateStart, dateEnd]);
-        return result?.rows || result[0] || result;
+        // ค้นหา visit_id ที่เป็น IPD และมี sepsis code
+        const subquery = db('his_connect.view_diagnosis_sepsis_ipd')
+            .select('t_visit_id')
+            .where('f_visit_type_id', '1')
+            .whereBetween('date', [dateStart, dateEnd])
+            .where('is_sepsis_code', true);
+
+        return db('his_connect.view_diagnosis_sepsis_ipd')
+            .select(
+                db.raw('? as hospcode', [hisHospcode]),
+                'hn', 'visitno', 'an', 'date', 'diagcode', 'diag_name', 'diag_type', 'dr',
+                'patient_prename', 'patient_fname', 'patient_lname',
+                'wardcode', 'wardname', 'codeset', 'd_update'
+            )
+            .whereIn('t_visit_id', subquery)
+            .orderBy(['visitno', 'diag_type', 'd_update'])
+            .limit(maxLimit);
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts (ผ่าน getLabResult)
     getInvestigation(db: Knex, columnName: string, searchNo: string, hospCode = hisHospcode) {
         return this.getLabResult(db, columnName, searchNo);
     }
+    // ❌ ไม่พบการเรียกใช้งาน
+    // ใช้ view_lab_request
+    // Columns based on column_description.md getLabRequest
     async getLabRequest(db: Knex, columnName: string, searchNo: string, hospCode = hisHospcode) {
-        columnName = columnName === 'visitNo' ? 'v.visit_vn' : columnName;
-        columnName = columnName === 'hn' ? 'pt.patient_hn' : columnName;
-        columnName = columnName === 'cid' ? 'pt.patient_pid' : columnName;
+        columnName = columnName === 'visitNo' ? 'visit_vn' : columnName;
+        columnName = columnName === 'hn' ? 'patient_hn' : columnName;
+        columnName = columnName === 'cid' ? 'patient_pid' : columnName;
 
-        return db('t_lab_order as lo')
-            .leftJoin('t_visit as v', 'lo.t_visit_id', 'v.t_visit_id')
-            .leftJoin('t_patient as pt', 'v.t_patient_id', 'pt.t_patient_id')
-            .select(db.raw(`'${hisHospcode}' as HOSPCODE, 'LAB' as INVESTTYPE`))
-            .select('v.visit_vn as vn', 'v.visit_vn as visitno', 'v.visit_vn as SEQ',
-                'pt.patient_hn as PID', 'pt.patient_pid as CID',
-                'lo.t_lab_order_id as request_id',
-                'lo.b_item_id as LOCALCODE',
-                'lo.lab_order_common_name as INVESTNAME',
-                'lo.lab_order_staff_record as PROVIDER',
-                'lo.lab_order_order_date_time as DATETIME_INVEST')
+        return db('his_connect.view_lab_request')
+            .select(
+                db.raw('? as hospcode', [hisHospcode]),
+                'visitno', 'hn', 'an', 'request_id', 'LOCALCODE', 'INVESTNAME',
+                'loinc', 'icdcm', 'cgd', 'cost', 'price', 'DATETIME_REPORT'
+            )
             .where(columnName, searchNo)
             .limit(maxLimit);
     }
 
+    // ⚙️ Internal - เรียกจาก getInvestigation()
+    // ใช้ view_lab_result
     async getLabResult(db: Knex, columnName: string, searchNo: string, hospCode = hisHospcode) {
-        columnName = columnName === 'visitNo' ? 'v.visit_vn' : columnName;
-        columnName = columnName === 'hn' ? 'pt.patient_hn' : columnName;
+        columnName = columnName === 'visitNo' ? 'visit_vn' : columnName;
+        columnName = columnName === 'hn' ? 'patient_hn' : columnName;
 
-        return db('t_lab_result as lr')
-            .leftJoin('t_lab_order as lo', 'lr.t_lab_order_id', 'lo.t_lab_order_id')
-            .leftJoin('t_visit as v', 'lo.t_visit_id', 'v.t_visit_id')
-            .leftJoin('t_patient as pt', 'v.t_patient_id', 'pt.t_patient_id')
-            .select(db.raw(`'${hisHospcode}' as HOSPCODE`))
-            .select('pt.patient_hn as PID', 'v.visit_vn as SEQ', 'v.visit_vn as VN', 'pt.patient_pid as CID',
-                'lo.t_lab_order_id as request_id',
-                'lr.lab_result_lab_test_description as INVESTNAME',
-                'lr.lab_result_lab_test_result as INVESTVALUE',
-                'lr.lab_result_lab_test_unit as UNIT',
-                'lo.lab_order_order_date_time as DATETIME_INVEST',
-                'lr.lab_result_record_date_time as D_UPDATE')
+        return db('his_connect.view_lab_result')
+            .select(
+                db.raw('? as HOSPCODE', [hisHospcode]),
+                'PID', 'SEQ', 'VN', 'CID', 'request_id',
+                'INVESTNAME', 'INVESTVALUE', 'UNIT', 'DATETIME_INVEST', 'D_UPDATE'
+            )
             .where(columnName, searchNo)
             .limit(maxLimit);
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/qdrugstore/index.ts, routes/refer/v3.ts
+    // ใช้ view_drug_opd
     async getDrugOpd(db: Knex, visitNo, hospCode = hisHospcode) {
-        const sql = `
-            SELECT ? as HOSPCODE,
-                pt.patient_hn as PID, pt.patient_pid as CID,
-                v.visit_vn as seq_id, v.visit_vn as SEQ, v.visit_vn as vn,
-                concat(to_number(substr(v.visit_begin_visit_time,1,4),'9999')-543 ,'-',substr(v.visit_begin_visit_time,6,5)) as date_serv,
-                v.b_visit_clinic_id as clinic,
-                item.b_item_id as DID, item.item_common_name as DID_TMT,
-                item.b_item_id as dcode, item.item_common_name as dname,
-                o.order_qty as amount,
-                '' as unit,
-                '' as unit_packing,
-                o.b_item_drug_uom_id_usage as usage_code,
-                o.order_common_name as drug_usage,
-                '' as caution,
-                o.order_price as drugprice, 
-                o.order_cost as drugcost, 
-                o.visit_order_staff_doctor as provider,
-                o.order_executed_date_time as d_update
-                
-            FROM
-                t_order o
-                left join t_visit v on o.t_visit_id = v.t_visit_id
-                left join t_patient pt on v.t_patient_id = pt.t_patient_id
-                inner join b_item item on o.b_item_id = item.b_item_id
-            WHERE 
-                v.f_visit_type_id = '0'
-                and o.f_order_status_id <> '3'
-                and v.visit_vn = ?
-        `;
-        const result = await db.raw(sql, [hisHospcode, visitNo]);
-        return result[0] || result.rows || result;
+        return db('his_connect.view_drug_opd')
+            .select(
+                db.raw('? as HOSPCODE', [hisHospcode]),
+                'PID', 'CID', 'seq_id', 'SEQ', 'vn', 'date_serv', 'clinic',
+                'DID', 'DID_TMT', 'dcode', 'dname', 'amount', 'unit', 'unit_packing',
+                'usage_code', 'drug_usage', 'caution', 'drugprice', 'drugcost', 'provider', 'd_update'
+            )
+            .where('visit_vn', visitNo);
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/refer/v3.ts, routes/refer/crontab.ts
+    // ใช้ view_admission
     async getAdmission(db: Knex, columnName: string, searchValue: any, hospCode = hisHospcode) {
-        columnName = columnName === 'an' ? 'v.visit_vn' : columnName;
-        columnName = columnName === 'hn' ? 'pt.patient_hn' : columnName;
-        columnName = columnName === 'visitNo' ? 'v.visit_vn' : columnName;
-        columnName = columnName === 'dateadmit' ? 'v.visit_begin_visit_time' : columnName;
-        columnName = columnName === 'datedisc' ? 'v.visit_financial_discharge_time' : columnName;
+        columnName = columnName === 'an' ? 'visit_vn' : columnName;
+        columnName = columnName === 'hn' ? 'patient_hn' : columnName;
+        columnName = columnName === 'visitNo' ? 'visit_vn' : columnName;
+        columnName = columnName === 'dateadmit' ? 'visit_begin_visit_time' : columnName;
+        columnName = columnName === 'datedisc' ? 'visit_financial_discharge_time' : columnName;
 
-        let sqlCommand = db('t_visit as v')
-            .leftJoin('t_patient as pt', 'v.t_patient_id', 'pt.t_patient_id')
-            .leftJoin('b_visit_ward as ward', 'v.b_visit_ward_id', 'ward.b_visit_ward_id')
-            .leftJoin('b_employee as dr', 'v.visit_staff_doctor', 'dr.b_employee_id');
+        let sqlCommand = db('his_connect.view_admission')
+            .select(
+                db.raw('? as HOSPCODE', [hisHospcode]),
+                'PID', 'SEQ', 'AN', 'CID', 'SEX',
+                'datetime_admit', 'WARD_LOCAL', 'WARDADMITNAME',
+                'datetime_disch', 'dr', 'provider', 'd_update'
+            );
 
         if (Array.isArray(searchValue)) {
             sqlCommand.whereIn(columnName, searchValue);
@@ -474,274 +348,208 @@ export class HisHospitalOsModel {
             sqlCommand.where(columnName, searchValue);
         }
 
-        return sqlCommand.select(
-            db.raw('? as HOSPCODE', [hisHospcode]),
-            'pt.patient_hn as PID',
-            'v.visit_vn as SEQ', 'v.visit_vn as AN', 'pt.patient_pid as CID', 'pt.f_sex_id as SEX',
-            'v.visit_begin_visit_time as datetime_admit',
-            'v.b_visit_ward_id as WARD_LOCAL',
-            'ward.visit_ward_description as WARDADMITNAME',
-            'v.visit_financial_discharge_time as datetime_disch',
-            'dr.b_employee_id as dr', 'dr.employee_licenseno as provider',
-            'v.visit_record_date_time as d_update'
-        );
+        return sqlCommand;
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/refer/v3.ts, routes/refer/crontab.ts
+    // ใช้ view_procedure_ipd
     async getProcedureIpd(db: Knex, an: string, hospCode = hisHospcode) {
-        const sql = `
-            SELECT ? as HOSPCODE,
-                pt.patient_hn as PID,
-                v.visit_vn as AN, v.visit_vn as SEQ,
-                concat(to_number(substr(v.visit_begin_visit_time,1,4),'9999')-543 ,'-',substr(v.visit_begin_visit_time,6,5)) as date_serv,
-                v.b_visit_clinic_id as clinic,
-                dx.visit_diagnosis_icd10 as procedcode,
-                icd.icd10_description as procedname,
-                dx.visit_diagnosis_staff_record as provider,
-                v.visit_begin_visit_time as start_date,
-                v.visit_begin_visit_time as start_time,
-                v.visit_financial_discharge_time as finish_date,
-                v.visit_financial_discharge_time as finish_time,
-                v.visit_record_date_time as d_update
-            FROM
-                t_visit_diagnosis dx
-                left join t_visit v on dx.t_visit_id = v.t_visit_id
-                left join t_patient pt on v.t_patient_id = pt.t_patient_id
-                left join b_icd10 icd on dx.visit_diagnosis_icd10 = icd.icd10_number
-            WHERE v.visit_vn = ?
-                AND dx.f_visit_diagnosis_type_id = '1'
-        `;
-        const result = await db.raw(sql, [hisHospcode, an]);
-        return result[0] || result.rows || result;
+        return db('his_connect.view_procedure_ipd')
+            .select(
+                db.raw('? as HOSPCODE', [hisHospcode]),
+                'PID', 'AN', 'SEQ', 'date_serv', 'clinic', 'procedcode', 'procedname',
+                'provider', 'start_date', 'start_time', 'finish_date', 'finish_time', 'd_update'
+            )
+            .where('visit_vn', an)
+            .where('f_visit_diagnosis_type_id', '1');
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/qdrugstore/index.ts, routes/refer/v3.ts
+    // ใช้ view_charge_ipd
     async getChargeIpd(db: Knex, an: string, hospCode = hisHospcode) {
-        const sql = `
-            SELECT ? as HOSPCODE,
-                pt.patient_hn as PID,
-                v.visit_vn as AN, v.visit_vn as SEQ,
-                v.visit_begin_visit_time as date_serv,
-                item.b_item_id as chargecode,
-                item.item_common_name as chargename,
-                o.order_qty as quantity,
-                v.b_visit_clinic_id as clinic,
-                o.order_price as unitprice,
-                o.order_price * o.order_qty as chargeprice,
-                o.visit_order_staff_doctor as provider,
-                o.order_executed_date_time as d_update
-            FROM
-                t_order o
-                left join t_visit v on o.t_visit_id = v.t_visit_id
-                left join t_patient pt on v.t_patient_id = pt.t_patient_id
-                inner join b_item item on o.b_item_id = item.b_item_id
-            WHERE v.visit_vn = ?
-                and o.f_order_status_id <> '3'
-        `;
-        const result = await db.raw(sql, [hisHospcode, an]);
-        return result[0] || result.rows || result;
+        return db('his_connect.view_charge_ipd')
+            .select(
+                db.raw('? as HOSPCODE', [hisHospcode]),
+                'PID', 'AN', 'SEQ', 'date_serv', 'chargecode', 'chargename',
+                'quantity', 'clinic', 'unitprice', 'chargeprice', 'provider', 'd_update'
+            )
+            .where('visit_vn', an);
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/refer/v3.ts, routes/refer/crontab.ts
+    // ใช้ view_drug_ipd
     async getDrugIpd(db: Knex, an: string, hospCode = hisHospcode) {
-        const sql = `
-            SELECT ? as HOSPCODE,
-                pt.patient_hn as PID,
-                v.visit_vn as AN, v.visit_vn as SEQ,
-                v.visit_begin_visit_time as date_serv,
-                v.b_visit_clinic_id as clinic,
-                item.b_item_id as DID, item.item_common_name as DID_TMT,
-                item.b_item_id as dcode, item.item_common_name as dname,
-                o.order_qty as amount,
-                '' as unit,
-                '' as unit_packing,
-                o.b_item_drug_uom_id_usage as usage_code,
-                o.order_common_name as drug_usage,
-                '' as caution,
-                o.order_price as drugprice, 
-                o.order_cost as drugcost, 
-                o.visit_order_staff_doctor as provider,
-                o.order_executed_date_time as d_update
-            FROM
-                t_order o
-                left join t_visit v on o.t_visit_id = v.t_visit_id
-                left join t_patient pt on v.t_patient_id = pt.t_patient_id
-                inner join b_item item on o.b_item_id = item.b_item_id
-            WHERE v.visit_vn = ?
-                and o.f_order_status_id <> '3'
-        `;
-        const result = await db.raw(sql, [hisHospcode, an]);
-        return result[0] || result.rows || result;
+        return db('his_connect.view_drug_ipd')
+            .select(
+                db.raw('? as HOSPCODE', [hisHospcode]),
+                'PID', 'AN', 'SEQ', 'date_serv', 'clinic',
+                'DID', 'DID_TMT', 'dcode', 'dname', 'amount', 'unit', 'unit_packing',
+                'usage_code', 'drug_usage', 'caution', 'drugprice', 'drugcost', 'provider', 'd_update'
+            )
+            .where('visit_vn', an);
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/refer/v3.ts, routes/refer/crontab.ts
+    // ใช้ view_diagnosis_ipd
     async getDiagnosisIpd(db: Knex, columnName, searchNo, hospCode = hisHospcode) {
-        columnName = columnName === 'visitNo' ? 'v.visit_vn' : columnName;
-        columnName = columnName === 'an' ? 'v.visit_vn' : columnName;
-        const sql = `
-            select 
-                ? as hospcode,
-                pt.patient_hn as pid,
-                v.visit_vn as an,
-                v.visit_begin_visit_time as datetime_admit,
-                v.b_visit_ward_id as warddiag,
-                dx.f_visit_diagnosis_type_id as diagtype,
-                dx.visit_diagnosis_icd10 as diagcode, 
-                icd.icd10_description AS diagname,
-                dx.visit_diagnosis_staff_record as provider,
-                dx.visit_diagnosis_record_date_time d_update,
-                pt.patient_pid as CID
-                
-            from 
-                t_visit_diagnosis dx
-                left join t_visit v on v.t_visit_id = dx.t_visit_id
-                left join t_patient pt on pt.t_patient_id = v.t_patient_id
-                left join b_icd10 icd on icd.icd10_number = dx.visit_diagnosis_icd10
-            where ${columnName} = ?
-            order by v.visit_vn, dx.f_visit_diagnosis_type_id`;
-        const result = await db.raw(sql, [hisHospcode, searchNo]);
-        return result[0] || result.rows || result;
+        columnName = columnName === 'visitNo' ? 'visit_vn' : columnName;
+        columnName = columnName === 'an' ? 'visit_vn' : columnName;
+
+        return db('his_connect.view_diagnosis_ipd')
+            .select(
+                db.raw('? as hospcode', [hisHospcode]),
+                'pid', 'an', 'datetime_admit', 'warddiag', 'diagtype',
+                'diagcode', 'diagname', 'provider', 'd_update', 'CID'
+            )
+            .where(columnName, searchNo)
+            .orderBy(['an', 'diagtype']);
     }
+    // ✅ เรียกใช้: routes/his/index.ts
+    // ใช้ view_diagnosis_ipd_accident
     async getDiagnosisIpdAccident(db: Knex, dateStart: any, dateEnd: any, hospCode = hisHospcode) {
         if (dateStart && dateEnd) {
-            return db('t_visit_diagnosis as dx')
-                .innerJoin('t_visit as v', 'dx.t_visit_id', 'v.t_visit_id')
-                .select('dx.*')
-                .whereBetween(<any>db.raw(`concat(to_number(substr(dx.visit_diagnosis_record_date_time,1,4),'9999')-543 ,'-',substr(dx.visit_diagnosis_record_date_time,6,5))`), [dateStart, dateEnd])
-                .whereRaw(`LEFT(dx.visit_diagnosis_icd10,1) IN ('V','W','X','Y')`)
-                .where('v.f_visit_type_id', '1')
+            return db('his_connect.view_diagnosis_ipd_accident')
+                .select(
+                    db.raw('? as hospcode', [hisHospcode]),
+                    't_visit_diagnosis_id', 't_visit_id', 'visit_diagnosis_icd10',
+                    'f_visit_diagnosis_type_id', 'visit_diagnosis_staff_record',
+                    'visit_diagnosis_record_date_time', 'visit_vn', 'visit_hn', 'diagnosis_date'
+                )
+                .whereBetween('diagnosis_date', [dateStart, dateEnd])
                 .limit(maxLimit);
         } else {
             throw new Error('Invalid parameters');
         }
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/qdrugstore/index.ts, routes/refer/v3.ts
+    // ใช้ view_accident
     async getAccident(db: Knex, visitNo, hospCode = hisHospcode) {
-        return db('t_visit as v')
-            .leftJoin('t_accident as acc', 'acc.t_visit_id', 'v.t_visit_id')
-            .leftJoin('t_visit_vital_sign as vs', 'vs.t_visit_id', 'v.t_visit_id')
-            .select('v.visit_vn as vn', 'v.visit_hn as hn', 'v.visit_begin_visit_time as adate',
-                'v.visit_begin_visit_time as atime',
-                'vs.visit_vital_sign_blood_presure as bp1',
-                'acc.accident_eye_id as e', 'acc.accident_speak_id as v', 'acc.accident_movement_id as m')
-            .where('v.visit_vn', visitNo);
+        return db('his_connect.view_accident')
+            .select(
+                db.raw('? as HOSPCODE', [hisHospcode]),
+                'vn', 'hn', 'adate', 'atime', 'bp1', 'e', 'verbal', 'm'
+            )
+            .where('visit_vn', visitNo);
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/refer/v3.ts, routes/refer/crontab.ts, routes/pcc/index.ts
+    // ใช้ view_drug_allergy
     async getDrugAllergy(db: Knex, hn, hospCode = hisHospcode) {
-        return db('t_patient_drug_allergy as al')
-            .leftJoin('t_patient as pt', 'al.t_patient_id', 'pt.t_patient_id')
-            .select(db.raw('? as HOSPCODE', [hisHospcode]))
-            .select('pt.patient_hn as PID', 'pt.patient_pid as CID', 'al.drug_allergy_drug_name as DRUGALLERGY',
-                'al.drug_allergy_drug_name as DNAME', 'al.f_drug_allergy_symtom_level_id as ALEVE',
-                'al.drug_allergy_symtom as DETAIL', 'al.drug_allergy_staff_record as INFORMANT',
-                'al.drug_allergy_record_date_time as DATERECORD',
+        return db('his_connect.view_drug_allergy')
+            .select(
+                db.raw('? as HOSPCODE', [hisHospcode]),
+                'PID', 'CID', 'DRUGALLERGY', 'DNAME', 'ALEVE', 'DETAIL', 'INFORMANT',
+                'DATERECORD',
                 db.raw('? as INFORMHOSP', [hisHospcode]),
-                'al.f_drug_allergy_symtom_level_id as TYPEDX',
-                'al.drug_allergy_symtom as SYMPTOM',
-                'al.drug_allergy_record_date_time as D_UPDATE')
-            .where('pt.patient_hn', hn);
+                'TYPEDX', 'SYMPTOM', 'D_UPDATE'
+            )
+            .where('patient_hn', hn);
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/qdrugstore/index.ts, routes/refer/v3.ts
+    // ใช้ view_appointment
     getAppointment(db: Knex, visitNo: any, hospCode = hisHospcode) {
-        return db('t_patient_appointment as a')
-            .innerJoin('t_visit as v', 'a.t_visit_id', 'v.t_visit_id')
-            .innerJoin('t_patient as pt', 'v.t_patient_id', 'pt.t_patient_id')
-            .select(db.raw('? as hospcode', [hisHospcode]))
-            .select('pt.patient_hn as hn', 'v.visit_vn as vn', 'a.patient_appointment_date as apdate',
-                'a.patient_appointment_time as aptime', 'a.patient_appointment_clinic_description as department',
-                'a.patient_appointment_notice as reason', 'a.patient_appointment_staff_record as dr')
-            .where('v.visit_vn', visitNo)
+        return db('his_connect.view_appointment')
+            .select(
+                db.raw('? as hospcode', [hisHospcode]),
+                'hn', 'vn', 'apdate', 'aptime', 'department', 'reason', 'dr'
+            )
+            .where('visit_vn', visitNo)
             .limit(maxLimit);
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/qdrugstore/index.ts, routes/refer/v3.ts
+    // ใช้ view_refer_history
     async getReferHistory(db: Knex, columnName, searchNo, hospCode = hisHospcode) {
-        columnName = columnName === 'visitNo' ? 'v.visit_vn' : columnName;
-        columnName = columnName === 'vn' ? 'v.visit_vn' : columnName;
-        columnName = columnName === 'referNo' ? 'ro.visit_refer_out_number' : columnName;
+        columnName = columnName === 'visitNo' ? 'visit_vn' : columnName;
+        columnName = columnName === 'vn' ? 'visit_vn' : columnName;
+        columnName = columnName === 'referNo' ? 'visit_refer_out_number' : columnName;
 
-        return db('t_visit_refer_out as ro')
-            .innerJoin('t_visit as v', 'ro.t_visit_id', 'v.t_visit_id')
-            .innerJoin('t_patient as pt', 'v.t_patient_id', 'pt.t_patient_id')
-            .leftJoin('b_employee as dr', 'ro.visit_refer_out_staff_doctor', 'dr.b_employee_id')
-            .select(db.raw('? as HOSPCODE', [hisHospcode]))
-            .select('ro.visit_refer_out_number as REFERID',
-                'pt.patient_hn as PID', 'pt.patient_pid as CID', 'v.visit_vn as SEQ', 'v.visit_vn as AN',
-                'v.visit_begin_visit_time as DATETIME_SERV',
-                'ro.visit_refer_out_date_time as DATETIME_REFER',
-                'v.b_visit_clinic_id as CLINIC_REFER',
-                'ro.visit_refer_out_off_id as HOSP_DESTINATION',
-                'ro.f_visit_refer_out_emergency_type_id as EMERGENCY',
-                'dr.employee_licenseno as provider',
-                'ro.visit_refer_out_record_date_time as D_UPDATE')
-            .where(columnName, searchNo)
-            .whereNotNull('ro.visit_refer_out_off_id')
-            .whereNot('ro.visit_refer_out_off_id', '');
+        return db('his_connect.view_refer_history')
+            .select(
+                db.raw('? as HOSPCODE', [hisHospcode]),
+                'REFERID', 'PID', 'CID', 'SEQ', 'AN', 'DATETIME_SERV',
+                'DATETIME_REFER', 'CLINIC_REFER', 'HOSP_DESTINATION', 'EMERGENCY', 'provider', 'D_UPDATE'
+            )
+            .where(columnName, searchNo);
     }
 
-
-
+    // ✅ เรียกใช้: routes/his/index.ts, routes/qdrugstore/index.ts, routes/refer/v3.ts
+    // ใช้ view_clinical_refer
     async getClinicalRefer(db: Knex, referNo, hospCode = hisHospcode) {
-        return db('t_visit_refer_out as ro')
-            .leftJoin('t_visit as v', 'ro.t_visit_id', 'v.t_visit_id')
-            .leftJoin('t_visit_vital_sign as vs', 'v.t_visit_id', 'vs.t_visit_id')
-            .select(db.raw(`'${hisHospcode}' as hospcode`))
-            .select('ro.visit_refer_out_number as refer_no', 'vs.visit_vital_sign_blood_presure as bp',
-                'vs.visit_vital_sign_heart_rate as pr', 'vs.visit_vital_sign_respiratory_rate as rr',
-                'vs.visit_vital_sign_temperature as temp')
-            .where('ro.visit_refer_out_number', referNo)
+        return db('his_connect.view_clinical_refer')
+            .select(
+                db.raw('? as hospcode', [hisHospcode]),
+                'refer_no', 'bp', 'pr', 'rr', 'temp'
+            )
+            .where('visit_refer_out_number', referNo)
             .limit(maxLimit);
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/qdrugstore/index.ts, routes/refer/v3.ts
+    // ใช้ view_investigation_refer
     async getInvestigationRefer(db: Knex, referNo, hospCode = hisHospcode) {
-        return db('t_lab_result as lr')
-            .innerJoin('t_lab_order as lo', 'lr.t_lab_order_id', 'lo.t_lab_order_id')
-            .innerJoin('t_visit_refer_out as ro', 'lo.t_visit_id', 'ro.t_visit_id')
-            .select(db.raw(`'${hisHospcode}' as hospcode`))
-            .select('ro.visit_refer_out_number as refer_no', 'lr.lab_result_lab_test_description as investname',
-                'lr.lab_result_lab_test_result as investvalue', 'lr.lab_result_lab_test_unit as unit')
-            .where('ro.visit_refer_out_number', referNo)
+        return db('his_connect.view_investigation_refer')
+            .select(
+                db.raw('? as hospcode', [hisHospcode]),
+                'refer_no', 'investname', 'investvalue', 'unit'
+            )
+            .where('visit_refer_out_number', referNo)
             .limit(maxLimit);
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/qdrugstore/index.ts, routes/refer/v3.ts
+    // ใช้ view_care_refer
     async getCareRefer(db: Knex, referNo, hospCode = hisHospcode) {
-        return db('t_visit_refer_out as ro')
-            .select(db.raw(`'${hisHospcode}' as hospcode`))
-            .select('ro.visit_refer_out_number as referid', 'ro.visit_refer_out_record_date_time as d_update')
-            .where('ro.visit_refer_out_number', referNo);
+        return db('his_connect.view_care_refer')
+            .select(
+                db.raw('? as hospcode', [hisHospcode]),
+                'referid', 'd_update'
+            )
+            .where('referid', referNo);
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/refer/v3.ts, routes/refer/crontab.ts
+    // ใช้ view_refer_result
     getReferResult(db: Knex, visitDate: string, hospCode = hisHospcode) {
         visitDate = moment(visitDate).format('YYYY-MM-DD');
-        return db('t_visit_refer_in as ri')
-            .leftJoin('t_visit as v', 'ri.t_visit_id', 'v.t_visit_id')
-            .leftJoin('t_patient as pt', 'v.t_patient_id', 'pt.t_patient_id')
-            .select(db.raw(`'${hisHospcode}' as HOSPCODE`))
-            .select('ri.visit_refer_in_off_id as HOSP_SOURCE',
-                'pt.patient_pid as CID_IN',
-                'pt.patient_hn as PID_IN', 'v.visit_vn as SEQ_IN', 'ri.visit_refer_in_number as REFERID',
-                'v.visit_begin_visit_time as DATETIME_REFER', 'ri.visit_refer_in_icd10 as detail')
-            .select(db.raw(`ri.visit_refer_in_number as REFERID_SOURCE`))
-            .select(db.raw(`v.visit_begin_visit_time as DATETIME_IN, '1' as REFER_RESULT`))
-            .select('v.visit_record_date_time as D_UPDATE')
-            .whereRaw(`concat(to_number(substr(v.visit_begin_visit_time,1,4),'9999')-543 ,'-',substr(v.visit_begin_visit_time,6,5)) = ?`, [visitDate])
+        return db('his_connect.view_refer_result')
+            .select(
+                db.raw('? as HOSPCODE', [hisHospcode]),
+                'HOSP_SOURCE', 'CID_IN', 'PID_IN', 'SEQ_IN', 'REFERID',
+                'DATETIME_REFER', 'detail', 'REFERID_SOURCE', 'DATETIME_IN', 'REFER_RESULT', 'D_UPDATE'
+            )
+            .where('visit_date', visitDate)
             .limit(maxLimit);
     }
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/qdrugstore/index.ts, routes/refer/v3.ts
+    // ใช้ view_provider
     async getProvider(db: Knex, columnName, searchNo, hospCode = hisHospcode) {
-        columnName = columnName === 'licenseNo' ? 'employee_licenseno' : columnName;
+        columnName = columnName === 'licenseNo' ? 'registerno' : columnName;
 
-        return db('b_employee')
-            .select(db.raw(`'${hisHospcode}' as hospcode`))
-            .select('b_employee_id as provider', 'employee_licenseno as registerno',
-                'employee_firstname as name', 'employee_lastname as lname')
+        return db('his_connect.view_provider')
+            .select(
+                db.raw('? as hospcode', [hisHospcode]),
+                'provider', 'registerno', 'name', 'lname'
+            )
             .where(columnName, searchNo)
             .limit(maxLimit);
     }
 
+    // ✅ เรียกใช้: routes/refer/crontab.ts
+    // ใช้ view_provider
     getProviderDr(db: Knex, drList: any[]) {
-        return db('b_employee')
-            .select(db.raw(`'${hisHospcode}' as hospcode`))
-            .select('b_employee_id as provider', 'employee_licenseno as registerno',
-                'employee_firstname as name', 'employee_lastname as lname')
-            .whereIn('b_employee_id', drList);
+        return db('his_connect.view_provider')
+            .select(
+                db.raw('? as hospcode', [hisHospcode]),
+                'provider', 'registerno', 'name', 'lname'
+            )
+            .whereIn('provider', drList);
     }
 
+    // ❌ ไม่พบการเรียกใช้งาน (มีแค่ reportModel.getData ซึ่งเป็นคนละ model)
     getData(db: Knex, tableName, columnName, searchNo, hospCode = hisHospcode) {
         return db(tableName)
             .select(db.raw(`'${hisHospcode}' as hospcode`))
@@ -749,148 +557,163 @@ export class HisHospitalOsModel {
             .limit(maxLimit);
     }
 
+    // ✅ เรียกใช้: routes/refer/v3.ts
+    // ใช้ view_refer_out_summary
     // Report Zone
     sumReferOut(db: Knex, dateStart: any, dateEnd: any) {
-        return db('t_visit_refer_out as r')
-            .select(db.raw(`concat(to_number(substr(r.visit_refer_out_date_time,1,4),'9999')-543 ,'-',substr(r.visit_refer_out_date_time,6,5)) as refer_date`))
-            .count('r.t_visit_refer_out_id as cases')
-            .whereBetween(<any>db.raw(`concat(to_number(substr(r.visit_refer_out_date_time,1,4),'9999')-543 ,'-',substr(r.visit_refer_out_date_time,6,5))`), [dateStart, dateEnd])
-            .where('r.visit_refer_out_off_id', '!=', "")
-            .whereNotNull('r.visit_refer_out_off_id')
-            .where('r.visit_refer_out_off_id', '!=', hisHospcode)
-            .groupByRaw(`concat(to_number(substr(r.visit_refer_out_date_time,1,4),'9999')-543 ,'-',substr(r.visit_refer_out_date_time,6,5))`)
+        return db('his_connect.view_refer_out_summary')
+            .select('refer_date')
+            .count('t_visit_refer_out_id as cases')
+            .whereBetween('refer_date', [dateStart, dateEnd])
+            .whereNot('visit_refer_out_off_id', hisHospcode)
+            .groupBy('refer_date')
             .orderBy('refer_date');
     }
 
+    // ✅ เรียกใช้: routes/refer/v3.ts
+    // ใช้ view_refer_in_summary
     sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
-        return db('t_visit_refer_in as r')
-            .select(db.raw(`concat(to_number(substr(r.visit_refer_in_date_time,1,4),'9999')-543 ,'-',substr(r.visit_refer_in_date_time,6,5)) as refer_date`))
-            .count('r.t_visit_refer_in_id as cases')
-            .whereBetween(<any>db.raw(`concat(to_number(substr(r.visit_refer_in_date_time,1,4),'9999')-543 ,'-',substr(r.visit_refer_in_date_time,6,5))`), [dateStart, dateEnd])
-            .where('r.visit_refer_in_off_id', '!=', hisHospcode)
-            .whereNotNull('r.visit_refer_in_off_id')
-            .groupByRaw(`concat(to_number(substr(r.visit_refer_in_date_time,1,4),'9999')-543 ,'-',substr(r.visit_refer_in_date_time,6,5))`)
+        return db('his_connect.view_refer_in_summary')
+            .select('refer_date')
+            .count('t_visit_refer_in_id as cases')
+            .whereBetween('refer_date', [dateStart, dateEnd])
+            .whereNot('visit_refer_in_off_id', hisHospcode)
+            .groupBy('refer_date')
             .orderBy('refer_date');
     }
+    // ✅ เรียกใช้: task/moph-erp.ts
+    // ใช้ view_ipd_concurrent
     concurrentIPDByWard(db: Knex, date: any) {
-        let sql = db('t_visit as v')
-            .leftJoin('b_visit_ward as ward', 'v.b_visit_ward_id', 'ward.b_visit_ward_id')
-            .select('v.b_visit_ward_id as wardcode', 'ward.visit_ward_description as wardname',
-                db.raw(`sum(case when concat(to_number(substr(v.visit_begin_visit_time,1,4),'9999')-543 ,'-',substr(v.visit_begin_visit_time,6,5)) = ? then 1 else 0 end) as new_case`, [date]),
-                db.raw(`sum(case when concat(to_number(substr(v.visit_financial_discharge_time,1,4),'9999')-543 ,'-',substr(v.visit_financial_discharge_time,6,5)) = ? then 1 else 0 end) as discharge`, [date]),
-                db.raw(`sum(case when v.f_visit_ipd_discharge_status_id IN ('8','9') then 1 else 0 end) as death`))
-            .count('v.t_visit_id as cases')
-            .whereRaw(`concat(to_number(substr(v.visit_begin_visit_time,1,4),'9999')-543 ,'-',substr(v.visit_begin_visit_time,6,5)) <= ?`, [date])
-            .where('v.f_visit_type_id', '1')
+        return db('his_connect.view_ipd_concurrent')
+            .select(
+                'wardcode', 'wardname',
+                db.raw(`SUM(CASE WHEN begin_date = ? THEN 1 ELSE 0 END) as new_case`, [date]),
+                db.raw(`SUM(CASE WHEN discharge_date = ? THEN 1 ELSE 0 END) as discharge`, [date]),
+                db.raw(`SUM(CASE WHEN discharge_status IN ('8','9') THEN 1 ELSE 0 END) as death`)
+            )
+            .count('t_visit_id as cases')
+            .where('begin_date', '<=', date)
             .andWhere(function () {
-                this.whereNull('v.visit_financial_discharge_time').orWhereRaw(`concat(to_number(substr(v.visit_financial_discharge_time,1,4),'9999')-543 ,'-',substr(v.visit_financial_discharge_time,6,5)) >= ?`, [date]);
-            });
-        return sql.groupBy('v.b_visit_ward_id').orderBy('v.b_visit_ward_id');
+                this.where('is_not_discharged', true)
+                    .orWhere('discharge_date', '>=', date);
+            })
+            .groupBy('wardcode', 'wardname')
+            .orderBy('wardcode');
     }
+
+    // ✅ เรียกใช้: task/moph-erp.ts
+    // ใช้ view_ipd_concurrent
     concurrentIPDByClinic(db: Knex, date: any) {
-        let sql = db('t_visit as v')
-            .leftJoin('b_visit_clinic as clinic', 'v.b_visit_clinic_id', 'clinic.b_visit_clinic_id')
-            .select('v.b_visit_clinic_id as cliniccode', 'clinic.visit_clinic_description as clinicname',
-                db.raw(`sum(case when concat(to_number(substr(v.visit_begin_visit_time,1,4),'9999')-543 ,'-',substr(v.visit_begin_visit_time,6,5)) = ? then 1 else 0 end) as new_case`, [date]),
-                db.raw(`sum(case when concat(to_number(substr(v.visit_financial_discharge_time,1,4),'9999')-543 ,'-',substr(v.visit_financial_discharge_time,6,5)) = ? then 1 else 0 end) as discharge`, [date]),
-                db.raw(`sum(case when v.f_visit_ipd_discharge_status_id IN ('8','9') then 1 else 0 end) as death`))
-            .count('v.t_visit_id as cases')
-            .whereRaw(`concat(to_number(substr(v.visit_begin_visit_time,1,4),'9999')-543 ,'-',substr(v.visit_begin_visit_time,6,5)) <= ?`, [date])
-            .where('v.f_visit_type_id', '1')
+        return db('his_connect.view_ipd_concurrent')
+            .select(
+                'cliniccode', 'clinicname',
+                db.raw(`SUM(CASE WHEN begin_date = ? THEN 1 ELSE 0 END) as new_case`, [date]),
+                db.raw(`SUM(CASE WHEN discharge_date = ? THEN 1 ELSE 0 END) as discharge`, [date]),
+                db.raw(`SUM(CASE WHEN discharge_status IN ('8','9') THEN 1 ELSE 0 END) as death`)
+            )
+            .count('t_visit_id as cases')
+            .where('begin_date', '<=', date)
             .andWhere(function () {
-                this.whereNull('v.visit_financial_discharge_time').orWhereRaw(`concat(to_number(substr(v.visit_financial_discharge_time,1,4),'9999')-543 ,'-',substr(v.visit_financial_discharge_time,6,5)) >= ?`, [date]);
-            });
-        return sql.groupBy('v.b_visit_clinic_id').orderBy('v.b_visit_clinic_id');
+                this.where('is_not_discharged', true)
+                    .orWhere('discharge_date', '>=', date);
+            })
+            .groupBy('cliniccode', 'clinicname')
+            .orderBy('cliniccode');
     }
+
+    // ✅ เรียกใช้: task/moph-erp.ts
+    // ใช้ view_opd_visit_summary
     sumOpdVisitByClinic(db: Knex, date: any) {
-        let sql = db('t_visit as v')
-            .leftJoin('b_visit_clinic as clinic', 'v.b_visit_clinic_id', 'clinic.b_visit_clinic_id')
-            .select(db.raw(`concat(to_number(substr(v.visit_begin_visit_time,1,4),'9999')-543 ,'-',substr(v.visit_begin_visit_time,6,5)) as date`),
-                'v.b_visit_clinic_id as cliniccode',
-                db.raw("SUM(CASE WHEN v.f_visit_type_id = '1' THEN 1 ELSE 0 END) AS admit"))
-            .count('v.t_visit_id as cases')
-            .whereRaw(`concat(to_number(substr(v.visit_begin_visit_time,1,4),'9999')-543 ,'-',substr(v.visit_begin_visit_time,6,5)) = ?`, [date]);
-        return sql.groupBy('v.b_visit_clinic_id').orderBy('v.b_visit_clinic_id');
+        return db('his_connect.view_opd_visit_summary')
+            .select(
+                'visit_date as date',
+                'cliniccode',
+                db.raw(`SUM(CASE WHEN visit_type = '1' THEN 1 ELSE 0 END) AS admit`)
+            )
+            .count('t_visit_id as cases')
+            .where('visit_date', date)
+            .groupBy('visit_date', 'cliniccode')
+            .orderBy('cliniccode');
     }
 
 
     // ผ่านการ Verify แล้ว ==============================================
 
+    // ✅ เรียกใช้: routes/his/index.ts, routes/refer/v3.ts, task/moph-erp.ts
+    // ใช้ view_ward
     // MOPH ERP
+    // Columns based on column_description.md getWard
     getWard(db: Knex, wardCode: string = '', wardName: string = '') {
-        let sql = db('b_visit_ward as ward');
+        let sql = db('his_connect.view_ward')
+            .select(
+                db.raw('? as hospcode', [hisHospcode]),
+                'wardcode', 'wardname', 'std_code',
+                'bed_normal', 'bed_special', 'bed_icu', 'bed_semi', 'bed_stroke', 'bed_burn',
+                'bed_minithanyaruk', 'bed_extra', 'lr', 'clip', 'imc', 'homeward', 'isactive'
+            );
+        
         if (wardCode) {
-            sql.where('visit_ward_number', wardCode);
+            sql.where('wardcode', wardCode);
         } else if (wardName) {
-            sql.whereLike('visit_ward_description', `%${wardName}%`)
+            sql.whereLike('wardname', `%${wardName}%`);
         }
-        return sql
-            .select('visit_ward_number as wardcode', 'visit_ward_description as wardname',
-                'visit_ward_active as isactive')
-            .orderBy('visit_ward_number')
-            .limit(maxLimit);
+        
+        return sql.orderBy('wardcode').limit(maxLimit);
     }
 
+    // ✅ เรียกใช้: task/moph-erp.ts
+    // ใช้ view_bed
     countBedNo(db: Knex) {
-        return db('b_visit_bed as bed').count('bed.bed_number as total_bed')
-            .leftJoin('b_visit_ward as ward', 'bed.b_visit_ward_id', 'ward.b_visit_ward_id')
-            .where({ 'bed.active': '1', 'ward.visit_ward_active': '1' }).first();
+        return db('his_connect.view_bed')
+            .count('bedno as total_bed')
+            .where('isactive', 1)
+            .first();
     }
+    // ✅ เรียกใช้: task/moph-erp.ts
+    // ใช้ view_bed
+    // Columns based on column_description.md getBedNo
     async getBedNo(db: Knex, bedno: any = null, start = -1, limit: number = 1000) {
-        const createQueryConcat = (wardCode: string, bedNumber: string): any => {
-            return db.raw(`${wardCode}::text || '-' || ${bedNumber}::text`);
-        };
-        const BedNnumberSql = createQueryConcat('ward.visit_ward_number', 'bed.bed_number');
-        let sql = db('b_visit_bed as bed')
-            .leftJoin('b_visit_room as room', 'bed.b_visit_room_id', 'room.b_visit_room_id')
-            .leftJoin('b_visit_ward as ward', 'bed.b_visit_ward_id', 'ward.b_visit_ward_id')
-            .select('bed.bed_number', 'bed.active as isactive',
-                db.raw(`${BedNnumberSql} as bedno`),
-                'bed.b_visit_ward_id', 'ward.visit_ward_active',
-                'ward.visit_ward_number as wardcode', 'ward.visit_ward_description as wardname',
-                'room.room_number as roomno',
-                db.raw(`
-                        CASE 
-                            WHEN LOWER(ward.visit_ward_description) LIKE '%icu%' OR LOWER(ward.visit_ward_description) LIKE '%ไอซียู%' THEN 'ICU'
-                            WHEN LOWER(ward.visit_ward_description) LIKE '%ห้องคลอด%' OR LOWER(ward.visit_ward_description) LIKE '%รอคลอด%' THEN 'LR'
-                            WHEN LOWER(ward.visit_ward_description) LIKE '%พิเศษ%' THEN 'S'
-                            WHEN LOWER(ward.visit_ward_description) LIKE '%Home Ward%' THEN 'HW'
-                            ELSE 'N'
-                        END as bed_type
-                    `)
-            ).where({ 'bed.active': '1', 'ward.visit_ward_active': '1' })
+        let sql = db('his_connect.view_bed')
+            .select(
+                db.raw('? as hospcode', [hisHospcode]),
+                'bedno', 'bedname', 'roomno', 'wardcode', 'std_code', 'isactive'
+            )
+            .where('isactive', 1);
+        
         if (bedno) {
             sql = sql.where('bedno', bedno);
         }
         if (start >= 0) {
             sql = sql.offset(start).limit(limit);
         }
+        
         return sql.orderBy('bedno');
     }
+    // ✅ เรียกใช้: task/moph-alert.ts
+    // ใช้ view_visit_opd
     async getVisitForMophAlert(db: Knex, date: any, isRowCount: boolean = false, limit: number = 1000, start = -1) {
         try {
             date = moment(date).locale('TH').format('YYYY-MM-DD');
             if (isRowCount) {
-                const result = await db('t_visit')
-                    .whereRaw(`concat(to_number(substr(visit_begin_visit_time,1,4),'9999')-543 ,'-',substr(visit_begin_visit_time,6,5)) = ?`, [date])
-                    .count('t_visit_id as row_count').first();
+                const result = await db('his_connect.view_visit_opd')
+                    .where('date_service', date)
+                    .count('t_visit_id as row_count')
+                    .first();
                 return result;
             } else {
-                let sql = db('t_visit as v')
-                    .leftJoin('t_patient as p', 'v.t_patient_id', 'p.t_patient_id')
-                    .leftJoin('b_visit_clinic as c', 'v.b_visit_clinic_id', 'c.b_visit_clinic_id')
-                    .select('p.patient_hn as hn', 'v.visit_vn as vn', 'p.patient_pid as cid',
-                        db.raw(`? as department_type`, ['OPD']),
-                        'v.b_visit_clinic_id as department_code',
-                        'c.visit_clinic_description as department_name',
-                        db.raw(`concat(to_number(substr(v.visit_begin_visit_time,1,4),'9999')-543 ,'-',substr(v.visit_begin_visit_time,6,5)) as date_service`),
-                        db.raw(`substr(v.visit_begin_visit_time,12,8) as time_service`),
-                        db.raw(`v.f_visit_opd_discharge_status_id as service_status`),
-                        db.raw(`v.f_visit_opd_discharge_status_id as service_status_name`))
-                    .whereRaw(`concat(to_number(substr(v.visit_begin_visit_time,1,4),'9999')-543 ,'-',substr(v.visit_begin_visit_time,6,5)) = ?`, [date]);
+                let sql = db('his_connect.view_visit_opd')
+                    .select(
+                        db.raw('? as hospcode', [hisHospcode]),
+                        'hn', 'vn', 'cid', 'department_type', 'department_code',
+                        'department_name', 'date_service', 'time_service',
+                        'service_status', 'service_status_name'
+                    )
+                    .where('date_service', date);
+                
                 if (start >= 0) {
                     sql = sql.offset(start).limit(limit);
                 }
+                
                 const rows = await sql;
                 return rows;
             }
