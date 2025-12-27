@@ -575,26 +575,28 @@ export class HisHospitalOsModel {
     }
 
     // ✅ เรียกใช้: routes/refer/v3.ts
-    // ใช้ view_refer_out_summary
+    // ใช้ view_refer_summary - filter ด้วย is_refer_out = true
     // Report Zone
     sumReferOut(db: Knex, dateStart: any, dateEnd: any) {
-        return db('his_connect.view_refer_out_summary')
+        return db('his_connect.view_refer_summary')
             .select('refer_date')
-            .count('t_visit_refer_out_id as cases')
-            .whereBetween('refer_date', [dateStart, dateEnd])
-            .whereNot('visit_refer_out_off_id', hisHospcode)
+            .count('refer_id as cases')
+            .whereRaw('refer_date::DATE BETWEEN ? AND ?', [dateStart, dateEnd])
+            .where('is_refer_out', true)
+            .whereNot('refer_hospcode', hisHospcode)
             .groupBy('refer_date')
             .orderBy('refer_date');
     }
 
     // ✅ เรียกใช้: routes/refer/v3.ts
-    // ใช้ view_refer_in_summary
+    // ใช้ view_refer_summary - filter ด้วย is_refer_in = true
     sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
-        return db('his_connect.view_refer_in_summary')
+        return db('his_connect.view_refer_summary')
             .select('refer_date')
-            .count('t_visit_refer_in_id as cases')
-            .whereBetween('refer_date', [dateStart, dateEnd])
-            .whereNot('visit_refer_in_off_id', hisHospcode)
+            .count('refer_id as cases')
+            .whereRaw('refer_date::DATE BETWEEN ? AND ?', [dateStart, dateEnd])
+            .where('is_refer_in', true)
+            .whereNot('refer_hospcode', hisHospcode)
             .groupBy('refer_date')
             .orderBy('refer_date');
     }
