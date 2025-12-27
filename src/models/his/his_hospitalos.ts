@@ -329,8 +329,11 @@ export class HisHospitalOsModel {
         return db('his_connect.view_lab_result')
             .select(
                 db.raw('? as HOSPCODE', [hisHospcode]),
-                'PID', 'SEQ', 'VN', 'CID', 'request_id',
-                'INVESTNAME', 'INVESTVALUE', 'UNIT', 'DATETIME_INVEST', 'D_UPDATE'
+                db.raw('? as INVESTTYPE', ['LAB']),
+                'VN', 'visitno', 'SEQ', 'PID', 'CID', 'request_id',
+                'LOCALCODE', 'tmlt', 'lab_group', 'INVESTNAME', 'INVESTVALUE',
+                'ICDCM', 'GROUPCODE', 'GROUPNAME', 'UNIT',
+                'DATETIME_INVEST', 'DATETIME_REPORT'
             )
             .where(columnName, searchNo)
             .limit(maxLimit);
@@ -355,15 +358,20 @@ export class HisHospitalOsModel {
         columnName = columnName === 'an' ? 'visit_vn' : columnName;
         columnName = columnName === 'hn' ? 'patient_hn' : columnName;
         columnName = columnName === 'visitNo' ? 'visit_vn' : columnName;
-        columnName = columnName === 'dateadmit' ? 'visit_begin_visit_time' : columnName;
-        columnName = columnName === 'datedisc' ? 'visit_financial_discharge_time' : columnName;
+        columnName = columnName === 'dateadmit' ? 'dateadmit_date_formatted' : columnName;
+        columnName = columnName === 'datedisc' ? 'discharge_date_formatted' : columnName;
 
         let sqlCommand = db('his_connect.view_admission')
             .select(
                 db.raw('? as HOSPCODE', [hisHospcode]),
-                'PID', 'SEQ', 'AN', 'CID', 'SEX',
-                'datetime_admit', 'WARD_LOCAL', 'WARDADMITNAME',
-                'datetime_disch', 'dr', 'provider', 'd_update'
+                'PID', 'seq_id', 'SEQ', 'AN', 'cid', 'SEX',
+                'datetime_admit', 'WARD_LOCAL', 'wardadmit', 'WARDADMITNAME',
+                'instype', 'typein', 'referinhosp', 'causein', 'admitweight', 'admitheight',
+                'datetime_disch', 'warddisch', 'WARDDISCHNAME',
+                'dischstatus', 'dischtype', 'referouthosp', 'causeout',
+                'cost', 'price', 'payprice', 'actualpay',
+                'dr', 'provider', 'd_update',
+                'drg', 'rw', 'adjrw', 'wtlos', 'error', 'warning', 'actlos', 'grouper_version'
             );
 
         if (Array.isArray(searchValue)) {
@@ -381,8 +389,7 @@ export class HisHospitalOsModel {
         return db('his_connect.view_procedure_ipd')
             .select(
                 db.raw('? as HOSPCODE', [hisHospcode]),
-                'PID', 'AN', 'SEQ', 'date_serv', 'clinic', 'procedcode', 'procedname',
-                'provider', 'start_date', 'start_time', 'finish_date', 'finish_time', 'd_update'
+                'pid', 'an', 'datetime_admit', 'wardstay', 'procedcode', 'timestart', 'timefinish', 'serviceprice', 'provider', 'd_update'
             )
             .where('visit_vn', an)
             .where('f_visit_diagnosis_type_id', '1');
@@ -394,8 +401,8 @@ export class HisHospitalOsModel {
         return db('his_connect.view_charge_ipd')
             .select(
                 db.raw('? as HOSPCODE', [hisHospcode]),
-                'PID', 'AN', 'SEQ', 'date_serv', 'chargecode', 'chargename',
-                'quantity', 'clinic', 'unitprice', 'chargeprice', 'provider', 'd_update'
+                'PID', 'AN', 'datetime_admit', 'wardstay', 'chargeitem', 'chargelist',
+                'quantity', 'instype', 'cost', 'price', 'payprice', 'd_update'
             )
             .where('visit_vn', an);
     }
@@ -406,9 +413,9 @@ export class HisHospitalOsModel {
         return db('his_connect.view_drug_ipd')
             .select(
                 db.raw('? as HOSPCODE', [hisHospcode]),
-                'PID', 'AN', 'SEQ', 'date_serv', 'clinic',
-                'DID', 'DID_TMT', 'dcode', 'dname', 'amount', 'unit', 'unit_packing',
-                'usage_code', 'drug_usage', 'caution', 'drugprice', 'drugcost', 'provider', 'd_update'
+                'PID', 'AN', 'DATETIME_ADMIT', 'WARDSTAY', 'TYPEDRUG', 'DIDSTD', 'DNAME',
+                'DATESTART', 'DATEFINISH', 'AMOUNT', 'UNIT', 'UNIT_PACKING',
+                'DRUGPRICE', 'DRUGCOST', 'PROVIDER', 'D_UPDATE', 'CID'
             )
             .where('visit_vn', an);
     }
@@ -435,11 +442,10 @@ export class HisHospitalOsModel {
             return db('his_connect.view_diagnosis_ipd_accident')
                 .select(
                     db.raw('? as hospcode', [hisHospcode]),
-                    't_visit_diagnosis_id', 't_visit_id', 'visit_diagnosis_icd10',
-                    'f_visit_diagnosis_type_id', 'visit_diagnosis_staff_record',
-                    'visit_diagnosis_record_date_time', 'visit_vn', 'visit_hn', 'diagnosis_date'
+                    'pid', 'an', 'datetime_admit', 'warddiag', 'diagtype',
+                    'diagcode', 'diagname', 'provider', 'd_update', 'CID'
                 )
-                .whereBetween('diagnosis_date', [dateStart, dateEnd])
+                .whereRaw('diagnosis_date::DATE BETWEEN ? AND ?', [dateStart, dateEnd])
                 .limit(maxLimit);
         } else {
             throw new Error('Invalid parameters');
