@@ -186,13 +186,14 @@ export class HisHospitalOsModel {
 
     // ❌ ไม่พบการเรียกใช้จาก models/his (routes/isonline/his.ts ใช้ isonline model)
     getOpdServiceByVN(db: Knex, vn: any) {
-        let sql = db('his_connect.view_opd_service_by_vn');
-        if (typeof vn === 'string') {
-            sql.where('visit_vn', vn);
-        } else {
-            sql.whereIn('visit_vn', vn)
-        };
-        return sql.limit(maxLimit);
+        // let sql = db('his_connect.view_opd_service_by_vn');
+        // if (typeof vn === 'string') {
+        //     sql.where('visit_vn', vn);
+        // } else {
+        //     sql.whereIn('visit_vn', vn)
+        // };
+        // return sql.limit(maxLimit);
+        return [];
     }
 
     // ✅ เรียกใช้: routes/his/index.ts, routes/refer/v3.ts, routes/refer/crontab.ts
@@ -201,7 +202,7 @@ export class HisHospitalOsModel {
         return db('his_connect.view_diagnosis_opd')
             .select(
                 db.raw('? as HOSPCODE', [hisHospcode]),
-                'CID', 'PID', 'visit_vn as visit_hn', 'seq_id', 'SEQ', 'VN',
+                'CID', 'PID', 'hn', 'seq_id', 'SEQ', 'VN',
                 'DATE_SERV', 'DIAGTYPE', 'DIAGCODE', 'CLINIC', 'PROVIDER', 'D_UPDATE'
             )
             .where('visit_vn', visitNo);
@@ -212,12 +213,12 @@ export class HisHospitalOsModel {
         if (dateStart && dateEnd) {
             return db('his_connect.view_diagnosis_opd_accident')
                 .select(
-                    db.raw('? as hospcode', [hisHospcode]),
-                    't_visit_diagnosis_id', 't_visit_id', 'visit_diagnosis_icd10',
-                    'f_visit_diagnosis_type_id', 'visit_diagnosis_staff_record',
-                    'visit_diagnosis_record_date_time', 'visit_vn', 'visit_hn', 'diagnosis_date'
+                    db.raw('? as HOSPCODE', [hisHospcode]),
+                    'CID', 'PID', 'hn', 'seq_id', 'SEQ', 'VN',
+                    'DATE_SERV', 'DIAGTYPE', 'DIAGCODE', 'DIAGNAME',
+                    'CLINIC', 'PROVIDER', 'D_UPDATE'
                 )
-                .whereBetween('diagnosis_date', [dateStart, dateEnd])
+                .whereRaw('DATE_SERV::DATE BETWEEN ? AND ?', [dateStart, dateEnd])
                 .limit(maxLimit);
         } else {
             throw new Error('Invalid parameters');
@@ -261,7 +262,7 @@ export class HisHospitalOsModel {
 
         return db('his_connect.view_diagnosis_sepsis')
             .select(
-                db.raw('? as hospcode', [hisHospcode]),
+                // db.raw('? as hospcode', [hisHospcode]),
                 'hn', 'visitno', 'date', 'diagcode', 'diag_name', 'diag_type', 'dr', 'episode', 'codeset', 'd_update'
             )
             .where('is_opd', true)
