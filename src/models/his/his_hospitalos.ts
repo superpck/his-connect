@@ -458,7 +458,10 @@ export class HisHospitalOsModel {
         return db('his_connect.view_accident')
             .select(
                 db.raw('? as HOSPCODE', [hisHospcode]),
-                'vn', 'hn', 'adate', 'atime', 'bp1', 'e', 'verbal', 'm'
+                'hn', 'PID', 'CID', 'seq_id', 'SEQ', 'datetime_serv', 'datetime_ae',
+                'aetype', 'aeplace', 'typein_ae', 'traffic', 'vehicle', 'alcohol', 'nacrotic_drug',
+                'belt', 'helmet', 'airway', 'stopbleed', 'splint', 'fluid', 'urgency',
+                'coma_eye', 'coma_speak', 'coma_movement', 'd_update'
             )
             .where('visit_vn', visitNo);
     }
