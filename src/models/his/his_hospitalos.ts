@@ -523,7 +523,7 @@ export class HisHospitalOsModel {
         return db('his_connect.view_care_refer')
             .select(
                 db.raw('? as hospcode', [hisHospcode]),
-                'referid', 'd_update'
+                'referid', 'referid_province', 'caretype', 'd_update'
             )
             .where('referid', referNo);
     }
@@ -535,8 +535,7 @@ export class HisHospitalOsModel {
         return db('his_connect.view_refer_result')
             .select(
                 db.raw('? as HOSPCODE', [hisHospcode]),
-                'HOSP_SOURCE', 'CID_IN', 'PID_IN', 'SEQ_IN', 'REFERID',
-                'DATETIME_REFER', 'detail', 'REFERID_SOURCE', 'DATETIME_IN', 'REFER_RESULT', 'D_UPDATE'
+                'HOSP_SOURCE', 'CID_IN', 'PID_IN', 'SEQ_IN', 'REFERID', 'DATETIME_REFER', 'detail', 'reply_diagnostic', 'reply_recommend', 'REFERID_SOURCE', 'reply_date', 'AN_IN', 'REFERID_PROVINCE', 'DATETIME_IN', 'REFER_RESULT', 'D_UPDATE'
             )
             .where('visit_date', visitDate)
             .limit(maxLimit);
@@ -550,7 +549,7 @@ export class HisHospitalOsModel {
         return db('his_connect.view_provider')
             .select(
                 db.raw('? as hospcode', [hisHospcode]),
-                'provider', 'registerno', 'name', 'lname'
+                'provider', 'registerno', 'council', 'cid', 'prename', 'name', 'lname', 'sex', 'birth', 'providertype', 'startdate', 'outdate', 'movefrom', 'moveto', 'd_update'
             )
             .where(columnName, searchNo)
             .limit(maxLimit);
@@ -562,7 +561,7 @@ export class HisHospitalOsModel {
         return db('his_connect.view_provider')
             .select(
                 db.raw('? as hospcode', [hisHospcode]),
-                'provider', 'registerno', 'name', 'lname'
+                'provider', 'registerno', 'council', 'cid', 'prename', 'name', 'lname', 'sex', 'birth', 'providertype', 'startdate', 'outdate', 'movefrom', 'moveto', 'd_update'
             )
             .whereIn('provider', drList);
     }
