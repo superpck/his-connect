@@ -62,7 +62,7 @@ export class HisHospitalOsModel {
             .select(
                 'hn', 'visitno', 'time', 'adate', 'bp_systolic', 'bp_diastolic', 'pr', 'rr',
                 'hdate', 'htime', 'mooban', 'apointname', 'atumbon', 'aampur', 'aplace',
-                'cause_t', 'gsc_e', 'gsc_v', 'gsc_m', 'eye', 'verbal', 'motor',
+                'cause_t', 'eye', 'verbal', 'motor',
                 'cause', 'apoint', 'injt', 'pmi', 'atohosp', 'airway',
                 'risk1', 'risk2', 'risk3', 'risk4', 'blood', 'splintc', 'splint', 'iv',
                 'disc_date_er', 'staer', 'staward'

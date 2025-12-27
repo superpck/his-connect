@@ -603,18 +603,32 @@ export class HisHospitalOsModel {
     concurrentIPDByWard(db: Knex, date: any) {
         return db('his_connect.view_ipd_concurrent')
             .select(
-                'wardcode', 'wardname',
-                db.raw(`SUM(CASE WHEN begin_date = ? THEN 1 ELSE 0 END) as new_case`, [date]),
-                db.raw(`SUM(CASE WHEN discharge_date = ? THEN 1 ELSE 0 END) as discharge`, [date]),
-                db.raw(`SUM(CASE WHEN discharge_status IN ('8','9') THEN 1 ELSE 0 END) as death`)
+                db.raw('? as hospcode', [hisHospcode]),
+                db.raw('current_timestamp as date'),
+                'wardcode',
+                'std_code',
+                db.raw('SUM(normal + special + icu + semi + stroke + burn + imc + lr + clip + minithanyaruk + homeward) as cases'),
+                db.raw('SUM(new_case) as new_case'),
+                db.raw('SUM(discharge) as discharge'),
+                db.raw('SUM(death) as death'),
+                db.raw('SUM(normal) as normal'),
+                db.raw('SUM(special) as special'),
+                db.raw('SUM(icu) as icu'),
+                db.raw('SUM(semi) as semi'),
+                db.raw('SUM(stroke) as stroke'),
+                db.raw('SUM(burn) as burn'),
+                db.raw('SUM(imc) as imc'),
+                db.raw('SUM(lr) as lr'),
+                db.raw('SUM(clip) as clip'),
+                db.raw('SUM(minithanyaruk) as minithanyaruk'),
+                db.raw('SUM(homeward) as homeward')
             )
-            .count('t_visit_id as cases')
-            .where('begin_date', '<=', date)
+            .whereRaw('begin_date::date <= ?', [date])
             .andWhere(function () {
-                this.where('is_not_discharged', true)
-                    .orWhere('discharge_date', '>=', date);
+                this.whereRaw('discharge_date::date IS NULL')
+                    .orWhereRaw('discharge_date::date >= ?', [date]);
             })
-            .groupBy('wardcode', 'wardname')
+            .groupBy('wardcode', 'std_code')
             .orderBy('wardcode');
     }
 
@@ -623,18 +637,31 @@ export class HisHospitalOsModel {
     concurrentIPDByClinic(db: Knex, date: any) {
         return db('his_connect.view_ipd_concurrent')
             .select(
-                'cliniccode', 'clinicname',
-                db.raw(`SUM(CASE WHEN begin_date = ? THEN 1 ELSE 0 END) as new_case`, [date]),
-                db.raw(`SUM(CASE WHEN discharge_date = ? THEN 1 ELSE 0 END) as discharge`, [date]),
-                db.raw(`SUM(CASE WHEN discharge_status IN ('8','9') THEN 1 ELSE 0 END) as death`)
+                db.raw('? as hospcode', [hisHospcode]),
+                db.raw('current_timestamp as date'),
+                'cliniccode',
+                db.raw('SUM(normal + special + icu + semi + stroke + burn + imc + lr + clip + minithanyaruk + homeward) as cases'),
+                db.raw('SUM(new_case) as new_case'),
+                db.raw('SUM(discharge) as discharge'),
+                db.raw('SUM(death) as death'),
+                db.raw('SUM(normal) as normal'),
+                db.raw('SUM(special) as special'),
+                db.raw('SUM(icu) as icu'),
+                db.raw('SUM(semi) as semi'),
+                db.raw('SUM(stroke) as stroke'),
+                db.raw('SUM(burn) as burn'),
+                db.raw('SUM(imc) as imc'),
+                db.raw('SUM(lr) as lr'),
+                db.raw('SUM(clip) as clip'),
+                db.raw('SUM(minithanyaruk) as minithanyaruk'),
+                db.raw('SUM(homeward) as homeward')
             )
-            .count('t_visit_id as cases')
-            .where('begin_date', '<=', date)
+            .whereRaw('begin_date::date <= ?', [date])
             .andWhere(function () {
-                this.where('is_not_discharged', true)
-                    .orWhere('discharge_date', '>=', date);
+                this.whereRaw('dateDisc::date IS NULL')
+                    .orWhereRaw('dateDisc::date >= ?', [date]);
             })
-            .groupBy('cliniccode', 'clinicname')
+            .groupBy('cliniccode')
             .orderBy('cliniccode');
     }
 
@@ -643,13 +670,14 @@ export class HisHospitalOsModel {
     sumOpdVisitByClinic(db: Knex, date: any) {
         return db('his_connect.view_opd_visit_summary')
             .select(
-                'visit_date as date',
+                db.raw('? as hospcode', [hisHospcode]),
+                db.raw('current_timestamp as date'),
                 'cliniccode',
                 db.raw(`SUM(CASE WHEN visit_type = '1' THEN 1 ELSE 0 END) AS admit`)
             )
             .count('t_visit_id as cases')
             .where('visit_date', date)
-            .groupBy('visit_date', 'cliniccode')
+            .groupBy('cliniccode')
             .orderBy('cliniccode');
     }
 
