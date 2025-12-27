@@ -497,13 +497,15 @@ export class HisHospitalOsModel {
     async getReferHistory(db: Knex, columnName, searchNo, hospCode = hisHospcode) {
         columnName = columnName === 'visitNo' ? 'visit_vn' : columnName;
         columnName = columnName === 'vn' ? 'visit_vn' : columnName;
-        columnName = columnName === 'referNo' ? 'visit_refer_out_number' : columnName;
+        columnName = columnName === 'referNo' ? 'refer_no' : columnName;
 
         return db('his_connect.view_refer_history')
             .select(
                 db.raw('? as HOSPCODE', [hisHospcode]),
-                'REFERID', 'PID', 'CID', 'SEQ', 'AN', 'DATETIME_SERV',
-                'DATETIME_REFER', 'CLINIC_REFER', 'HOSP_DESTINATION', 'EMERGENCY', 'provider', 'D_UPDATE'
+                'REFERID', 'REFERID_PROVINCE', 'PID', 'CID', 'seq_id', 'SEQ', 'AN',
+                'REFERID_ORIGIN', 'HOSPCODE_ORIGIN', 'DATETIME_SERV', 'DATETIME_ADMIT', 'DATETIME_REFER',
+                'CLINIC_REFER', 'HOSP_DESTINATION', 'CHIEFCOMP', 'PHYSICALEXAM', 'DIAGFIRST', 'DIAGLAST',
+                'PSTATUS', 'dr', 'provider', 'PTYPE', 'EMERGENCY', 'PTYPEDIS', 'CAUSEOUT', 'REQUEST', 'D_UPDATE'
             )
             .where(columnName, searchNo);
     }
