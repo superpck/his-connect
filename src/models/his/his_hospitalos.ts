@@ -63,7 +63,7 @@ export class HisHospitalOsModel {
     getDepartment(db: Knex, depCode: string = '', depName: string = '') {
         let sql = db('his_connect.view_department')
             .select(
-                db.raw('? as hospcode', [hisHospcode]),
+                // db.raw('? as hospcode', [hisHospcode]),
                 'department_code', 'department_name', 'moph_code', 'emergency'
             )
             .where('isactive', '1');
@@ -83,7 +83,7 @@ export class HisHospitalOsModel {
     getDr(db: Knex, drCode: string = '', drName: string = '') {
         let sql = db('his_connect.view_dr')
             .select(
-                db.raw('? as hospcode', [hisHospcode]),
+                // db.raw('? as hospcode', [hisHospcode]),
                 'dr_code', 'dr_license_code', 'dr_name', 'expire_date'
             )
             .where('isactive', '1');
