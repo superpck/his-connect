@@ -104,12 +104,16 @@ export class HisHospitalOsModel {
     // ใช้ view_refer_out
     //select รายชื่อเพื่อแสดงทะเบียน refer
     getReferOut(db: Knex, date: any, hospCode = hisHospcode, visitNo: string = null) {
+        date = moment(date).locale('TH').format('YYYY-MM-DD');
         let sql = db('his_connect.view_refer_out')
             .select(
                 db.raw('? as hospcode', [hisHospcode]),
                 'refer_date', 'referid', 'hosp_destination',
                 'PID', 'hn', 'CID', 'vn', 'SEQ', 'AN',
-                'fname', 'lname', 'dob', 'sex', 'EMERGENCY', 'dr', 'provider', 'clinic'
+                'prename', 'fname', 'lname', 'dob', 'sex',
+                'EMERGENCY', 'dr', 'provider',
+                'REQUEST', 'dx', 'cc', 'PH', 'PI', 'PHYSICALEXAM', 'diaglast',
+                'an', 'clinic'
             );
         
         if (visitNo) {
@@ -118,9 +122,7 @@ export class HisHospitalOsModel {
             sql.where('refer_date_formatted', date);
         }
         
-        return sql
-            .whereNot('visit_refer_out_off_id', hisHospcode)
-            .orderBy('refer_date');
+        return sql.orderBy('refer_date');
     }
 
 
@@ -135,8 +137,11 @@ export class HisHospitalOsModel {
             .select(
                 db.raw('? as HOSPCODE', [hisHospcode]),
                 'HID', 'CID', 'PRENAME', 'NAME', 'LNAME', 'HN', 'PID', 'SEX', 'BIRTH',
-                'MSTATUS', 'OCCUPATION_OLD', 'OCCUPATION_NEW', 'NATION', 'RACE',
-                'RELIGION', 'EDUCATION', 'FATHER', 'MOTHER', 'MOBILE', 'D_UPDATE'
+                'MSTATUS', 'OCCUPATION_OLD', 'OCCUPATION_NEW', 'RACE', 'NATION',
+                'RELIGION', 'EDUCATION', 'FATHER', 'MOTHER', 'COUPLE', 
+                'VSTATUS', 'MOVEIN', 'DISCHARGE', 'DDISCHARGE', 'ABOGROUP',
+                'RHGROUP', 'LABOR', 'PASSPORT', 'TYPEAREA', 'MOBILE', 'dead',
+                'D_UPDATE'
             )
             .where(columnName, searchText)
             .first();
@@ -171,9 +176,9 @@ export class HisHospitalOsModel {
                 'PID', 'HN', 'CID', 'seq_id', 'SEQ', 'DATE_SERV', 'TIME_SERV',
                 'LOCATION', 'INTIME', 'INSTYPE', 'MAIN', 'TYPEIN', 'REFEROUTHOSP', 'CAUSEOUT',
                 'waist', 'cc', 'pe', 'ph', 'pi', 'nurse_note', 'SERVPLACE',
-                'BTEMP', 'BP', 'PR', 'RR', 'o2sat', 'weight', 'height',
+                'BTEMP', 'SBP', 'DBP', 'PR', 'RR', 'o2sat', 'weight', 'height',
                 'gcs_e', 'gcs_v', 'gcs_m', 'pupil_left', 'pupil_right',
-                'TYPEOUT', 'AN', 'dr', 'provider',
+                'TYPEOUT', 'dr', 'provider', 'CAUSEOUT',
                 'COST', 'PRICE', 'PAYPRICE', 'ACTUALPAY', 'D_UPDATE', 'hsub'
             )
             .where(columnName, searchText);
