@@ -102,7 +102,7 @@ export class HisHospitalOsModel {
             'SELECT * FROM his_connect.fn_get_person(?, ?, ?)',
             [columnName, searchText, hisHospcode]
         );
-        return result.rows?.[0] || null;
+        return result.rows;
     }
     // ✅ เรียกใช้: routes/refer/crontab.ts
     // ใช้ fn_get_address
@@ -114,7 +114,7 @@ export class HisHospitalOsModel {
             'SELECT * FROM his_connect.fn_get_address(?, ?, ?)',
             [columnName, searchText, hisHospcode]
         );
-        return result.rows?.[0] || null;
+        return result.rows;
     }
     // ✅ เรียกใช้: routes/his/index.ts, routes/refer/v3.ts, routes/refer/crontab.ts
     // ใช้ fn_get_service
