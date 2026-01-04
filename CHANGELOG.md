@@ -1,3 +1,7 @@
+# 3.9.6
+## Feature
+  - Update HospitalOS เปลี่ยนไป query ใน view แทน Table จริง
+
 # 3.9.5
 ## Feature
   - เพิ่มการ set ALLOW_API_SUBNET เพื่อให้ลูกข่ายใช้งานได้ ในกรณี Set private IP ไปตรงกับ IP ต่างประเทศ
