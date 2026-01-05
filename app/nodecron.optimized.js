@@ -190,7 +190,6 @@ async function cronjob(fastify) {
             }
             if (timingSchedule['nrefer'].autosend &&
                 minuteSinceLastNight % timingSchedule['nrefer'].minute === 0) {
-                console.log(`${getTimestamp()} start 'nRefer' task on PID ${process.pid}`);
                 if (moment().hour() % 2 === 0 && moment().minute() === 56) {
                     runJob('sendNReferIPD', async () => {
                         await referCrontab.processSend(req, res, global.dbHIS, {

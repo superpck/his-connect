@@ -41,6 +41,7 @@ const processSend = async (request: any, reply: any, dbConn: Knex, config = {}) 
       crontabConfig['client_ip'] = request.ip || crontabConfig['client_ip'];
     }
   }
+  console.log(moment().format('HH:mm:ss'), `Start 'nRefer' task on PID ${process.pid}`);
   let result: any;
   if (crontabConfig?.service == 'ipdChecking') {
     result = await ipdChecking(request, reply);
@@ -90,7 +91,6 @@ async function sendMoph(req, reply, db) {
     }
   }
 
-  console.log(moment().format('HH:mm:ss'), process.pid, '='.repeat(60));
   var [referOut, referResult] = await sendRefer(db, dateNow);
   return { date: dateNow, referOut, referResult };
 }

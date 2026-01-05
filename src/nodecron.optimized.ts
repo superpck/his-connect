@@ -408,8 +408,6 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
       // Run nRefer jobs if scheduled
       if (timingSchedule['nrefer'].autosend &&
         minuteSinceLastNight % timingSchedule['nrefer'].minute === 0) {
-        console.log(`${getTimestamp()} start 'nRefer' task on PID ${process.pid}`);
-
         // Run IPD checking at specific times
         if (moment().hour() % 2 === 0 && moment().minute() === 56) {
           runJob('sendNReferIPD', async () => {
