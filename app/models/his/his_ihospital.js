@@ -297,7 +297,7 @@ class HisIHospitalModel {
         columnName = columnName === 'datedisc' ? 'disc' : columnName;
         let sql = db('view_ipd_ipd as ipd');
         if (['no_card', 'vn', 'hn', 'an'].indexOf(columnName) < 0) {
-            sql.whereRaw('LENGTH(ipd.refer)=5');
+            sql.whereRaw('LENGTH(ipd.refer) IN (5,9)');
         }
         if (Array.isArray(searchValue)) {
             sql.whereIn(columnName, searchValue);
@@ -461,7 +461,7 @@ class HisIHospitalModel {
             .select(db.raw(`(select hcode from sys_hospital) as HOSPCODE`), 'visit.refer as HOSP_SOURCE', 'visit.refer_no as REFERID_SOURCE', db.raw('concat(visit.refer,visit.refer_no) as REFERID_PROVINCE'), 'visit.date as DATETIME_IN', 'visit.hn as PID_IN', 'visit.vn as SEQ_IN', 'visit.ipd_an as AN_IN', 'visit.no_card as CID_IN', 'refer_in.refer_in as REFERID', 'visit.dx1 as detail', 'visit.dr_note as reply_diagnostic', 'visit.lastupdate as reply_date', db.raw('1 as REFER_RESULT'), db.raw(`concat(visit.date,' ',visit.time) as D_UPDATE`), 'visit.dr as PROVIDER', 'visit.dr')
             .where('visit.date', visitDate)
             .where('visit.refer', '!=', hospCode)
-            .where(db.raw('length(visit.refer)=5'))
+            .where(db.raw('length(visit.refer) IN (5,9)'))
             .groupBy('visit.vn')
             .limit(maxLimit);
     }
@@ -489,7 +489,7 @@ class HisIHospitalModel {
             .whereBetween('visit.date', [dateStart, dateEnd])
             .whereNotNull('visit.refer')
             .where('visit.refer', '!=', hisHospcode)
-            .whereRaw('LENGTH(visit.refer)=5')
+            .whereRaw('LENGTH(visit.refer) IN (5,9)')
             .whereNotNull('visit.vn')
             .groupBy('visit.date');
     }

@@ -126,6 +126,7 @@ function logJobStatus() {
     Object.entries(jobQueue).forEach(([jobName, state]) => {
         if (state.lastRun) {
             console.log(`${getTimestamp()} Last process time '${jobName}' ${state.lastRun.format('HH:mm:ss')}`);
+            console.log('-'.repeat(70));
         }
     });
 }
@@ -151,7 +152,7 @@ async function cronjob(fastify) {
     const timingSchedule = configureTimingSchedules();
     if (processState.isFirstProcess) {
         console.log(`${getTimestamp()} Start API for Hospcode ${process.env.HOSPCODE}`);
-        console.log(`   ⬜ Random time config:`);
+        console.log(`   ⏰ Random time config:`);
         console.log(`      - Alive/Alert: Every ${timeRandom} minutes`);
         console.log(`      - Bed Occupancy: At minute ${timeRandom}`);
         console.log(`      - Ward/Bed Update: At ${hourRandom}:${timeRandom}:${secondNow}`);
@@ -169,19 +170,6 @@ async function cronjob(fastify) {
         const minuteNow = moment().get('minute');
         const hourNow = moment().hour();
         if (processState.isFirstProcess) {
-            console.log(`\n--- ⏱️  Cron Tick: ${getTimestamp()} (Minute: ${minuteNow}) ---`);
-            const aliveRem = getRemainingMinutes(minuteNow, timeRandom);
-            const aliveStatus = aliveRem === 0 && minuteNow !== 0
-                ? `✅ RUNNING NOW`
-                : `⏳ in ${aliveRem} min(s)`;
-            console.log(`   ► Alive/Alert (Every ${timeRandom}m): ${aliveStatus}`);
-            let occRem = timeRandom - minuteNow;
-            if (occRem < 0)
-                occRem += 60;
-            const occStatus = minuteNow === timeRandom
-                ? `✅ RUNNING NOW`
-                : `⏳ in ${occRem} min(s)`;
-            console.log(`   ► Bed Occupancy (At :${timeRandom}): ${occStatus}`);
             if (minuteSinceLastNight % 2 === 1) {
                 logJobStatus();
             }
@@ -202,6 +190,7 @@ async function cronjob(fastify) {
             }
             if (timingSchedule['nrefer'].autosend &&
                 minuteSinceLastNight % timingSchedule['nrefer'].minute === 0) {
+                console.log(`${getTimestamp()} start 'nRefer' task on PID ${process.pid}`);
                 if (moment().hour() % 2 === 0 && moment().minute() === 56) {
                     runJob('sendNReferIPD', async () => {
                         await referCrontab.processSend(req, res, global.dbHIS, {

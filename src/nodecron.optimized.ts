@@ -266,6 +266,7 @@ function logJobStatus(): void {
   Object.entries(jobQueue).forEach(([jobName, state]) => {
     if (state.lastRun) {
       console.log(`${getTimestamp()} Last process time '${jobName}' ${state.lastRun.format('HH:mm:ss')}`);
+      console.log('-'.repeat(70));
     }
   });
 }
@@ -310,7 +311,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   const secondNow = moment().seconds();
   // รันที่วินาทีที่ start process ของทุกนาที
   const timingSch = `${secondNow} * * * * *`;
-  
+
   let timeRandom = 10 + (Math.ceil(Math.random() * 10) || 1);
   let hourRandom = Math.ceil(Math.random() * 22) || 1;
 
@@ -320,7 +321,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   // Log startup information if this is the first process
   if (processState.isFirstProcess) {
     console.log(`${getTimestamp()} Start API for Hospcode ${process.env.HOSPCODE}`);
-    console.log(`   ⬜ Random time config:`);
+    console.log(`   ⏰ Random time config:`);
     console.log(`      - Alive/Alert: Every ${timeRandom} minutes`);
     console.log(`      - Bed Occupancy: At minute ${timeRandom}`);
     console.log(`      - Ward/Bed Update: At ${hourRandom}:${timeRandom}:${secondNow}`);
@@ -356,29 +357,29 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
     if (processState.isFirstProcess) {
 
       // --- 🚀 NEW: LOG STATUS & COUNTDOWN ---
-      console.log(`\n--- ⏱️  Cron Tick: ${getTimestamp()} (Minute: ${minuteNow}) ---`);
-      
+      // console.log(`\n--- ⏱️  Cron Tick: ${getTimestamp()} (Minute: ${minuteNow}) ---`);
+
       // 1. Alive Status
-      const aliveRem = getRemainingMinutes(minuteNow, timeRandom);
-      const aliveStatus = aliveRem === 0 && minuteNow !== 0 
-        ? `✅ RUNNING NOW` 
-        : `⏳ in ${aliveRem} min(s)`;
-      console.log(`   ► Alive/Alert (Every ${timeRandom}m): ${aliveStatus}`);
+      // const aliveRem = getRemainingMinutes(minuteNow, timeRandom);
+      // const aliveStatus = aliveRem === 0 && minuteNow !== 0
+      //   ? `✅ RUNNING NOW`
+      //   : `⏳ in ${aliveRem} min(s)`;
+      // console.log(`   ► Alive/Alert (Every ${timeRandom}m): ${aliveStatus}`);
 
       // 2. Bed Occupancy Status
-      let occRem = timeRandom - minuteNow;
-      if (occRem < 0) occRem += 60;
-      const occStatus = minuteNow === timeRandom 
-        ? `✅ RUNNING NOW` 
-        : `⏳ in ${occRem} min(s)`;
-      console.log(`   ► Bed Occupancy (At :${timeRandom}): ${occStatus}`);
-      
+      // let occRem = timeRandom - minuteNow;
+      // if (occRem < 0) occRem += 60;
+      // const occStatus = minuteNow === timeRandom
+      //   ? `✅ RUNNING NOW`
+      //   : `⏳ in ${occRem} min(s)`;
+      // console.log(`   ► Bed Occupancy (At :${timeRandom}): ${occStatus}`);
+
       // --------------------------------------
 
       if (minuteSinceLastNight % 2 === 1) {
         logJobStatus();
       }
-      
+
       // 1. Alive / Alert Logic
       if (minuteNow != 0 && minuteNow % timeRandom == 0) {
         // console.log("   --> Executing Update Alive & Alert...");
@@ -407,6 +408,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
       // Run nRefer jobs if scheduled
       if (timingSchedule['nrefer'].autosend &&
         minuteSinceLastNight % timingSchedule['nrefer'].minute === 0) {
+        console.log(`${getTimestamp()} start 'nRefer' task on PID ${process.pid}`);
 
         // Run IPD checking at specific times
         if (moment().hour() % 2 === 0 && moment().minute() === 56) {
@@ -438,4 +440,4 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
       }
     }
   });
-    }
+}

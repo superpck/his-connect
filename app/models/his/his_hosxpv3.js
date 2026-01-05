@@ -699,7 +699,7 @@ class HisHosxpv3Model {
             sqlCommand.where(columnName, searchValue);
         }
         if (columnName == 'i.dchdate') {
-            sqlCommand.whereRaw('LENGTH(i.rfrilct)=5');
+            sqlCommand.whereRaw('LENGTH(i.rfrilct) IN (5,9)');
         }
         return sqlCommand
             .select(db.raw(`
@@ -1262,7 +1262,7 @@ class HisHosxpv3Model {
             .select(db.raw(`concat(ovst.vstdate, ' ',ovst.vsttime) as DATETIME_IN, '1' as REFER_RESULT`))
             .select(db.raw(`concat(ovst.vstdate, ' ',ovst.vsttime) as D_UPDATE`))
             .where(db.raw(`(referin.refer_date=? or referin.date_in=?)`, [visitDate, visitDate]))
-            .where(db.raw('length(referin.refer_hospcode)=5'))
+            .where(db.raw('length(referin.refer_hospcode) IN (5,9)'))
             .whereNotNull('referin.vn')
             .whereNotNull('patient.hn')
             .limit(maxLimit);

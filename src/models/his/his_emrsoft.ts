@@ -623,7 +623,7 @@ export class HisEmrSoftModel {
         columnName = columnName === 'visitNo' ? 'q.vn' : columnName;
         columnName = columnName === 'dateadmit' ? 'i.regdate' : columnName;
         columnName = columnName === 'datedisc' ? 'i.dchdate' : columnName;
-        let validRefer = columnName === 'datedisc'? ' AND LENGTH(i.rfrilct)=5 ':'';
+        let validRefer = columnName === 'datedisc'? ' AND LENGTH(i.rfrilct) IN (5,9) ':'';
         const sql = `
             SELECT
                 (select hospitalcode from opdconfig) as HOSPCODE,
@@ -1236,7 +1236,7 @@ export class HisEmrSoftModel {
             .select(db.raw(`concat(ovst.vstdate, ' ',ovst.vsttime) as DATETIME_IN, '1' as REFER_RESULT`))
             .select(db.raw(`concat(ovst.vstdate, ' ',ovst.vsttime) as D_UPDATE`))
             .where(db.raw(`(referin.refer_date='${visitDate}' or referin.date_in='${visitDate}')`))
-            .where(db.raw('length(referin.refer_hospcode)=5'))
+            .where(db.raw('length(referin.refer_hospcode) IN (5,9)'))
             .whereNotNull('referin.vn')
             .whereNotNull('patient.hn')
             .limit(maxLimit);

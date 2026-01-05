@@ -1324,7 +1324,7 @@ export class HisHosxpPcuModel {
             .select(db.raw(`concat(ovst.vstdate, ' ',ovst.vsttime) as DATETIME_IN, '1' as REFER_RESULT`))
             .select(db.raw(`concat(ovst.vstdate, ' ',ovst.vsttime) as D_UPDATE`))
             .where(db.raw(`(referin.refer_date='${visitDate}' or referin.date_in='${visitDate}')`))
-            .where(db.raw('length(referin.refer_hospcode)=5'))
+            .where(db.raw('length(referin.refer_hospcode) IN (5,9)'))
             .whereNotNull('referin.vn')
             .whereNotNull('patient.hn')
             .limit(maxLimit);
