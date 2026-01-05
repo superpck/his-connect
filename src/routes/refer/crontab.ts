@@ -29,7 +29,7 @@ let crontabConfig: any = {
 };
 let db: Knex;
 
-const processSend = (request: any, reply: any, dbConn: Knex, config = {}) => {
+const processSend = async (request: any, reply: any, dbConn: Knex, config = {}) => {
   db = dbConn;
   crontabConfig = { ...crontabConfig, ...config };
   crontabConfig['client_ip'] = '127.0.0.1';
@@ -41,11 +41,15 @@ const processSend = (request: any, reply: any, dbConn: Knex, config = {}) => {
       crontabConfig['client_ip'] = request.ip || crontabConfig['client_ip'];
     }
   }
+  console.log(moment().format('HH:mm:ss'), `Start 'nRefer' task on PID ${process.pid}`);
+  let result: any;
   if (crontabConfig?.service == 'ipdChecking') {
-    return ipdChecking(request, reply);
+    result = await ipdChecking(request, reply);
   } else {
-    return sendMoph(request, reply, db);  // ข้อมูลปัจจุบัน
+    result = await sendMoph(request, reply, db);  // ข้อมูลปัจจุบัน
   }
+  console.log('-'.repeat(70));
+  return result;
 }
 
 async function sendMoph(req, reply, db) {
@@ -59,7 +63,7 @@ async function sendMoph(req, reply, db) {
     nReferToken = resultToken.token;
     sentContent += `token ${nReferToken}\r`;
   } else {
-    console.log('Get nRefer token error', resultToken.message);
+    console.error('Get nRefer token error', resultToken.message);
     sentContent += `get token Error:` + JSON.stringify(resultToken) + `\r`;
     writeResult(resultText, sentContent);
     return false;
@@ -87,7 +91,6 @@ async function sendMoph(req, reply, db) {
     }
   }
 
-  console.log(moment().format('HH:mm:ss'), process.pid, '='.repeat(60));
   var [referOut, referResult] = await sendRefer(db, dateNow);
   return { date: dateNow, referOut, referResult };
 }
@@ -103,7 +106,7 @@ async function sendRefer(db: Knex, date: any) {
 async function getReferOut(db: Knex, date: any) {
   try {
     const referout = await hisModel.getReferOut(db, date, hcode, null);
-    // console.log('******** >> refer out', date, referout.length, ' cases');
+    console.log('   >> nRefer Out', date, referout.length, ' cases');
     if (!referout || referout.length == 0) {
       return '';
     }
@@ -173,10 +176,10 @@ async function getReferOut(db: Knex, date: any) {
       }
     }
     await getProvider(db, drList, sentResult);
-    console.log(' nrefer sent ', process.env.HOSPCODE, sentResult.message || sentResult);
+    console.log('  nRefer sent ', process.env.HOSPCODE, sentResult.message || sentResult);
     return referout;
   } catch (error) {
-    console.log('getReferOut, crontab error:', error.message)
+    console.error('getReferOut, crontab error:', error.message)
     sentContent += moment().format('HH:mm:ss.SSS') + 'crontab error ' + error.message + '\r\r';
     return [];
   }
@@ -199,7 +202,7 @@ async function getReferIn(db, date) {
   };
   try {
     const referResult = await hisModel.getReferResult(db, date, hcode);
-    // console.log('******** >> refer in', date, referResult.length, ' cases');
+    console.log('   >> nRefer In', date, referResult.length, ' cases');
     if (!referResult || referResult.length == 0) {
       return '';
     }
@@ -818,14 +821,14 @@ async function ipdChecking(req: any, res: any) {
           await getAdmission(db, 'vn', vn);
         }
       }
-      console.log(`Send IPD backward: ${date} founed: ${rows.length} rows, IPD sent: ${anList.length} rows`);
+      console.log(moment().format('HH:mm:ss'), `Send IPD backward: ${date} founed: ${rows.length} rows, IPD sent: ${anList.length} rows`);
       date = moment(date).add(1, 'day').format('YYYY-MM-DD');
     }
     while (date <= dateEnd && date <= today);
     console.log(sentResult);
     return sentResult;
   } catch (error) {
-    console.log('ipdChecking', error.message)
+    console.log(moment().format('HH:mm:ss'), 'ipdChecking', error.message)
   }
 }
 

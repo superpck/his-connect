@@ -43,6 +43,7 @@ export const sendBedOccupancy = async (dateProcess: any = null) => {
     dateOpd = moment(dateOpd).add(1, 'day').format('YYYY-MM-DD');
   } while (dateOpd <= currDate);
 
+  console.log('-'.repeat(70));
   return { clinicResult, wardResult, opdResult };
 }
 
@@ -57,9 +58,11 @@ const sendBedOccupancyByWard = async (date: any) => {
       const result: any = await sendingToMoph('/save-occupancy-rate-by-ward', rows);
       console.log(moment().format('HH:mm:ss'), 'send Occ Rate by ward', date, result.status || '', result.message || '', rows.length, 'rows');
     }
+    console.log('-'.repeat(70));
     return rows;
   } catch (error) {
     console.error(moment().format('HH:mm:ss'), 'sendBedOccupancy error by ward', date, error.message);
+    console.log('-'.repeat(70));
     return false;
   }
 }
@@ -152,13 +155,16 @@ export const sendWardName = async () => {
       });
       const result: any = await sendingToMoph('/save-ward', rows);
       console.log(moment().format('HH:mm:ss'), 'sendWardName', result.status || '', result.message || '', rows.length, 'rows');
+      console.log('-'.repeat(70));
       return result;
     } else {
       console.log(moment().format('HH:mm:ss'), 'sendWardName', 'No ward data');
+      console.log('-'.repeat(70));
       return { statusCode: 200, message: 'No ward data' };
     }
   } catch (error) {
     console.log(moment().format('HH:mm:ss'), 'getWard error', error.message);
+    console.log('-'.repeat(70));
     return [];
   }
 }
@@ -199,9 +205,11 @@ export const sendBedNo = async () => {
       times++;
     } while (startRow < countBed && countBed != 0);
     console.log(moment().format('HH:mm:ss'), `sendBedNo ${countBed} rows (${times} times)`, error);
+    console.log('-'.repeat(70));
     return { statusCode: 200, sentResult };
   } catch (error) {
     console.log(moment().format('HH:mm:ss'), 'getBedNo error', error.message);
+    console.log('-'.repeat(70));
     return { statusCode: error.status || 500, message: error.message || error };
   }
 }
@@ -235,9 +243,11 @@ export const updateAlive = async () => {
     } else {
       console.error(moment().format('HH:mm:ss'), '❌ Sent API Alive status result', result.status || '', result.statusCode || '', result?.message || '');
     }
+    console.log('-'.repeat(70));
     return result;
   } catch (error) {
     console.error(moment().format('HH:mm:ss'), '❌ Sent API Alive status error:', error?.status || error?.statusCode || '', error?.message || error || '');
+    console.log('-'.repeat(70));
     return [];
   }
 }
@@ -281,10 +291,12 @@ export const erpAdminRequest = async () => {
     } else {
       console.log(moment().format('HH:mm:ss'), 'No admin request', result.status || result?.statusCode || '', result?.data?.message || result?.message || '');
     }
+    console.log('-'.repeat(70));
     return result;
   } catch (error) {
     console.log(moment().format('HH:mm:ss'), 'Admin Request error', error.message);
     // console.log(moment().format('HH:mm:ss'), 'API Alive error', error.message);
+    console.log('-'.repeat(70));
     return [];
   }
 }
@@ -378,7 +390,7 @@ async function detectRuntimeEnvironment() {
       if (/kubepods/i.test(cgroup)) {
         env = "kubernetes";
       }
-    } catch {}
+    } catch { }
   }
 
   // -------------------------------
@@ -394,7 +406,7 @@ async function detectRuntimeEnvironment() {
     ) {
       env = "wsl";
     }
-  } catch {}
+  } catch { }
 
   // -------------------------------
   // 3) Return พร้อมข้อมูลเพิ่มเติม

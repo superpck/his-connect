@@ -31,8 +31,10 @@ export const mophAlertSurvey = async (date: any = null) => {
       date = moment().subtract(1, 'hours').format('YYYY-MM-DD');
       await opdVisit(date);
     }
+    console.log('-'.repeat(70));
   } catch (error) {
     console.log(moment().format('HH:mm:ss'), 'getVisitForMophAlert error', error.message);
+    console.log('-'.repeat(70));
     return [];
   }
 }

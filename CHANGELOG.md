@@ -1,6 +1,7 @@
 # 3.9.6
 ## Feature
   - Update HospitalOS เปลี่ยนไป query ใน view แทน Table จริง
+  - ปรับ Query ให้รองรับ Hospcode 5 หรือ 9 หลัก
 
 # 3.9.5
 ## Feature

@@ -428,7 +428,7 @@ export class HisIHospitalModel {
 
     let sql = db('view_ipd_ipd as ipd');
     if (['no_card', 'vn', 'hn', 'an'].indexOf(columnName) < 0) {
-      sql.whereRaw('LENGTH(ipd.refer)=5');
+      sql.whereRaw('LENGTH(ipd.refer) IN (5,9)');
     }
     if (Array.isArray(searchValue)) {
       sql.whereIn(columnName, searchValue)
@@ -633,7 +633,7 @@ export class HisIHospitalModel {
         , 'visit.dr as PROVIDER', 'visit.dr')
       .where('visit.date', visitDate)
       .where('visit.refer', '!=', hospCode)
-      .where(db.raw('length(visit.refer)=5'))
+      .where(db.raw('length(visit.refer) IN (5,9)'))
       .groupBy('visit.vn')
       .limit(maxLimit);
   }
@@ -664,7 +664,7 @@ export class HisIHospitalModel {
       .whereBetween('visit.date', [dateStart, dateEnd])
       .whereNotNull('visit.refer')
       .where('visit.refer', '!=', hisHospcode)
-      .whereRaw('LENGTH(visit.refer)=5')
+      .whereRaw('LENGTH(visit.refer) IN (5,9)')
       .whereNotNull('visit.vn')
       .groupBy('visit.date');
   }
