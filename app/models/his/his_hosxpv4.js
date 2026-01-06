@@ -107,8 +107,43 @@ class HisHosxpv4Model {
             .whereRaw(`LEFT(licenseno,1) IN ('ว','ท')`)
             .limit(maxLimit);
     }
-    getReferOut(db, date, hospCode = hisHospcode, visitNo = null) {
-        return [];
+    async getReferOut(db, date, hospCode = hisHospcode, visitNo = null) {
+        if (dbClient == 'pg' || dbClient == 'postgres' || dbClient == 'postgresql') {
+            return [];
+        }
+        const filter = visitNo ? visitNo : date;
+        const filterText = visitNo ? 'r.vn =?' : 'r.refer_date =?';
+        const sql = `
+            SELECT (SELECT hospitalcode FROM opdconfig ) AS hospcode,
+                concat(r.refer_date, ' ', r.refer_time) AS refer_date,
+                r.refer_number AS referid,
+                case when r.refer_hospcode then r.refer_hospcode else r.hospcode end AS hosp_destination,
+                r.hn AS PID, r.hn AS hn, pt.cid AS CID, r.vn, r.vn as SEQ,
+                an_stat.an as AN, pt.pname AS prename,
+                pt.fname AS fname, r.doctor as dr, doctor.licenseno as provider,
+                pt.lname AS lname,
+                pt.birthday AS dob,
+                pt.sex AS sex, r.referout_emergency_type_id as EMERGENCY, 
+                r.request_text as REQUEST,
+                r.pdx AS dx,
+                case when r.pmh then r.pmh else opdscreen.pmh end as PH,
+                case when r.hpi then r.hpi else opdscreen.hpi end as PI,
+                r.treatment_text as PHYSICALEXAM,
+                r.pre_diagnosis as DIAGLAST,
+                IF((SELECT count(an) as cc from an_stat WHERE an =r.vn) = 1,r.vn,null) as an
+            FROM
+                referout r
+                INNER JOIN patient pt ON pt.hn = r.hn
+                left join an_stat on r.vn=an_stat.vn
+                left join opdscreen on r.vn=opdscreen.vn
+                left join doctor on r.doctor = doctor.code
+            WHERE
+                ${filterText} and r.vn is not null and r.refer_hospcode!='' and r.refer_hospcode is not null
+                and r.refer_hospcode != ?
+            ORDER BY
+                r.refer_date`;
+        const result = await db.raw(sql, [filter, hisHospcode]);
+        return result[0];
     }
     async getPerson(db, columnName, searchText, hospCode = hisHospcode) {
         columnName = columnName == 'hn' ? 'p.hn' : columnName;
@@ -1163,6 +1198,18 @@ class HisHosxpv4Model {
             .limit(maxLimit);
     }
     sumReferOut(db, dateStart, dateEnd) {
+        dateStart = moment(dateStart).format('YYYY-MM-DD');
+        dateEnd = moment(dateEnd).format('YYYY-MM-DD');
+        console.log(db('referout as r')
+            .select('r.refer_date')
+            .count('r.vn as cases')
+            .whereNotNull('r.vn')
+            .whereBetween('r.refer_date', [dateStart, dateEnd])
+            .where('r.refer_hospcode', '!=', '')
+            .whereNotNull('r.refer_hospcode')
+            .where('r.refer_hospcode', '!=', hisHospcode)
+            .groupBy('r.refer_date')
+            .orderBy('r.refer_date').toString());
         return db('referout as r')
             .select('r.refer_date')
             .count('r.vn as cases')
@@ -1175,6 +1222,8 @@ class HisHosxpv4Model {
             .orderBy('r.refer_date');
     }
     sumReferIn(db, dateStart, dateEnd) {
+        dateStart = moment(dateStart).format('YYYY-MM-DD');
+        dateEnd = moment(dateEnd).format('YYYY-MM-DD');
         return db('referin')
             .leftJoin('ovst', 'referin.vn', 'ovst.vn')
             .select('referin.refer_date')

@@ -2,6 +2,7 @@
 ## Feature
   - Update HospitalOS เปลี่ยนไป query ใน view แทน Table จริง
   - ปรับ Query ให้รองรับ Hospcode 5 หรือ 9 หลัก
+  - ปรับ SQL ที่รองรับ pgSQL
 
 # 3.9.5
 ## Feature
