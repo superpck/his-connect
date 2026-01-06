@@ -122,13 +122,15 @@ export class HisHosxpv4Model {
   }
 
   //select รายชื่อเพื่อแสดงทะเบียน refer
-  getReferOut(db: Knex, date: any, hospCode = hisHospcode, visitNo: string = null) {
+  async getReferOut(db: Knex, date: any, hospCode = hisHospcode, visitNo: string = null) {
+    if (dbClient == 'pg' || dbClient == 'postgres' || dbClient == 'postgresql') {
+      return [];
+    }
     // รอปรับ Source ให้ mathch กับ DB เนื่องจาก HIS v.4 pg ใช้คนละ command
-    /*
-            const filter = visitNo ? visitNo : date;
-            const filterText = visitNo ? 'r.vn =?' : 'r.refer_date =?';
-    
-            const sql = `
+    const filter = visitNo ? visitNo : date;
+    const filterText = visitNo ? 'r.vn =?' : 'r.refer_date =?';
+
+    const sql = `
             SELECT (SELECT hospitalcode FROM opdconfig ) AS hospcode,
                 concat(r.refer_date, ' ', r.refer_time) AS refer_date,
                 r.refer_number AS referid,
@@ -157,11 +159,8 @@ export class HisHosxpv4Model {
                 and r.refer_hospcode != ?
             ORDER BY
                 r.refer_date`;
-            const result = await db.raw(sql, [filter, hisHospcode]);
-            return result[0];
-        }
-    */
-    return [];
+    const result = await db.raw(sql, [filter, hisHospcode]);
+    return result[0];
   }
 
   async getPerson(db: Knex, columnName, searchText, hospCode = hisHospcode) {
@@ -1633,6 +1632,18 @@ export class HisHosxpv4Model {
 
   // Report Zone
   sumReferOut(db: Knex, dateStart: any, dateEnd: any) {
+    dateStart = moment(dateStart).format('YYYY-MM-DD');
+    dateEnd = moment(dateEnd).format('YYYY-MM-DD');
+    console.log(db('referout as r')
+      .select('r.refer_date')
+      .count('r.vn as cases')
+      .whereNotNull('r.vn')
+      .whereBetween('r.refer_date', [dateStart, dateEnd])
+      .where('r.refer_hospcode', '!=', '')
+      .whereNotNull('r.refer_hospcode')
+      .where('r.refer_hospcode', '!=', hisHospcode)
+      .groupBy('r.refer_date')
+      .orderBy('r.refer_date').toString())
     return db('referout as r')
       .select('r.refer_date')
       .count('r.vn as cases')
@@ -1646,6 +1657,8 @@ export class HisHosxpv4Model {
   }
 
   sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
+    dateStart = moment(dateStart).format('YYYY-MM-DD');
+    dateEnd = moment(dateEnd).format('YYYY-MM-DD');
     return db('referin')
       .leftJoin('ovst', 'referin.vn', 'ovst.vn')
       .select('referin.refer_date')
