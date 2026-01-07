@@ -85,6 +85,11 @@ async function sendMoph(req, reply, db) {
             oldDate = moment(oldDate).add(1, 'days').format('YYYY-MM-DD');
         }
     }
+    for (let i = 1; i <= 2; i++) {
+        let d = moment().subtract(i, 'days').format('YYYY-MM-DD');
+        var [referOut, referResult] = await sendRefer(db, d);
+        console.log(d);
+    }
     var [referOut, referResult] = await sendRefer(db, dateNow);
     return { date: dateNow, referOut, referResult };
 }
@@ -336,7 +341,7 @@ async function sendReferOut(row, sentResult) {
         else {
             sentResult.referout.fail += 1;
             sentResult.referout.vnFail.push(SEQ);
-            console.log('save-refer-history', data.REFERID, saveResult.message);
+            console.error('save-refer-history', data.REFERID, saveResult.message);
         }
         sentContent += '  - refer_history ' + data.REFERID + ' ' + (saveResult.result || saveResult.message) + '\r';
         return saveResult;
@@ -389,9 +394,9 @@ async function sendReferIn(row, sentResult) {
 async function getPerson(db, pid, sentResult) {
     try {
         const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
-        const rows = await hismodel_1.default.getPerson(db, 'hn', pid, hcode);
+        let rows = await hismodel_1.default.getPerson(db, 'hn', pid, hcode);
         sentContent += '  - person = ' + rows.length + '\r';
-        if (rows && rows.length) {
+        if (rows && rows.length > 0) {
             for (const row of rows) {
                 for (let fld in row) {
                     row[fld.toLowerCase()] = row[fld];

@@ -187,7 +187,7 @@ function configureTimingSchedules(): TimingSchedules {
     'nrefer',
     'NREFER_AUTO_SEND',
     'NREFER_AUTO_SEND_EVERY_MINUTE',
-    5,
+    3,
     false
   );
 
@@ -406,6 +406,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
       }
 
       // Run nRefer jobs if scheduled
+      console.log('nrefer timingSchedule', minuteSinceLastNight, timingSchedule['nrefer']);
       if (timingSchedule['nrefer'].autosend &&
         minuteSinceLastNight % timingSchedule['nrefer'].minute === 0) {
         // Run IPD checking at specific times
