@@ -84,7 +84,7 @@ function configureTimingSchedules() {
         };
     });
     configureService(timingSchedule, 'isonline', 'IS_AUTO_SEND', 'IS_AUTO_SEND_EVERY_MINUTE', 10, true);
-    configureService(timingSchedule, 'nrefer', 'NREFER_AUTO_SEND', 'NREFER_AUTO_SEND_EVERY_MINUTE', 3, false);
+    configureService(timingSchedule, 'nrefer', 'NREFER_AUTO_SEND', 'NREFER_AUTO_SEND_EVERY_MINUTE', 5, false);
     return timingSchedule;
 }
 function configureService(timingSchedule, serviceName, autoSendEnvVar, minuteEnvVar, minMinutes, normalizeHour) {
@@ -188,7 +188,6 @@ async function cronjob(fastify) {
                 (0, moph_erp_1.sendWardName)();
                 (0, moph_erp_1.sendBedNo)();
             }
-            console.log('nrefer timingSchedule', minuteSinceLastNight, timingSchedule['nrefer']);
             if (timingSchedule['nrefer'].autosend &&
                 minuteSinceLastNight % timingSchedule['nrefer'].minute === 0) {
                 if (moment().hour() % 2 === 0 && moment().minute() === 56) {
