@@ -85,6 +85,11 @@ async function sendMoph(req, reply, db) {
             oldDate = moment(oldDate).add(1, 'days').format('YYYY-MM-DD');
         }
     }
+    for (let i = 1; i < 7; i++) {
+        const d = moment().subtract(i, 'days').format('YYYY-MM-DD');
+        var [referOut, referResult] = await sendRefer(db, d);
+        console.log('  -- send refer date ', d, referOut, referResult);
+    }
     var [referOut, referResult] = await sendRefer(db, dateNow);
     return { date: dateNow, referOut, referResult };
 }
@@ -131,6 +136,7 @@ async function getReferOut(db, date) {
             for (let fld in row) {
                 row[fld.toLowerCase()] = row[fld];
             }
+            row.hospcode = row?.hospcode || hcode;
             const hn = row.hn || row.pid;
             const seq = row.seq || row.vn;
             sentContent += (index + 1) + '. refer no.' + row.referid + ', hn ' + hn + ', seq ' + seq + '\r';

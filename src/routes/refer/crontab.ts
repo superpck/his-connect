@@ -149,6 +149,7 @@ async function getReferOut(db: Knex, date: any) {
         row[fld.toLowerCase()] = row[fld];
       }
 
+      row.hospcode = row?.hospcode || hcode;
       const hn = row.hn || row.pid;
       const seq = row.seq || row.vn;
       sentContent += (index + 1) + '. refer no.' + row.referid + ', hn ' + hn + ', seq ' + seq + '\r';
