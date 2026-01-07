@@ -85,11 +85,6 @@ async function sendMoph(req, reply, db) {
             oldDate = moment(oldDate).add(1, 'days').format('YYYY-MM-DD');
         }
     }
-    for (let i = 1; i < 7; i++) {
-        const d = moment().subtract(i, 'days').format('YYYY-MM-DD');
-        var [referOut, referResult] = await sendRefer(db, d);
-        console.log('  -- send refer date ', d, referOut, referResult);
-    }
     var [referOut, referResult] = await sendRefer(db, dateNow);
     return { date: dateNow, referOut, referResult };
 }

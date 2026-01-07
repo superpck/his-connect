@@ -111,6 +111,7 @@ class HisHosxpv4Model {
         if (dbClient == 'pg' || dbClient == 'postgres' || dbClient == 'postgresql') {
             return [];
         }
+        date = moment(date).format('YYYY-MM-DD');
         const filter = visitNo ? visitNo : date;
         const filterText = visitNo ? 'r.vn =?' : 'r.refer_date =?';
         const sql = `
