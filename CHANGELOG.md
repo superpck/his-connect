@@ -3,6 +3,7 @@
   - Update HospitalOS เปลี่ยนไป query ใน view แทน Table จริง
   - ปรับ Query ให้รองรับ Hospcode 5 หรือ 9 หลัก
   - ปรับ SQL ที่รองรับ pgSQL
+  - ปรับการ GetPerson ให้ return result แทน result[0] เนื่องจากใช้ knex ไม่ใช่ raw
 
 # 3.9.5
 ## Feature

@@ -163,7 +163,7 @@ export class HisHosxpv4Model {
     return result[0];
   }
 
-  async getPerson(db: Knex, columnName, searchText, hospCode = hisHospcode) {
+  async getPerson(db: Knex, columnName: string, searchText: string, hospCode = hisHospcode) {
     columnName = columnName == 'hn' ? 'p.hn' : columnName;
     columnName = columnName == 'cid' ? 'p.cid' : columnName;
     columnName = columnName == 'name' ? 'p.fname' : columnName;
@@ -229,7 +229,7 @@ export class HisHosxpv4Model {
       )
       .where(columnName, searchText);
 
-    return result[0];
+    return result;
   }
 
   async getAddress(db: Knex, columnName, searchText, hospCode = hisHospcode) {
