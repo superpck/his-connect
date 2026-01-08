@@ -44,6 +44,10 @@ class HisHosxpv4Model {
     check() {
         return true;
     }
+    async hospCodeFromTable(db) {
+        const result = await db('opdconfig').select('hospitalcode').first();
+        return result ? result.hospitalcode : hisHospcode;
+    }
     async testConnect(db) {
         let result;
         result = await global.dbHIS('opdconfig').first();
@@ -108,43 +112,66 @@ class HisHosxpv4Model {
             .limit(maxLimit);
     }
     async getReferOut(db, date, hospCode = hisHospcode, visitNo = null) {
-        if (dbClient == 'pg' || dbClient == 'postgres' || dbClient == 'postgresql') {
-            return [];
+        try {
+            date = moment(date).format('YYYY-MM-DD');
+            const limitDate = moment().subtract(1, 'months').format('YYYY-MM-DD');
+            hospCode = await this.hospCodeFromTable(db);
+            let query = db('referout as r');
+            if (visitNo) {
+                query.where('r.vn', visitNo);
+            }
+            else {
+                query.where(builder => {
+                    builder.where('r.refer_date', date)
+                        .orWhere(subBuilder => {
+                        subBuilder.where('r.refer_date', '>', limitDate)
+                            .andWhereBetween('r.update_datetime', [date + ' 00:00:00', date + ' 23:59:59']);
+                    });
+                });
+            }
+            const result = await query.select([
+                db.raw('? as hospcode', [hospCode]),
+                db.raw("CONCAT(r.refer_date, ' ', r.refer_time) as refer_date"),
+                'r.refer_number as referid',
+                'r.refer_hospcode as hosp_destination',
+                'r.hn as pid',
+                'r.hn as hn',
+                'pt.cid as cid',
+                'r.vn',
+                'r.vn as seq',
+                'an_stat.an as an',
+                'pt.pname as prename',
+                'pt.fname as fname',
+                'r.doctor as dr',
+                'doctor.licenseno as provider',
+                'pt.lname as lname',
+                'pt.birthday as dob',
+                'pt.sex as sex',
+                'r.referout_emergency_type_id as emergency',
+                'r.request_text as request',
+                'r.pdx as dx',
+                'r.lab_text',
+                'other_text',
+                db.raw("CASE WHEN r.pmh IS NOT NULL AND r.pmh != '' THEN r.pmh ELSE opdscreen.pmh END as ph"),
+                db.raw("CASE WHEN r.hpi IS NOT NULL AND r.hpi != '' THEN r.hpi ELSE opdscreen.hpi END as pi"),
+                'r.treatment_text as physicalexam',
+                'r.pre_diagnosis as diaglast',
+                db.raw("CASE WHEN (SELECT count(an) FROM an_stat WHERE an = r.vn) = 1 THEN r.vn ELSE NULL END as an")
+            ])
+                .innerJoin('patient as pt', 'pt.hn', 'r.hn')
+                .leftJoin('an_stat', 'r.vn', 'an_stat.vn')
+                .leftJoin('opdscreen', 'r.vn', 'opdscreen.vn')
+                .leftJoin('doctor', 'r.doctor', 'doctor.code')
+                .whereNotNull('r.vn')
+                .where('r.refer_hospcode', '!=', '')
+                .whereNotNull('r.refer_hospcode')
+                .where('r.refer_hospcode', '!=', hospCode)
+                .orderBy('r.refer_date');
+            return result;
         }
-        date = moment(date).format('YYYY-MM-DD');
-        const filter = visitNo ? visitNo : date;
-        const filterText = visitNo ? 'r.vn =?' : 'r.refer_date =?';
-        const sql = `
-            SELECT (SELECT hospitalcode FROM opdconfig) AS hospcode,
-                concat(r.refer_date, ' ', r.refer_time) AS refer_date,
-                r.refer_number AS referid,
-                r.refer_hospcode AS hosp_destination,
-                r.hn AS PID, r.hn AS hn, pt.cid AS CID, r.vn, r.vn as SEQ,
-                an_stat.an as AN, pt.pname AS prename,
-                pt.fname AS fname, r.doctor as dr, doctor.licenseno as provider,
-                pt.lname AS lname,
-                pt.birthday AS dob,
-                pt.sex AS sex, r.referout_emergency_type_id as EMERGENCY, 
-                r.request_text as REQUEST,
-                r.pdx AS dx,
-                case when r.pmh then r.pmh else opdscreen.pmh end as PH,
-                case when r.hpi then r.hpi else opdscreen.hpi end as PI,
-                r.treatment_text as PHYSICALEXAM,
-                r.pre_diagnosis as DIAGLAST,
-                IF((SELECT count(an) as cc from an_stat WHERE an =r.vn) = 1,r.vn,null) as an
-            FROM
-                referout r
-                INNER JOIN patient pt ON pt.hn = r.hn
-                left join an_stat on r.vn=an_stat.vn
-                left join opdscreen on r.vn=opdscreen.vn
-                left join doctor on r.doctor = doctor.code
-            WHERE
-                ${filterText} and r.vn is not null and r.refer_hospcode!='' and r.refer_hospcode is not null
-                and r.refer_hospcode != ?
-            ORDER BY
-                r.refer_date`;
-        const result = await db.raw(sql, [filter, hisHospcode]);
-        return result[0];
+        catch (error) {
+            throw error;
+        }
     }
     async getPerson(db, columnName, searchText, hospCode = hisHospcode) {
         columnName = columnName == 'hn' ? 'p.hn' : columnName;
@@ -1116,58 +1143,98 @@ class HisHosxpv4Model {
         const result = await db.raw(sql, [referNo]);
         return result[0];
     }
-    getReferResult(db, visitDate, hospCode = hisHospcode) {
-        visitDate = moment(visitDate).format('YYYY-MM-DD');
-        return db('referin')
-            .leftJoin('patient', 'referin.hn', 'patient.hn')
-            .leftJoin('ovst', 'referin.vn', 'ovst.vn')
-            .leftJoin('refer_reply', 'referin.vn', 'refer_reply.vn')
-            .select(db.raw(`? as HOSPCODE`, [hisHospcode]))
-            .select('referin.refer_hospcode as HOSP_SOURCE', 'patient.cid as CID_IN', 'referin.hn as PID_IN', 'referin.vn as SEQ_IN', 'referin.docno as REFERID', 'referin.refer_date as DATETIME_REFER', 'referin.icd10 as detail', 'refer_reply.diagnosis_text as reply_diagnostic', 'refer_reply.advice_text as reply_recommend')
-            .select(db.raw(`case when referin.referin_number IS NOT NULL AND referin.referin_number !='' AND referin.referin_number !='-' then referin.referin_number else concat('${hisHospcode}-',referin.docno) end as REFERID_SOURCE`))
-            .select(db.raw(`concat(refer_reply.reply_date, ' ',refer_reply.reply_time) as reply_date`))
-            .select(db.raw(`'' as AN_IN, concat(referin.refer_hospcode,referin.referin_number) as REFERID_PROVINCE`))
-            .select(db.raw(`concat(ovst.vstdate, ' ',ovst.vsttime) as DATETIME_IN, '1' as REFER_RESULT`))
-            .select(db.raw(`concat(ovst.vstdate, ' ',ovst.vsttime) as D_UPDATE`))
-            .where(db.raw(`(referin.refer_date=? or referin.date_in=?)`, [visitDate, visitDate]))
-            .where(db.raw('length(referin.refer_hospcode) IN (5,9)'))
-            .whereNotNull('referin.vn')
-            .whereNotNull('patient.hn')
-            .limit(maxLimit);
+    async getReferResult(db, visitDate, hospCode = hisHospcode) {
+        try {
+            visitDate = moment(visitDate).format('YYYY-MM-DD');
+            const hospCode = await this.hospCodeFromTable(db);
+            const lenFunc = db.client.driverName === 'mssql' ? 'LEN' : 'LENGTH';
+            const result = await db('referin')
+                .leftJoin('patient', 'referin.hn', 'patient.hn')
+                .leftJoin('ovst', 'referin.vn', 'ovst.vn')
+                .leftJoin('refer_reply', 'referin.vn', 'refer_reply.vn')
+                .select([
+                db.raw('? as "HOSPCODE"', [hospCode]),
+                'referin.refer_hospcode as HOSP_SOURCE',
+                'patient.cid as CID_IN',
+                'referin.hn as PID_IN',
+                'referin.vn as SEQ_IN',
+                'referin.docno as REFERID',
+                'referin.refer_date as DATETIME_REFER',
+                'referin.icd10 as detail',
+                'refer_reply.diagnosis_text as reply_diagnostic',
+                'refer_reply.advice_text as reply_recommend',
+                db.raw(`CASE WHEN referin.referin_number IS NOT NULL 
+              AND referin.referin_number <> '' 
+              AND referin.referin_number <> '-' 
+            THEN referin.referin_number 
+            ELSE CONCAT(?, '-', referin.docno) 
+            END as "REFERID_SOURCE"`, [hospCode]),
+                db.raw(`CONCAT(refer_reply.reply_date, ' ', refer_reply.reply_time) as reply_date`),
+                db.raw(`'' as "AN_IN"`),
+                db.raw(`CONCAT(referin.refer_hospcode, referin.referin_number) as "REFERID_PROVINCE"`),
+                db.raw(`CONCAT(ovst.vstdate, ' ', ovst.vsttime) as "DATETIME_IN"`),
+                db.raw(`'1' as "REFER_RESULT"`),
+                db.raw(`CONCAT(ovst.vstdate, ' ', ovst.vsttime) as "D_UPDATE"`)
+            ])
+                .where('referin.refer_date', visitDate)
+                .where(db.raw(`${lenFunc}(referin.refer_hospcode) IN (5, 9)`))
+                .whereNotNull('referin.vn')
+                .whereNotNull('patient.hn')
+                .limit(maxLimit);
+            return result;
+        }
+        catch (error) {
+            throw error;
+        }
     }
     async getProvider(db, columnName, searchNo, hospCode = hisHospcode) {
-        columnName = columnName === 'licenseNo' ? 'd.code' : columnName;
-        columnName = columnName === 'cid' ? 'd.cid' : columnName;
-        const sql = `
-            select 
-                '${hisHospcode}' as hospcode,
-                d.code as provider,
-                d.licenseno as registerno,
-                d.council_code as council,
-                d.cid as cid,
-                ifnull(p2.provis_pname_long_name,d.pname) as prename,
-                ifnull(p.fname,d.fname) as name,
-                ifnull(p.lname,d.lname) as lname,
-                d.sex as sex,	
-                if(p.birthday   is null or trim(p.birthday )='' or p.birthday   like '0000-00-00%','',date_format(p.birthday,'%Y-%m-%d')) as  birth,
-                d.provider_type_code as providertype,
-                if( d.start_date is null or trim(d.start_date)='' or d.start_date like '0000-00-00%','',date_format(d.start_date,'%Y-%m-%d')) as startdate,
-                if( d.finish_date is null or trim(d.finish_date)='' or d.finish_date like '0000-00-00%','',date_format(d.finish_date,'%Y-%m-%d')) as outdate,
-                d.move_from_hospcode as movefrom,
-                d.move_to_hospcode as  moveto,
-                if(d.update_datetime is null or trim(d.update_datetime)='' or d.update_datetime like '0000-00-00%','',date_format(d.update_datetime,'%Y-%m-%d %H:%i:%s') ) as d_update
-                
-            from 
-                doctor d 
-                left join patient p on d.cid = p.cid
-                left join pname pn on pn.name = p.pname
-                left join provis_pname p2 on p2.provis_pname_code = pn.provis_code                
-            where 
-                ${columnName} = ?`;
-        const result = await db.raw(sql, [searchNo]);
-        return result[0];
+        try {
+            columnName = columnName === 'licenseNo' ? 'd.code' : columnName;
+            columnName = columnName === 'cid' ? 'd.cid' : columnName;
+            hospCode = await this.hospCodeFromTable(db);
+            const getSqlDate = (field, includeTime = false) => {
+                const driver = db.client.driverName;
+                if (driver === 'pg') {
+                    const fmt = includeTime ? 'YYYY-MM-DD HH24:MI:SS' : 'YYYY-MM-DD';
+                    return `TO_CHAR(${field}, '${fmt}')`;
+                }
+                else if (driver === 'mssql') {
+                    const fmt = includeTime ? 'yyyy-MM-dd HH:mm:ss' : 'yyyy-MM-dd';
+                    return `FORMAT(${field}, '${fmt}')`;
+                }
+                const fmt = includeTime ? '%Y-%m-%d %H:%i:%s' : '%Y-%m-%d';
+                return `DATE_FORMAT(${field}, '${fmt}')`;
+            };
+            const result = await db('doctor as d')
+                .leftJoin('patient as p', 'd.cid', 'p.cid')
+                .leftJoin('pname as pn', 'pn.name', 'p.pname')
+                .leftJoin('provis_pname as p2', 'p2.provis_pname_code', 'pn.provis_code')
+                .select([
+                db.raw('? as hospcode', [hospCode]),
+                'd.code as provider',
+                'd.licenseno as registerno',
+                'd.council_code as council',
+                'd.cid as cid',
+                db.raw('COALESCE(p2.provis_pname_long_name, d.pname) as prename'),
+                db.raw('COALESCE(p.fname, d.fname) as name'),
+                db.raw('COALESCE(p.lname, d.lname) as lname'),
+                'd.sex',
+                db.raw(`CASE WHEN p.birthday IS NULL THEN '' ELSE ${getSqlDate('p.birthday')} END as birth`),
+                'd.provider_type_code as providertype',
+                db.raw(`CASE WHEN d.start_date IS NULL THEN '' ELSE ${getSqlDate('d.start_date')} END as startdate`),
+                db.raw(`CASE WHEN d.finish_date IS NULL THEN '' ELSE ${getSqlDate('d.finish_date')} END as outdate`),
+                'd.move_from_hospcode as movefrom',
+                'd.move_to_hospcode as moveto',
+                db.raw(`CASE WHEN d.update_datetime IS NULL THEN '' ELSE ${getSqlDate('d.update_datetime', true)} END as d_update`)
+            ])
+                .where(columnName, searchNo);
+            return result;
+        }
+        catch (error) {
+            throw error;
+        }
     }
-    getProviderDr(db, drList) {
+    async getProviderDr_(db, drList) {
         return db('doctor as d')
             .leftJoin('patient as p', 'd.cid', 'p.cid')
             .leftJoin('pname as pn', 'pn.name', 'p.pname')
@@ -1190,6 +1257,54 @@ class HisHosxpv4Model {
                 d.move_to_hospcode as  moveto,
                 if(d.update_datetime is null or trim(d.update_datetime)='' or d.update_datetime like '0000-00-00%','',date_format(d.update_datetime,'%Y-%m-%d %H:%i:%s') ) as d_update`))
             .whereIn('d.code', drList);
+    }
+    async getProviderDr(db, drList) {
+        try {
+            const hospCode = await this.hospCodeFromTable(db);
+            const driver = db.client.driverName;
+            const sqlDate = (field, withTime = false) => {
+                const zeroDateCheck = (driver === 'mysql' || driver === 'mysql2')
+                    ? `OR CAST(${field} AS CHAR) LIKE '0000-00-00%'`
+                    : '';
+                let formatFn = '';
+                if (driver === 'pg') {
+                    formatFn = `TO_CHAR(${field}, '${withTime ? 'YYYY-MM-DD HH24:MI:SS' : 'YYYY-MM-DD'}')`;
+                }
+                else if (driver === 'mssql') {
+                    formatFn = `FORMAT(${field}, '${withTime ? 'yyyy-MM-dd HH:mm:ss' : 'yyyy-MM-dd'}')`;
+                }
+                else {
+                    formatFn = `DATE_FORMAT(${field}, '${withTime ? '%Y-%m-%d %H:%i:%s' : '%Y-%m-%d'}')`;
+                }
+                return `CASE WHEN ${field} IS NULL ${zeroDateCheck} THEN '' ELSE ${formatFn} END`;
+            };
+            return db('doctor as d')
+                .leftJoin('patient as p', 'd.cid', 'p.cid')
+                .leftJoin('pname as pn', 'pn.name', 'p.pname')
+                .leftJoin('provis_pname as p2', 'p2.provis_pname_code', 'pn.provis_code')
+                .select([
+                db.raw('? as hospcode', [hospCode]),
+                'd.code as provider',
+                'd.licenseno as registerno',
+                'd.council_code as council',
+                'd.cid as cid',
+                db.raw('COALESCE(p2.provis_pname_long_name, d.pname) as prename'),
+                db.raw('COALESCE(p.fname, d.fname) as name'),
+                db.raw('COALESCE(p.lname, d.lname) as lname'),
+                'd.sex as sex',
+                db.raw(`${sqlDate('p.birthday')} as birth`),
+                'd.provider_type_code as providertype',
+                db.raw(`${sqlDate('d.start_date')} as startdate`),
+                db.raw(`${sqlDate('d.finish_date')} as outdate`),
+                'd.move_from_hospcode as movefrom',
+                'd.move_to_hospcode as moveto',
+                db.raw(`${sqlDate('d.update_datetime', true)} as d_update`)
+            ])
+                .whereIn('d.code', drList);
+        }
+        catch (error) {
+            throw error;
+        }
     }
     getData(db, tableName, columnName, searchNo, hospCode = hisHospcode) {
         return db(tableName)
