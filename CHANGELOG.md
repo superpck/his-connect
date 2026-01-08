@@ -1,3 +1,7 @@
+# 3.9.7
+## Feature
+  - ปรับ SQL getReferOut, getReferResult, getProviderDr ให้รองรับ Pg, MSSQL
+
 # 3.9.6
 ## Feature
   - Update HospitalOS เปลี่ยนไป query ใน view แทน Table จริง

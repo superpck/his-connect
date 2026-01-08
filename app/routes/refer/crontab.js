@@ -295,6 +295,7 @@ async function sendReferOut(row, sentResult) {
         const dAdmit = row.datetime_admit || row.datetime_admit || null;
         const dRefer = row.datetime_refer || row.REFER_DATE || row.refer_date || dServe || null;
         const destHosp = row.hosp_destination;
+        row.physicalexam += ((row?.lab_text || '') ? '\n' + row.lab_text : '') + (row?.other_text ? '\n' + row.other_text : '');
         const data = {
             HOSPCODE: hcode,
             REFERID: referId,
@@ -311,9 +312,9 @@ async function sendReferOut(row, sentResult) {
             CLINIC_REFER: row.clinic_refer || '',
             CHIEFCOMP: row.chiefcomp || row.cc || '',
             PHYSICALEXAM: row.physicalexam || row.pe || '',
-            PH: row.PH || row.ph || '',
-            PI: row.PI || row.pi || '',
-            FH: row.FH || row.fh || '',
+            PH: row.ph || '',
+            PI: row.pi || '',
+            FH: row.fh || '',
             DIAGFIRST: row.diagfirst || '',
             DIAGLAST: row.diaglast || '',
             PSTATUS: row.ptstatus || '',
