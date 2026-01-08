@@ -1,6 +1,7 @@
 # 3.9.7
 ## Feature
-  - ปรับ SQL getReferOut, getReferResult, getProviderDr ให้รองรับ Pg, MSSQL
+  - ปรับ SQL getReferOut, getReferResult, getProviderDr, sumReferOut ให้รองรับ Pg, MSSQL
+  - เปลี่ยน count('bedno.bedno as total_bed') เป็น count({ total_bed: 'bedno.bedno' })
 
 # 3.9.6
 ## Feature

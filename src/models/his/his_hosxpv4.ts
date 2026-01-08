@@ -5,6 +5,7 @@ const maxLimit = 250;
 let hisHospcode = process.env.HOSPCODE;
 const hisVersion = process.env.HIS_PROVIDER.toLowerCase() == 'hosxpv3' ? '3' : '4';
 const dbClient = process.env.HIS_DB_CLIENT ? process.env.HIS_DB_CLIENT.toLowerCase() : 'mysql2';
+let hospcodeConfig = null;
 
 const getDatetimeExpr = (db: Knex, dateCol: string, timeCol: string): any => {
   const clientType = (db.client?.config?.client || dbClient).toLowerCase();
@@ -47,8 +48,13 @@ export class HisHosxpv4Model {
   }
 
   async hospCodeFromTable(db: Knex) {
-    const result = await db('opdconfig').select('hospitalcode').first();
-    return result ? result.hospitalcode : hisHospcode;
+    if (hospcodeConfig) {
+      return hospcodeConfig;
+    } else {
+      const result = await db('opdconfig').select('hospitalcode').first();
+      hospcodeConfig = result ? result.hospitalcode : hisHospcode;
+      return hospcodeConfig;
+    }
   }
 
   async testConnect(db: Knex) {
@@ -1795,29 +1801,24 @@ export class HisHosxpv4Model {
       .limit(maxLimit);
   }
 
-  // Report Zone
-  sumReferOut(db: Knex, dateStart: any, dateEnd: any) {
+  // Report Zone =========================================================
+  // verified for mysql, pg, mssql
+  async sumReferOut(db: Knex, dateStart: any, dateEnd: any) {
     try {
+      const hospCode = await this.hospCodeFromTable(db);
       dateStart = moment(dateStart).format('YYYY-MM-DD');
       dateEnd = moment(dateEnd).format('YYYY-MM-DD');
-      console.log(db('referout as r')
-        .select('r.refer_date')
-        .count('r.vn as cases')
-        .whereNotNull('r.vn')
-        .whereBetween('r.refer_date', [dateStart, dateEnd])
-        .where('r.refer_hospcode', '!=', '')
-        .whereNotNull('r.refer_hospcode')
-        .where('r.refer_hospcode', '!=', hisHospcode)
-        .groupBy('r.refer_date')
-        .orderBy('r.refer_date').toString())
       return db('referout as r')
         .select('r.refer_date')
+        // หมายเหตุ: Postgres จะ return count เป็น string (bigint) 
+        // ส่วน MySQL/MSSQL return เป็น number (int)
+        // ถ้าต้องการให้เป็น number เสมอ อาจต้อง cast ใน javascript ภายหลัง
         .count('r.vn as cases')
-        .whereNotNull('r.vn')
         .whereBetween('r.refer_date', [dateStart, dateEnd])
-        .where('r.refer_hospcode', '!=', '')
+        .whereNotNull('r.vn')
+        .where('r.refer_hospcode', '<>', '')
         .whereNotNull('r.refer_hospcode')
-        .where('r.refer_hospcode', '!=', hisHospcode)
+        .where('r.refer_hospcode', '<>', hospCode)
         .groupBy('r.refer_date')
         .orderBy('r.refer_date');
     } catch (error) {
@@ -1825,20 +1826,24 @@ export class HisHosxpv4Model {
     }
   }
 
-  sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
+  // verified for mysql, pg, mssql
+  async sumReferIn(db: Knex, dateStart: any, dateEnd: any) {
     try {
       dateStart = moment(dateStart).format('YYYY-MM-DD');
       dateEnd = moment(dateEnd).format('YYYY-MM-DD');
+      const hospCode = await this.hospCodeFromTable(db);
+
       return db('referin')
         .leftJoin('ovst', 'referin.vn', 'ovst.vn')
         .select('referin.refer_date')
         .count('referin.vn as cases')
         .whereBetween('referin.refer_date', [dateStart, dateEnd])
-        .where('referin.refer_hospcode', '!=', hisHospcode)
+        .where('referin.refer_hospcode', '<>', hospCode)
         .whereNotNull('referin.refer_hospcode')
         .whereNotNull('referin.vn')
         .whereNotNull('ovst.vn')
-        .groupBy('referin.refer_date');
+        .groupBy('referin.refer_date')
+        .orderBy('referin.refer_date');
     } catch (error) {
       throw error;
     }
@@ -1847,7 +1852,9 @@ export class HisHosxpv4Model {
   // MOPH ERP ==========================================================
   countBedNo(db: Knex) {
     try {
-      return db('bedno').count('bedno.bedno as total_bed')
+      return db('bedno')
+        // .count('bedno.bedno as total_bed')
+        .count({ total_bed: 'bedno.bedno' })
         .leftJoin('roomno', 'bedno.roomno', 'roomno.roomno')
         .leftJoin('ward', 'roomno.ward', 'ward.ward')
         .where('ward.ward_active', 'Y').first();
@@ -1858,7 +1865,6 @@ export class HisHosxpv4Model {
 
   async getBedNo(db: Knex, bedno: any = null, start = -1, limit: number = 1000) {
     try {
-
       let sql = db('bedno')
         .leftJoin('roomno', 'bedno.roomno', 'roomno.roomno')
         .leftJoin('ward', 'roomno.ward', 'ward.ward')
