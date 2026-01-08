@@ -6,6 +6,7 @@ const maxLimit = 250;
 let hisHospcode = process.env.HOSPCODE;
 const hisVersion = process.env.HIS_PROVIDER.toLowerCase() == 'hosxpv3' ? '3' : '4';
 const dbClient = process.env.HIS_DB_CLIENT ? process.env.HIS_DB_CLIENT.toLowerCase() : 'mysql2';
+let hospcodeConfig = null;
 const getDatetimeExpr = (db, dateCol, timeCol) => {
     const clientType = (db.client?.config?.client || dbClient).toLowerCase();
     switch (clientType) {
@@ -45,8 +46,14 @@ class HisHosxpv4Model {
         return true;
     }
     async hospCodeFromTable(db) {
-        const result = await db('opdconfig').select('hospitalcode').first();
-        return result ? result.hospitalcode : hisHospcode;
+        if (hospcodeConfig) {
+            return hospcodeConfig;
+        }
+        else {
+            const result = await db('opdconfig').select('hospitalcode').first();
+            hospcodeConfig = result ? result.hospitalcode : hisHospcode;
+            return hospcodeConfig;
+        }
     }
     async testConnect(db) {
         let result;
@@ -1264,8 +1271,7 @@ class HisHosxpv4Model {
             const driver = db.client.driverName;
             const sqlDate = (field, withTime = false) => {
                 const zeroDateCheck = (driver === 'mysql' || driver === 'mysql2')
-                    ? `OR CAST(${field} AS CHAR) LIKE '0000-00-00%'`
-                    : '';
+                    ? `OR CAST(${field} AS CHAR) LIKE '0000-00-00%'` : '';
                 let formatFn = '';
                 if (driver === 'pg') {
                     formatFn = `TO_CHAR(${field}, '${withTime ? 'YYYY-MM-DD HH24:MI:SS' : 'YYYY-MM-DD'}')`;
@@ -1313,47 +1319,51 @@ class HisHosxpv4Model {
             .where(columnName, "=", searchNo)
             .limit(maxLimit);
     }
-    sumReferOut(db, dateStart, dateEnd) {
-        dateStart = moment(dateStart).format('YYYY-MM-DD');
-        dateEnd = moment(dateEnd).format('YYYY-MM-DD');
-        console.log(db('referout as r')
-            .select('r.refer_date')
-            .count('r.vn as cases')
-            .whereNotNull('r.vn')
-            .whereBetween('r.refer_date', [dateStart, dateEnd])
-            .where('r.refer_hospcode', '!=', '')
-            .whereNotNull('r.refer_hospcode')
-            .where('r.refer_hospcode', '!=', hisHospcode)
-            .groupBy('r.refer_date')
-            .orderBy('r.refer_date').toString());
-        return db('referout as r')
-            .select('r.refer_date')
-            .count('r.vn as cases')
-            .whereNotNull('r.vn')
-            .whereBetween('r.refer_date', [dateStart, dateEnd])
-            .where('r.refer_hospcode', '!=', '')
-            .whereNotNull('r.refer_hospcode')
-            .where('r.refer_hospcode', '!=', hisHospcode)
-            .groupBy('r.refer_date')
-            .orderBy('r.refer_date');
+    async sumReferOut(db, dateStart, dateEnd) {
+        try {
+            const hospCode = await this.hospCodeFromTable(db);
+            dateStart = moment(dateStart).format('YYYY-MM-DD');
+            dateEnd = moment(dateEnd).format('YYYY-MM-DD');
+            return db('referout as r')
+                .select('r.refer_date')
+                .count('r.vn as cases')
+                .whereBetween('r.refer_date', [dateStart, dateEnd])
+                .whereNotNull('r.vn')
+                .where('r.refer_hospcode', '<>', '')
+                .whereNotNull('r.refer_hospcode')
+                .where('r.refer_hospcode', '<>', hospCode)
+                .groupBy('r.refer_date')
+                .orderBy('r.refer_date');
+        }
+        catch (error) {
+            throw error;
+        }
     }
-    sumReferIn(db, dateStart, dateEnd) {
-        dateStart = moment(dateStart).format('YYYY-MM-DD');
-        dateEnd = moment(dateEnd).format('YYYY-MM-DD');
-        return db('referin')
-            .leftJoin('ovst', 'referin.vn', 'ovst.vn')
-            .select('referin.refer_date')
-            .count('referin.vn as cases')
-            .whereBetween('referin.refer_date', [dateStart, dateEnd])
-            .where('referin.refer_hospcode', '!=', hisHospcode)
-            .whereNotNull('referin.refer_hospcode')
-            .whereNotNull('referin.vn')
-            .whereNotNull('ovst.vn')
-            .groupBy('referin.refer_date');
+    async sumReferIn(db, dateStart, dateEnd) {
+        try {
+            dateStart = moment(dateStart).format('YYYY-MM-DD');
+            dateEnd = moment(dateEnd).format('YYYY-MM-DD');
+            const hospCode = await this.hospCodeFromTable(db);
+            return db('referin')
+                .leftJoin('ovst', 'referin.vn', 'ovst.vn')
+                .select('referin.refer_date')
+                .count('referin.vn as cases')
+                .whereBetween('referin.refer_date', [dateStart, dateEnd])
+                .where('referin.refer_hospcode', '<>', hospCode)
+                .whereNotNull('referin.refer_hospcode')
+                .whereNotNull('referin.vn')
+                .whereNotNull('ovst.vn')
+                .groupBy('referin.refer_date')
+                .orderBy('referin.refer_date');
+        }
+        catch (error) {
+            throw error;
+        }
     }
     countBedNo(db) {
         try {
-            return db('bedno').count('bedno.bedno as total_bed')
+            return db('bedno')
+                .count({ total_bed: 'bedno.bedno' })
                 .leftJoin('roomno', 'bedno.roomno', 'roomno.roomno')
                 .leftJoin('ward', 'roomno.ward', 'ward.ward')
                 .where('ward.ward_active', 'Y').first();
