@@ -27,7 +27,7 @@ if (process.env.SSL_ENABLE && process.env.SSL_ENABLE == '1' && process.env.SSL_K
       level: 'error',
     },
     bodyLimit: 20 * 1024 * 1024,    // 20 MB
-    http2: true,
+    // http2: true,
     https: {
       key: fs.readFileSync(process.env.SSL_KEY),
       cert: fs.readFileSync(process.env.SSL_CRT)

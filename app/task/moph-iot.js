@@ -52,11 +52,23 @@ async function getData(dateStart, dateEnd) {
                 return row;
             });
             console.log(moment().format('HH:mm:ss'), 'MOPH IoT Process Date:', date, 'Total Records:', vsData.length);
+            const results = await sendToMoph(vsData);
             date = moment(date).add(1, 'day').format('YYYY-MM-DD');
         } while (date <= moment(dateEnd).format('YYYY-MM-DD'));
     }
     catch (error) {
         throw error;
     }
+}
+async function sendToMoph(rows) {
+    if (rows.length === 0)
+        return;
+    let sentResult = [];
+    for (const row of rows) {
+        const hl7Form = hl7Formatted(row);
+    }
+}
+function hl7Formatted(row) {
+    return row;
 }
 exports.default = { process };
