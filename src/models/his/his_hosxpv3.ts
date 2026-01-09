@@ -278,7 +278,7 @@ export class HisHosxpv3Model {
                         or trim(o.vsttime )='' 
                         or o.vsttime like '0000-00-00%',
                     '',
-                    time_format(o.vsttime,'%H%i%s')
+                    time_format(o.vsttime,'%H:%i:%s')
                 ) as TIME_SERV,
                 if(v.village_moo <>'0' ,'1','2') as LOCATION,
                 (select case  o.visit_type 

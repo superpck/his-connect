@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import * as moment from 'moment';
 import { execSync } from 'child_process';
 import { sendWardName, sendBedNo, sendBedOccupancy, updateAlive, erpAdminRequest, mophErpProcessTask } from "./task/moph-erp";
+import mophIot from "./task/moph-iot";
 import { mophAlertSurvey } from "./task/moph-alert";
 
 // Type definitions for better type safety

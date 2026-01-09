@@ -202,11 +202,11 @@ export class HisIHospitalModel {
     columnName = columnName === 'date_serv' ? 'visit.date' : `visit.${columnName}`;
     return db('view_opd_visit as visit')
       .leftJoin('hospdata.er_triage as triage', 'visit.vn', 'triage.vn')
-      .select(db.raw('"' + hisHospcode + '" as hospcode'))
-      .select('visit.hn as pid', 'visit.hn', 'visit.vn as seq', 'visit.date as date_serv',
+      .select(db.raw('? as hospcode', [hisHospcode]),
+        'visit.hn as pid', 'visit.hn', 'visit.vn as seq', 'visit.date as date_serv',
         'visit.hospmain as main', 'visit.hospsub as hsub',
         'visit.refer as referinhosp',
-        db.raw(" case when visit.time='' or visit.time='08:00' then visit.time_opd else visit.time end as time_serv "),
+        db.raw(" case when visit.time='' or visit.time='08:00' then visit.time_reg else visit.time end as time_serv "),
         db.raw('"1" as servplace'), 'visit.nurse_cc as chiefcomp',
         'visit.pi_dr as presentillness', 'visit.pe_dr as physicalexam', 'visit.nurse_ph as pasthistory',
         'visit.t as btemp', 'visit.bp as sbp', 'visit.bp1 as dbp', 'visit.weigh as weight', 'visit.high as height',
@@ -215,12 +215,10 @@ export class HisIHospitalModel {
         'triage.e as gcs_e', 'triage.v as gcs_v', 'triage.m as gcs_m',
         'triage.gcs', 'triage.o2sat', 'triage.pupil_lt as pupil_left', 'triage.pupil_rt as pupil_right',
         db.raw('IF(visit.period>1,2,1) AS intime'), 'visit.cost as price', 'visit.opd_result_hdc as typeout',
-        db.raw('IF(visit.hospmain=? OR visit.`add`=?,1,2) AS location', [hcode, '4001'])
-      )
-      .select(db.raw('concat(visit.date, " " , visit.time) as d_update'))
+        db.raw('IF(visit.hospmain=? OR visit.`add`=?,1,2) AS location', [hcode, '4001']),
+        db.raw('concat(visit.date, " " , visit.time) as d_update'))
       .where(columnName, searchText)
-      .orderBy('visit.date', 'desc')
-      .limit(maxLimit);
+      .orderBy('visit.date', 'desc');
   }
 
   getDiagnosisOpd(db: Knex, visitno: string, hospCode = hisHospcode) {
@@ -683,8 +681,8 @@ export class HisIHospitalModel {
     }
     query = query.select('bed.bed_id', 'bed.ward_code as wardcode', 'bed.bed_name',
       db.raw(`CONCAT(bed.ward_code, '-', bed.bed_number) as bedno`),
-        'bed.room as roomno', 'bed.moph_code as std_code', 'ward.moph_code as ward_std_code',
-        'bed.bed_status as isactive')
+      'bed.room as roomno', 'bed.moph_code as std_code', 'ward.moph_code as ward_std_code',
+      'bed.bed_status as isactive')
       // .where('bed.bed_status', 1) // เฉพาะเตียงที่ใช้งาน
       .whereNotNull('bed.ward_code')
       .whereNotIn('bed.ward_code', ['0', '']);
@@ -759,7 +757,7 @@ export class HisIHospitalModel {
       });
     return sql.groupBy('cliniccode').orderBy('cliniccode');
   }
-  
+
   sumOpdVisitByClinic(db: Knex, date: any) {
     date = moment(date).format('YYYY-MM-DD'); // for safety date format
     let sql = db('view_opd_visit as visit')
