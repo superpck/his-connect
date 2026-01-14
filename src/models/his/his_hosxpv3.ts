@@ -117,17 +117,17 @@ export class HisHosxpv3Model {
               END as bed_normal`),
 
       db.raw("CASE WHEN sub_code_3 = '602' THEN bedcount ELSE 0 END as imc"),
-      db.raw("CASE WHEN sub_code_3 = '603' THEN bedcount ELSE 0 END as extra"),
-      db.raw("CASE WHEN sub_code_3 = '604' THEN bedcount ELSE 0 END as minithayarak"),
-      db.raw("CASE WHEN sub_code_3 = '606' THEN bedcount ELSE 0 END as special"),
+      db.raw("CASE WHEN sub_code_3 = '603' THEN bedcount ELSE 0 END as bed_extra"),
+      db.raw("CASE WHEN sub_code_3 = '604' THEN bedcount ELSE 0 END as bed_minithanyaruk"),
+      db.raw("CASE WHEN sub_code_3 = '606' THEN bedcount ELSE 0 END as bed_special"),
       db.raw("CASE WHEN sub_code_3 = '607' THEN bedcount ELSE 0 END as homeward"),
       db.raw("CASE WHEN sub_code_3 = '608' THEN bedcount ELSE 0 END as lr"),
       db.raw("CASE WHEN sub_code_3 = '609' THEN bedcount ELSE 0 END as clip"),
 
-      db.raw("CASE WHEN sub_code_1 = '2' THEN bedcount ELSE 0 END as icu"),
-      db.raw("CASE WHEN sub_code_1 = '3' THEN bedcount ELSE 0 END as semi"),
-      db.raw("CASE WHEN sub_code_1 = '4' THEN bedcount ELSE 0 END as stroke"),
-      db.raw("CASE WHEN sub_code_1 = '5' THEN bedcount ELSE 0 END as burn"),
+      db.raw("CASE WHEN sub_code_1 = '2' THEN bedcount ELSE 0 END as bed_icu"),
+      db.raw("CASE WHEN sub_code_1 = '3' THEN bedcount ELSE 0 END as bed_semi"),
+      db.raw("CASE WHEN sub_code_1 = '4' THEN bedcount ELSE 0 END as bed_stroke"),
+      db.raw("CASE WHEN sub_code_1 = '5' THEN bedcount ELSE 0 END as bed_burn"),
 
       db.raw("CASE WHEN w.ward_active = 'Y' THEN 1 ELSE 0 END as isactive")
     ])
