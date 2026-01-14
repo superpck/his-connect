@@ -1,7 +1,7 @@
 {
   "name": "his-connect",
   "version": "3.9.7",
-  "subVersion": "2026.01.09-1",
+  "subVersion": "2026.01.14-1",
   "private": true,
   "license": "MIT",
   "scripts": {

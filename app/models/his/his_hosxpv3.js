@@ -79,19 +79,45 @@ class HisHosxpv3Model {
             .orderBy('name')
             .limit(maxLimit);
     }
-    getWard(db, wardCode = '', wardName = '') {
-        let sql = db('ward');
+    async getWard(db, wardCode = '', wardName = '') {
+        const subQuery = db('ward')
+            .select('*')
+            .select(db.raw('SUBSTRING(ward_export_code, 4, 3) as sub_code_3'))
+            .select(db.raw('SUBSTRING(ward_export_code, 4, 1) as sub_code_1'))
+            .as('w');
+        const sql = db.select('*').from(subQuery);
         if (wardCode) {
-            sql.where('ward', wardCode);
+            sql.where('w.ward', wardCode);
         }
         else if (wardName) {
-            sql.whereLike('name', `%${wardName}%`);
+            const op = db.client.driverName === 'pg' ? 'ilike' : 'like';
+            sql.where('w.name', op, `%${wardName}%`);
         }
-        return sql
-            .select('ward as wardcode', 'name as wardname', `ward_export_code as std_code`, 'bedcount as bed_normal', db.raw("CASE WHEN ward_active ='Y' THEN 1 ELSE 0 END as isactive"))
-            .where('ward', '!=', '')
-            .whereNotNull('ward')
-            .orderBy('ward')
+        return sql.select([
+            'w.ward as wardcode',
+            'w.name as wardname',
+            'w.ward_export_code as std_code',
+            db.raw(`CASE 
+                WHEN sub_code_3 IN ('602','603','604','606','607','608','609') THEN 0 
+                WHEN sub_code_1 IN ('2','3','4','5') THEN 0
+                ELSE bedcount 
+              END as bed_normal`),
+            db.raw("CASE WHEN sub_code_3 = '602' THEN bedcount ELSE 0 END as imc"),
+            db.raw("CASE WHEN sub_code_3 = '603' THEN bedcount ELSE 0 END as bed_extra"),
+            db.raw("CASE WHEN sub_code_3 = '604' THEN bedcount ELSE 0 END as bed_minithanyaruk"),
+            db.raw("CASE WHEN sub_code_3 = '606' THEN bedcount ELSE 0 END as bed_special"),
+            db.raw("CASE WHEN sub_code_3 = '607' THEN bedcount ELSE 0 END as homeward"),
+            db.raw("CASE WHEN sub_code_3 = '608' THEN bedcount ELSE 0 END as lr"),
+            db.raw("CASE WHEN sub_code_3 = '609' THEN bedcount ELSE 0 END as clip"),
+            db.raw("CASE WHEN sub_code_1 = '2' THEN bedcount ELSE 0 END as bed_icu"),
+            db.raw("CASE WHEN sub_code_1 = '3' THEN bedcount ELSE 0 END as bed_semi"),
+            db.raw("CASE WHEN sub_code_1 = '4' THEN bedcount ELSE 0 END as bed_stroke"),
+            db.raw("CASE WHEN sub_code_1 = '5' THEN bedcount ELSE 0 END as bed_burn"),
+            db.raw("CASE WHEN w.ward_active = 'Y' THEN 1 ELSE 0 END as isactive")
+        ])
+            .where('w.ward', '<>', '')
+            .whereNotNull('w.ward')
+            .orderBy('w.ward')
             .limit(maxLimit);
     }
     getDr(db, drCode = '', drName = '') {
