@@ -44,7 +44,7 @@ class HisIHospitalModel {
             .limit(maxLimit);
     }
     async getWard(db, wardCode = '', wardName = '') {
-        let sql = db('lib_ward').where('code', '!=', 0);
+        let sql = db('lib_ward').where('code', '<>', 0);
         if (wardCode) {
             sql.where('code', wardCode);
         }
@@ -325,9 +325,14 @@ class HisIHospitalModel {
         columnName = columnName === 'an' ? 'dx.AN' : columnName;
         columnName = columnName === 'pid' ? 'dx.PID' : columnName;
         columnName = columnName === 'cid' ? 'dx.CID' : columnName;
-        return db('view_ipd_dx_hdc as dx')
-            .select('dx.*', db.raw(' "IT" as codeset'))
-            .where(columnName, searchNo)
+        let query = db('view_ipd_dx_hdc as dx');
+        if (Array.isArray(searchNo)) {
+            query.whereIn(columnName, searchNo);
+        }
+        else {
+            query.where(columnName, searchNo);
+        }
+        return query.select('dx.*', db.raw(' "IT" as codeset'))
             .where('DIAGTYPE', '!=', '5')
             .orderBy('AN')
             .orderBy('DIAGTYPE')
@@ -348,18 +353,29 @@ class HisIHospitalModel {
         }
     }
     getProcedureIpd(db, an, hospCode = hisHospcode) {
-        return db('view_ipd_op as op')
-            .select(db.raw('"' + hcode + '" as HOSPCODE'))
+        let query = db('view_ipd_op as op');
+        if (Array.isArray(an)) {
+            query.whereIn('an', an);
+        }
+        else {
+            query.where('an', an);
+        }
+        return query.select(db.raw('? as HOSPCODE', [hcode]))
             .select('hn as PID', 'an as AN', 'vn as SEQ')
             .select(db.raw('concat(admite, " " , timeadmit) as DATETIME_ADMIT'))
             .select('clinic_std as WARDSTAY', 'op as PROCEDCODE', 'desc as PROCEDNAME', 'dr as PROVIDER', 'price as SERVICEPRICE', 'cid as CID', 'lastupdate as D_UPDATE')
-            .where('an', an)
             .limit(maxLimit);
     }
     getChargeIpd(db, an, hospCode = hisHospcode) {
-        return db('ipd_charge')
-            .select(db.raw('"' + hcode + '" as hospcode'))
-            .where({ an })
+        let query = db('ipd_charge');
+        if (Array.isArray(an)) {
+            query.whereIn('an', an);
+        }
+        else {
+            query.where('an', an);
+        }
+        return query
+            .select(db.raw('? as hospcode', [hcode]))
             .limit(maxLimit);
     }
     async getDrugIpd(db, an, hospCode = hisHospcode) {

@@ -3,6 +3,7 @@ import * as moment from 'moment';
 import { execSync } from 'child_process';
 import { sendWardName, sendBedNo, sendBedOccupancy, updateAlive, erpAdminRequest, mophErpProcessTask } from "./task/moph-erp";
 import mophIot from "./task/moph-iot";
+import mophCMI from "./task/moph-cmi";
 import { mophAlertSurvey } from "./task/moph-alert";
 
 // Type definitions for better type safety
@@ -334,6 +335,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
     updateAlive();
     sendWardName();
     sendBedNo();
+    // mophCMI.processCMI();
   }
 
   // Optional: Real-time Debug Countdown (ระวัง Log เยอะเกินไปหากเปิดใช้)

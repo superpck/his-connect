@@ -4,6 +4,7 @@
   - เปลี่ยน count('bedno.bedno as total_bed') เป็น count({ total_bed: 'bedno.bedno' })
   - ปรับ https ให้ใช้ protocol http1
   - ปรับ sql getWard ให้ใช้ std_code แยกจำนวนเตียง
+  - ปรับ SQL ให้รองรับ whereIn Array
 
 # 3.9.6
 ## Feature
