@@ -319,7 +319,7 @@ export class HisHiModel {
       .orderBy('cln.specialty');
   }
 
-  getVisitForMophAlert(db: Knex, date: any, isRowCount: boolean = false, start = -1, limit: number = 1000) { // fix sequence of parameter
+  async getVisitForMophAlert(db: Knex, date: any, isRowCount: boolean = false, start = -1, limit: number = 1000) { // fix sequence of parameter
     date = moment(date).locale('TH').format('YYYY-MM-DD');
 
     // ข้อมูลผู้ป่วยนอก
@@ -387,4 +387,5 @@ export class HisHiModel {
       }
       return unionQuery;
     }
+  }
 }
