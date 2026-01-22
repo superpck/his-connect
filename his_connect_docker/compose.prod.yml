@@ -1,0 +1,22 @@
+services:
+
+  api:
+    #image: superpck/his-connect:linux-latest
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    container_name: his-connect-api
+    environment:
+      - TZ=Asia/Bangkok
+    ports:
+      - "3004:3004"
+    volumes:
+      - ./config:/usr/src/his_connect/config:ro
+      - ./sent_result.txt:/usr/src/his_connect/sent_result.txt
+    command: ["pm2-runtime", "start", "app/app.js", "-i", "2", "--name", "his-connect"]
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004"]
+      interval: 30s
+      timeout: 10s
+      retries: 5

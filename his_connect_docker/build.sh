@@ -1,3 +1,3 @@
 docker compose  down -v
-docker compose  up -d --build
+docker compose -f compose.prod.yml  up -d --build
 docker compose logs -f
