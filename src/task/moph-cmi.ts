@@ -6,6 +6,7 @@ import { dateLen } from '../middleware/utils';
 const dbConnection = require('../plugins/db');
 let db: Knex = dbConnection('HIS');
 let hisHospcode: string = process.env.HOSPCODE;
+let token: string;
 
 const processCMI = (async (dateStart: any = null, dateEnd: any = null) => {
   dateStart = dateStart ? moment(dateStart).format('YYYY-MM-DD') : moment().subtract(35, 'days').format('YYYY-MM-DD');
@@ -66,18 +67,6 @@ const getIPD = (async (dateStart: string, dateEnd: string) => {
         };
         data.pdx = '';
         data.drpdx = null;
-        // for (let i = 1; i < 13; i++) {
-        //   data[`sdx${i}`] = null;
-        //   data[`drsdx${i}`] = null;
-        // }
-        // for (let i = 1; i < 21; i++) {
-        //   data[`proc${i}`] = null;
-        //   data[`drop${i}`] = null;
-        //   data[`datein${i}`] = null;
-        //   data[`timein${i}`] = null;
-        //   data[`dateout${i}`] = null;
-        //   data[`timeout${i}`] = null;
-        // }
         let i = 0;
         for (const d of row.dx) {
           if (d.diagtype === '1') {
@@ -192,7 +181,7 @@ function toLowerColumnName(data: any) {
 async function sendingToMoph(rows: any) {
   try {
     // get CMI token
-    // const token = await mophApi.getToken();
+    await getToken();
     // if (!token) {
     //   console.error(moment().format('HH:mm:ss'), 'DRG/CMI: Cannot get MOPH API token.');
     //   return null;
@@ -207,10 +196,43 @@ async function sendingToMoph(rows: any) {
     //   console.error(moment().format('HH:mm:ss'), 'DRG/CMI: Failed to send data to MOPH CMI API.', result);
     //   return null;
     // }
-    // console.table(rows[2]);
-    return rows.length;
+
+    let results = [];
+    for (let row of rows) {
+      const result = await sendRow(row);
+      results.push(result);
+    }
+    console.table(rows[2]);
+    return results;
   } catch (error) {
     console.error(moment().format('HH:mm:ss'), 'DRG/CMI: Error in sendingToMoph:', error.message || error);
+    throw error;
+  }
+}
+
+async function getToken(){
+  if (token){
+    return token;
+  }
+  // token = await mophApi.getToken();
+  return token;
+}
+async function sendRow(row: any){
+  try {
+    // console.log(moment().format('HH:mm:ss'), `DRG/CMI: Sending 1 record to MOPH CMI API...`);
+    // // send data to MOPH CMI API
+    // const result = await mophApi.sendCMIData(token, [row]);
+    // if (result && result.status === 'success') {
+    //   console.log(moment().format('HH:mm:ss'), `DRG/CMI: Successfully sent 1 record to MOPH CMI API.`);
+    //   return true;
+    // } else {
+    //   console.error(moment().format('HH:mm:ss'), 'DRG/CMI: Failed to send data to MOPH CMI API.', result);
+    //   return false;
+    // }
+    console.log(row);
+    return true;
+  } catch (error) {
+    console.error(moment().format('HH:mm:ss'), 'DRG/CMI: Error in sendRow:', error.message || error);
     throw error;
   }
 }

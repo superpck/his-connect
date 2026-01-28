@@ -15,6 +15,7 @@ let crontabConfig: any = {
   subVersion: global.appDetail?.subVersion || ''
 };
 let nReferToken: string = null;
+let hospitalConfig: any = null;
 
 export const getReferToken = async () => {
   if (nReferToken) {
@@ -51,6 +52,32 @@ export const getReferToken = async () => {
     return data;
   } catch (error) {
     console.log('getNReferToken Error:', error.status || '', error.message);
+    return error;
+  }
+}
+
+export const getHospitalConfig = async () => {
+    const now = moment();
+  if (hospitalConfig) {
+    const configTime = moment(hospitalConfig.fetchTime || null);
+    const diff = now.diff(configTime, 'minutes');
+    if (diff < 12) {
+      return hospitalConfig;
+    }
+  }
+
+  await getReferToken();
+  if (!nReferToken) {
+    return { status: 500, message: 'No nRefer token' };
+  }
+
+  const url = referAPIUrl + '/nrefer/api-config/' + hcode;
+  const headers = createHeaders(nReferToken);
+  try {
+    const { status, data } = await axios.get(url, { headers });
+    hospitalConfig = { ...(data?.row || data?.data || data), fetchTime: now.format('YYYY-MM-DD HH:mm:ss') };
+    return hospitalConfig;
+  } catch (error) {
     return error;
   }
 }
@@ -124,10 +151,6 @@ export const updateHISAlive = async (dataArray: any) => {
   } catch (error) {
     return error;
   }
-}
-
-function updateHisVersion(){
-  // /save-api-config
 }
 
 export const checkAdminRequest = async () => {

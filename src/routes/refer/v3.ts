@@ -399,7 +399,7 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const rows = await hisModel.getAppointment(global.dbHIS, visitNo, hospcode);
+      const rows = await hisModel.getAppointment(global.dbHIS, 'vn', visitNo, hospcode);
       reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
 
     } catch (error) {

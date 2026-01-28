@@ -174,10 +174,10 @@ async function connectDB() {
 }
 async function checkConfigFile() {
     if (fs.existsSync('./config')) {
-        console.info(`✅ PID:${process.pid} >> Check 'config' file exist: Successfully`);
+        console.info(`✅ PID:${process.pid} >> Check local 'config' file exist: Successfully`);
     }
     else {
-        console.error(`❌ PID:${process.pid} >> Check 'config' file exist: Not found, please create file 'config' and try again.`);
+        console.error(`❌ PID:${process.pid} >> Check local 'config' file exist: Not found, please create file 'config' and try again.`);
         process.exit(1);
     }
 }

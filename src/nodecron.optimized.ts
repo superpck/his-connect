@@ -5,6 +5,8 @@ import { sendWardName, sendBedNo, sendBedOccupancy, updateAlive, erpAdminRequest
 import mophIot from "./task/moph-iot";
 import mophCMI from "./task/moph-cmi";
 import { mophAlertSurvey } from "./task/moph-alert";
+import mophStartTask from "./task/moph-starter";
+import mophAppointment from "./task/moph-appointment";
 
 // Type definitions for better type safety
 interface ServiceSchedule {
@@ -49,6 +51,8 @@ const shell = require("shelljs");
 const cron = require('node-cron');
 const referCrontab = require('./routes/refer/crontab');
 const instanceId = process.env.NODE_APP_INSTANCE ? +process.env.NODE_APP_INSTANCE + 1 : null;
+
+let hospitalConfig = null;
 
 // Process state management
 const processState: ProcessState = {
@@ -307,6 +311,7 @@ async function getmophUrl(): Promise<void> {
  */
 export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   // Initialize process state
+  hospitalConfig = await mophStartTask.getMophConfig();
   updateProcessState();
 
   // Create cron schedule (run every minute)
@@ -336,6 +341,8 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
     sendWardName();
     sendBedNo();
     // mophCMI.processCMI();
+    // mophIot.processIoT();
+    // mophAppointment.process();
   }
 
   // Optional: Real-time Debug Countdown (ระวัง Log เยอะเกินไปหากเปิดใช้)
@@ -406,6 +413,11 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
         console.log(`   --> 📅 Daily Task: Executing Ward Name & Bed No...`);
         sendWardName();
         sendBedNo();
+      }
+
+      if (moment().hour() == 1 && minuteNow == timeRandom) { // ตี 1 ทุกวัน
+        mophIot.processIoT();
+        // mophCMI.processCMI();
       }
 
       // Run nRefer jobs if scheduled
