@@ -9,6 +9,7 @@ const dbConnection = require('../plugins/db');
 let db = dbConnection('HIS');
 const hospcode = process.env.HOSPCODE || '';
 const limitRow = 100;
+let hospitalConfig = null;
 let cacheInitialized = false;
 const mophAlertSurvey = async (date = null) => {
     try {
@@ -16,6 +17,7 @@ const mophAlertSurvey = async (date = null) => {
             await (0, cache_db_1.initializeCacheDb)();
             cacheInitialized = true;
         }
+        hospitalConfig = await (0, moph_refer_1.getHospitalConfig)();
         date = date ? moment(date).format('YYYY-MM-DD') : moment().subtract(2, 'hours').format('YYYY-MM-DD');
         await opdVisit(date);
         if (moment().format('HH:mm') < '02:00') {
@@ -62,7 +64,16 @@ async function getAndSend(date, startRow = -1, limitRow = 100) {
             return { statusCode: 200, message: 'All VNs already sent' };
         }
         console.log(moment().format('HH:mm:ss'), 'Sending', filteredRows.length, 'new VNs to MOPH');
-        const rowsToSend = filteredRows.map((item) => { return { ...item, date_service: moment(item.date_service).format('YYYY-MM-DD'), hospcode }; });
+        const await_minute = hospitalConfig.satisfaction_await || 60;
+        const rowsToSend = filteredRows.map((item) => {
+            return {
+                ...item,
+                await_minute,
+                date_alert_request: moment(item.date_service).add(await_minute, 'minutes').format('YYYY-MM-DD HH:mm:ss'),
+                date_service: moment(item.date_service).format('YYYY-MM-DD'),
+                hospcode
+            };
+        });
         let result = await (0, moph_refer_1.sendingToMoph)('/save-moph-alert', rowsToSend);
         console.log(moment().format('HH:mm:ss'), `send moph alert ${rowsToSend.length} rows, result status:`, result.statusCode || '', result.message || '');
         result.resultList = result?.resultList.map((item) => { delete item?.result; return item; });

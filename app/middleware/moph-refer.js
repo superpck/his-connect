@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateAdminRequest = exports.checkAdminRequest = exports.updateHISAlive = exports.sendingToMoph = exports.taskFunction = exports.getReferToken = void 0;
+exports.updateAdminRequest = exports.checkAdminRequest = exports.updateHISAlive = exports.sendingToMoph = exports.taskFunction = exports.getHospitalConfig = exports.getReferToken = void 0;
 const axios_1 = require("axios");
 const moment = require("moment");
 const crypto_1 = require("crypto");
@@ -17,6 +17,7 @@ let crontabConfig = {
     subVersion: global.appDetail?.subVersion || ''
 };
 let nReferToken = null;
+let hospitalConfig = null;
 const getReferToken = async () => {
     if (nReferToken) {
         const toke = nReferToken.split('.');
@@ -55,6 +56,31 @@ const getReferToken = async () => {
     }
 };
 exports.getReferToken = getReferToken;
+const getHospitalConfig = async () => {
+    const now = moment();
+    if (hospitalConfig) {
+        const configTime = moment(hospitalConfig.fetchTime || null);
+        const diff = now.diff(configTime, 'minutes');
+        if (diff < 12) {
+            return hospitalConfig;
+        }
+    }
+    await (0, exports.getReferToken)();
+    if (!nReferToken) {
+        return { status: 500, message: 'No nRefer token' };
+    }
+    const url = referAPIUrl + '/nrefer/api-config/' + hcode;
+    const headers = createHeaders(nReferToken);
+    try {
+        const { status, data } = await axios_1.default.get(url, { headers });
+        hospitalConfig = { ...(data?.row || data?.data || data), fetchTime: now.format('YYYY-MM-DD HH:mm:ss') };
+        return hospitalConfig;
+    }
+    catch (error) {
+        return error;
+    }
+};
+exports.getHospitalConfig = getHospitalConfig;
 const taskFunction = async (type = '', bodyData = null) => {
     await (0, exports.getReferToken)();
     if (!nReferToken) {
@@ -122,8 +148,6 @@ const updateHISAlive = async (dataArray) => {
     }
 };
 exports.updateHISAlive = updateHISAlive;
-function updateHisVersion() {
-}
 const checkAdminRequest = async () => {
     const apiIp = (0, utils_1.getIP)();
     if (!apiIp || !apiIp.ip) {

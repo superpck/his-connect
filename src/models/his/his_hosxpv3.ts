@@ -286,93 +286,134 @@ export class HisHosxpv3Model {
     const result = await db.raw(sql, [searchText]);
     return result[0];
   }
-  async getService(db: Knex, columnName, searchText, hospCode = hisHospcode) {
-    //columnName = visitNo, hn
-    columnName = columnName === 'visitNo' ? 'os.vn' : columnName;
-    columnName = columnName === 'vn' ? 'os.vn' : columnName;
-    columnName = columnName === 'seq_id' ? 'os.seq_id' : columnName;
-    columnName = columnName === 'hn' ? 'o.hn' : columnName;
-    columnName = columnName === 'date_serv' ? 'o.vstdate' : columnName;
-    const sql = `
-            select 
-                (select hospitalcode from opdconfig) as HOSPCODE,
-                pt.hn as PID, o.hn as HN, pt.CID, os.seq_id, os.vn as SEQ, os.vn as VN,
-                if(
-                    o.vstdate  is null 
-                        or trim(o.vstdate )='' 
-                        or o.vstdate  like '0000-00-00%',
-                    '',
-                    date_format(o.vstdate ,'%Y-%m-%d')
-                ) as DATE_SERV,
-                if(
-                    o.vsttime  is null 
-                        or trim(o.vsttime )='' 
-                        or o.vsttime like '0000-00-00%',
-                    '',
-                    time_format(o.vsttime,'%H:%i:%s')
-                ) as TIME_SERV,
-                if(v.village_moo <>'0' ,'1','2') as LOCATION,
-                (select case  o.visit_type 
-                    when 'i'  then '1' 
-                    when 'o' then '2'
-                    else '1' end) as INTIME,
-                if(p2.pttype_std_code is null or p2.pttype_std_code ='' ,'9100',p2.pttype_std_code) as INSTYPE,
-                o.hospmain as MAIN,
-                (select case o.pt_subtype 
-                    when '7' then '2' 
-                    when '9' then '3' 
-                    when '10' then '4'
-                else '1' end) as TYPEIN,
-                CASE WHEN o.rfrilct IS NULL THEN i.rfrilct ELSE o.rfrilct END AS REFERINHOSP,
-                CASE WHEN o.rfrics IS NULL THEN i.rfrics ELSE o.rfrics END AS CAUSEIN,
-                concat('CC:',s.cc,' HPI:',s.hpi,' PMH:',s.pmh) as CHIEFCOMP,
-                if(o.pt_subtype in('0','1'),'1','2') as SERVPLACE,
-                if(s.temperature, replace(format(s.temperature,1),',',''), format(0,1))as BTEMP,
-                format(s.bps,0) as SBP,
-                format(s.bpd,0) as DBP,
-                format(s.pulse,0) as PR,
-                format(s.rr,0) as RR,
-                s.o2sat, s.bw as weight, s.height,
-                'er.gcs_e', 'er.gcs_v',
-                'er.gcs_m', 'er.pupil_l as pupil_left', 'er.pupil_r as pupil_right',
-                (select case   
-                    when (o.ovstost >='01' and o.ovstost <='14') then '2' 
-                    when o.ovstost in ('98','99','61','62','63','00') then '1' 
-                    when o.ovstost = '54' then '3' when o.ovstost = '52' then '4'
-                else '7' end) as TYPEOUT,
-                CASE WHEN o.rfrolct IS NULL THEN i.rfrolct ELSE o.rfrolct END as REFEROUTHOSP,
-                CASE WHEN o.rfrocs IS NULL THEN i.rfrocs ELSE o.rfrocs END as CAUSEOUT,
-                o.doctor as dr, doctor.licenseno as provider, 
-                if(vn.inc01 + vn.inc12 , replace(format(vn.inc01 + vn.inc12,2),',',''), format(0,2))as COST,
-                if(vn.item_money , replace(format(vn.item_money,2),',',''), format(0,2))as PRICE,
-                if(vn.paid_money , replace(format(vn.paid_money,2),',',''), format(0,2))as PAYPRICE,
-                if(vn.rcpt_money, replace(format(vn.rcpt_money,2),',',''), format(0,2))as ACTUALPAY,
-                if(
-                    concat(o.vstdate,' ',o.vsttime) is null 
-                        or trim(concat(o.vstdate,' ',o.vsttime))='' 
-                        or concat(o.vstdate,' ',o.vsttime)  like '0000-00-00%',
-                    '',
-                    date_format(concat(o.vstdate,' ',o.vsttime) ,'%Y-%m-%d %H:%i:%s')
-                ) as D_UPDATE,
-                vn.hospsub as hsub
-                
-            from  
-                ovst o 
-                left join person p on o.hn=p.patient_hn  
-                left join vn_stat vn on o.vn=vn.vn and vn.hn=p.patient_hn  
-                left join ipt i on i.vn=o.vn 
-                left join opdscreen s on o.vn = s.vn and o.hn = s.hn 
-                left join pttype p2 on p2.pttype = vn.pttype
-                left join village v on v.village_id = p.village_id
-                left join patient pt on pt.hn = o.hn
-                left join ovst_seq os on os.vn = o.vn 
-                left join doctor on o.doctor = doctor.code
-                LEFT JOIN er_nursing_detail as er ON er.vn = o.vn
-            
-            where ${columnName} = ?
-            `;
-    const result = await db.raw(sql, [searchText]);
-    return result[0];
+  async getService(db: Knex, columnName: string, searchText: any, hospCode = hisHospcode) {
+    // 1. Mapping Column Name (Sanitize input)
+    const colMap = {
+      'visitNo': 'os.vn',
+      'vn': 'os.vn',
+      'seq_id': 'os.seq_id',
+      'hn': 'o.hn',
+      'date_serv': 'o.vstdate'
+    };
+    // ถ้าไม่เจอใน map ให้ใช้ค่าเดิม (แต่ควรระวัง SQL Injection หาก columnName มาจาก User โดยตรง)
+    const targetCol = colMap[columnName] || columnName;
+
+    // 2. ตรวจสอบ Driver
+    const driver = db.client.driverName; // 'mysql', 'pg', 'mssql'
+
+    // --- Helper Functions ---
+
+    // จัดการวันที่ (Date)
+    const sqlDate = (field) => {
+      // Logic เช็คค่าว่างแบบครอบจักรวาล
+      const nullCheck = (driver === 'mysql' || driver === 'mysql2')
+        ? `(${field} IS NULL OR ${field} = '' OR CAST(${field} AS CHAR) LIKE '0000-00-00%')`
+        : `(${field} IS NULL)`; // PG/MSSQL เป็น Date แท้ ไม่ต้องเช็ค string 0000-00-00
+
+      if (driver === 'pg') return `CASE WHEN ${nullCheck} THEN '' ELSE TO_CHAR(${field}, 'YYYY-MM-DD') END`;
+      if (driver === 'mssql') return `CASE WHEN ${nullCheck} THEN '' ELSE FORMAT(${field}, 'yyyy-MM-dd') END`;
+      return `CASE WHEN ${nullCheck} THEN '' ELSE DATE_FORMAT(${field}, '%Y-%m-%d') END`;
+    };
+
+    // จัดการเวลา (Time) -> Output format: HHmmss (เช่น 103000)
+    const sqlTime = (field) => {
+      const nullCheck = (driver === 'mysql' || driver === 'mysql2')
+        ? `(${field} IS NULL OR ${field} = '')`
+        : `(${field} IS NULL)`;
+
+      if (driver === 'pg') return `CASE WHEN ${nullCheck} THEN '' ELSE TO_CHAR(${field}, 'HH24:MI:SS') END`;
+      if (driver === 'mssql') return `CASE WHEN ${nullCheck} THEN '' ELSE FORMAT(${field}, 'HH:mm:ss') END`;
+      return `CASE WHEN ${nullCheck} THEN '' ELSE TIME_FORMAT(${field}, '%H:%i:%s') END`;
+    };
+
+    // จัดการตัวเลข (Number) -> Output เป็น String ทศนิยมตามกำหนด ไม่เอา comma (REPLACE logic เดิม)
+    const sqlNum = (field, decimal = 0) => {
+      if (driver === 'pg' || driver === 'postgres' || driver === 'postgresql') {
+        return `COALESCE(CAST(ROUND(CAST(${field} AS NUMERIC), ${decimal}) AS TEXT), '0')`;
+      } else if (driver === 'mssql' || driver === 'sqlserver') {
+        // MSSQL ใช้ STR หรือ CAST
+        return `COALESCE(CAST(CAST(${field} AS DECIMAL(18, ${decimal})) AS VARCHAR), '0')`;
+      } else {
+        // MySQL ใช้ FORMAT แล้วลบ comma ออก
+        return `CASE WHEN ${field} IS NOT NULL THEN REPLACE(FORMAT(${field}, ${decimal}), ',', '') ELSE '0' END`;
+      }
+      // PG/MSSQL ใช้การ CAST เป็น Numeric/Decimal แล้วแปลงเป็น Text
+      // CAST(ROUND(col, 2) as DECIMAL(18,2))
+    };
+
+    // จัดการ DateTime Update
+    const sqlDateTime = (dateField, timeField) => {
+      // Logic รวม Date+Time แล้ว Format
+      // เพื่อความง่ายและรองรับทุก DB: ใช้ Concat String เอา แล้วค่อย format (หรือส่งค่าดิบไปจัดการที่ APP ก็ได้)
+      // แต่เพื่อให้ตรงกับ format เดิม '%Y-%m-%d %H:%i:%s'
+      if (driver === 'pg' || driver === 'postgres' || driver === 'postgresql') return `TO_CHAR(CONCAT(${dateField}, ' ', ${timeField})::TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS')`;
+      if (driver === 'mssql' || driver === 'sqlserver') return `FORMAT(CAST(CONCAT(${dateField}, ' ', ${timeField}) AS DATETIME), 'yyyy-MM-dd HH:mm:ss')`;
+      return `DATE_FORMAT(CONCAT(${dateField}, ' ', ${timeField}), '%Y-%m-%d %H:%i:%s')`;
+    };
+
+    let query = db('ovst as o')
+      .leftJoin('person as p', 'o.hn', 'p.patient_hn')
+      .leftJoin('vn_stat as vn', function () {
+        this.on('o.vn', '=', 'vn.vn')
+          .andOn('vn.hn', '=', 'p.patient_hn');
+      })
+      .leftJoin('ipt as i', 'i.vn', 'o.vn')
+      .leftJoin('opdscreen as s', function () {
+        this.on('o.vn', '=', 's.vn')
+          .andOn('o.hn', '=', 's.hn');
+      })
+      .leftJoin('pttype as p2', 'p2.pttype', 'vn.pttype')
+      .leftJoin('village as v', 'v.village_id', 'p.village_id')
+      .leftJoin('patient as pt', 'pt.hn', 'o.hn')
+      .leftJoin('ovst_seq as os', 'os.vn', 'o.vn')
+      .leftJoin('doctor', 'o.doctor', 'doctor.code')
+      .leftJoin('er_nursing_detail as er', 'er.vn', 'o.vn');
+
+    return query.select([
+      db.raw('? as "HOSPCODE"', [hospCode]),
+      'p.cid as CID', 'p.pname as PRENAME', 'p.fname as FNAME', 'p.lname as LNAME',
+      'o.hn as HN', 'o.hn as PID', 'p.sex as SEX', 'p.birthdate as DOB',
+      'os.seq_id', 'os.vn as SEQ',
+      db.raw(`${sqlDate('o.vstdate')} as "DATE_SERV"`),
+      db.raw(`${sqlTime('o.vsttime')} as "TIME_SERV"`),
+      db.raw(`CASE WHEN v.village_moo <> '0' THEN '1' ELSE '2' END as "LOCATION"`),
+      db.raw(`CASE o.visit_type WHEN 'i' THEN '1' WHEN 'o' THEN '2' ELSE '1' END as "INTIME"`),
+      db.raw(`COALESCE(NULLIF(p2.pttype_std_code, ''), '9100') as "INSTYPE"`),
+      'o.hospmain as MAIN',
+      db.raw(`CASE o.pt_subtype WHEN '7' THEN '2' WHEN '9' THEN '3' WHEN '10' THEN '4' ELSE '1' END as "TYPEIN"`),
+      db.raw('COALESCE(o.rfrolct, i.rfrolct) as "REFEROUTHOSP"'),
+      db.raw('COALESCE(o.rfrocs, i.rfrocs) as "CAUSEOUT"'),
+      's.waist', 's.cc', 's.pe', 's.pmh as ph', 's.hpi as pi',
+      // Nurse Note: ใช้ CONCAT (PG/MSSQL/MySQL รองรับ) แต่ต้องระวัง NULL ทำให้ string หายในบาง DB
+      // ใช้ COALESCE ดัก NULL ไว้ก่อนเพื่อความปลอดภัย
+      db.raw(`CONCAT('CC:', COALESCE(s.cc,''), ' HPI:', COALESCE(s.hpi,''), ' PMH:', COALESCE(s.pmh,'')) as nurse_note`),
+      db.raw(`CASE WHEN o.pt_subtype IN ('0', '1') THEN '1' ELSE '2' END as "SERVPLACE"`),
+      db.raw(`${sqlNum('s.temperature', 1)} as "BTEMP"`),
+      db.raw(`${sqlNum('s.bps', 0)} as "SBP"`),
+      db.raw(`${sqlNum('s.bpd', 0)} as "DBP"`),
+      db.raw(`${sqlNum('s.pulse', 0)} as "PR"`),
+      db.raw(`${sqlNum('s.rr', 0)} as "RR"`),
+      's.o2sat', 's.bw as weight', 's.height', 's.bmi',
+      'er.gcs_e', 'er.gcs_v', 'er.gcs_m',
+      'er.pupil_l as pupil_left',
+      'er.pupil_r as pupil_right',
+      db.raw(`CASE 
+                  WHEN (o.ovstost >= '01' AND o.ovstost <= '14') THEN '2' 
+                  WHEN o.ovstost IN ('98', '99', '61', '62', '63', '00') THEN '1' 
+                  WHEN o.ovstost = '54' THEN '3' 
+                  WHEN o.ovstost = '52' THEN '4' 
+                  ELSE '7' 
+              END as "TYPEOUT"`),
+      'o.doctor as dr',
+      'doctor.licenseno as provider',
+      db.raw(`${sqlNum('vn.inc01 + vn.inc12', 2)} as "COST"`),
+      db.raw(`${sqlNum('vn.item_money', 2)} as "PRICE"`),
+      db.raw(`${sqlNum('vn.paid_money', 2)} as "PAYPRICE"`),
+      db.raw(`${sqlNum('vn.rcpt_money', 2)} as "ACTUALPAY"`),
+      db.raw(`${sqlDateTime('o.vstdate', 'o.vsttime')} as "D_UPDATE"`),
+      'vn.hospsub as hsub'
+    ])
+      .whereRaw(`${targetCol} = ?`, [searchText]);
   }
 
   async getDiagnosisOpd(db: Knex, visitNo, hospCode = hisHospcode) {
@@ -1432,12 +1473,72 @@ export class HisHosxpv3Model {
       .where('oe.hn', hn)
   }
 
-  getAppointment(db, visitNo, hospCode = hisHospcode) {
-    return db('view_opd_fu')
-      .select(db.raw('"' + hisHospcode + '" as hospcode'))
-      .select('*')
-      .where('vn', "=", visitNo)
-      .limit(maxLimit);
+  async getAppointment(db: Knex, columnName: string, searchValue: any) {
+    const colMap: Record<string, string> = {
+      fu_date: "nextdate",
+      visit_date: "vstdate",
+      visitno: "vn",
+      visitNo: "vn",
+      hn: "hn",
+      vn: "vn",
+      an: "an"
+    };
+
+    const mapped = colMap[columnName];
+    if (!mapped) {
+      throw new Error(`Invalid columnName: ${columnName}`);
+    }
+
+    // 2) normalize date เฉพาะฟิลด์วันที่
+    if (columnName === "fu_date" || columnName === "visit_date") {
+      if (Array.isArray(searchValue)) {
+        searchValue = searchValue.map((d) => moment(d).format("YYYY-MM-DD"));
+      } else {
+        searchValue = moment(searchValue).format("YYYY-MM-DD");
+      }
+    }
+
+    // 3) build query
+    let query = db({ o: "oapp" })
+      .join({ c: "clinic" }, "c.clinic", "o.clinic")
+      .join({ d: "doctor" }, "d.code", "o.doctor")
+      .join({ oa: "oapp_status" }, "oa.oapp_status_id", "o.oapp_status_id")
+      .leftJoin({ pt: "pttype" }, "o.next_pttype", "pt.pttype");
+
+    // 4) apply filter (DATE เป็น DATE อยู่แล้ว → whereIn/where ใช้ได้ทั้ง mysql/pg)
+    const colRef = `o.${mapped}`;
+    if (Array.isArray(searchValue)) {
+      query = query.whereIn(colRef, searchValue);
+    } else {
+      query = query.where(colRef, searchValue);
+    }
+
+    // 5) select
+    query = query
+      .select([
+        "o.hn","o.an","o.vn","o.visit_vn",
+        db.raw("CASE WHEN o.patient_visit = 'Y' THEN 1 ELSE 0 END AS isvisited"),
+        db.raw("o.vstdate AS visit_date"),
+        db.raw("o.nextdate AS fu_date"),
+        db.raw("o.nexttime AS fu_time"),
+        db.raw("o.clinic AS cliniccode"),
+        db.raw("c.name AS clinicName"),
+        db.raw("o.doctor AS dr_code"),
+        db.raw("d.name AS dr_name"),
+        db.raw("d.licenseno AS provider"),
+        db.raw("pt.name AS pt_name"),
+        db.raw("o.app_cause AS cause"),
+        "o.note",
+        db.raw("CASE WHEN o.note1 IS NULL OR o.note1 = '' THEN o.perform_text ELSE o.note1 END AS prepare_text"),
+        db.raw("o.lab_list_text AS lab"),
+        db.raw("o.xray_list_text AS xray"),
+        db.raw("o.contact_point AS visit_area"),
+        db.raw("CASE WHEN o.oapp_status_id = 1 THEN 1 ELSE 0 END AS isactive"),
+      ])
+      .whereNotNull("o.nextdate")
+      .whereRaw("o.vstdate < o.nextdate");
+
+    return query.orderBy([{ column: "o.nextdate" }, { column: "o.nexttime" }]).limit(maxLimit);
   }
 
   async getReferHistory(db: Knex, columnName, searchNo, hospCode = hisHospcode) {

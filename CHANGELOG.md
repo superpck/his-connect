@@ -5,6 +5,8 @@
   - ปรับ https ให้ใช้ protocol http1
   - ปรับ sql getWard ให้ใช้ std_code แยกจำนวนเตียง
   - ปรับ SQL ให้รองรับ whereIn Array
+  - ตรวจสอบเวลาในการส่ง Alert ความพึงพอใจ
+  - เพิ่มการตรวจสอบ Config ส่วนกลางก่อนดำเนินการ
 
 # 3.9.6
 ## Feature

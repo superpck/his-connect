@@ -4,11 +4,14 @@ exports.default = cronjob;
 const moment = require("moment");
 const child_process_1 = require("child_process");
 const moph_erp_1 = require("./task/moph-erp");
+const moph_iot_1 = require("./task/moph-iot");
 const moph_alert_1 = require("./task/moph-alert");
+const moph_starter_1 = require("./task/moph-starter");
 const shell = require("shelljs");
 const cron = require('node-cron');
 const referCrontab = require('./routes/refer/crontab');
 const instanceId = process.env.NODE_APP_INSTANCE ? +process.env.NODE_APP_INSTANCE + 1 : null;
+let hospitalConfig = null;
 const processState = {
     firstProcessPid: 0,
     pm2Name: 'unknown',
@@ -144,6 +147,7 @@ async function getmophUrl() {
     global.mophService = await require('./routes/main/crontab')(global.mophService, {});
 }
 async function cronjob(fastify) {
+    hospitalConfig = await moph_starter_1.default.getMophConfig();
     updateProcessState();
     const secondNow = moment().seconds();
     const timingSch = `${secondNow} * * * * *`;
@@ -187,6 +191,9 @@ async function cronjob(fastify) {
                 console.log(`   --> 📅 Daily Task: Executing Ward Name & Bed No...`);
                 (0, moph_erp_1.sendWardName)();
                 (0, moph_erp_1.sendBedNo)();
+            }
+            if (moment().hour() == 1 && minuteNow == timeRandom) {
+                moph_iot_1.default.processIoT();
             }
             if (timingSchedule['nrefer'].autosend &&
                 minuteSinceLastNight % timingSchedule['nrefer'].minute === 0) {

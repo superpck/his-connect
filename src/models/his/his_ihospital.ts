@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
 import * as moment from 'moment';
-const maxLimit = 250;
+const maxLimit = 1000;
 const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
 const dbClient = process.env.HIS_DB_CLIENT ? process.env.HIS_DB_CLIENT.toLowerCase() : 'mysql2';
@@ -166,10 +166,17 @@ export class HisIHospitalModel {
       .orderBy('r.refer_date');
   }
 
-  getPerson(db: Knex, columnName, searchText, hospCode = hisHospcode) {
+  getPerson(db: Knex, columnName: string, searchText: any, hospCode = hisHospcode) {
     //columnName = cid, hn
     columnName = columnName === 'cid' ? 'no_card' : columnName;
-    return db('hospdata.view_patient')
+    let query = db('hospdata.view_patient');
+    if (Array.isArray(searchText)) {
+      query.whereIn(columnName, searchText);
+    } else {
+      query.where(columnName, "=", searchText);
+    }
+
+    return query
       .select(db.raw('"' + hisHospcode + '" as hospcode'))
       .select(db.raw('4 as typearea'))
       .select('no_card as cid', 'hn as pid', 'title as prename',
@@ -179,8 +186,7 @@ export class HisIHospitalModel {
         'nation_std as nation', 'religion_std as religion',
         'edu_std as education', 'tel as telephone',
         'lastupdate as d_update')
-      .where(columnName, "=", searchText)
-      .limit(maxLimit);
+      .limit(5000);
   }
 
   getAddress(db: Knex, columnName, searchNo, hospCode = hisHospcode) {
@@ -196,29 +202,40 @@ export class HisIHospitalModel {
       .limit(maxLimit);
   }
 
-  getService(db: Knex, columnName: string, searchText: any, hospCode = hisHospcode) {
+  async getService(db: Knex, columnName: string, searchText: any, hospCode = hisHospcode) {
     //columnName => visitNo, hn
     columnName = columnName === 'visitNo' ? 'vn' : columnName;
+    columnName = columnName === 'cid' ? 'no_card' : columnName;
     columnName = columnName === 'date_serv' ? 'visit.date' : `visit.${columnName}`;
-    return db('view_opd_visit as visit')
-      .leftJoin('hospdata.er_triage as triage', 'visit.vn', 'triage.vn')
-      .select(db.raw('? as hospcode', [hisHospcode]),
-        'visit.hn as pid', 'visit.hn', 'visit.vn as seq', 'visit.date as date_serv',
-        'visit.hospmain as main', 'visit.hospsub as hsub',
-        'visit.refer as referinhosp',
-        db.raw(" case when visit.time='' or visit.time='08:00' then visit.time_reg else visit.time end as time_serv "),
-        db.raw('"1" as servplace'), 'visit.nurse_cc as chiefcomp',
-        'visit.pi_dr as presentillness', 'visit.pe_dr as physicalexam', 'visit.nurse_ph as pasthistory',
-        'visit.t as btemp', 'visit.bp as sbp', 'visit.bp1 as dbp', 'visit.weigh as weight', 'visit.high as height',
-        'visit.puls as pr', 'visit.rr', db.raw(`IF(visit.dr > 0, CONCAT("ว",visit.dr),'') as provider`),
-        'visit.no_card as cid', 'visit.pttype_std as instype', 'visit.no_ptt as insid',
-        'triage.e as gcs_e', 'triage.v as gcs_v', 'triage.m as gcs_m',
-        'triage.gcs', 'triage.o2sat', 'triage.pupil_lt as pupil_left', 'triage.pupil_rt as pupil_right',
-        db.raw('IF(visit.period>1,2,1) AS intime'), 'visit.cost as price', 'visit.opd_result_hdc as typeout',
-        db.raw('IF(visit.hospmain=? OR visit.`add`=?,1,2) AS location', [hcode, '4001']),
-        db.raw('concat(visit.date, " " , visit.time) as d_update'))
-      .where(columnName, searchText)
-      .orderBy('visit.date', 'desc');
+    let query = db('view_opd_visit as visit')
+      .leftJoin('hospdata.er_triage as triage', 'visit.vn', 'triage.vn');
+    if (Array.isArray(searchText)) {
+      query = query.whereIn(columnName, searchText);
+    } else {
+      query = query.where(columnName, searchText);
+    }
+    query = query.select(db.raw('? as hospcode', [hisHospcode]),
+      'visit.hn as pid', 'visit.hn', 'visit.no_card as cid',
+      'visit.title as prename', 'visit.name as fname', 'visit.surname as lname',
+      'visit.birth as dob', 'visit.sex',
+      'visit.vn as seq', 'visit.date as date_serv',
+      'visit.hospmain as main', 'visit.hospsub as hsub', 'visit.waistline as waist',
+      'visit.refer as referinhosp',
+      db.raw(" case when visit.time='' or visit.time='08:00' then visit.time_reg else visit.time end as time_serv "),
+      db.raw('? as servplace', [1]), 'visit.nurse_cc as chiefcomp',
+      'visit.pi_dr as presentillness', 'visit.pe_dr as physicalexam', 'visit.nurse_ph as pasthistory',
+      'visit.t as btemp', 'visit.bp as sbp', 'visit.bp1 as dbp', 'visit.weigh as weight', 'visit.high as height',
+      'visit.puls as pr', 'visit.rr', 'visit.bmi',
+      db.raw(`IF(visit.dr > 0, CONCAT("ว",visit.dr),'') as provider`),
+      'visit.pttype_std as instype', 'visit.no_ptt as insid',
+      'triage.e as gcs_e', 'triage.v as gcs_v', 'triage.m as gcs_m',
+      'triage.gcs', 'triage.o2sat', 'triage.pupil_lt as pupil_left', 'triage.pupil_rt as pupil_right',
+      db.raw('IF(visit.period>1,2,1) AS intime'), 'visit.cost as price', 'visit.opd_result_hdc as typeout',
+      db.raw('IF(visit.hospmain=? OR visit.`add`=?,1,2) AS location', [hcode, '4001']),
+      db.raw('concat(visit.date, " " , visit.time) as d_update'));
+
+    // console.log(query.orderBy('visit.date', 'desc').toString());
+    return await query.orderBy('visit.date', 'desc');
   }
 
   getDiagnosisOpd(db: Knex, visitno: string, hospCode = hisHospcode) {
@@ -558,12 +575,81 @@ export class HisIHospitalModel {
       .limit(maxLimit);
   }
 
-  getAppointment(db: Knex, visitNo: string, hospCode = hisHospcode) {
-    return db('view_opd_fu')
-      .select('*')
-      .select(db.raw('"' + hcode + '" as hospcode'))
-      .where('vn', "=", visitNo)
-      .limit(maxLimit);
+  async getAppointment(db: Knex, columnName: string, searchValue: any) {
+    const colMap: Record<string, string> = {
+      fu_date: "fu_date",
+      visit_date: "date",
+      visitno: "vn",
+      visitNo: "vn",
+      hn: "hn",
+      vn: "vn",
+      an: "an"
+    };
+
+    const mapped = colMap[columnName] || null;
+    if (!mapped) {
+      throw new Error(`Invalid columnName: ${columnName}`);
+    }
+
+    // 2) normalize date เฉพาะฟิลด์วันที่
+    if (columnName === "fu_date" || columnName === "visit_date") {
+      if (Array.isArray(searchValue)) {
+        searchValue = searchValue.map((d) => moment(d).format("YYYY-MM-DD"));
+      } else {
+        searchValue = moment(searchValue).format("YYYY-MM-DD");
+      }
+    }
+
+    // 3) build query
+    let query = db({ o: "view_opd_fu" })
+
+    // 4) apply filter (DATE เป็น DATE อยู่แล้ว → whereIn/where ใช้ได้ทั้ง mysql/pg)
+    if (Array.isArray(searchValue)) {
+      query = query.whereIn(mapped, searchValue);
+    } else {
+      query = query.where(mapped, searchValue);
+    }
+
+    // 5) select
+    query = query
+      .select([
+        "hn", "an", "vn", db.raw("? as visit_vn", [null]),
+        db.raw("0 AS isvisited"),
+        db.raw("date AS visit_date"),
+        "fu_date",
+        db.raw("time AS fu_time"),
+        db.raw("fu_dep AS cliniccode"),
+        db.raw("fu_dep_name AS clinicName"),
+        db.raw("fu_dr AS dr_code"),
+        db.raw("fu_dr_name AS dr_name"),
+        db.raw("dr AS provider"),
+        db.raw("CONCAT(title,name,' ',surname) AS pt_name"),
+        db.raw("? AS cause", [null]),
+        "detail_js",
+        db.raw("? AS prepare_text", ['']),
+        db.raw("? AS lab", [null]),
+        db.raw("? AS xray", [null]),
+        "fu_dep_building", "fu_dep_floor",
+        db.raw("? AS visit_area", [null]),
+        db.raw("CASE WHEN iscancel = 1 THEN 0 ELSE 1 END AS isactive"),
+      ])
+      .whereNotNull("fu_date")
+      .whereRaw("date < fu_date");
+
+    const rows = await query.orderBy(["fu_date", "time"]).limit(5000);
+    for (let row of rows) {
+      let detailList = Array.isArray(row.detail_js) ? row.detail_js : JSON.parse(row.detail_js);
+      detailList = detailList || [];
+      for (let detail of detailList) {
+        // row.prepare_text = (row.prepare_text? '\n-' : '-') + detail.guidelineFullname;
+        row.prepare_text = (row.prepare_text ? '\n-' : '-') + detail.text;
+      }
+      row.visit_area = (row.fu_dep_building ? row.fu_dep_building : '') + (row.fu_dep_floor ? ' ชั้น ' + row.fu_dep_floor : '');
+      delete row.fu_dep_building;
+      delete row.fu_dep_floor;
+      delete row.detail_js;
+    }
+    return rows;
   }
 
   async getReferHistory(db: Knex, columnName, searchNo, hospCode = hisHospcode) {

@@ -478,7 +478,7 @@ const router = (fastify, {}, next) => {
         const visitNo = req.body.visitNo;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         try {
-            const rows = await hismodel_1.default.getAppointment(global.dbHIS, visitNo, hospcode);
+            const rows = await hismodel_1.default.getAppointment(global.dbHIS, 'vn', visitNo, hospcode);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {

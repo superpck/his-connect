@@ -643,7 +643,7 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const result = await hisModel.getAppointment(global.dbHIS, visitNo, hospcode);
+      const result = await hisModel.getAppointment(global.dbHIS, 'vn', visitNo, hospcode);
       reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows: result });
 
     } catch (error) {

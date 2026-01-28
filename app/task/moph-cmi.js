@@ -6,6 +6,7 @@ const utils_1 = require("../middleware/utils");
 const dbConnection = require('../plugins/db');
 let db = dbConnection('HIS');
 let hisHospcode = process.env.HOSPCODE;
+let token;
 const processCMI = (async (dateStart = null, dateEnd = null) => {
     dateStart = dateStart ? moment(dateStart).format('YYYY-MM-DD') : moment().subtract(35, 'days').format('YYYY-MM-DD');
     dateEnd = dateEnd ? moment(dateEnd).format('YYYY-MM-DD') : moment().subtract(30, 'days').format('YYYY-MM-DD');
@@ -163,10 +164,33 @@ function toLowerColumnName(data) {
 }
 async function sendingToMoph(rows) {
     try {
-        return rows.length;
+        await getToken();
+        let results = [];
+        for (let row of rows) {
+            const result = await sendRow(row);
+            results.push(result);
+        }
+        console.table(rows[2]);
+        return results;
     }
     catch (error) {
         console.error(moment().format('HH:mm:ss'), 'DRG/CMI: Error in sendingToMoph:', error.message || error);
+        throw error;
+    }
+}
+async function getToken() {
+    if (token) {
+        return token;
+    }
+    return token;
+}
+async function sendRow(row) {
+    try {
+        console.log(row);
+        return true;
+    }
+    catch (error) {
+        console.error(moment().format('HH:mm:ss'), 'DRG/CMI: Error in sendRow:', error.message || error);
         throw error;
     }
 }
