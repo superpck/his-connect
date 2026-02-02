@@ -425,9 +425,7 @@ export class HisHiModel {
         'ward.op56 as department_code',
         'ward.nameidpm as department_name',
         db.raw('date(admission.dchdate) as date_service'),
-        db.raw(
-          `time(concat(admission.dchdate,' ', admission.dchtime*100)) as time_service`
-        )
+        db.raw('time(admission.dchtime*100) as time_service')
       )
       //.distinct('admission.an'); // ✅ แทน groupBy
   
