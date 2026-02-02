@@ -320,72 +320,131 @@ export class HisHiModel {
   }
 
   async getVisitForMophAlert(db: Knex, date: any, isRowCount: boolean = false, start = -1, limit: number = 1000) { // fix sequence of parameter
-    date = moment(date).locale('TH').format('YYYY-MM-DD');
-
-    // ข้อมูลผู้ป่วยนอก
-    let opdQuery = db('ovst as visit') // ข้อมูลผู้ป่วยนอก
-      .innerJoin('pt as patient', 'visit.hn', 'patient.hn') // ข้อมูลประชาชน
-      .leftJoin('cln as clinic', 'visit.cln', 'clinic.cln') // ห้องตรวจ
-      .where(db.raw(`date(visit.vstdttm) = ? and visit.an = 0 and visit.ovstost = '1'`, [date])) // เฉพาะผู้ป่วยนอกที่มาในวันนั้น และ status 1 = discharge กลับบ้าน
-      .andWhere(db.raw(`patient.pop_id <> ''`)) // ต้องมีหมายเลขบัตรประชาชน
-      .andWhere(db.raw(`patient.pop_id is not null`)) // ต้องมีหมายเลขบัตรประชาชน
-      .andWhere(db.raw(`length(patient.pop_id) = 13`)) // ต้องมีความยาว 13 หลัก
-      .andWhere(db.raw(`patient.pop_id not in (?,?)`, ['1111111111119', '9999999999994'])) // ไม่เอาหมายเลขประชาชนตัวอย่าง
-      .andWhere(db.raw(`timestampdiff(year, patient.brthdate, ?) between 15 and 90`, [date])) // อายุระหว่าง 15-90 ปี
-      .andWhere(db.raw(`patient.ntnlty = '99'`)); // สัญชาติไทย
-
-    // ข้อมูลผู้ป่วยใน
-    let ipdQuery = db('ipt as admission') // ข้อมูลผู้ป่วยใน
-      .innerJoin('pt as patient', 'admission.hn', 'patient.hn') // ข้อมูลประชาชน
-      .leftJoin('idpm as ward', 'admission.ward', 'ward.idpm') // ward ผู้ป่วยใน
-      .where(db.raw(`admission.dchdate = ?`, [date])) // ผู้ป่วยในที่จำหน่ายในวันนั้น
-      .andWhere(db.raw(`patient.pop_id <> ''`)) // ต้องมีหมายเลขบัตรประชาชน
-      .andWhere(db.raw(`patient.pop_id is not null`)) // ต้องมีหมายเลขบัตรประชาชน
-      .andWhere(db.raw(`length(patient.pop_id) = 13`)) // ต้องมีความยาว 13 หลัก
-      .andWhere(db.raw(`patient.pop_id not in (?,?)`, ['1111111111119', '9999999999994'])) // ไม่เอาหมายเลขประชาชนตัวอย่าง
-      .andWhere(db.raw(`timestampdiff(year, patient.brthdate, ?) between 15 and 90`, [date])) // อายุระหว่าง 15-90 ปี
-      .andWhere(db.raw(`patient.ntnlty = '99'`)); // สัญชาติไทย
+    const serviceDate = moment(date).format('YYYY-MM-DD');
     
-    // นับจำนวนแถว
-    if (isRowCount) { // ถ้าต้องการนับจำนวนแถว ให้ทำการนับจากทั้ง 2 query แล้วบวกกัน
-      let opdCount = opdQuery.countDistinct('visit.vn as row_count').first();
-      let ipdCount = ipdQuery.countDistinct('admission.vn as row_count').first();
-      console.log(opdCount.toString());
-      console.log(ipdCount.toString());
-      let [opdResult, ipdResult] = await Promise.all([opdCount, ipdCount]);
-      let totalCount = Number(opdResult?.row_count || 0) + Number(ipdResult?.row_count || 0);
-      return { row_count: totalCount };
-    } else { // ดึงข้อมูลรายละเอียด
-
-      // ข้อมูลผู้ป่วยนอก
-      let opdData = opdQuery
-        .select('visit.hn', 'visit.vn', 'patient.pop_id as cid',
-          db.raw(`'OPD' as department_type`),
-          'clinic.cln as department_code', 'clinic.namecln as department_name',
-          db.raw('date(visit.vstdttm) as date_service'),
-          db.raw('time(visit.vstdttm) as time_service')
-        )
-        .groupBy('visit.cln', 'visit.hn'); // กันซ้ำ hn ในวันเดียวกันในห้องตรวจเดียวกัน
-      
-      // ข้อมูลผู้ป่วยใน
-      let ipdData = ipdQuery
-        .select('admission.hn', 'admission.an as vn', 'patient.pop_id as cid',
-          db.raw(`CASE
-              when substr(ward.export_code,4,3) = '606' THEN 'HOMEWARD' 
-              WHEN substr(ward.export_code,4,3) <> '606' THEN 'IPD' 
-              END as department_type`), // แยก homeward ออกมา
-          'ward.op56 as department_code','ward.nameidpm as department_name',
-          db.raw('date(admission.dchdate) as date_service'),
-          db.raw(`time(concat(admission.dchdate,' ',admission.dchtime*100)) as time_service`)
-        )
-        .groupBy('admission.vn'); // กันซ้ำ hn ในวันเดียวกันใน ward เดียวกัน
-      
-      let unionQuery = opdData.unionAll([ipdData]);
-
-      if (start >= 0) {
-        unionQuery = unionQuery.offset(start).limit(limit);
+    // ===============================
+    // OPD base query
+    // ===============================
+    let opdQuery = db('ovst as visit')
+      .innerJoin('pt as patient', 'visit.hn', 'patient.hn')
+      .leftJoin('cln as clinic', 'visit.cln', 'clinic.cln')
+      .whereRaw(
+        `date(visit.vstdttm) = ?
+         and visit.an = 0
+         and visit.ovstost = '1'`,
+        [serviceDate]
+      )
+      .whereNotNull('patient.pop_id')
+      .andWhere('patient.pop_id', '<>', '')
+      .andWhereRaw('length(patient.pop_id) = 13')
+      .whereNotIn('patient.pop_id', ['1111111111119', '9999999999994'])
+      .andWhereRaw(
+        'timestampdiff(year, patient.brthdate, ?) between 15 and 90',
+        [serviceDate]
+      )
+      .andWhere('patient.ntnlty', '99');
+  
+    // ===============================
+    // IPD base query
+    // ===============================
+    let ipdQuery = db('ipt as admission')
+      .innerJoin('pt as patient', 'admission.hn', 'patient.hn')
+      .leftJoin('idpm as ward', 'admission.ward', 'ward.idpm')
+      .where('admission.dchdate', serviceDate)
+      .whereNotNull('patient.pop_id')
+      .andWhere('patient.pop_id', '<>', '')
+      .andWhereRaw('length(patient.pop_id) = 13')
+      .whereNotIn('patient.pop_id', ['1111111111119', '9999999999994'])
+      .andWhereRaw(
+        'timestampdiff(year, patient.brthdate, ?) between 15 and 90',
+        [serviceDate]
+      )
+      .andWhere('patient.ntnlty', '99');
+    
+      // ===============================
+      // COUNT MODE
+      // ===============================
+      if (isRowCount) {
+        const opdCount = opdQuery
+          .clone()
+          .countDistinct({ row_count: 'visit.vn' })
+          .first();
+    
+        const ipdCount = ipdQuery
+          .clone()
+          .countDistinct({ row_count: 'admission.vn' })
+          .first();
+    
+        const [opdResult, ipdResult] = await Promise.all([
+          opdCount,
+          ipdCount
+        ]);
+    
+        return {
+          row_count:
+            Number(opdResult?.row_count || 0) +
+            Number(ipdResult?.row_count || 0)
+        };
       }
-      return unionQuery;
+    
+    // ===============================
+    // DATA MODE
+    // ===============================
+  
+    // ----- OPD -----
+    const opdData = opdQuery
+      .clone()
+      .distinct() // ✅ ไม่ส่ง column
+      .select(
+        'visit.hn',
+        'visit.vn',
+        'patient.pop_id as cid',
+        db.raw(`'OPD' as department_type`),
+        'clinic.cln as department_code',
+        'clinic.namecln as department_name',
+        db.raw('date(visit.vstdttm) as date_service'),
+        db.raw('time(visit.vstdttm) as time_service')
+      )
+      //.distinct('visit.vn'); // ✅ แทน groupBy
+
+    // ----- IPD -----
+    const ipdData = ipdQuery
+      .clone()
+      .distinct() // ✅ ไม่ส่ง column
+      .select(
+        'admission.hn',
+        'admission.an as vn',
+        'patient.pop_id as cid',
+        db.raw(`
+          CASE
+            WHEN substr(ward.export_code,4,3) = '606'
+            THEN 'HOMEWARD'
+            ELSE 'IPD'
+          END as department_type
+        `),
+        'ward.op56 as department_code',
+        'ward.nameidpm as department_name',
+        db.raw('date(admission.dchdate) as date_service'),
+        db.raw(
+          `time(concat(admission.dchdate,' ', admission.dchtime*100)) as time_service`
+        )
+      )
+      //.distinct('admission.an'); // ✅ แทน groupBy
+  
+    // ===============================
+    // UNION + PAGINATION
+    // ===============================
+    let unionQuery = db
+      .from(opdData.unionAll([ipdData]).as('u'))
+      .orderBy([
+        { column: 'date_service', order: 'asc' },
+        { column: 'time_service', order: 'asc' }
+      ]);
+  
+    if (start >= 0) {
+      unionQuery = unionQuery.offset(start).limit(limit);
     }
+    return unionQuery;
   }
 }
+
