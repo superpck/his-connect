@@ -1,5 +1,5 @@
 import moment = require("moment");
-import { sendingToMoph, updateHISAlive, checkAdminRequest, updateAdminRequest, taskFunction } from "../middleware/moph-refer";
+import { sendingToMoph, updateHISAlive, checkAdminRequest, updateAdminRequest, taskFunction, getHospitalConfig } from "../middleware/moph-refer";
 import hisModel from './../routes/his/hismodel';
 import { Knex } from 'knex';
 import { platform, release } from "os";
@@ -12,8 +12,11 @@ let db: Knex = dbConnection('HIS');
 const hisProvider = process.env.HIS_PROVIDER || '';
 const hisVersion = process.env.HIS_VERSION || '';
 const hospcode = process.env.HOSPCODE || '';
+let hospitalConfig: any = null;
 
 export const sendBedOccupancy = async (dateProcess: any = null) => {
+  hospitalConfig = await getHospitalConfig();
+
   let whatUTC = Intl?.DateTimeFormat().resolvedOptions().timeZone || '';
   let currDate: any;
 
@@ -258,35 +261,26 @@ export const erpAdminRequest = async () => {
     const rows = result?.rows || result?.data || [];
     if (rows && rows.length > 0) {
       let requestResult: any;
-      for (let req of rows) {
-        if (req.request_type == 'bed') {
+      for (let row of rows) {
+        if (row.request_type == 'bed') {
           requestResult = await sendBedNo();
           console.log(moment().format('HH:mm:ss'), 'ERP admin request get bed no.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
-          await updateAdminRequest({
-            request_id: req.request_id,
-            status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
-            isactive: 0
-          });
-        } else if (req.request_type == 'ward') {
+        } else if (row.request_type == 'ward') {
           requestResult = await sendWardName();
           console.log(moment().format('HH:mm:ss'), 'ERP admin request get ward name.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
-          await updateAdminRequest({
-            request_id: req.request_id,
-            status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
-            isactive: 0
-          });
-        } else if (req.request_type == 'alive') {
+        } else if (row.request_type == 'alive') {
           requestResult = await updateAlive();
           console.log(moment().format('HH:mm:ss'), 'ERP admin request send alive status.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
-        } else if (req.request_type == 'occupancy') {
+        } else if (row.request_type == 'occupancy') {
           requestResult = await sendBedOccupancy();
-          console.log(moment().format('HH:mm:ss'), 'erpAdminRequest occupancy', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
-          await updateAdminRequest({
-            request_id: req.request_id,
-            status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
-            isactive: 0
-          });
+          console.log(moment().format('HH:mm:ss'), 'ERP admin request occupancy', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
         }
+        const updateResult = await updateAdminRequest({
+          request_id: row.request_id,
+          status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
+          isactive: 0
+        });
+        console.log(moment().format('HH:mm:ss'), 'ERP admin request update status', updateResult?.statusCode || updateResult?.status || '', updateResult?.message || '');
       }
     } else {
       console.log(moment().format('HH:mm:ss'), 'No admin request', result.status || result?.statusCode || '', result?.data?.message || result?.message || '');

@@ -1,3 +1,9 @@
+# 3.9.8
+## Feature
+  - ปรับ sql สำหรับ HospitalOS V.4
+  - draft visit model สำหรับ MOPH IoT
+  - draft appointment model สำหรับ MOPH Alert
+
 # 3.9.7
 ## Feature
   - ปรับ SQL getReferOut, getReferResult, getProviderDr, sumReferOut ให้รองรับ Pg, MSSQL

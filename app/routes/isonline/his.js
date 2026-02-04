@@ -57,6 +57,7 @@ switch (provider) {
         hisModel = new his_hosxppcu_model_1.HisHosxppcuModel();
         break;
     case 'hospitalos':
+    case 'hospitalosv4':
         hisModel = new his_hospitalos_model_1.HisHospitalOsModel();
         break;
     case 'emrsoft':

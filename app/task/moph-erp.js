@@ -13,7 +13,9 @@ let db = dbConnection('HIS');
 const hisProvider = process.env.HIS_PROVIDER || '';
 const hisVersion = process.env.HIS_VERSION || '';
 const hospcode = process.env.HOSPCODE || '';
+let hospitalConfig = null;
 const sendBedOccupancy = async (dateProcess = null) => {
+    hospitalConfig = await (0, moph_refer_1.getHospitalConfig)();
     let whatUTC = Intl?.DateTimeFormat().resolvedOptions().timeZone || '';
     let currDate;
     if (whatUTC == 'UTC' || whatUTC == 'Etc/UTC') {
@@ -244,38 +246,29 @@ const erpAdminRequest = async () => {
         const rows = result?.rows || result?.data || [];
         if (rows && rows.length > 0) {
             let requestResult;
-            for (let req of rows) {
-                if (req.request_type == 'bed') {
+            for (let row of rows) {
+                if (row.request_type == 'bed') {
                     requestResult = await (0, exports.sendBedNo)();
                     console.log(moment().format('HH:mm:ss'), 'ERP admin request get bed no.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
-                    await (0, moph_refer_1.updateAdminRequest)({
-                        request_id: req.request_id,
-                        status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
-                        isactive: 0
-                    });
                 }
-                else if (req.request_type == 'ward') {
+                else if (row.request_type == 'ward') {
                     requestResult = await (0, exports.sendWardName)();
                     console.log(moment().format('HH:mm:ss'), 'ERP admin request get ward name.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
-                    await (0, moph_refer_1.updateAdminRequest)({
-                        request_id: req.request_id,
-                        status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
-                        isactive: 0
-                    });
                 }
-                else if (req.request_type == 'alive') {
+                else if (row.request_type == 'alive') {
                     requestResult = await (0, exports.updateAlive)();
                     console.log(moment().format('HH:mm:ss'), 'ERP admin request send alive status.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
                 }
-                else if (req.request_type == 'occupancy') {
+                else if (row.request_type == 'occupancy') {
                     requestResult = await (0, exports.sendBedOccupancy)();
-                    console.log(moment().format('HH:mm:ss'), 'erpAdminRequest occupancy', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
-                    await (0, moph_refer_1.updateAdminRequest)({
-                        request_id: req.request_id,
-                        status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
-                        isactive: 0
-                    });
+                    console.log(moment().format('HH:mm:ss'), 'ERP admin request occupancy', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
                 }
+                const updateResult = await (0, moph_refer_1.updateAdminRequest)({
+                    request_id: row.request_id,
+                    status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
+                    isactive: 0
+                });
+                console.log(moment().format('HH:mm:ss'), 'ERP admin request update status', updateResult?.statusCode || updateResult?.status || '', updateResult?.message || '');
             }
         }
         else {

@@ -174,7 +174,7 @@ const checkAdminRequest = async () => {
     }
 };
 exports.checkAdminRequest = checkAdminRequest;
-const updateAdminRequest = async (data) => {
+const updateAdminRequest = async (updateData) => {
     const apiIp = (0, utils_1.getIP)();
     if (!apiIp || !apiIp.ip) {
         return { status: 400, message: 'No API IP' };
@@ -184,7 +184,7 @@ const updateAdminRequest = async (data) => {
         return { status: 500, message: 'No nRefer token' };
     }
     const url = referAPIUrl + '/moph-erp/update-admin-request/' + hcode;
-    const postData = createPostData(data);
+    const postData = createPostData(updateData);
     const headers = createHeaders(nReferToken);
     try {
         const { status, data } = await axios_1.default.post(url, postData, { headers });

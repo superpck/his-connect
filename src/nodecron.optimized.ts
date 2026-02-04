@@ -408,6 +408,11 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
         sendBedOccupancy();
       }
 
+      // ส่ง ผป.นัดหมาย
+      if (hourNow%2 == 0 && minuteNow == timeRandom) {
+        mophAppointment.process();
+      }
+
       // 4. Ward/Bed Daily Logic
       if (moment().hour() == hourRandom && minuteNow == timeRandom) {
         console.log(`   --> 📅 Daily Task: Executing Ward Name & Bed No...`);

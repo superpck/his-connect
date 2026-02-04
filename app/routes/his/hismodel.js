@@ -17,6 +17,7 @@ const his_haos_1 = require("../../models/his/his_haos");
 const his_ssb_srih_1 = require("../../models/his/his_ssb_srih");
 const his_homc_1 = require("../../models/his/his_homc");
 const his_hospitalos_1 = require("../../models/his/his_hospitalos");
+const his_hospitalos_v4_1 = require("../../models/his/his_hospitalos.v4");
 const his_mitnet_1 = require("../../models/his/his_mitnet");
 const his_1 = require("../../models/his/his");
 const his_hi_1 = require("../../models/his/his_hi");
@@ -73,6 +74,9 @@ switch (hisProvider) {
         break;
     case 'hospitalos':
         hisModel = new his_hospitalos_1.HisHospitalOsModel();
+        break;
+    case 'hospitalosv4':
+        hisModel = new his_hospitalos_v4_1.HisHospitalOsV4Model();
         break;
     case 'vpm':
         hisModel = new his_vpm_1.HisVpmHModel();

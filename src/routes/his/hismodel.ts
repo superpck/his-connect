@@ -16,6 +16,7 @@ import { HisHaosModel } from '../../models/his/his_haos';
 import { HisSsbSriHModel } from '../../models/his/his_ssb_srih';
 import { HisHomCHModel } from '../../models/his/his_homc';
 import { HisHospitalOsModel } from '../../models/his/his_hospitalos';
+import { HisHospitalOsV4Model } from '../../models/his/his_hospitalos.v4';
 import { HisMitnetModel } from '../../models/his/his_mitnet';
 import { HisModel } from '../../models/his/his';
 import { HisHiModel } from '../../models/his/his_hi';
@@ -74,6 +75,9 @@ switch (hisProvider) {
     break;
   case 'hospitalos':
     hisModel = new HisHospitalOsModel();
+    break;
+  case 'hospitalosv4':
+    hisModel = new HisHospitalOsV4Model();
     break;
   case 'vpm':
     hisModel = new HisVpmHModel();

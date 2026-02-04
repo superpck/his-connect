@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.HisHospitalOsModel = void 0;
+exports.HisHospitalOsV4Model = void 0;
 const moment = require("moment-timezone");
 const dbName = process.env.HIS_DB_NAME;
 const maxLimit = 250;
 let hisHospcode = process.env.HOSPCODE;
-class HisHospitalOsModel {
+class HisHospitalOsV4Model {
     constructor() {
     }
     async tableExist(db, tableName) {
@@ -15,14 +15,18 @@ class HisHospitalOsModel {
     check() {
         return true;
     }
-    getTableName(knex) {
-        return knex('information_schema.tables')
+    getTableName(db) {
+        return db('information_schema.tables')
             .select('table_name')
             .where('table_catalog', '=', dbName);
     }
     async testConnect(db) {
-        console.log('nRefer: Testing DB connection... from t_patient');
-        return await db('t_patient').select('patient_hn').limit(1);
+        let patientTable = 't_patient';
+        if (!(await this.tableExist(db, 't_person'))) {
+            patientTable = 't_person';
+        }
+        console.log(`nRefer: Testing DB connection... from ${patientTable}`);
+        return await db(patientTable).select('patient_hn').limit(1);
     }
     async testConnect_(db) {
         const opdConfig = await global.dbHIS('opdconfig').first();
@@ -358,24 +362,47 @@ class HisHospitalOsModel {
         const result = await db.raw('SELECT * FROM his_connect.fn_get_bed_no(?, ?, ?, ?)', [bedno || null, hisHospcode, start, limit]);
         return result.rows;
     }
-    async getVisitForMophAlert(db, date, isRowCount = false, limit = 1000, start = -1) {
-        if (!date) {
-            throw new Error('Invalid parameters: date is required');
+    async getVisitForMophAlert(db, date, isRowCount, limit = 1000, start = -1) {
+        let patientTable = 't_patient';
+        if (!(await this.tableExist(db, 't_person'))) {
+            patientTable = 't_person';
         }
         try {
-            const formattedDate = moment(date).locale('TH').format('YYYY-MM-DD');
+            const dateStr = moment(date).format("YYYY-MM-DD");
+            let query = db("t_visit as v")
+                .innerJoin(`${patientTable} as pt`, "v.t_patient_id", "pt.t_patient_id")
+                .whereRaw("(substr(v.visit_begin_visit_time, 1, 4)::numeric - 543 || substr(v.visit_begin_visit_time, 5, 6)) = ?", [dateStr])
+                .andWhere("v.f_visit_status_id", "3");
             if (isRowCount) {
-                const result = await db.raw('SELECT * FROM his_connect.fn_count_visit_for_moph_alert(?)', [formattedDate]);
-                return result.rows?.[0] || { row_count: 0 };
+                const result = await query.count("v.t_visit_id as row_count").first();
+                return result;
             }
             else {
-                const result = await db.raw('SELECT * FROM his_connect.fn_get_visit_for_moph_alert(?, ?, ?, ?)', [formattedDate, hisHospcode, start, limit]);
-                return result.rows;
+                query
+                    .leftJoin("b_service_point as sp", "v.b_service_point_id", "sp.b_service_point_id")
+                    .leftJoin("f_visit_opd_discharge_status as s", "v.f_visit_opd_discharge_status_id", "s.f_visit_opd_discharge_status_id")
+                    .select("pt.patient_hn as hn", "v.visit_vn as vn", "pt.patient_pid as cid", db.raw("'OPD' as department_type"), "sp.service_point_number as department_code", "sp.service_point_description as department_name", db.raw("(substr(v.visit_begin_visit_time, 1, 4)::numeric - 543 || substr(v.visit_begin_visit_time, 5, 6))::date as date_service"), db.raw("substr(v.visit_begin_visit_time, 11, 6)::time as time_service"), "s.visit_opd_discharge_status_description as service_status", "s.visit_opd_discharge_status_description as service_status_name")
+                    .where((builder) => {
+                    builder.where("s.visit_opd_discharge_status_description", "like", "%ตรวจและกลับบ้าน%")
+                        .orWhere("s.visit_opd_discharge_status_description", "like", "%รอรับยา%")
+                        .orWhere("s.visit_opd_discharge_status_description", "like", "%จำหน่าย%")
+                        .orWhere("s.visit_opd_discharge_status_description", "like", "%Refer%")
+                        .orWhere("s.visit_opd_discharge_status_description", "like", "%เสร็จสิ้น%");
+                });
+                if (start >= 0) {
+                    query.offset(start).limit(limit);
+                }
+                else {
+                    query.limit(limit);
+                }
+                const rows = await query;
+                return rows;
             }
         }
-        catch (error) {
-            throw error;
+        catch (err) {
+            console.error("Error in getVisitForMophAlert:", err);
+            throw err;
         }
     }
 }
-exports.HisHospitalOsModel = HisHospitalOsModel;
+exports.HisHospitalOsV4Model = HisHospitalOsV4Model;
