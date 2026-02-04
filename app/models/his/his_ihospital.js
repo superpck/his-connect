@@ -10,8 +10,20 @@ class HisIHospitalModel {
     check() {
         return true;
     }
+    async tableExist(db, tableName, dbName = '') {
+        if (dbName) {
+            return await db.schema
+                .withSchema(dbName)
+                .hasTable(tableName);
+        }
+        else {
+            return await db.schema.hasTable(tableName);
+        }
+    }
     async testConnect(db) {
         let result;
+        result = await this.tableExist(db, 'patient', 'hospdata');
+        console.log(`HisIHospitalModel: Testing DB connection... table hospdata.patient exist=${result}`);
         result = await global.dbHIS('hospdata.sys_hospital').first();
         const hospname = result?.hname || null;
         result = await db('hospdata.patient').select('hn').limit(1);
