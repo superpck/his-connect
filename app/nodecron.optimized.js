@@ -7,6 +7,7 @@ const moph_erp_1 = require("./task/moph-erp");
 const moph_iot_1 = require("./task/moph-iot");
 const moph_alert_1 = require("./task/moph-alert");
 const moph_starter_1 = require("./task/moph-starter");
+const moph_appointment_1 = require("./task/moph-appointment");
 const shell = require("shelljs");
 const cron = require('node-cron');
 const referCrontab = require('./routes/refer/crontab');
@@ -186,6 +187,9 @@ async function cronjob(fastify) {
             }
             if (minuteNow == timeRandom) {
                 (0, moph_erp_1.sendBedOccupancy)();
+            }
+            if (hourNow % 2 == 0 && minuteNow == timeRandom) {
+                moph_appointment_1.default.process();
             }
             if (moment().hour() == hourRandom && minuteNow == timeRandom) {
                 console.log(`   --> 📅 Daily Task: Executing Ward Name & Bed No...`);

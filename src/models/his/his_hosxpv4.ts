@@ -1635,6 +1635,7 @@ export class HisHosxpv4Model {
     // 3) build query
     let query = db({ o: "oapp" })
       .join({ c: "clinic" }, "c.clinic", "o.clinic")
+      .join({ ovst: "ovst" }, "o.vn", "ovst.vn")
       .join({ d: "doctor" }, "d.code", "o.doctor")
       .join({ oa: "oapp_status" }, "oa.oapp_status_id", "o.oapp_status_id")
       .leftJoin({ pt: "pttype" }, "o.next_pttype", "pt.pttype");
@@ -1652,10 +1653,11 @@ export class HisHosxpv4Model {
       .select([
         "o.hn","o.an","o.vn","o.visit_vn",
         db.raw("CASE WHEN o.patient_visit = 'Y' THEN 1 ELSE 0 END AS isvisited"),
-        db.raw("o.vstdate AS visit_date"),
-        db.raw("o.nextdate AS fu_date"),
-        db.raw("o.nexttime AS fu_time"),
-        db.raw("o.clinic AS cliniccode"),
+        // db.raw("o.vstdate AS visit_date"),
+        db.raw("concat(o.vstdate,' ',ovst.vsttime) AS visit_date"),
+        db.raw("o.nextdate AS apdate"),
+        db.raw("o.nexttime AS aptime"),
+        "o.clinic",
         db.raw("c.name AS clinicName"),
         db.raw("o.doctor AS dr_code"),
         db.raw("d.name AS dr_name"),
@@ -1666,8 +1668,9 @@ export class HisHosxpv4Model {
         db.raw("CASE WHEN o.note1 IS NULL OR o.note1 = '' THEN o.perform_text ELSE o.note1 END AS prepare_text"),
         db.raw("o.lab_list_text AS lab"),
         db.raw("o.xray_list_text AS xray"),
-        db.raw("o.contact_point AS visit_area"),
+        db.raw("o.contact_point AS apvisit_area"),
         db.raw("CASE WHEN o.oapp_status_id = 1 THEN 1 ELSE 0 END AS isactive"),
+        db.raw("o.update_datetime as d_update")
       ])
       .whereNotNull("o.nextdate")
       .whereRaw("o.vstdate < o.nextdate");

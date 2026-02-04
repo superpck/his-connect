@@ -18,6 +18,10 @@ const mophAlertSurvey = async (date = null) => {
             cacheInitialized = true;
         }
         hospitalConfig = await (0, moph_refer_1.getHospitalConfig)();
+        if (!hospitalConfig || !hospitalConfig?.hospital_satisfaction || hospitalConfig?.hospital_satisfaction != 1) {
+            console.error(moment().format('HH:mm:ss'), 'MOPH Alert Process Stop: Appointment Service Disabled');
+            return false;
+        }
         date = date ? moment(date).format('YYYY-MM-DD') : moment().subtract(2, 'hours').format('YYYY-MM-DD');
         await opdVisit(date);
         if (moment().format('HH:mm') < '02:00') {

@@ -11,15 +11,10 @@ START_TOOL=pm2
 # โปรดระมัดระวังการแก้ไขค่าในส่วนนี้
 ALLOW_API_SUBNET=0
 
-# [HTTPS]
-SSL_ENABLE=0
-SSL_KEY=public/ssl/localhost.key
-SSL_CRT=public/ssl/localhost.crt
-
 # valid db client driver: mysql (version เก่า), mysql2 (mysql 5.5+, mariaDB 10+, percona 5.5+), pg, mssql, oracledb
 # valid HIS provider name: 
 #    iHospital, HOSxPv3, HOSxPv4, HOSxPpcu, infod, homc, ssb
-#    hospitalos, jhcis, kpstat, md, mkhospital, thiades, 
+#    hospitalos, hospitalosv4, jhcis, kpstat, md, mkhospital, thiades, 
 #    hi, himpro, mitnet, EPIS, nemo, mypcu, emrsoft, haos, 
 #    MBase,VPM, medical2020
 

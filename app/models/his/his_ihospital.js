@@ -450,11 +450,12 @@ class HisIHospitalModel {
             .select([
             "hn", "an", "vn", db.raw("? as visit_vn", [null]),
             db.raw("0 AS isvisited"),
-            db.raw("date AS visit_date"),
-            "fu_date",
-            db.raw("time AS fu_time"),
-            db.raw("fu_dep AS cliniccode"),
+            db.raw("CONCAT(date,' ',time) AS visit_date"),
+            db.raw("fu_date AS apdate"),
+            db.raw("fu_time AS aptime"),
+            db.raw("fu_dep AS clinic"),
             db.raw("fu_dep_name AS clinicName"),
+            db.raw('fu_dep_standard as clinic_standard'),
             db.raw("fu_dr AS dr_code"),
             db.raw("fu_dr_name AS dr_name"),
             db.raw("dr AS provider"),
@@ -465,19 +466,23 @@ class HisIHospitalModel {
             db.raw("? AS lab", [null]),
             db.raw("? AS xray", [null]),
             "fu_dep_building", "fu_dep_floor",
-            db.raw("? AS visit_area", [null]),
+            db.raw("? AS apvisit_area", [null]),
             db.raw("CASE WHEN iscancel = 1 THEN 0 ELSE 1 END AS isactive"),
+            db.raw("lastupdate as d_update")
         ])
             .whereNotNull("fu_date")
             .whereRaw("date < fu_date");
         const rows = await query.orderBy(["fu_date", "time"]).limit(5000);
         for (let row of rows) {
             let detailList = Array.isArray(row.detail_js) ? row.detail_js : JSON.parse(row.detail_js);
-            detailList = detailList || [];
+            detailList = (detailList || []).filter((item) => item?.text && typeof item.text === 'string' && item.text.trim() !== '');
             for (let detail of detailList) {
-                row.prepare_text = (row.prepare_text ? '\n-' : '-') + detail.text;
+                row.prepare_text = (row.prepare_text ? '\n' : '')
+                    + (detailList.length > 1 ? '-' : '')
+                    + detail.text;
             }
-            row.visit_area = (row.fu_dep_building ? row.fu_dep_building : '') + (row.fu_dep_floor ? ' ชั้น ' + row.fu_dep_floor : '');
+            row.apvisit_area = (row.fu_dep_building ? row.fu_dep_building : '') + (row.fu_dep_floor ? ' ชั้น ' + row.fu_dep_floor : '');
+            row.visit_date = moment(row.visit_date).format('YYYY-MM-DD HH:mm:ss');
             delete row.fu_dep_building;
             delete row.fu_dep_floor;
             delete row.detail_js;
