@@ -8,9 +8,14 @@ export class HisHospitalOsV4Model {
     constructor() {
     }
 
-    async tableExist(db: Knex, tableName: string): Promise<boolean> {
-        const exist = await db.schema.hasTable(tableName);
-        return exist;
+    async tableExist(db: Knex, tableName: string, dbName: string = ''): Promise<boolean> {
+        if (dbName) {
+            return await db.schema
+                .withSchema(dbName)
+                .hasTable(tableName);
+        } else {
+            return await db.schema.hasTable(tableName);
+        }
     }
 
     // ❌ ไม่พบการเรียกใช้งาน
@@ -32,7 +37,7 @@ export class HisHospitalOsV4Model {
         if (!(await this.tableExist(db, 't_person'))) {
             patientTable = 't_person';
         }
-        
+
         console.log(`nRefer: Testing DB connection... from ${patientTable}`);
         return await db(patientTable).select('patient_hn').limit(1)
     }

@@ -89,7 +89,7 @@ app.decorate("authenticate", async (request: any, reply: any) => {
     request.authenDecoded = request.user;
   } catch (err) {
     let ipAddr: any = request.headers["x-real-ip"] || request.headers["x-forwarded-for"] || request.ip;
-    console.log(moment().format('HH:mm:ss.SSS'), ipAddr, 'error:' + StatusCodes.UNAUTHORIZED, err.message);
+    console.log(moment().format('HH:mm:ss.SSS'), ipAddr, 'Error client try to access API ' + StatusCodes.UNAUTHORIZED, err.message);
     reply.send({
       statusCode: StatusCodes.UNAUTHORIZED,
       message: getReasonPhrase(StatusCodes.UNAUTHORIZED)
