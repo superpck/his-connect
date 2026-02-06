@@ -4,6 +4,7 @@
   - draft visit model สำหรับ MOPH IoT
   - draft appointment model สำหรับ MOPH Alert
   - ลบ file ที่ไม่ถูกใช้งาน
+  - remove unused route (PCC, QDrug)
 
 # 3.9.7
 ## Feature
