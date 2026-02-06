@@ -10,6 +10,16 @@ export class HisIHospitalModel {
     return true;
   }
 
+  async tableExist(db: Knex, tableName: string, dbName: string = ''): Promise<boolean> {
+    if (dbName) {
+      return await db.schema
+        .withSchema(dbName)
+        .hasTable(tableName);
+    } else {
+      return await db.schema.hasTable(tableName);
+    }
+  }
+
   async testConnect(db: Knex) {
     let result: any;
     result = await global.dbHIS('hospdata.sys_hospital').first();

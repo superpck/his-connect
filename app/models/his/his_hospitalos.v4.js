@@ -8,9 +8,15 @@ let hisHospcode = process.env.HOSPCODE;
 class HisHospitalOsV4Model {
     constructor() {
     }
-    async tableExist(db, tableName) {
-        const exist = await db.schema.hasTable(tableName);
-        return exist;
+    async tableExist(db, tableName, dbName = '') {
+        if (dbName) {
+            return await db.schema
+                .withSchema(dbName)
+                .hasTable(tableName);
+        }
+        else {
+            return await db.schema.hasTable(tableName);
+        }
     }
     check() {
         return true;

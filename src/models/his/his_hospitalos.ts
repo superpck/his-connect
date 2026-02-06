@@ -8,11 +8,16 @@ export class HisHospitalOsModel {
     constructor() {
     }
 
-    async tableExist(db: Knex, tableName: string): Promise<boolean> {
-        const exist = await db.schema.hasTable(tableName);
-        return exist;
+    async tableExist(db: Knex, tableName: string, dbName: string = ''): Promise<boolean> {
+        if (dbName) {
+            return await db.schema
+                .withSchema(dbName)
+                .hasTable(tableName);
+        } else {
+            return await db.schema.hasTable(tableName);
+        }
     }
-    
+
     // ❌ ไม่พบการเรียกใช้งาน
     check() {
         return true;
