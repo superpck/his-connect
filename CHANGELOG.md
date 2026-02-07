@@ -5,6 +5,7 @@
   - draft appointment model สำหรับ MOPH Alert
   - ลบ file ที่ไม่ถูกใช้งาน
   - remove unused route (PCC, QDrug)
+  - ปรับ SQL
 
 # 3.9.7
 ## Feature

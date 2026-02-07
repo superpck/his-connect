@@ -329,8 +329,42 @@ class HisHospitalOsV4Model {
             .locale('TH')
             .endOf('hour')
             .format('YYYY-MM-DD HH:mm:ss');
-        const result = await db.raw('SELECT * FROM his_connect.fn_concurrent_ipd_by_ward(?, ?, ?)', [dateStart, dateEnd, hisHospcode]);
-        return result.rows;
+        const admitLimit = moment.tz(date, tz)
+            .locale('TH')
+            .subtract(6, 'months')
+            .format('YYYY-MM-DD HH:mm:ss');
+        let query = ` SELECT ? as hospcode,ward.visit_ward_number AS wardcode,
+                ward.visit_ward_description AS wardname,
+                COUNT(*)::integer as cases,
+                SUM(case when t_visit.visit_begin_admit_date_time between ? and ? then 1 else 0 end)::integer as new_case,
+                SUM(case when t_visit.visit_ipd_discharge_date_time between ? and ? then 1 else 0 end)::integer as discharge,
+                SUM(case when substring(bed.std_code,4,1)::text not in ('2','3','4','5') and  substring(bed.std_code,4,3)::text not in ('606','607','608','609') then 1 else 0 end)::integer as normal,
+                SUM(case when substring(bed.std_code,4,1)='2' then 1 else 0 end)::integer as icu,
+                SUM(case when substring(bed.std_code,4,1)='3' then 1 else 0 end)::integer as semi,
+                SUM(case when substring(bed.std_code,4,1)='4' then 1 else 0 end)::integer as stroke,
+                SUM(case when substring(bed.std_code,4,1)='5' then 1 else 0 end)::integer as burn,
+                SUM(case when substring(bed.std_code,4,3)='606' then 1 else 0 end)::integer as special,
+                SUM(case when substring(bed.std_code,4,3)='607' then 1 else 0 end)::integer as homeward,
+                SUM(case when substring(bed.std_code,4,3)='608' then 1 else 0 end)::integer as lr,
+                SUM(case when substring(bed.std_code,4,3)='609' then 1 else 0 end)::integer as clip
+            FROM t_visit
+                LEFT JOIN b_visit_ward ward ON t_visit.b_visit_ward_id::text = ward.b_visit_ward_id::text
+                LEFT JOIN b_visit_room room ON t_visit.b_visit_room_id::text = room.b_visit_room_id::text
+                LEFT JOIN b_visit_bed bed on ward.b_visit_ward_id::text =bed.b_visit_ward_id::text and t_visit.visit_bed = bed.b_visit_bed_id 
+                LEFT JOIN b_visit_clinic clinic ON t_visit.b_visit_clinic_id::text = clinic.b_visit_clinic_id::text
+            WHERE t_visit.f_visit_status_id::text <> '4'::text AND t_visit.f_visit_type_id::text = '1'::text
+            and (t_visit.visit_ipd_discharge_date_time is null or t_visit.visit_ipd_discharge_date_time >=?)
+            and t_visit.visit_begin_admit_date_time between ? and ?
+            group by ward.visit_ward_number,  ward.visit_ward_description
+            `;
+        const result = await db.raw(query, [hisHospcode, dateStart, dateEnd, dateStart, dateEnd, dateEnd, admitLimit, dateEnd]);
+        const rows = result.rows.map((row) => {
+            row.normal = parseInt(row.cases) -
+                (parseInt(row.icu) + parseInt(row.semi) + parseInt(row.stroke) + parseInt(row.burn) + parseInt(row.special) + parseInt(row.homeward) + parseInt(row.lr) + parseInt(row.clip));
+            return row;
+        });
+        console.table(rows);
+        return rows;
     }
     async concurrentIPDByClinic(db, date) {
         if (!date) {
@@ -356,9 +390,38 @@ class HisHospitalOsV4Model {
         const result = await db.raw('SELECT * FROM his_connect.fn_sum_opd_visit_by_clinic(?, ?)', [formattedDate, hisHospcode]);
         return result.rows;
     }
-    async getWard(db, wardCode = '', wardName = '') {
+    async getWard_(db, wardCode = '', wardName = '') {
         const result = await db.raw('SELECT * FROM his_connect.fn_get_ward(?, ?, ?, ?)', [wardCode || null, wardName || null, hisHospcode, maxLimit]);
         return result.rows;
+    }
+    async getWard(db, wardCode = '', wardName = '') {
+        let sql = `select ? as hospcode, b_visit_bed.b_visit_ward_id, b_visit_ward.visit_ward_number as wardcode,
+                b_visit_ward.visit_ward_description as wardname, count(*) as bed_count 
+                , sum(case when substring(b_visit_bed.std_code,4,3)='603' then 1 else 0 end) as bed_extra
+                , sum(case when substring(b_visit_bed.std_code,4,3)='607' then 1 else 0 end) as homeward
+                , sum(case when substring(b_visit_bed.std_code,4,3)='604' then 1 else 0 end) as bed_minithanyaruk
+                , sum(case when substring(b_visit_bed.std_code,4,3) in ('601','602') then 1 else 0 end) as imc
+                , sum(case when substring(b_visit_bed.std_code,4,1)='2' then 1 else 0 end) as bed_icu
+                , sum(case when substring(b_visit_bed.std_code,4,1)='3' then 1 else 0 end) as bed_semi
+                , sum(case when substring(b_visit_bed.std_code,4,1)='4' then 1 else 0 end) as bed_stroke
+                , sum(case when substring(b_visit_bed.std_code,4,1)='5' then 1 else 0 end) as bed_burn
+                , sum(case when substring(b_visit_bed.std_code,4,3)='606' then 1 else 0 end) as bed_special
+                , sum(case when substring(b_visit_bed.std_code,4,3)='608' then 1 else 0 end) as lr
+                , sum(case when substring(b_visit_bed.std_code,4,3)='609' then 1 else 0 end) as clip
+                , sum(case when substring(b_visit_bed.std_code,4,1)='7' then 1 else 0 end) as bed_negative
+                , b_visit_ward.visit_ward_active as isactive
+            from b_visit_bed
+                inner join b_visit_ward on b_visit_bed.b_visit_ward_id=b_visit_ward.b_visit_ward_id
+            where b_visit_bed.active = '1' and b_visit_ward.visit_ward_active ='1'
+            group by b_visit_bed.b_visit_ward_id, b_visit_ward.visit_ward_number, b_visit_ward.visit_ward_description
+            `;
+        const result = await db.raw(sql, [hisHospcode]);
+        let rows = result.rows.map((row) => {
+            row.bed_normal = parseInt(row.bed_count) -
+                (parseInt(row.bed_icu) + parseInt(row.bed_semi) + parseInt(row.bed_stroke) + parseInt(row.bed_burn) + parseInt(row.bed_special) + parseInt(row.homeward) + parseInt(row.lr) + parseInt(row.clip) + parseInt(row.bed_extra));
+            return row;
+        });
+        return rows;
     }
     async countBedNo(db) {
         const result = await db.raw('SELECT * FROM his_connect.fn_count_bed_no()');
