@@ -85,7 +85,11 @@ const process = async () => {
   await cleanOldRecords();
 
   hospitalConfig = await getHospitalConfig();
-  if (!hospitalConfig || !hospitalConfig.configure || !hospitalConfig.configure?.moph_appointment || hospitalConfig.configure?.moph_appointment?.enable != 1) {
+  let isAlertAppointment = false;
+  if (!hospitalConfig || !hospitalConfig.configure || !hospitalConfig.configure?.moph_appointment){
+    isAlertAppointment = hospitalConfig.configure?.moph_appointment?.alert_after_service == 1 || hospitalConfig.configure?.moph_appointment?.alert_before == 1 ? true : false;
+  }
+  if (!isAlertAppointment) {
     console.error(moment().format('HH:mm:ss'), 'MOPH Appointment Process: Appointment Service Disabled');
     return false;
   }

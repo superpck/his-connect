@@ -17,6 +17,42 @@ export class HisHospitalOsV4Model {
             return await db.schema.hasTable(tableName);
         }
     }
+    async columnExist(db: Knex, columnName: string, tableName: string, dbName: string = ''): Promise<boolean> {
+        if (!columnName || !tableName) {
+            throw new Error('Invalid parameters: columnName and tableName are required');
+        }
+        const client = ((db as any).client?.config?.client || '').toString().toLowerCase();
+        const connection = (db as any).client?.config?.connection || {};
+        const database = dbName || connection.database || connection.dbname || process.env.HIS_DB_NAME;
+        const schema = dbName || connection.schema || process.env.HIS_DB_SCHEMA || (client.includes('mssql') ? 'dbo' : 'public');
+
+        if (client.includes('mysql')) {
+            const result = await db('information_schema.columns')
+                .where({ table_schema: database, table_name: tableName, column_name: columnName })
+                .count('* as total');
+            return Number(result?.[0]?.total || 0) > 0;
+        }
+
+        if (client.includes('pg')) {
+            const result = await db('information_schema.columns')
+                .where({ table_schema: schema, table_name: tableName, column_name: columnName })
+                .count('* as total');
+            return Number(result?.[0]?.total || 0) > 0;
+        }
+
+        if (client.includes('mssql') || client.includes('sqlserver')) {
+            const result = await db('information_schema.columns')
+                .where({ table_catalog: database, table_schema: schema, table_name: tableName, column_name: columnName })
+                .count('* as total');
+            return Number(result?.[0]?.total || 0) > 0;
+        }
+
+        // fallback ให้ knex จัดการตาม client ที่เหลือ
+        if (dbName) {
+            return await db.schema.withSchema(dbName).hasColumn(tableName, columnName);
+        }
+        return await db.schema.hasColumn(tableName, columnName);
+    }
 
     // ❌ ไม่พบการเรียกใช้งาน
     check() {
@@ -539,6 +575,10 @@ export class HisHospitalOsV4Model {
     // ✅ เรียกใช้: task/moph-erp.ts ทุกๆ 1 ชั่วโมง ส่งเลยย้อนหลัง 1 ชั่วโมง
     // ใช้ fn_concurrent_ipd_by_ward
     async concurrentIPDByWard(db: Knex, date: any) {
+        const columnExist = await this.columnExist(db, 'std_code', 'b_visit_bed');
+        if (!columnExist) {
+            return { status: 500, message: 'not found std_code column in b_visit_bed table' };
+        }
         if (!date) {
             throw new Error('Invalid parameters: date is required');
         }
@@ -553,7 +593,7 @@ export class HisHospitalOsV4Model {
             .locale('TH')
             .endOf('hour')
             .format('YYYY-MM-DD HH:mm:ss');
-        const admitLimit =  moment.tz(date, tz)
+        const admitLimit = moment.tz(date, tz)
             .locale('TH')
             .subtract(6, 'months')
             .format('YYYY-MM-DD HH:mm:ss');
@@ -582,14 +622,13 @@ export class HisHospitalOsV4Model {
             and t_visit.visit_begin_admit_date_time between ? and ?
             group by ward.visit_ward_number,  ward.visit_ward_description
             `;
-        const result = await db.raw(query, 
-            [ hisHospcode, dateStart,dateEnd, dateStart,dateEnd,dateEnd,admitLimit,dateEnd]);
+        const result = await db.raw(query,
+            [hisHospcode, dateStart, dateEnd, dateStart, dateEnd, dateEnd, admitLimit, dateEnd]);
         const rows = result.rows.map((row: any) => {
-            row.normal = parseInt(row.cases) - 
+            row.normal = parseInt(row.cases) -
                 (parseInt(row.icu) + parseInt(row.semi) + parseInt(row.stroke) + parseInt(row.burn) + parseInt(row.special) + parseInt(row.homeward) + parseInt(row.lr) + parseInt(row.clip));
             return row;
         });
-        console.table(rows);
         return rows;
     }
 
@@ -647,6 +686,10 @@ export class HisHospitalOsV4Model {
         return result.rows;
     }
     async getWard(db: Knex, wardCode: string = '', wardName: string = '') {
+        const columnExist = await this.columnExist(db, 'std_code', 'b_visit_bed');
+        if (!columnExist) {
+            return { status: 500, message: 'not found std_code column in b_visit_bed table' };
+        }
         let sql = `select ? as hospcode, b_visit_bed.b_visit_ward_id, b_visit_ward.visit_ward_number as wardcode,
                 b_visit_ward.visit_ward_description as wardname, count(*) as bed_count 
                 , sum(case when substring(b_visit_bed.std_code,4,3)='603' then 1 else 0 end) as bed_extra
@@ -669,7 +712,7 @@ export class HisHospitalOsV4Model {
             `;
         const result = await db.raw(sql, [hisHospcode]);
         let rows = result.rows.map((row: any) => {
-            row.bed_normal = parseInt(row.bed_count) - 
+            row.bed_normal = parseInt(row.bed_count) -
                 (parseInt(row.bed_icu) + parseInt(row.bed_semi) + parseInt(row.bed_stroke) + parseInt(row.bed_burn) + parseInt(row.bed_special) + parseInt(row.homeward) + parseInt(row.lr) + parseInt(row.clip) + parseInt(row.bed_extra));
             return row;
         });
