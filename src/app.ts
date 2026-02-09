@@ -126,8 +126,8 @@ app.addHook('onRequest', async (req: any, reply) => {
   req.ipAddr = req.ipAddr || req.clientIP;
 
   let isSubnet = true;
-  if (process.env.ALLOW_API_SUBNET || false) {
-    isSubnet = await isIPInSubnet(req.ipAddr);
+  if (process.env?.ALLOW_API_SUBNET || false) {
+    isSubnet = await isIPInSubnet(req.clientIP);
   }
   var geo = geoip.lookup(req.ipAddr);
   req.geo = geo;
@@ -137,7 +137,7 @@ app.addHook('onRequest', async (req: any, reply) => {
   }
 });
 app.addHook('preHandler', async (request: any, reply) => {
-  console.log(moment().format('HH:mm:ss.SSS'), request.ipAddr, request?.geo?.country || '', request.method, request.url);
+  console.log(moment().format('HH:mm:ss.SSS'), request.ipAddr, request?.geo?.country || 'unk', request.method, request.url);
 });
 app.addHook('onSend', async (request, reply, payload) => {
   const headers = {
@@ -227,9 +227,8 @@ async function isIPInSubnet(ip: any) {
   if (!localIP || !localIP?.ip) {
     return true;
   }
+
   localIP = (localIP?.ip || '').split('.');
-  ip = (ip || '').split('.');
-  const isValidIP = ip[0] === localIP[0] && ip[1] === localIP[1] && ip[2] === localIP[2];
-  // console.log('localIP', localIP, ip, isValidIP);
+  const isValidIP = ip.includes(localIP.slice(0, 3).join('.'));
   return isValidIP;
 }
