@@ -359,14 +359,14 @@ class HisHosxpv3Model {
                   WHEN o.ovstost = '54' THEN '3' 
                   WHEN o.ovstost = '52' THEN '4' 
                   ELSE '7' 
-              END as "TYPEOUT"`),
+              END as TYPEOUT`),
             'o.doctor as dr',
             'doctor.licenseno as provider',
-            db.raw(`${sqlNum('vn.inc01 + vn.inc12', 2)} as "COST"`),
-            db.raw(`${sqlNum('vn.item_money', 2)} as "PRICE"`),
-            db.raw(`${sqlNum('vn.paid_money', 2)} as "PAYPRICE"`),
-            db.raw(`${sqlNum('vn.rcpt_money', 2)} as "ACTUALPAY"`),
-            db.raw(`${sqlDateTime('o.vstdate', 'o.vsttime')} as "D_UPDATE"`),
+            db.raw(`${sqlNum('vn.inc01 + vn.inc12', 2)} as COST`),
+            db.raw(`${sqlNum('vn.item_money', 2)} as PRICE`),
+            db.raw(`${sqlNum('vn.paid_money', 2)} as PAYPRICE`),
+            db.raw(`${sqlNum('vn.rcpt_money', 2)} as ACTUALPAY`),
+            db.raw(`${sqlDateTime('o.vstdate', 'o.vsttime')} as D_UPDATE`),
             'vn.hospsub as hsub'
         ])
             .whereRaw(`${targetCol} = ?`, [searchText]);
@@ -1204,7 +1204,7 @@ class HisHosxpv3Model {
                 date_format(oe.update_datetime,'%Y-%m-%d %H:%i:%s')) as D_UPDATE`))
             .where('oe.hn', hn);
     }
-    async getAppointment(db, columnName, searchValue) {
+    async getAppointment(db, columnName, searchValue, lastupdateLimit = null) {
         const colMap = {
             fu_date: "nextdate",
             visit_date: "vstdate",
@@ -1214,7 +1214,7 @@ class HisHosxpv3Model {
             vn: "vn",
             an: "an"
         };
-        const mapped = colMap[columnName];
+        const mapped = colMap[columnName] || null;
         if (!mapped) {
             throw new Error(`Invalid columnName: ${columnName}`);
         }
@@ -1226,8 +1226,11 @@ class HisHosxpv3Model {
                 searchValue = moment(searchValue).format("YYYY-MM-DD");
             }
         }
+        lastupdateLimit = lastupdateLimit || moment().subtract(120, 'minutes').format('YYYY-MM-DD HH:mm:ss');
         let query = db({ o: "oapp" })
+            .join({ p: "patient" }, "o.hn", "p.hn")
             .join({ c: "clinic" }, "c.clinic", "o.clinic")
+            .join({ ovst: "ovst" }, "o.vn", "ovst.vn")
             .join({ d: "doctor" }, "d.code", "o.doctor")
             .join({ oa: "oapp_status" }, "oa.oapp_status_id", "o.oapp_status_id")
             .leftJoin({ pt: "pttype" }, "o.next_pttype", "pt.pttype");
@@ -1240,12 +1243,14 @@ class HisHosxpv3Model {
         }
         query = query
             .select([
-            "o.hn", "o.an", "o.vn", "o.visit_vn",
+            db.raw("? AS hospcode", [hisHospcode]),
+            db.raw("oapp_id AS appointment_id"),
+            "o.hn", "o.an", "o.vn", "o.visit_vn", 'p.cid',
             db.raw("CASE WHEN o.patient_visit = 'Y' THEN 1 ELSE 0 END AS isvisited"),
-            db.raw("o.vstdate AS visit_date"),
-            db.raw("o.nextdate AS fu_date"),
-            db.raw("o.nexttime AS fu_time"),
-            db.raw("o.clinic AS cliniccode"),
+            db.raw("concat(o.vstdate,' ',ovst.vsttime) AS visit_date"),
+            db.raw("o.nextdate AS apdate"),
+            db.raw("o.nexttime AS aptime"),
+            "o.clinic",
             db.raw("c.name AS clinicName"),
             db.raw("o.doctor AS dr_code"),
             db.raw("d.name AS dr_name"),
@@ -1256,11 +1261,14 @@ class HisHosxpv3Model {
             db.raw("CASE WHEN o.note1 IS NULL OR o.note1 = '' THEN o.perform_text ELSE o.note1 END AS prepare_text"),
             db.raw("o.lab_list_text AS lab"),
             db.raw("o.xray_list_text AS xray"),
-            db.raw("o.contact_point AS visit_area"),
+            db.raw("o.contact_point AS apvisit_area"),
             db.raw("CASE WHEN o.oapp_status_id = 1 THEN 1 ELSE 0 END AS isactive"),
+            db.raw("o.update_datetime as d_update"),
+            db.raw("? as isactive", [1])
         ])
             .whereNotNull("o.nextdate")
-            .whereRaw("o.vstdate < o.nextdate");
+            .whereRaw("o.vstdate < o.nextdate")
+            .where("o.update_datetime ", "<=", lastupdateLimit);
         return query.orderBy([{ column: "o.nextdate" }, { column: "o.nexttime" }]).limit(maxLimit);
     }
     async getReferHistory(db, columnName, searchNo, hospCode = hisHospcode) {

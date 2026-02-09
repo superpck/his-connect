@@ -454,14 +454,14 @@ export class HisHosxpv4Model {
                   WHEN o.ovstost = '54' THEN '3' 
                   WHEN o.ovstost = '52' THEN '4' 
                   ELSE '7' 
-              END as "TYPEOUT"`),
+              END as TYPEOUT`),
       'o.doctor as dr',
       'doctor.licenseno as provider',
-      db.raw(`${sqlNum('vn.inc01 + vn.inc12', 2)} as "COST"`),
-      db.raw(`${sqlNum('vn.item_money', 2)} as "PRICE"`),
-      db.raw(`${sqlNum('vn.paid_money', 2)} as "PAYPRICE"`),
-      db.raw(`${sqlNum('vn.rcpt_money', 2)} as "ACTUALPAY"`),
-      db.raw(`${sqlDateTime('o.vstdate', 'o.vsttime')} as "D_UPDATE"`),
+      db.raw(`${sqlNum('vn.inc01 + vn.inc12', 2)} as COST`),
+      db.raw(`${sqlNum('vn.item_money', 2)} as PRICE`),
+      db.raw(`${sqlNum('vn.paid_money', 2)} as PAYPRICE`),
+      db.raw(`${sqlNum('vn.rcpt_money', 2)} as ACTUALPAY`),
+      db.raw(`${sqlDateTime('o.vstdate', 'o.vsttime')} as D_UPDATE`),
       'vn.hospsub as hsub'
     ])
       .whereRaw(`${targetCol} = ?`, [searchText]);

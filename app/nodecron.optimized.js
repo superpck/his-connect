@@ -189,10 +189,16 @@ async function cronjob(fastify) {
             if (minuteNow == timeRandom) {
                 (0, moph_erp_1.sendBedOccupancy)();
             }
-            if (!onProcess?.mophAppointment && minuteNow % 2) {
+            if (!onProcess?.mophAppointment && minuteSinceLastNight > 0 && minuteSinceLastNight % timeRandom == 0) {
                 onProcess.mophAppointment = true;
                 moph_appointment_1.default.process().then(() => {
                     onProcess.mophAppointment = false;
+                });
+            }
+            if (!onProcess?.mophIot && minuteSinceLastNight > 0 && minuteSinceLastNight % timeRandom == 0) {
+                onProcess.mophIot = true;
+                moph_iot_1.default.processIoT().then(() => {
+                    onProcess.mophIot = false;
                 });
             }
             if (moment().hour() == hourRandom && minuteNow == timeRandom) {
