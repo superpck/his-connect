@@ -174,25 +174,30 @@ async function cronjob(fastify) {
         minuteCount++;
         const minuteSinceLastNight = getMinutesSinceMidnight();
         const minuteNow = moment().get('minute');
-        const hourNow = moment().hour();
         if (processState.isFirstProcess) {
-            if (minuteSinceLastNight % 2 === 1) {
+            if (minuteSinceLastNight > 0 && minuteSinceLastNight % 2 === 1) {
                 logJobStatus();
             }
             if (minuteNow != 0 && minuteNow % timeRandom == 0) {
                 (0, moph_erp_1.updateAlive)();
                 (0, moph_alert_1.mophAlertSurvey)();
             }
-            if (minuteSinceLastNight % 2 == 0) {
+            if (minuteSinceLastNight > 0 && minuteSinceLastNight % 2 == 0) {
                 (0, moph_erp_1.erpAdminRequest)();
             }
             if (minuteNow == timeRandom) {
                 (0, moph_erp_1.sendBedOccupancy)();
             }
-            if (!onProcess?.mophAppointment && minuteNow % 2) {
+            if (!onProcess?.mophAppointment && minuteSinceLastNight > 0 && minuteSinceLastNight % timeRandom == 0) {
                 onProcess.mophAppointment = true;
                 moph_appointment_1.default.process().then(() => {
                     onProcess.mophAppointment = false;
+                });
+            }
+            if (!onProcess?.mophIot && minuteSinceLastNight > 0 && minuteSinceLastNight % timeRandom == 0) {
+                onProcess.mophIot = true;
+                moph_iot_1.default.processIoT().then(() => {
+                    onProcess.mophIot = false;
                 });
             }
             if (moment().hour() == hourRandom && minuteNow == timeRandom) {

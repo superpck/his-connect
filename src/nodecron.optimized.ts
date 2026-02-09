@@ -342,11 +342,13 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
     sendWardName();
     sendBedNo();
 
-    // for test only ******************
+    // *** for test only ******************
+    // 
     // mophCMI.processCMI();
     // mophIot.processIoT();
     // mophAppointment.process('2026-02-08');
-    // end test ***********************
+    //
+    // *** end test ***********************
   }
 
   // Optional: Real-time Debug Countdown (ระวัง Log เยอะเกินไปหากเปิดใช้)
@@ -365,7 +367,6 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
     // Get current time info
     const minuteSinceLastNight = getMinutesSinceMidnight();
     const minuteNow = moment().get('minute');
-    const hourNow = moment().hour();
 
     // Only run on the first process
     if (processState.isFirstProcess) {
@@ -390,34 +391,38 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
 
       // --------------------------------------
 
-      if (minuteSinceLastNight % 2 === 1) {
+      if (minuteSinceLastNight > 0 && minuteSinceLastNight % 2 === 1) {
         logJobStatus();
       }
 
       // 1. Alive / Alert Logic
       if (minuteNow != 0 && minuteNow % timeRandom == 0) {
-        // console.log("   --> Executing Update Alive & Alert...");
         updateAlive();
         mophAlertSurvey();
       }
 
       // 2. ERP Request Logic
-      if (minuteSinceLastNight % 2 == 0) {
+      if (minuteSinceLastNight > 0 && minuteSinceLastNight % 2 == 0) {
         erpAdminRequest();
       }
 
       // 3. Bed Occupancy Logic
       if (minuteNow == timeRandom) {
-        // console.log("   --> Executing Bed Occupancy...");
         sendBedOccupancy();
       }
 
       // ส่ง ผป.นัดหมาย
-      // if (!onProcess?.mophAppointment && minuteNow == timeRandom) {
-      if (!onProcess?.mophAppointment && minuteNow%2) {
+      if (!onProcess?.mophAppointment && minuteSinceLastNight > 0 && minuteSinceLastNight % timeRandom == 0) {
         onProcess.mophAppointment = true;
         mophAppointment.process().then(() => {
           onProcess.mophAppointment = false;
+        });
+      }
+
+      if (!onProcess?.mophIot && minuteSinceLastNight > 0 && minuteSinceLastNight % timeRandom == 0) {
+        onProcess.mophIot = true;
+        mophIot.processIoT().then(() => {
+          onProcess.mophIot = false;
         });
       }
 
