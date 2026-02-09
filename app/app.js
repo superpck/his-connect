@@ -73,8 +73,7 @@ app.decorate("authenticate", async (request, reply) => {
         request.authenDecoded = request.user;
     }
     catch (err) {
-        let ipAddr = request.headers["x-real-ip"] || request.headers["x-forwarded-for"] || request.ip;
-        console.log(moment().format('HH:mm:ss.SSS'), ipAddr, 'Error client try to access API ' + http_status_codes_1.StatusCodes.UNAUTHORIZED, err.message);
+        console.error(moment().format('HH:mm:ss.SSS'), request.ipAddr, 'Error client try to access API ' + http_status_codes_1.StatusCodes.UNAUTHORIZED, `message: '${err.message}'`);
         reply.send({
             statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED,
             message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED)
@@ -88,8 +87,7 @@ app.decorate("checkRequestKey", async (request, reply) => {
     }
     var requestKey = crypto.createHash('md5').update(process.env.REQUEST_KEY).digest('hex');
     if (!skey || skey !== requestKey) {
-        console.log('invalid key', requestKey);
-        reply.send({
+        return reply.send({
             statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED,
             message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED) + ' or invalid key'
         });
@@ -98,26 +96,31 @@ app.decorate("checkRequestKey", async (request, reply) => {
 var geoip = require('geoip-lite');
 app.addHook('onRequest', async (req, reply) => {
     const unBlockIP = process.env.UNBLOCK_IP || '??';
-    let ipAddr = req.headers["x-real-ip"] || req.headers["x-forwarded-for"] || req.ip;
+    let ipAddr = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;
+    req.clientIP = ipAddr;
     ipAddr = ipAddr ? ipAddr.split(',') : [''];
+    ipAddr = ipAddr[0].split(':');
     req.ipAddr = ipAddr[0].trim();
+    req.ipAddr = req.ipAddr || req.clientIP;
     let isSubnet = true;
     if (process.env.ALLOW_API_SUBNET || false) {
         isSubnet = await isIPInSubnet(req.ipAddr);
     }
     var geo = geoip.lookup(req.ipAddr);
+    req.geo = geo;
     if (!isSubnet && geo && geo.country && geo.country != 'TH' && req.ipAddr != process.env.HOST && !unBlockIP.includes(req.ipAddr)) {
         console.log(req.ipAddr, `Unacceptable country: ${geo.country}`);
         return reply.send({ status: http_status_codes_1.StatusCodes.NOT_ACCEPTABLE, ip: req.ipAddr, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.NOT_ACCEPTABLE) });
     }
-    console.log(moment().format('HH:mm:ss'), geo ? geo.country : 'unk', req.ipAddr, req.url);
 });
 app.addHook('preHandler', async (request, reply) => {
+    console.log(moment().format('HH:mm:ss.SSS'), request.ipAddr, request?.geo?.country || '', request.method, request.url);
 });
 app.addHook('onSend', async (request, reply, payload) => {
     const headers = {
         "Cache-Control": "no-store",
         Pragma: "no-cache",
+        src: `HIS-Connect ${version || ''}-${subVersion || ''}`
     };
     reply.headers(headers);
     return payload;

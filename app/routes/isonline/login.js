@@ -120,31 +120,41 @@ const router = (fastify, {}, next) => {
         let body = req.body;
         let loginCode = body.loginCode;
         if (loginCode) {
-            checkLoginCode(loginCode)
-                .then((data) => {
-                let today = moment().format('YYYY-MM-DD HH:mm:ss');
-                let expire = moment().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
-                const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
-                const payload = {
-                    hcode: process.env.HOSPCODE,
-                    tokenKey: tokenKey,
-                    create: today,
-                    expire: expire
-                };
-                const token = fastify.jwt.sign(payload, { expiresIn: '8h' });
-                res.send({
-                    statusCode: http_status_codes_1.StatusCodes.OK,
-                    token: token, data
+            try {
+                await checkLoginCode(loginCode)
+                    .then((data) => {
+                    let today = moment().format('YYYY-MM-DD HH:mm:ss');
+                    let expire = moment().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
+                    const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
+                    const payload = {
+                        hcode: process.env.HOSPCODE,
+                        tokenKey: tokenKey,
+                        create: today,
+                        expire: expire
+                    };
+                    const token = fastify.jwt.sign(payload, { expiresIn: '8h' });
+                    return res.send({
+                        statusCode: http_status_codes_1.StatusCodes.OK,
+                        token: token, data
+                    });
+                }).catch((error) => {
+                    console.error('login-by-code error:', error.message);
+                    return res.send({
+                        statusCode: error?.status || http_status_codes_1.StatusCodes.UNAUTHORIZED,
+                        message: error.message
+                    });
                 });
-            }).catch((error) => {
-                res.send({
-                    statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED,
+            }
+            catch (error) {
+                console.error('login-by-code error:', error.message);
+                return res.send({
+                    statusCode: error?.status || 500,
                     message: error.message
                 });
-            });
+            }
         }
         else {
-            res.send({
+            return res.send({
                 statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED,
                 message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED)
             });

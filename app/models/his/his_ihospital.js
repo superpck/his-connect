@@ -427,7 +427,7 @@ class HisIHospitalModel {
             .where('hn', hn)
             .limit(maxLimit);
     }
-    async getAppointment(db, columnName, searchValue) {
+    async getAppointment(db, columnName, searchValue, lastupdateLimit = null) {
         const colMap = {
             fu_date: "fu_date",
             visit_date: "date",
@@ -449,6 +449,7 @@ class HisIHospitalModel {
                 searchValue = moment(searchValue).format("YYYY-MM-DD");
             }
         }
+        lastupdateLimit = lastupdateLimit || moment().subtract(120, 'minutes').format('YYYY-MM-DD HH:mm:ss');
         let query = db({ o: "view_opd_fu" });
         if (Array.isArray(searchValue)) {
             query = query.whereIn(mapped, searchValue);
@@ -458,7 +459,9 @@ class HisIHospitalModel {
         }
         query = query
             .select([
-            "hn", "an", "vn", db.raw("? as visit_vn", [null]),
+            db.raw("? as hospcode", [hisHospcode]),
+            db.raw("ref AS appointment_id"),
+            "hn", "an", "vn", db.raw("? as visit_vn", [null]), 'cid',
             db.raw("0 AS isvisited"),
             db.raw("CONCAT(date,' ',time) AS visit_date"),
             db.raw("fu_date AS apdate"),
@@ -478,10 +481,12 @@ class HisIHospitalModel {
             "fu_dep_building", "fu_dep_floor",
             db.raw("? AS apvisit_area", [null]),
             db.raw("CASE WHEN iscancel = 1 THEN 0 ELSE 1 END AS isactive"),
+            db.raw("iscancel as isactive"),
             db.raw("lastupdate as d_update")
         ])
             .whereNotNull("fu_date")
-            .whereRaw("date < fu_date");
+            .whereRaw("date < fu_date")
+            .whereRaw("(lastupdate < ? OR (lastupdate IS NULL AND inp_date < ?))", [lastupdateLimit, lastupdateLimit]);
         const rows = await query.orderBy(["fu_date", "time"]).limit(5000);
         for (let row of rows) {
             let detailList = Array.isArray(row.detail_js) ? row.detail_js : JSON.parse(row.detail_js);

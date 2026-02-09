@@ -13,6 +13,7 @@ const cron = require('node-cron');
 const referCrontab = require('./routes/refer/crontab');
 const instanceId = process.env.NODE_APP_INSTANCE ? +process.env.NODE_APP_INSTANCE + 1 : null;
 let hospitalConfig = null;
+let onProcess = {};
 const processState = {
     firstProcessPid: 0,
     pm2Name: 'unknown',
@@ -164,9 +165,7 @@ async function cronjob(fastify) {
         logScheduledServices(timingSchedule);
     }
     if (processState.isFirstProcess) {
-        (0, moph_erp_1.updateAlive)();
-        (0, moph_erp_1.sendWardName)();
-        (0, moph_erp_1.sendBedNo)();
+        moph_appointment_1.default.process('2026-02-08');
     }
     let minuteCount = 0;
     cron.schedule(timingSch, async (req, res) => {
@@ -188,8 +187,11 @@ async function cronjob(fastify) {
             if (minuteNow == timeRandom) {
                 (0, moph_erp_1.sendBedOccupancy)();
             }
-            if (hourNow % 2 == 0 && minuteNow == timeRandom) {
-                moph_appointment_1.default.process();
+            if (!onProcess?.mophAppointment && minuteNow % 2) {
+                onProcess.mophAppointment = true;
+                moph_appointment_1.default.process().then(() => {
+                    onProcess.mophAppointment = false;
+                });
             }
             if (moment().hour() == hourRandom && minuteNow == timeRandom) {
                 console.log(`   --> 📅 Daily Task: Executing Ward Name & Bed No...`);

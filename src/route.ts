@@ -30,12 +30,20 @@ export default async function router(fastify: FastifyInstance) {
   fastify.register(require('./routes/isonline/ops'), { prefix: `${rootPrefix}/ops`, logger: true });
 
   // PCC Data connect service
-  // fastify.register(require('./routes/pcc/index'), { prefix: `${rootPrefix}/pcc`, logger: true });
+  fastify.register(require('./routes/pcc/index'), { prefix: `${rootPrefix}/pcc`, logger: true });
 
   // ร้านยาคุณภาพ
   // fastify.register(require('./routes/qdrugstore/index'), { prefix: `${rootPrefix}/qdrugstore`, logger: true });
 
   // รายงาน 506
   // fastify.register(require('./routes/rp506/index'), { prefix: `${rootPrefix}/rp506`, logger: true });
+
+  fastify.setNotFoundHandler((request, reply) => {
+    reply.send({
+      statusCode: 404,
+      error: 'Not Found',
+      message: `Route ${request.method}:${request.url} not found`
+    });
+  });
 
 }

@@ -1,5 +1,5 @@
 import moment = require('moment');
-console.log(moment().format('HH:mm:ss'), 'Start MOPH IoT Task');
+console.log(moment().format('HH:mm:ss'), process.pid, 'Start MOPH IoT Task');
 
 import { Knex } from 'knex';
 import { sendingToMoph, getHospitalConfig } from '../middleware/moph-refer';

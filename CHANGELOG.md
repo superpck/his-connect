@@ -6,6 +6,7 @@
   - ลบ file ที่ไม่ถูกใช้งาน
   - remove unused route (PCC, QDrug)
   - ปรับ SQL ของ HIS
+  - ปรับการ detect Error ให้แสดง message
 
 # 3.9.7
 ## Feature

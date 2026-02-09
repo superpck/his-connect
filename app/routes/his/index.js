@@ -6,6 +6,7 @@ const hismodel_1 = require("./hismodel");
 const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 const jwt_1 = require("./../../plugins/jwt");
 var jwt = new jwt_1.Jwt();
+var crypto = require('crypto');
 const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb',
     'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades',
     'himpro', 'nemo', 'mypcu', 'emrsoft', 'haos', 'other'];
@@ -61,6 +62,25 @@ const router = (fastify, {}, next) => {
                 message: error.message
             });
         }
+    });
+    fastify.post('/check-requestkey', async (req, reply) => {
+        let requestKey = req.body.requestKey || '??';
+        const isEncode = req.body.md5;
+        if (isEncode == 0) {
+            requestKey = crypto.createHash('md5').update(requestKey).digest('hex');
+        }
+        const defaultKey = crypto.createHash('md5').update(process.env.REQUEST_KEY).digest('hex');
+        if (requestKey !== defaultKey) {
+            console.log('invalid key', requestKey);
+            return reply.status(http_status_codes_1.StatusCodes.UNAUTHORIZED).send({
+                statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED,
+                message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED) + ' or invalid key'
+            });
+        }
+        reply.status(http_status_codes_1.StatusCodes.OK).send({
+            statusCode: http_status_codes_1.StatusCodes.OK,
+            skey: requestKey
+        });
     });
     fastify.post('/visit-detail', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         const body = req.body || {};
