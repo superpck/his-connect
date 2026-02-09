@@ -5,30 +5,79 @@ console.log(moment().format('HH:mm:ss'), process.pid, 'Start MOPH IoT Task');
 const moph_refer_1 = require("../middleware/moph-refer");
 const hismodel_1 = require("./../routes/his/hismodel");
 const dbConnection = require('../plugins/db');
+const cacheDbModule = require('../plugins/cache-db');
+const cacheDb = cacheDbModule.default || cacheDbModule;
 let db = dbConnection('HIS');
 let hospitalConfig = null;
-const Database = require("better-sqlite3");
-const path = require("path");
-const dbPath = path.join(__dirname, '../../data/iot_service.db');
-const sqlite = new Database(dbPath);
-sqlite.exec(`
-  CREATE TABLE IF NOT EXISTS iot_service (
-    seq TEXT PRIMARY KEY,
-    cid TEXT,
-    date_serv TEXT,
-    sent_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
-sqlite.exec(`
-  CREATE INDEX IF NOT EXISTS idx_sent_at ON iot_service(sent_at)
-`);
+async function createIotServiceTable() {
+    try {
+        const hasTable = await cacheDb.schema.hasTable('iot_service');
+        if (!hasTable) {
+            await cacheDb.schema.createTable('iot_service', (table) => {
+                table.increments('id').primary();
+                table.string('seq', 50).notNullable().unique();
+                table.string('cid', 13);
+                table.date('date_serv');
+                table.timestamp('sent_at').defaultTo(cacheDb.fn.now());
+                table.index(['date_serv']);
+                table.index(['sent_at']);
+            });
+            console.log(moment().format('HH:mm:ss'), 'Created iot_service table');
+        }
+    }
+    catch (error) {
+        console.error('Error creating iot_service table:', error);
+    }
+}
+async function cleanOldRecords() {
+    try {
+        const twoDaysAgo = moment().subtract(48, 'hours').format('YYYY-MM-DD HH:mm:ss');
+        const deleted = await cacheDb('iot_service')
+            .where('sent_at', '<', twoDaysAgo)
+            .delete();
+        if (deleted > 0) {
+            console.log(moment().format('HH:mm:ss'), `Cleaned ${deleted} old IoT records before ${twoDaysAgo}`);
+        }
+    }
+    catch (error) {
+        console.error('Error cleaning old IoT records:', error);
+    }
+}
+async function isAlreadySent(seq) {
+    try {
+        const record = await cacheDb('iot_service')
+            .where({ seq })
+            .first();
+        return !!record;
+    }
+    catch (error) {
+        console.error('Error checking sent record:', error);
+        return false;
+    }
+}
+async function markAsSent(row) {
+    try {
+        await cacheDb('iot_service')
+            .insert({
+            seq: row.seq,
+            cid: row.cid,
+            date_serv: row.date_serv
+        })
+            .onConflict('seq')
+            .ignore();
+    }
+    catch (error) {
+        console.error('Error marking as sent:', error);
+    }
+}
 const processIoT = async (date = null) => {
+    await createIotServiceTable();
+    await cleanOldRecords();
     hospitalConfig = await (0, moph_refer_1.getHospitalConfig)();
     if (!hospitalConfig || !hospitalConfig.configure || !hospitalConfig.configure?.iot_service || hospitalConfig.configure?.iot_service?.enable != 1) {
         console.error(moment().format('HH:mm:ss'), 'MOPH IoT Process Stop: IoT Service Disabled');
         return false;
     }
-    cleanupOldRecords();
     date = date || moment();
     const dateStart = moment(date).subtract(6, 'hours').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
     const dateEnd = moment(date).subtract(6, 'hours').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
@@ -62,7 +111,8 @@ async function getData(dateStart, dateEnd) {
                         == 0) {
                         continue;
                     }
-                    if (isSeqAlreadySent(row.seq)) {
+                    const alreadySent = await isAlreadySent(row.seq);
+                    if (alreadySent) {
                         continue;
                     }
                     row.dob = row.dob || row.birth || null;
@@ -74,7 +124,7 @@ async function getData(dateStart, dateEnd) {
                     row.datetime_serv = moment(row.date_serv + ' ' + (row.time_serv || '')).format('YYYY-MM-DD HH:mm:ss');
                     const sentResult = await (0, moph_refer_1.sendingToMoph)('/save-service', row);
                     if (sentResult && sentResult.statusCode === 200) {
-                        saveSeqToDb(row.seq, row.cid, row.date_serv);
+                        await markAsSent(row);
                     }
                     sentResults.push({ rowno: ++recno, ...sentResult, vn: row.seq });
                 }
@@ -89,39 +139,6 @@ async function getData(dateStart, dateEnd) {
     }
     catch (error) {
         throw error;
-    }
-}
-function isSeqAlreadySent(seq) {
-    try {
-        const stmt = sqlite.prepare('SELECT seq FROM iot_service WHERE seq = ?');
-        const result = stmt.get(seq);
-        return !!result;
-    }
-    catch (error) {
-        console.error(moment().format('HH:mm:ss'), 'Error checking seq:', error.message);
-        return false;
-    }
-}
-function saveSeqToDb(seq, cid, date_serv) {
-    try {
-        const stmt = sqlite.prepare('INSERT OR IGNORE INTO iot_service (seq, cid, date_serv) VALUES (?, ?, ?)');
-        stmt.run(seq, cid, date_serv);
-    }
-    catch (error) {
-        console.error(moment().format('HH:mm:ss'), 'Error saving seq to db:', error.message);
-    }
-}
-function cleanupOldRecords() {
-    try {
-        const cutoffTime = moment().subtract(48, 'hours').format('YYYY-MM-DD HH:mm:ss');
-        const stmt = sqlite.prepare('DELETE FROM iot_service WHERE sent_at < ?');
-        const result = stmt.run(cutoffTime);
-        if (result.changes > 0) {
-            console.log(moment().format('HH:mm:ss'), `Cleaned up ${result.changes} old IoT records (> 48 hours)`);
-        }
-    }
-    catch (error) {
-        console.error(moment().format('HH:mm:ss'), 'Error cleaning up old records:', error.message);
     }
 }
 exports.default = { processIoT };

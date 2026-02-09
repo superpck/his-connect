@@ -38,6 +38,9 @@ COPY --from=builder /usr/src/his_connect/app ./app
 
 COPY package.json ./
 
+# Create data directory for cache database
+RUN mkdir -p data && chmod 777 data
+
 EXPOSE 3004
 
 # Start application with PM2 in cluster mode
