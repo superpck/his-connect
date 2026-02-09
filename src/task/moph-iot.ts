@@ -55,14 +55,13 @@ async function getData(dateStart: string, dateEnd: string) {
     do {
       let opdVisit = await hisModel.getService(db, 'date_serv', date);
       let rows = (opdVisit ? (opdVisit || []) : []).filter((row: any) =>
-        (row.typeout || row.TYPEOUT) == '1' &&
+        (row?.typeout || row?.TYPEOUT) == '1' &&
         (row.cid || row.CID) &&
         ((row.cid || row.CID).trim().length == 13)
       ); // typeout 1=ตรวจแล้ว 2=Admit, cid ต้องเป็นเลข 13 หลัก (หมอพร้อม Alert)
       if (rows.length > 0) {
         let sentResults = [];
         console.log(moment().format('HH:mm:ss'), 'MOPH IoT Process:', date, ' founded:', opdVisit.length, 'rows');
-        // rows = rows.filter((row: any) => (row.cid || row.CID) && ((row.cid || row.CID).length == 13));
 
         let recno = 0;
         for (let row of rows) {
@@ -81,7 +80,6 @@ async function getData(dateStart: string, dateEnd: string) {
 
           // Check if seq already sent
           if (isSeqAlreadySent(row.seq)) {
-            // console.log(moment().format('HH:mm:ss'), `Skip seq: ${row.seq} - Already sent`);
             continue;
           }
 
@@ -100,7 +98,6 @@ async function getData(dateStart: string, dateEnd: string) {
           }
 
           sentResults.push({ rowno: ++recno, ...sentResult, vn: row.seq });
-          // console.log({ rowno: recno, ...sentResult, vn: row.seq });
         };
         console.log(moment().format('HH:mm:ss'), 'MOPH IoT Process Date:', date, 'service:', opdVisit.length, 'records, Sent:', sentResults.length, 'records');
       } else {

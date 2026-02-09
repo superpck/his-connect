@@ -42,7 +42,7 @@ async function getData(dateStart, dateEnd) {
         let date = moment(dateStart).format('YYYY-MM-DD');
         do {
             let opdVisit = await hismodel_1.default.getService(db, 'date_serv', date);
-            let rows = (opdVisit ? (opdVisit || []) : []).filter((row) => (row.typeout || row.TYPEOUT) == '1' &&
+            let rows = (opdVisit ? (opdVisit || []) : []).filter((row) => (row?.typeout || row?.TYPEOUT) == '1' &&
                 (row.cid || row.CID) &&
                 ((row.cid || row.CID).trim().length == 13));
             if (rows.length > 0) {
