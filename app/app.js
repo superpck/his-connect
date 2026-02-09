@@ -194,6 +194,5 @@ async function isIPInSubnet(ip) {
     }
     localIP = (localIP?.ip || '').split('.');
     const isValidIP = ip.includes(localIP.slice(0, 3).join('.'));
-    console.log('==>', ip, localIP.slice(0, 3).join('.'), isValidIP);
     return isValidIP;
 }
