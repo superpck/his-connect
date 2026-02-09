@@ -165,7 +165,9 @@ async function cronjob(fastify) {
         logScheduledServices(timingSchedule);
     }
     if (processState.isFirstProcess) {
-        moph_appointment_1.default.process('2026-02-08');
+        (0, moph_erp_1.updateAlive)();
+        (0, moph_erp_1.sendWardName)();
+        (0, moph_erp_1.sendBedNo)();
     }
     let minuteCount = 0;
     cron.schedule(timingSch, async (req, res) => {

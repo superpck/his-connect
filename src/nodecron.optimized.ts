@@ -338,14 +338,14 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
 
   // Initial tasks on first process
   if (processState.isFirstProcess) {
-    // updateAlive();
-    // sendWardName();
-    // sendBedNo();
+    updateAlive();
+    sendWardName();
+    sendBedNo();
 
     // for test only ******************
     // mophCMI.processCMI();
     // mophIot.processIoT();
-    mophAppointment.process('2026-02-08');
+    // mophAppointment.process('2026-02-08');
     // end test ***********************
   }
 
