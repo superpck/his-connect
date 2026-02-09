@@ -174,16 +174,15 @@ async function cronjob(fastify) {
         minuteCount++;
         const minuteSinceLastNight = getMinutesSinceMidnight();
         const minuteNow = moment().get('minute');
-        const hourNow = moment().hour();
         if (processState.isFirstProcess) {
-            if (minuteSinceLastNight % 2 === 1) {
+            if (minuteSinceLastNight > 0 && minuteSinceLastNight % 2 === 1) {
                 logJobStatus();
             }
             if (minuteNow != 0 && minuteNow % timeRandom == 0) {
                 (0, moph_erp_1.updateAlive)();
                 (0, moph_alert_1.mophAlertSurvey)();
             }
-            if (minuteSinceLastNight % 2 == 0) {
+            if (minuteSinceLastNight > 0 && minuteSinceLastNight % 2 == 0) {
                 (0, moph_erp_1.erpAdminRequest)();
             }
             if (minuteNow == timeRandom) {
