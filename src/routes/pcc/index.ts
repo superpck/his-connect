@@ -1,4 +1,4 @@
-import * as HttpStatus from 'http-status-codes';
+import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 var crypto = require('crypto');
 
 import pccHisModel from './../his/hismodel';
@@ -15,15 +15,14 @@ const router = (fastify, { }, next) => {
     const defaultKey = crypto.createHash('md5').update(process.env.REQUEST_KEY).digest('hex');
 
     if (requestKey !== defaultKey) {
-      console.log('invalid key', requestKey);
-      reply.send({
-        statusCode: HttpStatus.UNAUTHORIZED,
-        message: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED) + ' or invalid key'
+      return reply.send({
+        statusCode: StatusCodes.UNAUTHORIZED,
+        message: getReasonPhrase(StatusCodes.UNAUTHORIZED) + ' or invalid key'
       });
     }
 
-    reply.status(HttpStatus.OK).send({
-      statusCode: HttpStatus.OK,
+    reply.status(StatusCodes.OK).send({
+      statusCode: StatusCodes.OK,
       skey: requestKey
     });
   })
@@ -36,21 +35,21 @@ const router = (fastify, { }, next) => {
     if (searchType && searchValue) {
       try {
         const result = await pccHisModel.getPerson(global.dbHIS, searchType, searchValue);
-        reply.status(HttpStatus.OK).send({
-          statusCode: HttpStatus.OK,
+        reply.status(StatusCodes.OK).send({
+          statusCode: StatusCodes.OK,
           rows: result
         });
       } catch (error) {
         console.log('person', searchValue, error.message);
-        reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
-      reply.status(HttpStatus.BAD_REQUEST).send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+      reply.status(StatusCodes.BAD_REQUEST).send({
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })
@@ -63,21 +62,21 @@ const router = (fastify, { }, next) => {
     if (fname + lname) {
       try {
         const result = await pccHisModel.getPersonByName(global.dbHIS, fname, lname);
-        reply.status(HttpStatus.OK).send({
-          statusCode: HttpStatus.OK,
+        reply.status(StatusCodes.OK).send({
+          statusCode: StatusCodes.OK,
           rows: result
         });
       } catch (error) {
         console.log('person', fname, lname, error.message);
-        reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
-      reply.status(HttpStatus.BAD_REQUEST).send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+      reply.status(StatusCodes.BAD_REQUEST).send({
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })
@@ -91,27 +90,27 @@ const router = (fastify, { }, next) => {
       try {
         const result = await pccHisModel.getChronic(global.dbHIS, pid, cid);
         if (result) {
-          reply.status(HttpStatus.OK).send({
-            statusCode: HttpStatus.OK,
+          reply.status(StatusCodes.OK).send({
+            statusCode: StatusCodes.OK,
             rows: result
           });
         } else {
           reply.send({
-            statusCode: HttpStatus.BAD_REQUEST,
+            statusCode: StatusCodes.BAD_REQUEST,
             message: 'record not found'
           });
         }
       } catch (error) {
         console.log('person-chronic', cid, pid, error.message);
-        reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
-      reply.status(HttpStatus.BAD_REQUEST).send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+      reply.status(StatusCodes.BAD_REQUEST).send({
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })
@@ -125,27 +124,27 @@ const router = (fastify, { }, next) => {
       try {
         const result = await pccHisModel.getDrugAllergy(global.dbHIS, pid, cid);
         if (result) {
-          reply.status(HttpStatus.OK).send({
-            statusCode: HttpStatus.OK,
+          reply.status(StatusCodes.OK).send({
+            statusCode: StatusCodes.OK,
             rows: result
           });
         } else {
-          reply.status(HttpStatus.BAD_REQUEST).send({
-            statusCode: HttpStatus.BAD_REQUEST,
-            message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+          reply.status(StatusCodes.BAD_REQUEST).send({
+            statusCode: StatusCodes.BAD_REQUEST,
+            message: getReasonPhrase(StatusCodes.BAD_REQUEST)
           });
         }
       } catch (error) {
         console.log('drug-allergy', cid, pid, error.message);
-        reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
-      reply.status(HttpStatus.BAD_REQUEST).send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+      reply.status(StatusCodes.BAD_REQUEST).send({
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })
@@ -160,18 +159,18 @@ const router = (fastify, { }, next) => {
     if (hn + cid) {
       try {
         const rows = await pccHisModel.getServiceByHn(global.dbHIS, hn, cid, date, visitNo);
-        reply.status(HttpStatus.OK).send({ statusCode: HttpStatus.OK, rows });
+        reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
       } catch (error) {
         console.log(error.message);
-        reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
-      reply.status(HttpStatus.BAD_REQUEST).send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+      reply.status(StatusCodes.BAD_REQUEST).send({
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })
@@ -183,27 +182,27 @@ const router = (fastify, { }, next) => {
       try {
         const result = await pccHisModel.getDiagnosis(global.dbHIS, visitNo);
         if (result) {
-          reply.status(HttpStatus.OK).send({
-            statusCode: HttpStatus.OK,
+          reply.status(StatusCodes.OK).send({
+            statusCode: StatusCodes.OK,
             rows: result
           });
         } else {
-          reply.status(HttpStatus.BAD_REQUEST).send({
-            statusCode: HttpStatus.BAD_REQUEST,
+          reply.status(StatusCodes.BAD_REQUEST).send({
+            statusCode: StatusCodes.BAD_REQUEST,
             message: 'record not found'
           });
         }
       } catch (error) {
         console.log('opd-diagnosis', error.message);
-        reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
-      reply.status(HttpStatus.BAD_REQUEST).send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+      reply.status(StatusCodes.BAD_REQUEST).send({
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })
@@ -215,27 +214,27 @@ const router = (fastify, { }, next) => {
       try {
         const result = await pccHisModel.getDiagnosisByHn(global.dbHIS, hn);
         if (result) {
-          reply.status(HttpStatus.OK).send({
-            statusCode: HttpStatus.OK,
+          reply.status(StatusCodes.OK).send({
+            statusCode: StatusCodes.OK,
             rows: result
           });
         } else {
           reply.send({
-            statusCode: HttpStatus.BAD_REQUEST,
+            statusCode: StatusCodes.BAD_REQUEST,
             message: 'record not found'
           });
         }
       } catch (error) {
         console.log('opd-diagnosis-by-hn', error.message);
         reply.send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
       reply.send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })
@@ -247,27 +246,27 @@ const router = (fastify, { }, next) => {
       try {
         const result = await pccHisModel.getDrug(global.dbHIS, visitNo);
         if (result) {
-          reply.status(HttpStatus.OK).send({
-            statusCode: HttpStatus.OK,
+          reply.status(StatusCodes.OK).send({
+            statusCode: StatusCodes.OK,
             rows: result
           });
         } else {
-          reply.status(HttpStatus.BAD_REQUEST).send({
-            statusCode: HttpStatus.BAD_REQUEST,
+          reply.status(StatusCodes.BAD_REQUEST).send({
+            statusCode: StatusCodes.BAD_REQUEST,
             message: 'record not found'
           });
         }
       } catch (error) {
         console.log('drug', error.message);
-        reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
-      reply.status(HttpStatus.BAD_REQUEST).send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+      reply.status(StatusCodes.BAD_REQUEST).send({
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })
@@ -279,27 +278,27 @@ const router = (fastify, { }, next) => {
       try {
         const result = await pccHisModel.getDrugByHn(global.dbHIS, hn);
         if (result) {
-          reply.status(HttpStatus.OK).send({
-            statusCode: HttpStatus.OK,
+          reply.status(StatusCodes.OK).send({
+            statusCode: StatusCodes.OK,
             rows: result
           });
         } else {
           reply.send({
-            statusCode: HttpStatus.BAD_REQUEST,
+            statusCode: StatusCodes.BAD_REQUEST,
             message: 'record not found'
           });
         }
       } catch (error) {
         console.log('drug-by-hn', error.message);
         reply.send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
       reply.send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })
@@ -311,27 +310,27 @@ const router = (fastify, { }, next) => {
       try {
         const result = await pccHisModel.getAnc(global.dbHIS, visitNo);
         if (result) {
-          reply.status(HttpStatus.OK).send({
-            statusCode: HttpStatus.OK,
+          reply.status(StatusCodes.OK).send({
+            statusCode: StatusCodes.OK,
             rows: result
           });
         } else {
-          reply.status(HttpStatus.BAD_REQUEST).send({
-            statusCode: HttpStatus.BAD_REQUEST,
+          reply.status(StatusCodes.BAD_REQUEST).send({
+            statusCode: StatusCodes.BAD_REQUEST,
             message: 'record not found'
           });
         }
       } catch (error) {
         console.log('anc', error.message);
-        reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
-      reply.status(HttpStatus.BAD_REQUEST).send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+      reply.status(StatusCodes.BAD_REQUEST).send({
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })
@@ -343,27 +342,27 @@ const router = (fastify, { }, next) => {
       try {
         const result = await pccHisModel.getAncByHn(global.dbHIS, hn);
         if (result) {
-          reply.status(HttpStatus.OK).send({
-            statusCode: HttpStatus.OK,
+          reply.status(StatusCodes.OK).send({
+            statusCode: StatusCodes.OK,
             rows: result
           });
         } else {
           reply.send({
-            statusCode: HttpStatus.BAD_REQUEST,
+            statusCode: StatusCodes.BAD_REQUEST,
             message: 'record not found'
           });
         }
       } catch (error) {
         console.log('anc-by-hn', error.message);
         reply.send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
       reply.send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })
@@ -375,27 +374,27 @@ const router = (fastify, { }, next) => {
       try {
         const result = await pccHisModel.getEpi(global.dbHIS, visitNo);
         if (result) {
-          reply.status(HttpStatus.OK).send({
-            statusCode: HttpStatus.OK,
+          reply.status(StatusCodes.OK).send({
+            statusCode: StatusCodes.OK,
             rows: result
           });
         } else {
-          reply.status(HttpStatus.BAD_REQUEST).send({
-            statusCode: HttpStatus.BAD_REQUEST,
+          reply.status(StatusCodes.BAD_REQUEST).send({
+            statusCode: StatusCodes.BAD_REQUEST,
             message: 'record not found'
           });
         }
       } catch (error) {
         console.log('epi', error.message);
-        reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
-      reply.status(HttpStatus.BAD_REQUEST).send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+      reply.status(StatusCodes.BAD_REQUEST).send({
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })
@@ -407,27 +406,27 @@ const router = (fastify, { }, next) => {
       try {
         const result = await pccHisModel.getEpiByHn(global.dbHIS, hn);
         if (result) {
-          reply.status(HttpStatus.OK).send({
-            statusCode: HttpStatus.OK,
+          reply.status(StatusCodes.OK).send({
+            statusCode: StatusCodes.OK,
             rows: result
           });
         } else {
           reply.send({
-            statusCode: HttpStatus.BAD_REQUEST,
+            statusCode: StatusCodes.BAD_REQUEST,
             message: 'record not found'
           });
         }
       } catch (error) {
         console.log(process.env.HOSPCODE, 'epi-by-hn', error.message);
         reply.send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
       reply.send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })
@@ -439,27 +438,27 @@ const router = (fastify, { }, next) => {
       try {
         const result = await pccHisModel.getFp(global.dbHIS, visitNo);
         if (result) {
-          reply.status(HttpStatus.OK).send({
-            statusCode: HttpStatus.OK,
+          reply.status(StatusCodes.OK).send({
+            statusCode: StatusCodes.OK,
             rows: result
           });
         } else {
-          reply.status(HttpStatus.BAD_REQUEST).send({
-            statusCode: HttpStatus.BAD_REQUEST,
+          reply.status(StatusCodes.BAD_REQUEST).send({
+            statusCode: StatusCodes.BAD_REQUEST,
             message: 'record not found'
           });
         }
       } catch (error) {
         console.log('fp', error.message);
-        reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
-      reply.status(HttpStatus.BAD_REQUEST).send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+      reply.status(StatusCodes.BAD_REQUEST).send({
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })
@@ -471,27 +470,27 @@ const router = (fastify, { }, next) => {
       try {
         const result = await pccHisModel.getFpByHn(global.dbHIS, hn);
         if (result) {
-          reply.status(HttpStatus.OK).send({
-            statusCode: HttpStatus.OK,
+          reply.status(StatusCodes.OK).send({
+            statusCode: StatusCodes.OK,
             rows: result
           });
         } else {
           reply.send({
-            statusCode: HttpStatus.BAD_REQUEST,
+            statusCode: StatusCodes.BAD_REQUEST,
             message: 'record not found'
           });
         }
       } catch (error) {
         console.log('fp-by-hn', error.message);
         reply.send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
       reply.send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })
@@ -503,27 +502,27 @@ const router = (fastify, { }, next) => {
       try {
         const result = await pccHisModel.getNutrition(global.dbHIS, visitNo);
         if (result) {
-          reply.status(HttpStatus.OK).send({
-            statusCode: HttpStatus.OK,
+          reply.status(StatusCodes.OK).send({
+            statusCode: StatusCodes.OK,
             rows: result
           });
         } else {
-          reply.status(HttpStatus.BAD_REQUEST).send({
-            statusCode: HttpStatus.BAD_REQUEST,
+          reply.status(StatusCodes.BAD_REQUEST).send({
+            statusCode: StatusCodes.BAD_REQUEST,
             message: 'record not found'
           });
         }
       } catch (error) {
         console.log('nutrition', error.message);
-        reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
-      reply.status(HttpStatus.BAD_REQUEST).send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+      reply.status(StatusCodes.BAD_REQUEST).send({
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })
@@ -535,27 +534,27 @@ const router = (fastify, { }, next) => {
       try {
         const result = await pccHisModel.getNutritionByHn(global.dbHIS, hn);
         if (result) {
-          reply.status(HttpStatus.OK).send({
-            statusCode: HttpStatus.OK,
+          reply.status(StatusCodes.OK).send({
+            statusCode: StatusCodes.OK,
             rows: result
           });
         } else {
           reply.send({
-            statusCode: HttpStatus.BAD_REQUEST,
+            statusCode: StatusCodes.BAD_REQUEST,
             message: 'record not found'
           });
         }
       } catch (error) {
         console.log('nutrition-by-hn', error.message);
         reply.send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
       reply.send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })
@@ -568,26 +567,26 @@ const router = (fastify, { }, next) => {
       try {
         const result = await pccHisModel.getLabResult(global.dbHIS, searchType, searchValue);
         if (result) {
-          reply.status(HttpStatus.OK).send({
-            statusCode: HttpStatus.OK,
+          reply.status(StatusCodes.OK).send({
+            statusCode: StatusCodes.OK,
             rows: result
           });
         } else {
           reply.send({
-            statusCode: HttpStatus.BAD_REQUEST,
+            statusCode: StatusCodes.BAD_REQUEST,
             message: 'record not found'
           });
         }
       } catch (error) {
         console.log('lab-result', error.message);
         reply.send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
       reply.send({
-        statusCode: HttpStatus.BAD_REQUEST,
+        statusCode: StatusCodes.BAD_REQUEST,
         message: 'Invalid parameter'
       });
     }
@@ -601,27 +600,27 @@ const router = (fastify, { }, next) => {
       try {
         const result = await pccHisModel.libDrug(global.dbHIS, searchType, searchValue);
         if (result) {
-          reply.status(HttpStatus.OK).send({
-            statusCode: HttpStatus.OK,
+          reply.status(StatusCodes.OK).send({
+            statusCode: StatusCodes.OK,
             rows: result
           });
         } else {
-          reply.status(HttpStatus.BAD_REQUEST).send({
-            statusCode: HttpStatus.BAD_REQUEST,
+          reply.status(StatusCodes.BAD_REQUEST).send({
+            statusCode: StatusCodes.BAD_REQUEST,
             message: 'record not found'
           });
         }
       } catch (error) {
         console.log('drug', error.message);
-        reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+          statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
           message: error.message
         });
       }
     } else {
-      reply.status(HttpStatus.BAD_REQUEST).send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: HttpStatus.getStatusText(HttpStatus.BAD_REQUEST)
+      reply.status(StatusCodes.BAD_REQUEST).send({
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
       });
     }
   })

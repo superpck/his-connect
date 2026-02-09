@@ -585,7 +585,7 @@ export class HisIHospitalModel {
       .limit(maxLimit);
   }
 
-  async getAppointment(db: Knex, columnName: string, searchValue: any) {
+  async getAppointment(db: Knex, columnName: string, searchValue: any, lastupdateLimit = null) {
     const colMap: Record<string, string> = {
       fu_date: "fu_date",
       visit_date: "date",
@@ -611,6 +611,7 @@ export class HisIHospitalModel {
     }
 
     // 3) build query
+    lastupdateLimit = lastupdateLimit || moment().subtract(120, 'minutes').format('YYYY-MM-DD HH:mm:ss');
     let query = db({ o: "view_opd_fu" })
 
     // 4) apply filter (DATE เป็น DATE อยู่แล้ว → whereIn/where ใช้ได้ทั้ง mysql/pg)
@@ -623,7 +624,9 @@ export class HisIHospitalModel {
     // 5) select
     query = query
       .select([
-        "hn", "an", "vn", db.raw("? as visit_vn", [null]),
+        db.raw("? as hospcode", [hisHospcode]),
+        db.raw("ref AS appointment_id"),
+        "hn", "an", "vn", db.raw("? as visit_vn", [null]),'cid',
         db.raw("0 AS isvisited"),
         db.raw("CONCAT(date,' ',time) AS visit_date"),
         db.raw("fu_date AS apdate"),
@@ -643,10 +646,12 @@ export class HisIHospitalModel {
         "fu_dep_building", "fu_dep_floor",
         db.raw("? AS apvisit_area", [null]),
         db.raw("CASE WHEN iscancel = 1 THEN 0 ELSE 1 END AS isactive"),
+        db.raw("iscancel as isactive"),
         db.raw("lastupdate as d_update")
       ])
       .whereNotNull("fu_date")
-      .whereRaw("date < fu_date");
+      .whereRaw("date < fu_date")
+      .whereRaw("(lastupdate < ? OR (lastupdate IS NULL AND inp_date < ?))", [lastupdateLimit, lastupdateLimit]);
 
     const rows = await query.orderBy(["fu_date", "time"]).limit(5000);
     for (let row of rows) {

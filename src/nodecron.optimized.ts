@@ -53,6 +53,7 @@ const referCrontab = require('./routes/refer/crontab');
 const instanceId = process.env.NODE_APP_INSTANCE ? +process.env.NODE_APP_INSTANCE + 1 : null;
 
 let hospitalConfig = null;
+let onProcess: any = {};
 
 // Process state management
 const processState: ProcessState = {
@@ -337,12 +338,15 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
 
   // Initial tasks on first process
   if (processState.isFirstProcess) {
-    updateAlive();
-    sendWardName();
-    sendBedNo();
+    // updateAlive();
+    // sendWardName();
+    // sendBedNo();
+
+    // for test only ******************
     // mophCMI.processCMI();
     // mophIot.processIoT();
-    // mophAppointment.process();
+    mophAppointment.process('2026-02-08');
+    // end test ***********************
   }
 
   // Optional: Real-time Debug Countdown (ระวัง Log เยอะเกินไปหากเปิดใช้)
@@ -409,8 +413,12 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
       }
 
       // ส่ง ผป.นัดหมาย
-      if (hourNow%2 == 0 && minuteNow == timeRandom) {
-        mophAppointment.process();
+      // if (!onProcess?.mophAppointment && minuteNow == timeRandom) {
+      if (!onProcess?.mophAppointment && minuteNow%2) {
+        onProcess.mophAppointment = true;
+        mophAppointment.process().then(() => {
+          onProcess.mophAppointment = false;
+        });
       }
 
       // 4. Ward/Bed Daily Logic

@@ -6,6 +6,9 @@
   - ลบ file ที่ไม่ถูกใช้งาน
   - remove unused route (PCC, QDrug)
   - ปรับ SQL ของ HIS
+  - ปรับการ detect Error ให้แสดง message
+  - เพิ่มการ Return src ใน header
+  - แก้ไขการตรวจสอบ allowed client IP
 
 # 3.9.7
 ## Feature

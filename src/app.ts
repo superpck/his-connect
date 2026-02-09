@@ -88,8 +88,7 @@ app.decorate("authenticate", async (request: any, reply: any) => {
     request.user = await request.jwtVerify();
     request.authenDecoded = request.user;
   } catch (err) {
-    let ipAddr: any = request.headers["x-real-ip"] || request.headers["x-forwarded-for"] || request.ip;
-    console.log(moment().format('HH:mm:ss.SSS'), ipAddr, 'Error client try to access API ' + StatusCodes.UNAUTHORIZED, err.message);
+    console.error(moment().format('HH:mm:ss.SSS'), request.ipAddr, 'Error client try to access API ' + StatusCodes.UNAUTHORIZED, `message: '${err.message}'`);
     reply.send({
       statusCode: StatusCodes.UNAUTHORIZED,
       message: getReasonPhrase(StatusCodes.UNAUTHORIZED)
@@ -105,8 +104,7 @@ app.decorate("checkRequestKey", async (request: FastifyRequest, reply) => {
   }
   var requestKey = crypto.createHash('md5').update(process.env.REQUEST_KEY).digest('hex');
   if (!skey || skey !== requestKey) {
-    console.log('invalid key', requestKey);
-    reply.send({
+    return reply.send({
       statusCode: StatusCodes.UNAUTHORIZED,
       message: getReasonPhrase(StatusCodes.UNAUTHORIZED) + ' or invalid key'
     });
@@ -116,41 +114,36 @@ app.decorate("checkRequestKey", async (request: FastifyRequest, reply) => {
 
 // addHook pre-process ================================
 var geoip = require('geoip-lite');
+
+// Process sequence onRequest -> preHandler
 app.addHook('onRequest', async (req: any, reply) => {
   const unBlockIP = process.env.UNBLOCK_IP || '??';
-  let ipAddr: any = req.headers["x-real-ip"] || req.headers["x-forwarded-for"] || req.ip;
+  let ipAddr: any = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;
+  req.clientIP = ipAddr;
   ipAddr = ipAddr ? ipAddr.split(',') : [''];
+  ipAddr = ipAddr[0].split(':');
   req.ipAddr = ipAddr[0].trim();
+  req.ipAddr = req.ipAddr || req.clientIP;
 
   let isSubnet = true;
-  if (process.env.ALLOW_API_SUBNET || false){
-    isSubnet = await isIPInSubnet(req.ipAddr);
+  if (process.env?.ALLOW_API_SUBNET || false) {
+    isSubnet = await isIPInSubnet(req.clientIP);
   }
   var geo = geoip.lookup(req.ipAddr);
+  req.geo = geo;
   if (!isSubnet && geo && geo.country && geo.country != 'TH' && req.ipAddr != process.env.HOST && !unBlockIP.includes(req.ipAddr)) {
     console.log(req.ipAddr, `Unacceptable country: ${geo.country}`);
     return reply.send({ status: StatusCodes.NOT_ACCEPTABLE, ip: req.ipAddr, message: getReasonPhrase(StatusCodes.NOT_ACCEPTABLE) });
   }
-  console.log(moment().format('HH:mm:ss'), geo ? geo.country : 'unk', req.ipAddr, req.url);
-
-  // const encoding = req.headers['content-encoding']; // ตรวจสอบ Content-Encoding
-  // console.log('encoding', req.url, req.headers);
-  // console.log('encoding', req.url, encoding, req.headers['accept-encoding']);
-  // ถ้า Request Body ถูกบีบอัดด้วย Gzip
-  // if (encoding === 'gzip') {
-  //   req.raw = req.raw.pipe(zlib.createGunzip()); // คลาย Gzip
-  // } else if (encoding === 'br') {
-  //   req.raw = req.raw.pipe(zlib.createBrotliDecompress()); // คลาย Brotli
-  // } else if (encoding === 'deflate') {
-  //   req.raw = req.raw.pipe(zlib.createInflate()); // คลาย Deflate
-  // }
 });
-app.addHook('preHandler', async (request, reply) => {
+app.addHook('preHandler', async (request: any, reply) => {
+  console.log(moment().format('HH:mm:ss.SSS'), request.ipAddr, request?.geo?.country || 'unk', request.method, request.url);
 });
 app.addHook('onSend', async (request, reply, payload) => {
   const headers = {
     "Cache-Control": "no-store",
     Pragma: "no-cache",
+    src: `HIS-Connect ${version || ''}-${subVersion || ''}`
   };
   reply.headers(headers);
   return payload;
@@ -234,9 +227,8 @@ async function isIPInSubnet(ip: any) {
   if (!localIP || !localIP?.ip) {
     return true;
   }
+
   localIP = (localIP?.ip || '').split('.');
-  ip = (ip || '').split('.');
-  const isValidIP = ip[0] === localIP[0] && ip[1] === localIP[1] && ip[2] === localIP[2];
-  // console.log('localIP', localIP, ip, isValidIP);
-  return isValidIP;  
+  const isValidIP = ip.includes(localIP.slice(0, 3).join('.'));
+  return isValidIP;
 }

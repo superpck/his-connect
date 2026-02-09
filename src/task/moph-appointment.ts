@@ -79,23 +79,26 @@ async function markAsSent(row: any) {
   }
 }
 
-const process = async () => {
+const process = async (date: any = null) => {
   // สร้างตารางและลบข้อมูลเก่า
   await createAppointmentTable();
   await cleanOldRecords();
 
   hospitalConfig = await getHospitalConfig();
   let isAlertAppointment = false;
-  if (!hospitalConfig || !hospitalConfig.configure || !hospitalConfig.configure?.moph_appointment){
+  if (hospitalConfig && hospitalConfig?.configure && hospitalConfig.configure?.moph_appointment){
     isAlertAppointment = hospitalConfig.configure?.moph_appointment?.alert_after_service == 1 || hospitalConfig.configure?.moph_appointment?.alert_before == 1 ? true : false;
   }
   if (!isAlertAppointment) {
-    console.error(moment().format('HH:mm:ss'), 'MOPH Appointment Process: Appointment Service Disabled');
+    console.error(moment().format('HH:mm:ss'), 'MOPH Alert for Appointment Process: Appointment Service Disabled');
     return false;
   }
 
-  const date = moment().subtract(30, 'minutes').format('YYYY-MM-DD 00:00:00');
-  return await getData(date);
+  date = date || moment().subtract(30, 'minutes').format('YYYY-MM-DD');
+  console.log('');
+  const result = await getData(date);
+  console.log('-'.repeat(70));
+  return result;
 }
 
 async function getData(date: string) {
@@ -103,6 +106,7 @@ async function getData(date: string) {
     date = moment(date).format('YYYY-MM-DD');
     let opdVisit = await hisModel.getAppointment(db, 'visit_date', date);
     if (opdVisit.length > 0) {
+      console.log(moment().format('HH:mm:ss'), 'MOPH Appointment Process Date:', date, 'Found Records:', opdVisit.length);
       let skippedCount = 0;
       let sentResult: any[] = [];
       for (let row of opdVisit) {
@@ -140,8 +144,9 @@ async function getData(date: string) {
     } else {
       console.log(moment().format('HH:mm:ss'), 'MOPH Appointment Process Date:', date, 'No Records Found');
     }
-  } catch (error) {
-    throw error;
+  } catch (error: any) {
+    console.error(moment().format('HH:mm:ss'), 'MOPH Appointment Process Error:', error.message || error);
+    return error;
   }
 }
 

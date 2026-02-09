@@ -1607,7 +1607,7 @@ export class HisHosxpv4Model {
       .where('oe.hn', hn)
   }
 
-  async getAppointment(db: Knex, columnName: string, searchValue: any) {
+  async getAppointment(db: Knex, columnName: string, searchValue: any, lastupdateLimit = null) {
     const colMap: Record<string, string> = {
       fu_date: "nextdate",
       visit_date: "vstdate",
@@ -1633,7 +1633,9 @@ export class HisHosxpv4Model {
     }
 
     // 3) build query
+    lastupdateLimit = lastupdateLimit || moment().subtract(120, 'minutes').format('YYYY-MM-DD HH:mm:ss');
     let query = db({ o: "oapp" })
+      .join({ p: "patient" }, "o.hn", "p.hn")
       .join({ c: "clinic" }, "c.clinic", "o.clinic")
       .join({ ovst: "ovst" }, "o.vn", "ovst.vn")
       .join({ d: "doctor" }, "d.code", "o.doctor")
@@ -1651,7 +1653,9 @@ export class HisHosxpv4Model {
     // 5) select
     query = query
       .select([
-        "o.hn","o.an","o.vn","o.visit_vn",
+        db.raw("? AS hospcode", [hisHospcode]),
+        db.raw("oapp_id AS appointment_id"),
+        "o.hn", "o.an", "o.vn", "o.visit_vn",'p.cid',
         db.raw("CASE WHEN o.patient_visit = 'Y' THEN 1 ELSE 0 END AS isvisited"),
         // db.raw("o.vstdate AS visit_date"),
         db.raw("concat(o.vstdate,' ',ovst.vsttime) AS visit_date"),
@@ -1670,10 +1674,12 @@ export class HisHosxpv4Model {
         db.raw("o.xray_list_text AS xray"),
         db.raw("o.contact_point AS apvisit_area"),
         db.raw("CASE WHEN o.oapp_status_id = 1 THEN 1 ELSE 0 END AS isactive"),
-        db.raw("o.update_datetime as d_update")
+        db.raw("o.update_datetime as d_update"),
+        db.raw("? as isactive", [1])
       ])
       .whereNotNull("o.nextdate")
-      .whereRaw("o.vstdate < o.nextdate");
+      .whereRaw("o.vstdate < o.nextdate")
+      .where("o.update_datetime ", "<=", lastupdateLimit);
 
     return query.orderBy([{ column: "o.nextdate" }, { column: "o.nexttime" }]).limit(maxLimit);
   }

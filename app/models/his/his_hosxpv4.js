@@ -1190,7 +1190,7 @@ class HisHosxpv4Model {
                 date_format(oe.update_datetime,'%Y-%m-%d %H:%i:%s')) as D_UPDATE`))
             .where('oe.hn', hn);
     }
-    async getAppointment(db, columnName, searchValue) {
+    async getAppointment(db, columnName, searchValue, lastupdateLimit = null) {
         const colMap = {
             fu_date: "nextdate",
             visit_date: "vstdate",
@@ -1212,7 +1212,9 @@ class HisHosxpv4Model {
                 searchValue = moment(searchValue).format("YYYY-MM-DD");
             }
         }
+        lastupdateLimit = lastupdateLimit || moment().subtract(120, 'minutes').format('YYYY-MM-DD HH:mm:ss');
         let query = db({ o: "oapp" })
+            .join({ p: "patient" }, "o.hn", "p.hn")
             .join({ c: "clinic" }, "c.clinic", "o.clinic")
             .join({ ovst: "ovst" }, "o.vn", "ovst.vn")
             .join({ d: "doctor" }, "d.code", "o.doctor")
@@ -1227,7 +1229,9 @@ class HisHosxpv4Model {
         }
         query = query
             .select([
-            "o.hn", "o.an", "o.vn", "o.visit_vn",
+            db.raw("? AS hospcode", [hisHospcode]),
+            db.raw("oapp_id AS appointment_id"),
+            "o.hn", "o.an", "o.vn", "o.visit_vn", 'p.cid',
             db.raw("CASE WHEN o.patient_visit = 'Y' THEN 1 ELSE 0 END AS isvisited"),
             db.raw("concat(o.vstdate,' ',ovst.vsttime) AS visit_date"),
             db.raw("o.nextdate AS apdate"),
@@ -1245,10 +1249,12 @@ class HisHosxpv4Model {
             db.raw("o.xray_list_text AS xray"),
             db.raw("o.contact_point AS apvisit_area"),
             db.raw("CASE WHEN o.oapp_status_id = 1 THEN 1 ELSE 0 END AS isactive"),
-            db.raw("o.update_datetime as d_update")
+            db.raw("o.update_datetime as d_update"),
+            db.raw("? as isactive", [1])
         ])
             .whereNotNull("o.nextdate")
-            .whereRaw("o.vstdate < o.nextdate");
+            .whereRaw("o.vstdate < o.nextdate")
+            .where("o.update_datetime ", "<=", lastupdateLimit);
         return query.orderBy([{ column: "o.nextdate" }, { column: "o.nexttime" }]).limit(maxLimit);
     }
     async getReferHistory(db, columnName, searchNo, hospCode = hisHospcode) {

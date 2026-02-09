@@ -123,30 +123,39 @@ const router = (fastify, { }, next) => {
     let body: any = req.body;
     let loginCode = body.loginCode;
     if (loginCode) {
-      checkLoginCode(loginCode)
-      .then((data) => {
-        let today = moment().format('YYYY-MM-DD HH:mm:ss');
-        let expire = moment().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
-        const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
-        const payload = {
-          hcode: process.env.HOSPCODE,
-          tokenKey: tokenKey,
-          create: today,
-          expire: expire
-        };
-        const token = fastify.jwt.sign(payload, { expiresIn: '8h' });
-        res.send({
-          statusCode: StatusCodes.OK,
-          token: token, data
-        });
-      }).catch((error) => {
-        res.send({
-          statusCode: StatusCodes.UNAUTHORIZED,
+      try {
+        await checkLoginCode(loginCode)
+          .then((data) => {
+            let today = moment().format('YYYY-MM-DD HH:mm:ss');
+            let expire = moment().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
+            const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
+            const payload = {
+              hcode: process.env.HOSPCODE,
+              tokenKey: tokenKey,
+              create: today,
+              expire: expire
+            };
+            const token = fastify.jwt.sign(payload, { expiresIn: '8h' });
+            return res.send({
+              statusCode: StatusCodes.OK,
+              token: token, data
+            });
+          }).catch((error: any) => {
+            console.error('login-by-code error:', error.message);
+            return res.send({
+              statusCode: error?.status || StatusCodes.UNAUTHORIZED,
+              message: error.message
+            });
+          });
+      } catch (error: any) {
+        console.error('login-by-code error:', error.message);
+        return res.send({
+          statusCode: error?.status || 500,
           message: error.message
         });
-      });
+      }
     } else {
-      res.send({
+      return res.send({
         statusCode: StatusCodes.UNAUTHORIZED,
         message: getReasonPhrase(StatusCodes.UNAUTHORIZED)
       })

@@ -8,6 +8,7 @@ const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 
 import { Jwt } from './../../plugins/jwt';
 var jwt = new Jwt();
+var crypto = require('crypto');
 
 const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb'
   , 'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades'
@@ -71,6 +72,29 @@ const router = (fastify, { }, next) => {
     }
   })
 
+  // ตรวจสอบ 
+  fastify.post('/check-requestkey',  async (req: any, reply: any) => {
+    let requestKey = req.body.requestKey || '??';
+    const isEncode = req.body.md5;
+
+    if (isEncode == 0) {
+      requestKey = crypto.createHash('md5').update(requestKey).digest('hex');
+    }
+    const defaultKey = crypto.createHash('md5').update(process.env.REQUEST_KEY).digest('hex');
+
+    if (requestKey !== defaultKey) {
+      console.log('invalid key', requestKey);
+      return reply.status(StatusCodes.UNAUTHORIZED).send({
+        statusCode: StatusCodes.UNAUTHORIZED,
+        message: getReasonPhrase(StatusCodes.UNAUTHORIZED) + ' or invalid key'
+      });
+    }
+
+    reply.status(StatusCodes.OK).send({
+      statusCode: StatusCodes.OK,
+      skey: requestKey
+    });
+  })
 
   // HIS data ===========================================================
   fastify.post('/visit-detail', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {

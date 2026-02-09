@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const moment = require("moment");
-console.log(moment().format('HH:mm:ss'), 'Start MOPH IoT Task');
+console.log(moment().format('HH:mm:ss'), process.pid, 'Start MOPH IoT Task');
 const moph_refer_1 = require("../middleware/moph-refer");
 const hismodel_1 = require("./../routes/his/hismodel");
 const dbConnection = require('../plugins/db');

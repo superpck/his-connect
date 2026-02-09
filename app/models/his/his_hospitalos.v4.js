@@ -18,6 +18,37 @@ class HisHospitalOsV4Model {
             return await db.schema.hasTable(tableName);
         }
     }
+    async columnExist(db, columnName, tableName, dbName = '') {
+        if (!columnName || !tableName) {
+            throw new Error('Invalid parameters: columnName and tableName are required');
+        }
+        const client = (db.client?.config?.client || '').toString().toLowerCase();
+        const connection = db.client?.config?.connection || {};
+        const database = dbName || connection.database || connection.dbname || process.env.HIS_DB_NAME;
+        const schema = dbName || connection.schema || process.env.HIS_DB_SCHEMA || (client.includes('mssql') ? 'dbo' : 'public');
+        if (client.includes('mysql')) {
+            const result = await db('information_schema.columns')
+                .where({ table_schema: database, table_name: tableName, column_name: columnName })
+                .count('* as total');
+            return Number(result?.[0]?.total || 0) > 0;
+        }
+        if (client.includes('pg')) {
+            const result = await db('information_schema.columns')
+                .where({ table_schema: schema, table_name: tableName, column_name: columnName })
+                .count('* as total');
+            return Number(result?.[0]?.total || 0) > 0;
+        }
+        if (client.includes('mssql') || client.includes('sqlserver')) {
+            const result = await db('information_schema.columns')
+                .where({ table_catalog: database, table_schema: schema, table_name: tableName, column_name: columnName })
+                .count('* as total');
+            return Number(result?.[0]?.total || 0) > 0;
+        }
+        if (dbName) {
+            return await db.schema.withSchema(dbName).hasColumn(tableName, columnName);
+        }
+        return await db.schema.hasColumn(tableName, columnName);
+    }
     check() {
         return true;
     }
@@ -317,6 +348,10 @@ class HisHospitalOsV4Model {
         return result.rows;
     }
     async concurrentIPDByWard(db, date) {
+        const columnExist = await this.columnExist(db, 'std_code', 'b_visit_bed');
+        if (!columnExist) {
+            return { status: 500, message: 'not found std_code column in b_visit_bed table' };
+        }
         if (!date) {
             throw new Error('Invalid parameters: date is required');
         }
@@ -363,7 +398,6 @@ class HisHospitalOsV4Model {
                 (parseInt(row.icu) + parseInt(row.semi) + parseInt(row.stroke) + parseInt(row.burn) + parseInt(row.special) + parseInt(row.homeward) + parseInt(row.lr) + parseInt(row.clip));
             return row;
         });
-        console.table(rows);
         return rows;
     }
     async concurrentIPDByClinic(db, date) {
@@ -395,6 +429,10 @@ class HisHospitalOsV4Model {
         return result.rows;
     }
     async getWard(db, wardCode = '', wardName = '') {
+        const columnExist = await this.columnExist(db, 'std_code', 'b_visit_bed');
+        if (!columnExist) {
+            return { status: 500, message: 'not found std_code column in b_visit_bed table' };
+        }
         let sql = `select ? as hospcode, b_visit_bed.b_visit_ward_id, b_visit_ward.visit_ward_number as wardcode,
                 b_visit_ward.visit_ward_description as wardname, count(*) as bed_count 
                 , sum(case when substring(b_visit_bed.std_code,4,3)='603' then 1 else 0 end) as bed_extra
