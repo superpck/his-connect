@@ -11,8 +11,7 @@ require('dotenv').config({
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import fastify, { FastifyRequest } from 'fastify';
 import * as moment from 'moment';
-// import cronjob from './nodecron';
-import cronjob from './nodecron.optimized';
+import cronjob from './nodecron';
 
 const serveStatic = require('serve-static');
 var crypto = require('crypto');

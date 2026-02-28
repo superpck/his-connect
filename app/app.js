@@ -10,7 +10,7 @@ require('dotenv').config({
 const http_status_codes_1 = require("http-status-codes");
 const fastify_1 = require("fastify");
 const moment = require("moment");
-const nodecron_optimized_1 = require("./nodecron.optimized");
+const nodecron_1 = require("./nodecron");
 const serveStatic = require('serve-static');
 var crypto = require('crypto');
 const utils_1 = require("./middleware/utils");
@@ -126,7 +126,7 @@ app.addHook('onSend', async (request, reply, payload) => {
     return payload;
 });
 app.register(require('./route'));
-app.register(nodecron_optimized_1.default);
+app.register(nodecron_1.default);
 var options = {
     port: process.env.PORT || 3004,
     host: process.env.HOST || '0.0.0.0'

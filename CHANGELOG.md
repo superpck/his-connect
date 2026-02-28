@@ -2,6 +2,7 @@
 ## Feature
   - เพิ่มการส่งข้อมูล Vital sign กรณีเปิดใช้งาน MOPH IoT Data hub
   - เพิ่มการส่งข้อมูล Appointment กรณีเปิดใช้งาน MOPH Alert for appointment
+  - ปรับการ getWard
 
 # 3.9.8
 ## Feature

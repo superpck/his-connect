@@ -1,7 +1,7 @@
 {
   "name": "his-connect",
   "version": "3.9.9",
-  "subVersion": "2026.02.09-2",
+  "subVersion": "2026.02.28-1",
   "private": true,
   "license": "MIT",
   "scripts": {
@@ -24,7 +24,6 @@
     "ejs-mate": "^4.0.0",
     "fastify": "^5.6.1",
     "fastify-no-icon": "^7.0.0",
-    "fastify-plugin": "^5.0.1",
     "fastify-session": "^5.2.1",
     "fastify-ws": "^1.0.3",
     "geoip-lite": "^1.4.10",

@@ -24,16 +24,14 @@ const sendBedOccupancy = async (dateProcess = null) => {
     else {
         currDate = moment().locale('TH').subtract(1, 'hours').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
     }
-    let date = dateProcess || currDate;
-    let dateOpd = date;
-    let clinicResult = null, wardResult = null, opdResult = null;
-    do {
-        [clinicResult, wardResult] = await Promise.all([
-            sendBedOccupancyByClinic(date),
-            sendBedOccupancyByWard(date),
-        ]);
-        date = moment(date).add(1, 'day').format('YYYY-MM-DD');
-    } while (date <= currDate);
+    dateProcess = dateProcess ? moment(dateProcess).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss') : null;
+    let dateIPD = dateProcess || currDate;
+    let opdResult = null;
+    let [clinicResult, wardResult] = await Promise.all([
+        sendBedOccupancyByClinic(dateIPD),
+        sendBedOccupancyByWard(dateIPD),
+    ]);
+    let dateOpd = dateProcess || currDate;
     do {
         [opdResult] = await Promise.all([
             sendOpdVisitByClinic(dateOpd)
@@ -50,7 +48,12 @@ const sendBedOccupancyByWard = async (date) => {
         let rows = await hismodel_1.default.concurrentIPDByWard(db, date);
         if (rows && rows.length) {
             rows = rows.map((v) => {
-                return { ...v, occupancy_date, date, hospcode, his: hisProvider || '' };
+                return {
+                    ...v, occupancy_date,
+                    date: moment(date).format('YYYY-MM-DD'),
+                    hospcode,
+                    his: hisProvider || ''
+                };
             });
             const result = await (0, moph_refer_1.sendingToMoph)('/save-occupancy-rate-by-ward', rows);
             console.log(moment().format('HH:mm:ss'), 'send Occ Rate by ward', date, result.status || '', result.message || '', rows.length, 'rows');
