@@ -90,7 +90,7 @@ class HisHosxpv4Model {
             .orderBy('name')
             .limit(maxLimit);
     }
-    async getWard(db, wardCode = '', wardName = '') {
+    async getWard_(db, wardCode = '', wardName = '') {
         const subQuery = db('ward')
             .select('*')
             .select(db.raw('SUBSTRING(ward_export_code, 4, 3) as sub_code_3'))
@@ -129,6 +129,57 @@ class HisHosxpv4Model {
             .where('w.ward', '<>', '')
             .whereNotNull('w.ward');
         return sql.orderBy('w.ward').limit(maxLimit);
+    }
+    async getWard(db, wardCode = '', wardName = '') {
+        let query = db('ward')
+            .leftJoin('roomno', 'ward.ward', 'roomno.ward')
+            .leftJoin('bedno', 'roomno.roomno', 'bedno.roomno')
+            .leftJoin('bed_status_type', 'bedno.bed_status_type_id', 'bed_status_type.bed_status_type_id');
+        if (wardCode) {
+            query.where('ward.ward', wardCode);
+        }
+        else if (wardName) {
+            const op = db.client.driverName === 'pg' ? 'ilike' : 'like';
+            query.where('ward.name', op, `%${wardName}%`);
+        }
+        const substr1 = (col) => db.client.driverName === 'pg'
+            ? db.raw('SUBSTRING(?? FROM 4 FOR 1)', [col])
+            : db.raw('SUBSTRING(??,4,1)', [col]);
+        const substr3 = (col) => db.client.driverName === 'pg'
+            ? db.raw('SUBSTRING(?? FROM 4 FOR 3)', [col])
+            : db.raw('SUBSTRING(??,4,3)', [col]);
+        const result = await query.select(db.raw('? AS hospcode', [hisHospcode]), db.raw('ward.ward as wardcode'), db.raw('ward.name as wardname'), db.raw('ward.ward_export_code as std_code'), db.raw("CASE WHEN ward.ward_active = 'Y' THEN 1 ELSE 0 END as isactive"), 'ward.bedcount', db.raw('? as bed_normal', [0]), db.raw("CASE WHEN " + substr1('ward.ward_export_code').toString() + " = '2' THEN ward.bedcount ELSE 0 END as bed_icu"), db.raw("CASE WHEN " + substr1('ward.ward_export_code').toString() + " = '3' THEN ward.bedcount ELSE 0 END as bed_semi"), db.raw("CASE WHEN " + substr1('ward.ward_export_code').toString() + " = '4' THEN ward.bedcount ELSE 0 END as bed_stroke"), db.raw("CASE WHEN " + substr1('ward.ward_export_code').toString() + " = '5' THEN ward.bedcount ELSE 0 END as bed_burn"), db.raw("CASE WHEN " + substr3('ward.ward_export_code').toString() + " IN ('601','602') THEN ward.bedcount ELSE 0 END as imc"), db.raw("CASE WHEN " + substr3('ward.ward_export_code').toString() + " = '603' THEN ward.bedcount ELSE 0 END as bed_extra"), db.raw("CASE WHEN " + substr3('ward.ward_export_code').toString() + " = '604' THEN ward.bedcount ELSE 0 END as bed_minithanyaruk"), db.raw("CASE WHEN " + substr3('ward.ward_export_code').toString() + " = '606' THEN ward.bedcount ELSE 0 END as bed_special"), db.raw("CASE WHEN " + substr3('ward.ward_export_code').toString() + " = '607' THEN ward.bedcount ELSE 0 END as homeward"), db.raw("CASE WHEN " + substr3('ward.ward_export_code').toString() + " = '608' THEN ward.bedcount ELSE 0 END as lr"), db.raw("CASE WHEN " + substr3('ward.ward_export_code').toString() + " = '609' THEN ward.bedcount ELSE 0 END as clip"), db.raw("SUM(CASE WHEN bed_status_type.is_available = 'Y' THEN 1 ELSE 0 END) as active_bed"), db.raw("SUM(CASE WHEN bed_status_type.is_available = 'Y' THEN 0 ELSE 1 END) as inactive_bed"), db.raw("SUM(CASE WHEN " + substr1('bedno.export_code').toString() + " = '2' AND bed_status_type.is_available = 'Y' THEN 1 ELSE 0 END) as bedno_icu"), db.raw("SUM(CASE WHEN " + substr1('bedno.export_code').toString() + " = '3' AND bed_status_type.is_available = 'Y' THEN 1 ELSE 0 END) as bedno_semi"), db.raw("SUM(CASE WHEN " + substr1('bedno.export_code').toString() + " = '4' AND bed_status_type.is_available = 'Y' THEN 1 ELSE 0 END) as bedno_stroke"), db.raw("SUM(CASE WHEN " + substr1('bedno.export_code').toString() + " = '5' AND bed_status_type.is_available = 'Y' THEN 1 ELSE 0 END) as bedno_burn"), db.raw("SUM(CASE WHEN " + substr3('bedno.export_code').toString() + " IN ('601','602') AND bed_status_type.is_available = 'Y' THEN 1 ELSE 0 END) as bedno_imc"), db.raw("SUM(CASE WHEN " + substr3('bedno.export_code').toString() + " = '603' AND bed_status_type.is_available = 'Y' THEN 1 ELSE 0 END) as bedno_extra"), db.raw("SUM(CASE WHEN " + substr3('bedno.export_code').toString() + " = '604' AND bed_status_type.is_available = 'Y' THEN 1 ELSE 0 END) as bedno_minithanyaruk"), db.raw("SUM(CASE WHEN " + substr3('bedno.export_code').toString() + " = '606' AND bed_status_type.is_available = 'Y' THEN 1 ELSE 0 END) as bedno_special"), db.raw("SUM(CASE WHEN " + substr3('bedno.export_code').toString() + " = '607' AND bed_status_type.is_available = 'Y' THEN 1 ELSE 0 END) as bedno_homeward"), db.raw("SUM(CASE WHEN " + substr3('bedno.export_code').toString() + " = '608' AND bed_status_type.is_available = 'Y' THEN 1 ELSE 0 END) as bedno_lr"), db.raw("SUM(CASE WHEN " + substr3('bedno.export_code').toString() + " = '609' AND bed_status_type.is_available = 'Y' THEN 1 ELSE 0 END) as bedno_clip"))
+            .where('ward.ward', '<>', '')
+            .whereNotNull('ward.ward')
+            .groupBy([
+            'ward.ward',
+            'ward.name',
+            'ward.ward_export_code',
+            'ward.bedcount',
+            'ward.ward_active'
+        ])
+            .orderBy('ward.ward');
+        result.forEach((item) => {
+            if (!item.bedcount || item.bedcount == 0) {
+                item.active_bed = Number(item.active_bed);
+                item.inactive_bed = Number(item.inactive_bed);
+                item.bedcount = item.active_bed;
+                item.bed_icu = Number(item.bedno_icu);
+                item.bed_semi = Number(item.bedno_semi);
+                item.bed_stroke = Number(item.bedno_stroke);
+                item.bed_burn = Number(item.bedno_burn);
+                item.imc = Number(item.bedno_imc);
+                item.bed_extra = Number(item.bedno_extra);
+                item.bed_minithanyaruk = Number(item.bedno_minithanyaruk);
+                item.bed_special = Number(item.bedno_special);
+                item.homeward = Number(item.bedno_homeward);
+                item.lr = Number(item.bedno_lr);
+                item.clip = Number(item.bedno_clip);
+            }
+            item.bed_normal = item.bedcount - item.bed_icu - item.bed_semi - item.bed_stroke - item.bed_burn - item.imc - item.bed_extra - item.bed_minithanyaruk - item.bed_special - item.homeward - item.lr - item.clip;
+            item.bed_normal = item.bed_normal < 0 ? 0 : item.bed_normal;
+        });
+        return result;
     }
     getDr(db, drCode = '', drName = '') {
         let sql = db('doctor');

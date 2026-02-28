@@ -9,6 +9,7 @@ async function router(fastify) {
     fastify.register(require('./routes/index'), { prefix: "/" });
     fastify.register(require('./routes/his/index'), { prefix: `${rootPrefix}/${hisProviderLower}` });
     fastify.register(require('./routes/his/index'), { prefix: `${rootPrefix}/HIS` });
+    fastify.register(require('./routes/his/ai'), { prefix: `${rootPrefix}/AI`, logger: true });
     fastify.register(require('./routes/refer/v3'), { prefix: `${rootPrefix}/refer` });
     fastify.register(require('./routes/refer/v3'), { prefix: `${rootPrefix}/refer/his` });
     fastify.register(require('./routes/refer/local'), { prefix: `${rootPrefix}/refer/local` });
