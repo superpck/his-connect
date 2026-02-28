@@ -229,7 +229,6 @@ export class HisHosxpv4Model {
       item.bed_normal = item.bedcount - item.bed_icu - item.bed_semi - item.bed_stroke - item.bed_burn - item.imc - item.bed_extra - item.bed_minithanyaruk - item.bed_special - item.homeward - item.lr - item.clip;
       item.bed_normal = item.bed_normal < 0 ? 0 : item.bed_normal;
     });
-    console.log(result);
     return result;
   }
 
