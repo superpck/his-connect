@@ -434,7 +434,6 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
       }
 
       if (moment().hour() == 1 && minuteNow == timeRandom) { // ตี 1 ทุกวัน
-        mophIot.processIoT();
         // mophCMI.processCMI();
       }
 

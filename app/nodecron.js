@@ -206,7 +206,6 @@ async function cronjob(fastify) {
                 (0, moph_erp_1.sendBedNo)();
             }
             if (moment().hour() == 1 && minuteNow == timeRandom) {
-                moph_iot_1.default.processIoT();
             }
             if (timingSchedule['nrefer'].autosend &&
                 minuteSinceLastNight % timingSchedule['nrefer'].minute === 0) {

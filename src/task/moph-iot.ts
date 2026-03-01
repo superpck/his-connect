@@ -111,6 +111,7 @@ async function getData(dateStart: string, dateEnd: string) {
 
         let recno = 0;
         for (let row of rows) {
+          row.input_src = 'IoT';
           for (const key in row) {
             if (key !== key.toLowerCase()) {
               row[key.toLowerCase()] = row[key];
@@ -138,7 +139,7 @@ async function getData(dateStart: string, dateEnd: string) {
           }
           row.datetime_serv = moment(row.date_serv + ' ' + (row.time_serv || '')).format('YYYY-MM-DD HH:mm:ss');
           const sentResult = await sendingToMoph('/save-service', row);
-
+          
           // บันทึกประวัติการส่ง
           if (sentResult && sentResult.statusCode === 200) {
             await markAsSent(row);
