@@ -1,7 +1,11 @@
+# 3.10.0
+## Feature
+  - เพิ่มการส่งข้อมูล Service จาก nRefer ไปยังหมอพร้อม
+
 # 3.9.9
 ## Feature
-  - เพิ่มการส่งข้อมูล Vital sign กรณีเปิดใช้งาน MOPH IoT Data hub
-  - เพิ่มการส่งข้อมูล Appointment กรณีเปิดใช้งาน MOPH Alert for appointment
+  - เพิ่มการส่งข้อมูล Vital sign ไปยัง nRefer กรณีเปิดใช้งาน MOPH IoT Data hub
+  - เพิ่มการส่งข้อมูล Appointment ไปยัง nRefer กรณีเปิดใช้งาน MOPH Alert for appointment
   - ปรับการ getWard
 
 # 3.9.8

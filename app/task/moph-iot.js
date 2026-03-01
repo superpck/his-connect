@@ -99,6 +99,7 @@ async function getData(dateStart, dateEnd) {
                 console.log(moment().format('HH:mm:ss'), 'MOPH IoT Process:', date, ' founded:', opdVisit.length, 'rows');
                 let recno = 0;
                 for (let row of rows) {
+                    row.input_src = 'IoT';
                     for (const key in row) {
                         if (key !== key.toLowerCase()) {
                             row[key.toLowerCase()] = row[key];
