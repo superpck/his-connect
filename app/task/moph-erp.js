@@ -212,11 +212,6 @@ const sendBedNo = async () => {
         } while (startRow < countBed && countBed != 0);
         console.log(moment().format('HH:mm:ss'), `sendBedNo ${countBed} rows (${times} times)`, error);
         console.log('-'.repeat(70));
-        const r = await (0, moph_refer_1.sendingError)({
-            route_name: 'sendBedNo', error_code: '200',
-            error_message: 'no error'
-        });
-        console.log(moment().format('HH:mm:ss'), ' ==> sendBedNo sendingError log result', r.status || '1', r.statusCode || '2', r?.message || '3');
         return { statusCode: 200, sentResult };
     }
     catch (error) {

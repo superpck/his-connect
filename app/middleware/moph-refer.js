@@ -219,7 +219,7 @@ const sendingError = async (dataArray) => {
         'Source-Agent': 'HISConnect-' + (crontabConfig.version || packageJson?.version || 'x') + '-' + (crontabConfig.subVersion || packageJson?.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
     };
     const option = {
-        url, method: 'POST', headers, data: JSON.stringify(dataArray)
+        url, method: 'POST', headers, data: { data: dataArray }
     };
     console.log(option);
     try {
