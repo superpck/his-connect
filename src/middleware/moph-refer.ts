@@ -230,10 +230,10 @@ export const sendingError = async (dataArray: any) => {
   };
   try {
     const { status, data } = await axios(option);
-    console.log('sendingError:', status || data.status || data?.statusCode || 'success');
+    console.log('sendingError to MOPH:', status || data.status || data?.statusCode || 'success');
     return { statusCode: status, ...data };
   } catch (error: any) {
-    console.error('sendingError fail:', error.status || '', error.message);
+    console.error('sendingError to MOPH fail:', error.status || '', error.message);
     return error;
   }
 }

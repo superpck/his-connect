@@ -223,11 +223,11 @@ const sendingError = async (dataArray) => {
     };
     try {
         const { status, data } = await (0, axios_1.default)(option);
-        console.log('sendingError:', status || data.status || data?.statusCode || 'success');
+        console.log('sendingError to MOPH:', status || data.status || data?.statusCode || 'success');
         return { statusCode: status, ...data };
     }
     catch (error) {
-        console.error('sendingError fail:', error.status || '', error.message);
+        console.error('sendingError to MOPH fail:', error.status || '', error.message);
         return error;
     }
 };
