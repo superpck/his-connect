@@ -139,6 +139,10 @@ async function getData(dateStart, dateEnd) {
         } while (date <= moment(dateEnd).format('YYYY-MM-DD'));
     }
     catch (error) {
+        (0, moph_refer_1.sendingError)({
+            route_name: 'processIoT', error_code: error.status || 500,
+            error_message: error.message || ''
+        });
         throw error;
     }
 }

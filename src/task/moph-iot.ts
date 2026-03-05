@@ -2,7 +2,7 @@ import moment = require('moment');
 console.log(moment().format('HH:mm:ss'), process.pid, 'Start MOPH IoT Task');
 
 import { Knex } from 'knex';
-import { sendingToMoph, getHospitalConfig } from '../middleware/moph-refer';
+import { sendingToMoph, getHospitalConfig, sendingError } from '../middleware/moph-refer';
 import hisModel from './../routes/his/hismodel';
 const dbConnection = require('../plugins/db');
 const cacheDbModule = require('../plugins/cache-db');
@@ -153,7 +153,11 @@ async function getData(dateStart: string, dateEnd: string) {
       }
       date = moment(date).add(1, 'day').format('YYYY-MM-DD');
     } while (date <= moment(dateEnd).format('YYYY-MM-DD'))
-  } catch (error) {
+  } catch (error: any) {
+    sendingError({
+      route_name: 'processIoT', error_code: error.status || 500,
+      error_message: error.message || ''
+    });
     throw error;
   }
 }

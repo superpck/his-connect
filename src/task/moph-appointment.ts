@@ -2,7 +2,7 @@ import moment = require('moment');
 console.log(moment().format('HH:mm:ss'), 'Start MOPH Appointment Task');
 
 import { Knex } from 'knex';
-import { sendingToMoph, getHospitalConfig } from '../middleware/moph-refer';
+import { sendingToMoph, getHospitalConfig, sendingError } from '../middleware/moph-refer';
 import hisModel from './../routes/his/hismodel';
 const dbConnection = require('../plugins/db');
 const cacheDbModule = require('../plugins/cache-db');
@@ -145,6 +145,10 @@ async function getData(date: string) {
       console.log(moment().format('HH:mm:ss'), 'MOPH Appointment Process Date:', date, 'No Records Found');
     }
   } catch (error: any) {
+    sendingError({
+      route_name: 'moph-appointment', error_code: error.status || 500,
+      error_message: error.message || ''
+    });
     console.error(moment().format('HH:mm:ss'), 'MOPH Appointment Process Error:', error.message || error);
     return error;
   }

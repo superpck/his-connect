@@ -57,7 +57,7 @@ export const getReferToken = async () => {
 }
 
 export const getHospitalConfig = async () => {
-    const now = moment();
+  const now = moment();
   if (hospitalConfig) {
     const configTime = moment(hospitalConfig.fetchTime || null);
     const diff = now.diff(configTime, 'minutes');
@@ -194,6 +194,42 @@ export const updateAdminRequest = async (updateData: any) => {
   const headers = createHeaders(nReferToken);
   try {
     const { status, data } = await axios.post(url, postData, { headers });
+    return { statusCode: status, ...data };
+  } catch (error) {
+    return error;
+  }
+}
+
+export const sendingError = async (dataArray: any) => {
+  await getReferToken();
+  if (!nReferToken) {
+    return { status: 500, message: 'No nRefer token' };
+  }
+
+  const bodyData = {
+    ip: crontabConfig['client_ip'] || '127.0.0.1',
+    hospcode: hcode, data: JSON.stringify({
+      ...dataArray,
+      hospcode: process.env.HOSPCODE || '',
+      client_detail: {
+        his: process.env.HIS_PROVIDER || '',
+        port: process.env.PORT || '',
+        db: process.env.HIS_DB_CLIENT || ''
+      }
+    }),
+    processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
+    sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version || packageJson?.version, subVersion: crontabConfig.subVersion || packageJson?.subVersion,
+    hisProvider: process.env.HIS_PROVIDER
+  };
+
+  const url = referAPIUrl + '/his-connect/save-error';
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + nReferToken,
+    'Source-Agent': 'HISConnect-' + (crontabConfig.version || packageJson?.version || 'x') + '-' + (crontabConfig.subVersion || packageJson?.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+  };
+  try {
+    const { status, data } = await axios.post(url, bodyData, { headers });
     return { statusCode: status, ...data };
   } catch (error) {
     return error;

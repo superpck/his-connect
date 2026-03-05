@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateAdminRequest = exports.checkAdminRequest = exports.updateHISAlive = exports.sendingToMoph = exports.taskFunction = exports.getHospitalConfig = exports.getReferToken = void 0;
+exports.sendingError = exports.updateAdminRequest = exports.checkAdminRequest = exports.updateHISAlive = exports.sendingToMoph = exports.taskFunction = exports.getHospitalConfig = exports.getReferToken = void 0;
 const axios_1 = require("axios");
 const moment = require("moment");
 const crypto_1 = require("crypto");
@@ -195,6 +195,41 @@ const updateAdminRequest = async (updateData) => {
     }
 };
 exports.updateAdminRequest = updateAdminRequest;
+const sendingError = async (dataArray) => {
+    await (0, exports.getReferToken)();
+    if (!nReferToken) {
+        return { status: 500, message: 'No nRefer token' };
+    }
+    const bodyData = {
+        ip: crontabConfig['client_ip'] || '127.0.0.1',
+        hospcode: hcode, data: JSON.stringify({
+            ...dataArray,
+            hospcode: process.env.HOSPCODE || '',
+            client_detail: {
+                his: process.env.HIS_PROVIDER || '',
+                port: process.env.PORT || '',
+                db: process.env.HIS_DB_CLIENT || ''
+            }
+        }),
+        processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
+        sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version || packageJson?.version, subVersion: crontabConfig.subVersion || packageJson?.subVersion,
+        hisProvider: process.env.HIS_PROVIDER
+    };
+    const url = referAPIUrl + '/his-connect/save-error';
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + nReferToken,
+        'Source-Agent': 'HISConnect-' + (crontabConfig.version || packageJson?.version || 'x') + '-' + (crontabConfig.subVersion || packageJson?.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+    };
+    try {
+        const { status, data } = await axios_1.default.post(url, bodyData, { headers });
+        return { statusCode: status, ...data };
+    }
+    catch (error) {
+        return error;
+    }
+};
+exports.sendingError = sendingError;
 function createPostData(dataArray) {
     return {
         ip: crontabConfig['client_ip'] || (0, utils_1.getIP)() || '127.0.0.1',

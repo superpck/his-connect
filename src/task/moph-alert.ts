@@ -1,5 +1,5 @@
 import moment = require("moment");
-import { getHospitalConfig, sendingToMoph } from "../middleware/moph-refer";
+import { getHospitalConfig, sendingToMoph, sendingError } from "../middleware/moph-refer";
 import hisModel from './../routes/his/hismodel';
 import { Knex } from 'knex';
 import {
@@ -39,7 +39,11 @@ export const mophAlertSurvey = async (date: any = null) => {
       await opdVisit(date);
     }
     console.log('-'.repeat(70));
-  } catch (error) {
+  } catch (error: any) {
+    sendingError({
+      route_name: 'mophAlertSurvey', error_code: error.status || 500,
+      error_message: error.message || ''
+    });
     console.log(moment().format('HH:mm:ss'), 'getVisitForMophAlert error', error.message);
     console.log('-'.repeat(70));
     return [];
