@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import * as moment from 'moment';
+import moment from 'moment';
 
 const maxLimit = 250;
 const hn_len = +process.env.HN_LENGTH || 6;

@@ -1,9 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const http_status_codes_1 = require("http-status-codes");
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 var crypto = require('crypto');
-const hismodel_1 = require("./../his/hismodel");
+const hismodel_1 = __importDefault(require("./../his/hismodel"));
 const router = (fastify, {}, next) => {
     fastify.get('/', async (req, reply) => {
         reply.send({
@@ -51,7 +54,7 @@ const router = (fastify, {}, next) => {
         }
     });
     fastify.post('/sum-referout', { preHandler: [fastify.authenticate] }, async (req, reply) => {
-        const now = moment().locale('th').format('YYYY-MM-DD');
+        const now = (0, moment_1.default)().locale('th').format('YYYY-MM-DD');
         const dateStart = req.body.dateStart || now;
         const dateEnd = req.body.dateEnd || now;
         try {
@@ -64,7 +67,7 @@ const router = (fastify, {}, next) => {
         }
     });
     fastify.post('/referout', { preHandler: [fastify.authenticate] }, async (req, reply) => {
-        const now = moment().locale('th').format('YYYY-MM-DD');
+        const now = (0, moment_1.default)().locale('th').format('YYYY-MM-DD');
         const date = req.body.date || now;
         const hospcode = req.body.hospcode || process.env.HOSPCODE;
         const visitNo = req.body.visitNo || null;
@@ -87,7 +90,7 @@ const router = (fastify, {}, next) => {
             return;
         }
         try {
-            const now = moment().locale('th').format('YYYY-MM-DD HH:mm:ss');
+            const now = (0, moment_1.default)().locale('th').format('YYYY-MM-DD HH:mm:ss');
             let typeSearch = 'hn';
             let textSearch = hn;
             if (cid) {
@@ -430,7 +433,7 @@ const router = (fastify, {}, next) => {
         }
     });
     fastify.post('/sum-referin', { preHandler: [fastify.authenticate] }, async (req, reply) => {
-        const now = moment().locale('th').format('YYYY-MM-DD');
+        const now = (0, moment_1.default)().locale('th').format('YYYY-MM-DD');
         const dateStart = req.body.dateStart || now;
         const dateEnd = req.body.dateEnd || now;
         try {

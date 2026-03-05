@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisHaosModel = void 0;
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 class HisHaosModel {
@@ -1252,7 +1255,7 @@ class HisHaosModel {
         return result[0];
     }
     getReferResult(db, visitDate, hospCode = hcode) {
-        visitDate = moment(visitDate).format('YYYY-MM-DD');
+        visitDate = (0, moment_1.default)(visitDate).format('YYYY-MM-DD');
         return db('referin')
             .leftJoin('patient', 'referin.hn', 'patient.hn')
             .leftJoin('ovst', 'referin.vn', 'ovst.vn')
@@ -1329,7 +1332,7 @@ class HisHaosModel {
         return [];
     }
     async getVisitForMophAlert(db, date, isRowCount = false, startRow = -1, limit = 100) {
-        const formattedDate = moment(date).locale('th').format('YYYY-MM-DD');
+        const formattedDate = (0, moment_1.default)(date).locale('th').format('YYYY-MM-DD');
         const baseQuery = db('TB_OPD_SERVICES as a')
             .leftJoin('TB_PATIENTS as p', 'a.PatientId', 'p.PatientId')
             .leftJoin('TB_OPD_CLINICS as c', 'a.ServiceId', 'c.ServiceId')

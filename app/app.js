@@ -1,4 +1,7 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require('node:fs');
 checkConfigFile();
@@ -8,9 +11,9 @@ require('dotenv').config({
     quiet: true
 });
 const http_status_codes_1 = require("http-status-codes");
-const fastify_1 = require("fastify");
-const moment = require("moment");
-const nodecron_1 = require("./nodecron");
+const fastify_1 = __importDefault(require("fastify"));
+const moment_1 = __importDefault(require("moment"));
+const nodecron_1 = __importDefault(require("./nodecron"));
 const serveStatic = require('serve-static');
 var crypto = require('crypto');
 const utils_1 = require("./middleware/utils");
@@ -57,7 +60,7 @@ app.register(require('@fastify/view'), {
 app.register(require('@fastify/jwt'), {
     secret: process.env.SECRET_KEY
 });
-global.apiStartTime = moment().format('YYYY-MM-DD HH:mm:ss');
+global.apiStartTime = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss');
 global.mophService = require('./routes/main/crontab')(global.mophService, {});
 global.firstProcessPid = 0;
 global.mophService = null;
@@ -73,7 +76,7 @@ app.decorate("authenticate", async (request, reply) => {
         request.authenDecoded = request.user;
     }
     catch (err) {
-        console.error(moment().format('HH:mm:ss.SSS'), request.ipAddr, 'Error client try to access API ' + http_status_codes_1.StatusCodes.UNAUTHORIZED, `message: '${err.message}'`);
+        console.error((0, moment_1.default)().format('HH:mm:ss.SSS'), request.ipAddr, 'Error client try to access API ' + http_status_codes_1.StatusCodes.UNAUTHORIZED, `message: '${err.message}'`);
         reply.send({
             statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED,
             message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED)
@@ -114,7 +117,7 @@ app.addHook('onRequest', async (req, reply) => {
     }
 });
 app.addHook('preHandler', async (request, reply) => {
-    console.log(moment().format('HH:mm:ss.SSS'), request.ipAddr, request?.geo?.country || 'unk', request.method, request.url);
+    console.log((0, moment_1.default)().format('HH:mm:ss.SSS'), request.ipAddr, request?.geo?.country || 'unk', request.method, request.url);
 });
 app.addHook('onSend', async (request, reply, payload) => {
     const headers = {
@@ -135,7 +138,7 @@ app.listen(options, (err) => {
     if (err)
         throw err;
     const instanceId = process.env.NODE_APP_INSTANCE || '0';
-    console.info(`${moment().format('HH:mm:ss')} HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid} with NodeJS: ${process.version || ''}, Instance: ${instanceId}`);
+    console.info(`${(0, moment_1.default)().format('HH:mm:ss')} HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid} with NodeJS: ${process.version || ''}, Instance: ${instanceId}`);
 });
 async function connectDB() {
     const dbClient = process.env.HIS_DB_CLIENT;
@@ -169,7 +172,7 @@ async function connectDB() {
         else {
             date = result[0]?.[0]?.date;
         }
-        console.info(`   🔗 PID:${process.pid} >> HIS DB server '${dbClient}' connected, date/time on DB server:`, moment(date).format('YYYY-MM-DD HH:mm:ss'));
+        console.info(`   🔗 PID:${process.pid} >> HIS DB server '${dbClient}' connected, date/time on DB server:`, (0, moment_1.default)(date).format('YYYY-MM-DD HH:mm:ss'));
     }
     catch (error) {
         console.error(`   ❌ PID:${process.pid} >> HIS DB server '${dbClient}' connect error: `, error.message);

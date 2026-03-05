@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const http_status_codes_1 = require("http-status-codes");
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 var http = require('http');
 var querystring = require('querystring');
 const request = require('request');
@@ -9,7 +12,7 @@ let apiVersion = global.appDetail.version;
 let subVersion = global.appDetail.subVersion;
 const router = (fastify, {}, next) => {
     fastify.get('/sending-process/:?date', async (req, reply) => {
-        const now = moment().locale('th').format('YYYY-MM-DD');
+        const now = (0, moment_1.default)().locale('th').format('YYYY-MM-DD');
         const trust = req.headers.host.search('localhost|127.0.0.1') > -1;
         const apiKey = process.env?.MOPH_ERP_APIKEY || process.env.NREFER_APIKEY;
         const secretKey = process.env?.MOPH_ERP_SECRETKEY || process.env.NREFER_SECRETKEY;
@@ -98,7 +101,7 @@ async function getToken(apiKey, secretKey) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            'Source-Agent': 'HISConnect-' + apiVersion + '-' + subVersion + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+            'Source-Agent': 'HISConnect-' + apiVersion + '-' + subVersion + '-' + (process.env.HOSPCODE || 'hosp') + '-' + (0, moment_1.default)().format('x') + '-' + Math.random().toString(36).substring(2, 10),
             'Content-Length': Buffer.byteLength(postData)
         }
     };

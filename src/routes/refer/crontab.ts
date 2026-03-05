@@ -6,7 +6,7 @@ require('dotenv').config({
 });
 
 var fastify = require('fastify');
-import * as moment from 'moment';
+import moment from 'moment';
 import axios from 'axios';
 import hisModel from './../his/hismodel';
 import { Knex } from 'knex';

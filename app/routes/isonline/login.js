@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const http_status_codes_1 = require("http-status-codes");
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const crypto = require('crypto');
 const login_1 = require("../../models/isonline/login");
 const loginModel = new login_1.IsLoginModel();
@@ -15,8 +18,8 @@ const router = (fastify, {}, next) => {
                 let encPassword = await crypto.createHash('sha256').update(password).digest('hex');
                 const results = await loginModel.doLogin(global.dbISOnline, username, encPassword);
                 if (results.length) {
-                    let today = moment().locale('th').format('YYYY-MM-DD HH:mm:ss');
-                    let expire = moment().locale('th').add(12, 'hours').format('YYYY-MM-DD HH:mm:ss');
+                    let today = (0, moment_1.default)().locale('th').format('YYYY-MM-DD HH:mm:ss');
+                    let expire = (0, moment_1.default)().locale('th').add(12, 'hours').format('YYYY-MM-DD HH:mm:ss');
                     const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
                     const payload = {
                         fullname: results[0].prename + results[0].fname + ' ' + results[0].lname,
@@ -94,8 +97,8 @@ const router = (fastify, {}, next) => {
         const ip = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;
         console.log('api-login', ip, ipAddr);
         if (['203.157.103.55', '::1', '127.0.0.1'].indexOf(ip) >= 0 && username.length == 5 && password) {
-            let today = moment().format('YYYY-MM-DD HH:mm:ss');
-            let expire = moment().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
+            let today = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss');
+            let expire = (0, moment_1.default)().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
             const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
             const payload = {
                 hcode: username,
@@ -123,8 +126,8 @@ const router = (fastify, {}, next) => {
             try {
                 await checkLoginCode(loginCode)
                     .then((data) => {
-                    let today = moment().format('YYYY-MM-DD HH:mm:ss');
-                    let expire = moment().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
+                    let today = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss');
+                    let expire = (0, moment_1.default)().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
                     const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
                     const payload = {
                         hcode: process.env.HOSPCODE,

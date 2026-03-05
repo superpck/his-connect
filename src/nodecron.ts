@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import * as moment from 'moment';
+import moment from 'moment';
 import { execSync } from 'child_process';
 import { sendWardName, sendBedNo, sendBedOccupancy, updateAlive, erpAdminRequest, mophErpProcessTask } from "./task/moph-erp";
 import mophIot from "./task/moph-iot";

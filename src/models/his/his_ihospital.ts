@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import * as moment from 'moment';
+import moment from 'moment';
 const maxLimit = 1000;
 const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;

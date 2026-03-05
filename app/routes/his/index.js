@@ -1,8 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const http_status_codes_1 = require("http-status-codes");
-const moment = require("moment");
-const hismodel_1 = require("./hismodel");
+const moment_1 = __importDefault(require("moment"));
+const hismodel_1 = __importDefault(require("./hismodel"));
 const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 const jwt_1 = require("./../../plugins/jwt");
 var jwt = new jwt_1.Jwt();
@@ -140,7 +143,7 @@ const router = (fastify, {}, next) => {
         }
     });
     fastify.post('/referout', { preHandler: [fastify.authenticate] }, async (req, reply) => {
-        const now = moment().locale('th').format('YYYY-MM-DD');
+        const now = (0, moment_1.default)().locale('th').format('YYYY-MM-DD');
         const body = req.body || {};
         const date = body.date || now;
         const hospcode = body.hospcode || process.env.HOSPCODE;
@@ -154,7 +157,7 @@ const router = (fastify, {}, next) => {
         }
     });
     fastify.post('/referout-compress', { preHandler: [fastify.authenticate], compress: false }, async (req, reply) => {
-        const now = moment().locale('th').format('YYYY-MM-DD');
+        const now = (0, moment_1.default)().locale('th').format('YYYY-MM-DD');
         const body = req.body || {};
         const date = body.date || now;
         const hospcode = body.hospcode || process.env.HOSPCODE;
@@ -177,7 +180,7 @@ const router = (fastify, {}, next) => {
         const cid = body.cid;
         const hospcode = body.hospcode || process.env.HOSPCODE;
         try {
-            const now = moment().locale('th').format('YYYY-MM-DD HH:mm:ss');
+            const now = (0, moment_1.default)().locale('th').format('YYYY-MM-DD HH:mm:ss');
             let typeSearch = 'hn';
             let textSearch = hn;
             if (cid) {

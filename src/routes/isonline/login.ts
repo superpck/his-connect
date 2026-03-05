@@ -1,5 +1,5 @@
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
-import * as moment from 'moment';
+import moment from 'moment';
 const crypto = require('crypto');
 
 import { IsLoginModel } from '../../models/isonline/login';

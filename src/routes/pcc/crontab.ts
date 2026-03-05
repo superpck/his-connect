@@ -1,5 +1,5 @@
 var fastify = require('fastify');
-import * as moment from 'moment';
+import moment from 'moment';
 var fs = require('fs');
 var http = require('http');
 var querystring = require('querystring');

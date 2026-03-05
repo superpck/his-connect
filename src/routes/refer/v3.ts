@@ -1,6 +1,6 @@
 // ห้ามแก้ไข file นี้ // 
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
-import * as moment from 'moment';
+import moment from 'moment';
 var crypto = require('crypto');
 import hisModel from './../his/hismodel';
 

@@ -1,5 +1,5 @@
 import { Knex } from "knex";
-import * as moment from "moment";
+import moment from "moment";
 
 const maxLimit = 500;
 const dbName = process.env.THAI_REFER_DB_NAME;

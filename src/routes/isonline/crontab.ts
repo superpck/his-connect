@@ -1,6 +1,6 @@
 var fastify = require('fastify');
 import axios from 'axios';
-import * as moment from 'moment';
+import moment from 'moment';
 import { IswinModel } from '../../models/isonline/iswin';
 var iswin = new IswinModel();
 

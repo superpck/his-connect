@@ -1,9 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const moment = require("moment");
 console.log(moment().format('HH:mm:ss'), process.pid, 'Start MOPH IoT Task');
 const moph_refer_1 = require("../middleware/moph-refer");
-const hismodel_1 = require("./../routes/his/hismodel");
+const hismodel_1 = __importDefault(require("./../routes/his/hismodel"));
 const dbConnection = require('../plugins/db');
 const cacheDbModule = require('../plugins/cache-db');
 const cacheDb = cacheDbModule.default || cacheDbModule;

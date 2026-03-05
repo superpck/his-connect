@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getCacheStats = exports.cleanupOldRecords = exports.insertSentVns = exports.getExistingVns = exports.initializeCacheDb = void 0;
-const knex_1 = require("knex");
+const knex_1 = __importDefault(require("knex"));
 const path = require("path");
 const fs = require("fs");
 const moment = require("moment");

@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisMyPcuModel = void 0;
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 class HisMyPcuModel {
@@ -203,7 +206,7 @@ class HisMyPcuModel {
     }
     getReferResult(db, visitDate, hospCode = hcode) {
         let ret = [];
-        visitDate = moment(visitDate).format('YYYY-MM-DD');
+        visitDate = (0, moment_1.default)(visitDate).format('YYYY-MM-DD');
         return [];
     }
     async getProvider(db, columnName, searchNo, hospCode = hcode) {

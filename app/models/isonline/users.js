@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.IsUserModel = void 0;
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 class IsUserModel {
     list(knex, id) {
         if (id > 0) {
@@ -49,13 +52,13 @@ class IsUserModel {
         return knex.raw(sql);
     }
     saveUser(knex, id, arrData) {
-        arrData.updated_at = moment().format('x');
+        arrData.updated_at = (0, moment_1.default)().format('x');
         if (id > 0) {
             return knex('is_user').update(arrData)
                 .where('id', '=', id);
         }
         else {
-            arrData.created_at = moment().format('x');
+            arrData.created_at = (0, moment_1.default)().format('x');
             return knex('is_user').insert(arrData, 'id');
         }
     }

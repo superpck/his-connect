@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import * as moment from 'moment';
+import moment from 'moment';
 
 export class MophModel {
 }

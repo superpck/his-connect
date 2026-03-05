@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisInfodModel = void 0;
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const dbName = process.env.HIS_DB_NAME;
 const maxLimit = 100;
 class HisInfodModel {
@@ -40,7 +43,7 @@ class HisInfodModel {
         return [result[0]];
     }
     getOpdService(db, hn, date, columnName = '', searchText = '') {
-        date = (moment(date).get('year') + 543) + '' + moment(date).format("MMDD");
+        date = ((0, moment_1.default)(date).get('year') + 543) + '' + (0, moment_1.default)(date).format("MMDD");
         return db('dbo.OPD_H AS OH')
             .leftOuterJoin(db.raw('dbo.Bill_h AS BH ON BH.hn = OH.hn AND BH.regNo = OH.regNo'))
             .leftOuterJoin('dbo.PATIENT AS PT', 'PT.hn', 'OH.hn')

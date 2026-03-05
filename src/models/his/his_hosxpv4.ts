@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import * as moment from 'moment';
+import moment from 'moment';
 
 const maxLimit = 1000;
 let hisHospcode = process.env.HOSPCODE;
@@ -7,20 +7,25 @@ const hisVersion = process.env.HIS_PROVIDER.toLowerCase() == 'hosxpv3' ? '3' : '
 const dbClient = process.env.HIS_DB_CLIENT ? process.env.HIS_DB_CLIENT.toLowerCase() : 'mysql2';
 let hospcodeConfig = null;
 
-const getDatetimeExpr = (db: Knex, dateCol: string, timeCol: string): any => {
+const getDatetimeExpr = (db: Knex, dateCol: string, timeCol: string): { sql: string } => {
   const clientType = (db.client?.config?.client || dbClient).toLowerCase();
+  let sql: string;
   switch (clientType) {
     case 'pg':
     case 'postgres':
     case 'postgresql':
-      return db.raw(`${dateCol}::text || ' ' || ${timeCol}::text`);
+      sql = `${dateCol}::text || ' ' || ${timeCol}::text`;
+      break;
     case 'mssql':
-      return db.raw(`CAST(${dateCol} AS VARCHAR) + ' ' + CAST(${timeCol} AS VARCHAR)`);
+      sql = `CAST(${dateCol} AS VARCHAR) + ' ' + CAST(${timeCol} AS VARCHAR)`;
+      break;
     case 'oracledb':
-      return db.raw(`${dateCol} || ' ' || ${timeCol}`);
+      sql = `${dateCol} || ' ' || ${timeCol}`;
+      break;
     default:
-      return db.raw(`CONCAT(${dateCol}, ' ', ${timeCol})`);
+      sql = `CONCAT(${dateCol}, ' ', ${timeCol})`;
   }
+  return { sql };
 };
 
 const getHospcode = async () => {

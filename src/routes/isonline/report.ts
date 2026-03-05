@@ -1,6 +1,6 @@
 import * as fastify from 'fastify';
 import * as HttpStatus from 'http-status-codes';
-import * as moment from 'moment';
+import moment from 'moment';
 
 import { IsReportModel } from '../../models/isonline/report';
 const reportModel = new IsReportModel;

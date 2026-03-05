@@ -1,4 +1,4 @@
-import moment = require("moment");
+import moment from 'moment';
 import { sendingToMoph, updateHISAlive, checkAdminRequest, updateAdminRequest, taskFunction, getHospitalConfig, sendingError } from "../middleware/moph-refer";
 import hisModel from './../routes/his/hismodel';
 import { Knex } from 'knex';

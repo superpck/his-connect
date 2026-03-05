@@ -1,7 +1,7 @@
 // ห้ามแก้ไข file นี้ // 
 // import * as fastify from 'fastify';
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
-import * as moment from 'moment';
+import moment from 'moment';
 var http = require('http');
 var querystring = require('querystring');
 const request = require('request');

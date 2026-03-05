@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
 import { IisStructure } from '../model';
-import * as moment from 'moment';
+import moment from 'moment';
 const dbName = process.env.DB_NAME;
 const defaultHCode = process.env.HOSPCODE;
 

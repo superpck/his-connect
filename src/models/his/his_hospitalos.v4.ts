@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import * as moment from 'moment-timezone';
+import moment = require('moment-timezone');
 const dbName = process.env.HIS_DB_NAME;
 
 const maxLimit = 250;

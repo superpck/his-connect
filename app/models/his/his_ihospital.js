@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisIHospitalModel = void 0;
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const maxLimit = 1000;
 const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
@@ -443,13 +446,13 @@ class HisIHospitalModel {
         }
         if (columnName === "fu_date" || columnName === "visit_date") {
             if (Array.isArray(searchValue)) {
-                searchValue = searchValue.map((d) => moment(d).format("YYYY-MM-DD"));
+                searchValue = searchValue.map((d) => (0, moment_1.default)(d).format("YYYY-MM-DD"));
             }
             else {
-                searchValue = moment(searchValue).format("YYYY-MM-DD");
+                searchValue = (0, moment_1.default)(searchValue).format("YYYY-MM-DD");
             }
         }
-        lastupdateLimit = lastupdateLimit || moment().subtract(120, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+        lastupdateLimit = lastupdateLimit || (0, moment_1.default)().subtract(120, 'minutes').format('YYYY-MM-DD HH:mm:ss');
         let query = db({ o: "view_opd_fu" });
         if (Array.isArray(searchValue)) {
             query = query.whereIn(mapped, searchValue);
@@ -497,7 +500,7 @@ class HisIHospitalModel {
                     + detail.text;
             }
             row.apvisit_area = (row.fu_dep_building ? row.fu_dep_building : '') + (row.fu_dep_floor ? ' ชั้น ' + row.fu_dep_floor : '');
-            row.visit_date = moment(row.visit_date).format('YYYY-MM-DD HH:mm:ss');
+            row.visit_date = (0, moment_1.default)(row.visit_date).format('YYYY-MM-DD HH:mm:ss');
             delete row.fu_dep_building;
             delete row.fu_dep_floor;
             delete row.detail_js;
@@ -560,7 +563,7 @@ class HisIHospitalModel {
             .limit(maxLimit);
     }
     getReferResult(db, visitDate, hospCode = hisHospcode) {
-        visitDate = moment(visitDate).format('YYYY-MM-DD');
+        visitDate = (0, moment_1.default)(visitDate).format('YYYY-MM-DD');
         return db('view_opd_visit as visit')
             .leftJoin('refer_in', 'visit.vn', 'refer_in.vn')
             .select(db.raw(`(select hcode from sys_hospital) as HOSPCODE`), 'visit.refer as HOSP_SOURCE', 'visit.refer_no as REFERID_SOURCE', db.raw('concat(visit.refer,visit.refer_no) as REFERID_PROVINCE'), 'visit.date as DATETIME_IN', 'visit.hn as PID_IN', 'visit.vn as SEQ_IN', 'visit.ipd_an as AN_IN', 'visit.no_card as CID_IN', 'refer_in.refer_in as REFERID', 'visit.dx1 as detail', 'visit.dr_note as reply_diagnostic', 'visit.lastupdate as reply_date', db.raw('1 as REFER_RESULT'), db.raw(`concat(visit.date,' ',visit.time) as D_UPDATE`), 'visit.dr as PROVIDER', 'visit.dr')
@@ -624,9 +627,9 @@ class HisIHospitalModel {
         });
     }
     concurrentIPDByWard(db, date) {
-        const dateAdmitLimit = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
-        const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
-        const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        const dateAdmitLimit = (0, moment_1.default)(date).subtract(1, 'year').format('YYYY-MM-DD');
+        const dateStart = (0, moment_1.default)(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        const dateEnd = (0, moment_1.default)(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
         let sql = db('view_ipd_ipd4 as ip')
             .select('ip.ward as wardcode', 'ward_name as wardname', db.raw('SUBSTRING(ip.ward_std,2,2) as clinic'), db.raw('SUM(CASE WHEN ip.dateadm BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_case', [dateStart, dateEnd]), db.raw('SUM(CASE WHEN ip.disc_and_estimate BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge', [dateStart, dateEnd]), db.raw("SUM(CASE WHEN ip.refer IS NOT NULL AND ip.refer != '' THEN 1 ELSE 0 END) AS referin"), db.raw('SUM(CASE WHEN ip.disc_and_estimate BETWEEN ? AND ? THEN adjrw ELSE 0 END) AS adjrw', [dateStart, dateEnd]), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,1)='2' THEN 1 ELSE 0 END) AS icu`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,1)='3' THEN 1 ELSE 0 END) AS semi`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,1)='5' THEN 1 ELSE 0 END) AS burn`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,3) IN ('601','602') THEN 1 ELSE 0 END) AS imc`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,3)='604' THEN 1 ELSE 0 END) AS minithanyaruk`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,3)='607' THEN 1 ELSE 0 END) AS homeward`), db.raw('SUM(CASE WHEN ip.disc_and_estimate BETWEEN ? AND ? AND LEFT(ip.stat_dsc,1) IN ("8","9") THEN 1 ELSE 0 END) AS death', [dateStart, dateEnd]))
             .count('* as cases')
@@ -641,8 +644,8 @@ class HisIHospitalModel {
         return sql.groupBy('ip.ward').orderBy('ip.ward');
     }
     concurrentIPDByClinic(db, date) {
-        const dateAdmitLimit = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
-        date = moment(date).format('YYYY-MM-DD');
+        const dateAdmitLimit = (0, moment_1.default)(date).subtract(1, 'year').format('YYYY-MM-DD');
+        date = (0, moment_1.default)(date).format('YYYY-MM-DD');
         let sql = db('view_ipd_ipd as ip')
             .select('clinic_hdc_name as clinicname', db.raw('CASE WHEN clinic_hdc_code IS NULL OR clinic_hdc_code=\'\' OR clinic_hdc_code=\'99\' THEN SUBSTRING(ward_std,2,2) ELSE clinic_hdc_code END AS cliniccode'), db.raw('SUM(CASE WHEN ip.admite = ? THEN 1 ELSE 0 END) AS new_case', [date]), db.raw('SUM(CASE WHEN ip.disc = ? THEN 1 ELSE 0 END) AS discharge', [date]), db.raw('SUM(CASE WHEN ip.refer IS NOT NULL AND ip.refer != \'\' THEN 1 ELSE 0 END) AS referin'), db.raw('SUM(CASE WHEN ip.disc = ? THEN adjrw ELSE 0 END) AS adjrw', [date]), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,1)='2' THEN 1 ELSE 0 END) AS icu`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,1)='3' THEN 1 ELSE 0 END) AS semi`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,1)='4' THEN 1 ELSE 0 END) AS stroke`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,1)='5' THEN 1 ELSE 0 END) AS burn`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,3) IN ('601','602') THEN 1 ELSE 0 END) AS imc`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,3)='604' THEN 1 ELSE 0 END) AS minithanyaruk`), db.raw(`SUM(CASE WHEN SUBSTRING(ip.moph_code,4,3)='607' THEN 1 ELSE 0 END) AS homeward`), db.raw('SUM(CASE WHEN LEFT(ip.stat_dsc,1) IN ("8","9") THEN 1 ELSE 0 END) AS death'))
             .count('* as cases')
@@ -654,7 +657,7 @@ class HisIHospitalModel {
         return sql.groupBy('cliniccode').orderBy('cliniccode');
     }
     sumOpdVisitByClinic(db, date) {
-        date = moment(date).format('YYYY-MM-DD');
+        date = (0, moment_1.default)(date).format('YYYY-MM-DD');
         let sql = db('view_opd_visit as visit')
             .select('visit.date', db.raw("CASE WHEN clinic_std IS NULL OR clinic_std = '' THEN '99' ELSE SUBSTRING(visit.clinic_std, 2, 2) END as cliniccode"), 'visit.dxclinic_name as clinicname', db.raw("SUM(CASE WHEN visit.ipd_an IS NULL OR visit.ipd_an = '' THEN 0 ELSE 1 END) AS admit"))
             .count('* as cases')
@@ -662,7 +665,7 @@ class HisIHospitalModel {
         return sql.groupBy('cliniccode').orderBy('cliniccode');
     }
     async getVisitForMophAlert(db, date, isRowCount = false, startRow = -1, limit = 100) {
-        date = moment(date).locale('th').format('YYYY-MM-DD');
+        date = (0, moment_1.default)(date).locale('th').format('YYYY-MM-DD');
         const isMSSQL = dbClient === 'mssql';
         const isPostgreSQL = dbClient === 'pg' || dbClient === 'postgres' || dbClient === 'postgresql';
         const isOracle = dbClient === 'oracledb' || dbClient === 'oracle';

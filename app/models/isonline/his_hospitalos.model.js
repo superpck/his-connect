@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisHospitalOsModel = void 0;
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const dbName = process.env.HIS_DB_NAME;
 const maxLimit = 100;
 let hospcode = process.env.HOSPCODE;
@@ -38,7 +41,7 @@ class HisHospitalOsModel {
         if (!date) {
             throw new Error('Invalid parameters: date is required');
         }
-        const formattedDate = moment(date).locale('TH').format('YYYY-MM-DD');
+        const formattedDate = (0, moment_1.default)(date).locale('TH').format('YYYY-MM-DD');
         const result = await knex.raw('SELECT * FROM his_connect.fn_get_opd_service_model(?, ?, ?, ?, ?)', [hn || null, formattedDate, columnName || null, searchText || null, maxLimit]);
         return result.rows;
     }
@@ -54,7 +57,7 @@ class HisHospitalOsModel {
         if (!date) {
             throw new Error('Invalid parameters: date is required');
         }
-        const formattedDate = moment(date).locale('TH').format('YYYY-MM-DD');
+        const formattedDate = (0, moment_1.default)(date).locale('TH').format('YYYY-MM-DD');
         const result = await db.raw('SELECT * FROM his_connect.fn_get_diagnosis_opd_vwxy_model(?, ?)', [formattedDate, maxLimit]);
         return result.rows;
     }

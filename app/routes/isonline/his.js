@@ -1,4 +1,7 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const http_status_codes_1 = require("http-status-codes");
 const his_model_1 = require("./../../models/isonline/his.model");
@@ -96,7 +99,7 @@ switch (provider) {
     default:
         hisModel = new his_model_1.HisModel();
 }
-const hismodel_1 = require("./../his/hismodel");
+const hismodel_1 = __importDefault(require("./../his/hismodel"));
 const his_mitnet_1 = require("../../models/his/his_mitnet");
 const his_vpm_1 = require("../../models/his/his_vpm");
 const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb',

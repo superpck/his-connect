@@ -1,8 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var fastify = require('fastify');
-const axios_1 = require("axios");
-const moment = require("moment");
+const axios_1 = __importDefault(require("axios"));
+const moment_1 = __importDefault(require("moment"));
 const iswin_1 = require("../../models/isonline/iswin");
 var iswin = new iswin_1.IswinModel();
 let crontabConfig = global.appDetail;
@@ -12,19 +15,19 @@ async function sendMoph(req, reply, db) {
         let token = null;
         let result = await getIsToken();
         if (!result || result.statusCode != 200) {
-            console.log(moment().format('HH:mm:ss'), `IS autosend 'fail'. ${result.message}`);
+            console.log((0, moment_1.default)().format('HH:mm:ss'), `IS autosend 'fail'. ${result.message}`);
         }
         else {
             token = result.token;
         }
         let dateStart;
-        if (moment().get('hour') == 4) {
-            dateStart = moment().subtract(29, 'hours').format('YYYY-MM-DD HH:mm:ss');
+        if ((0, moment_1.default)().get('hour') == 4) {
+            dateStart = (0, moment_1.default)().subtract(29, 'hours').format('YYYY-MM-DD HH:mm:ss');
         }
         else {
-            dateStart = moment().subtract(6, 'hours').format('YYYY-MM-DD HH:mm:ss');
+            dateStart = (0, moment_1.default)().subtract(6, 'hours').format('YYYY-MM-DD HH:mm:ss');
         }
-        const dateEnd = moment().format('YYYY-MM-DD HH:mm:ss');
+        const dateEnd = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss');
         const isData = await iswin.getByDate(db, 'lastupdate', dateStart, dateEnd, process.env.HOSPCODE);
         if (isData && isData.length) {
             for (let row of isData) {

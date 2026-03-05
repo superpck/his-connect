@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.IsLoginModel = void 0;
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const dbName = process.env.DB_NAME;
 class IsLoginModel {
     doLogin(db, username, password) {
@@ -15,7 +18,7 @@ class IsLoginModel {
             .limit(1);
     }
     checkToken(knex, token) {
-        let today = moment().locale('th').format('YYYY-MM-DD HH:mm:ss');
+        let today = (0, moment_1.default)().locale('th').format('YYYY-MM-DD HH:mm:ss');
         return knex('is_token as token')
             .leftJoin('is_user as user', 'token.uid', 'user.id')
             .select('user.id as uid', 'token.token', 'token.created_at', 'token.expire', 'token.type', 'user.hcode', 'user.prename', 'user.fname', 'user.lname', 'user.position', 'user.position_level', 'user.user_level', 'user.department')

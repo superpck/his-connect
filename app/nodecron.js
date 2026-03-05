@@ -1,13 +1,16 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = cronjob;
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const child_process_1 = require("child_process");
 const moph_erp_1 = require("./task/moph-erp");
-const moph_iot_1 = require("./task/moph-iot");
+const moph_iot_1 = __importDefault(require("./task/moph-iot"));
 const moph_alert_1 = require("./task/moph-alert");
-const moph_starter_1 = require("./task/moph-starter");
-const moph_appointment_1 = require("./task/moph-appointment");
+const moph_starter_1 = __importDefault(require("./task/moph-starter"));
+const moph_appointment_1 = __importDefault(require("./task/moph-appointment"));
 const shell = require("shelljs");
 const cron = require('node-cron');
 const referCrontab = require('./routes/refer/crontab');
@@ -31,13 +34,13 @@ const jobQueue = {
     sendISOnline: { isRunning: false },
 };
 function getTimestamp() {
-    return moment().format('HH:mm:ss');
+    return (0, moment_1.default)().format('HH:mm:ss');
 }
 function getMinutesSinceMidnight() {
-    return moment().hours() * 60 + moment().minutes();
+    return (0, moment_1.default)().hours() * 60 + (0, moment_1.default)().minutes();
 }
 function getCurrentMinute() {
-    return moment().minutes() === 0 ? 60 : moment().minutes();
+    return (0, moment_1.default)().minutes() === 0 ? 60 : (0, moment_1.default)().minutes();
 }
 function getRemainingMinutes(currentMinute, interval) {
     const remainder = currentMinute % interval;
@@ -120,7 +123,7 @@ async function runJob(jobName, jobFn, ...args) {
     try {
         jobQueue[jobName] = { isRunning: true };
         await jobFn(...args);
-        jobQueue[jobName] = { isRunning: false, lastRun: moment() };
+        jobQueue[jobName] = { isRunning: false, lastRun: (0, moment_1.default)() };
     }
     catch (error) {
         console.error(`${getTimestamp()} Error in job ${jobName}:`, error);
@@ -138,7 +141,7 @@ function logJobStatus() {
 async function doAutoSend(req, res, serviceName, functionName, timingSchedule) {
     if (!processState.isFirstProcess)
         return;
-    const now = moment().locale('th').format('HH:mm:ss');
+    const now = (0, moment_1.default)().locale('th').format('HH:mm:ss');
     const db = serviceName === 'isonline' ? global.dbISOnline : global.dbHIS;
     console.log(`${now} start cronjob '${serviceName}' on PID ${process.pid}`);
     if (serviceName !== 'nrefer') {
@@ -151,7 +154,7 @@ async function getmophUrl() {
 async function cronjob(fastify) {
     hospitalConfig = await moph_starter_1.default.getMophConfig();
     updateProcessState();
-    const secondNow = moment().seconds();
+    const secondNow = (0, moment_1.default)().seconds();
     const timingSch = `${secondNow} * * * * *`;
     let timeRandom = 10 + (Math.ceil(Math.random() * 10) || 1);
     let hourRandom = Math.ceil(Math.random() * 22) || 1;
@@ -175,7 +178,7 @@ async function cronjob(fastify) {
     cron.schedule(timingSch, async (req, res) => {
         minuteCount++;
         const minuteSinceLastNight = getMinutesSinceMidnight();
-        const minuteNow = moment().get('minute');
+        const minuteNow = (0, moment_1.default)().get('minute');
         if (processState.isFirstProcess) {
             if (minuteSinceLastNight > 0 && minuteSinceLastNight % 2 === 1) {
                 logJobStatus();
@@ -202,16 +205,16 @@ async function cronjob(fastify) {
                     onProcess.mophIot = false;
                 });
             }
-            if (moment().hour() == hourRandom && minuteNow == timeRandom) {
+            if ((0, moment_1.default)().hour() == hourRandom && minuteNow == timeRandom) {
                 console.log(`   --> 📅 Daily Task: Executing Ward Name & Bed No...`);
                 (0, moph_erp_1.sendWardName)();
                 (0, moph_erp_1.sendBedNo)();
             }
-            if (moment().hour() == 1 && minuteNow == timeRandom) {
+            if ((0, moment_1.default)().hour() == 1 && minuteNow == timeRandom) {
             }
             if (timingSchedule['nrefer'].autosend &&
                 minuteSinceLastNight % timingSchedule['nrefer'].minute === 0) {
-                if (moment().hour() % 2 === 0 && moment().minute() === 56) {
+                if ((0, moment_1.default)().hour() % 2 === 0 && (0, moment_1.default)().minute() === 56) {
                     runJob('sendNReferIPD', async () => {
                         await referCrontab.processSend(req, res, global.dbHIS, {
                             ...timingSchedule['nrefer'],

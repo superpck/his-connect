@@ -1,6 +1,9 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const path = require("path");
 var fs = require('fs');
 const crypto = require('crypto');
@@ -23,7 +26,7 @@ const router = (fastify, {}, next) => {
         reply.view('/templates/pages/login.ejs', { token: '' });
     });
     fastify.get('/form', (req, reply) => {
-        const now = moment().format('YYYYMMDDHHmmss');
+        const now = (0, moment_1.default)().format('YYYYMMDDHHmmss');
         let setupSess = getSession();
         let isLogin = setupSess > now;
         if (!isLogin) {
@@ -89,10 +92,10 @@ const router = (fastify, {}, next) => {
                 '// SECRET_KEY <ตั้งเอง 16-128 อักษร>',
         };
         const configFileNameBak = configFileName + '_' +
-            moment().locale('th').format('YYYYMMDD_HHmmss') + '.old';
+            (0, moment_1.default)().locale('th').format('YYYYMMDD_HHmmss') + '.old';
         const resultRename = renameFile(configFileName, configFileNameBak);
         let content = "// FIle: " + configFileName + "\r\n";
-        content += "// Date: " + moment().locale('th').format('YYYY-MM-DD HH:mm:ss') + "\r\n";
+        content += "// Date: " + (0, moment_1.default)().locale('th').format('YYYY-MM-DD HH:mm:ss') + "\r\n";
         content += "// IP: " + req.ip + "\r\n";
         for (let config in configs) {
             content += await `\r\n[${config}]\r\n`;
@@ -143,7 +146,7 @@ const router = (fastify, {}, next) => {
         return configs;
     }
     async function resetVar() {
-        const today = moment().format('YYYY-MM-DD HH:mm:ss.SSS');
+        const today = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss.SSS');
         let config = await {
             HOSPITAL: {
                 API_LEVEL: 'hospital',
@@ -236,7 +239,7 @@ const router = (fastify, {}, next) => {
         });
     }
     function setSession() {
-        setupSession = moment().add(15 * 4 * 4, 'minute').format('YYYYMMDDHHmmss');
+        setupSession = (0, moment_1.default)().add(15 * 4 * 4, 'minute').format('YYYYMMDDHHmmss');
         fastify.setupSession = setupSession;
         return setupSession;
     }
@@ -252,17 +255,17 @@ const router = (fastify, {}, next) => {
         return new Promise(async (resolve, reject) => {
             const pm2Name = api.PM2_NAME === '' ? '' : api.PM2_NAME;
             const pm2Instance = +api.PM2_INSTANCE > 0 ? +api.PM2_INSTANCE : 1;
-            console.log(' ====> restart PM2:', pm2Name, moment().locale('th').format('HH:mm:ss.SS'));
+            console.log(' ====> restart PM2:', pm2Name, (0, moment_1.default)().locale('th').format('HH:mm:ss.SS'));
             await shell.exec('tsc');
             await shell.exec("find ./app -name '*.map' -type f -delete");
             await shell.exec('pm2 flush');
             const shellExecute1 = `pm2 scale ${pm2Name} ${pm2Instance}`;
             await shell.exec(shellExecute1, (err, r) => {
-                console.log(' ====> shellScaling', shellExecute1, r, moment().locale('th').format('HH:mm:ss.SS'));
+                console.log(' ====> shellScaling', shellExecute1, r, (0, moment_1.default)().locale('th').format('HH:mm:ss.SS'));
             });
             const shellExecute2 = `pm2 restart ${pm2Name}`;
             shell.exec(shellExecute2, (err, shellCode) => {
-                console.log(' ====> shellCode', shellExecute2, shellCode, err, moment().locale('th').format('HH:mm:ss.SS'));
+                console.log(' ====> shellCode', shellExecute2, shellCode, err, (0, moment_1.default)().locale('th').format('HH:mm:ss.SS'));
                 resolve(true);
             });
         });

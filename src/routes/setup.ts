@@ -1,4 +1,4 @@
-import * as moment from 'moment';
+import moment from 'moment';
 import path = require('path');
 // import { localStorage, sessionStorage } from "webstorage-node";
 

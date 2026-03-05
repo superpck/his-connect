@@ -10,7 +10,7 @@ require('dotenv').config({
 
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import fastify, { FastifyRequest } from 'fastify';
-import * as moment from 'moment';
+import moment from 'moment';
 import cronjob from './nodecron';
 
 const serveStatic = require('serve-static');

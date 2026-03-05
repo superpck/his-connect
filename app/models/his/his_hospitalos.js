@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisHospitalOsModel = void 0;
-const moment = require("moment-timezone");
+const moment_timezone_1 = __importDefault(require("moment-timezone"));
 const dbName = process.env.HIS_DB_NAME;
 const maxLimit = 250;
 let hisHospcode = process.env.HOSPCODE;
@@ -64,7 +67,7 @@ class HisHospitalOsModel {
         if (!date) {
             throw new Error('Invalid parameters: date is required');
         }
-        const formattedDate = moment(date).locale('TH').format('YYYY-MM-DD');
+        const formattedDate = (0, moment_timezone_1.default)(date).locale('TH').format('YYYY-MM-DD');
         const result = await db.raw('SELECT * FROM his_connect.fn_get_refer_out(?, ?, ?)', [visitNo ? null : formattedDate, visitNo || null, hisHospcode]);
         return result.rows;
     }
@@ -104,8 +107,8 @@ class HisHospitalOsModel {
             throw new Error('Invalid parameters: dateStart and dateEnd are required');
         }
         const tz = 'Asia/Bangkok';
-        const start = moment.tz(dateStart, tz).startOf('day').format('YYYY-MM-DD HH:mm:ss');
-        const end = moment.tz(dateEnd, tz).endOf('day').format('YYYY-MM-DD HH:mm:ss');
+        const start = moment_timezone_1.default.tz(dateStart, tz).startOf('day').format('YYYY-MM-DD HH:mm:ss');
+        const end = moment_timezone_1.default.tz(dateEnd, tz).endOf('day').format('YYYY-MM-DD HH:mm:ss');
         const result = await db.raw('SELECT * FROM his_connect.fn_get_diagnosis_opd_accident(?, ?, ?, ?)', [start, end, hisHospcode, maxLimit]);
         return result.rows;
     }
@@ -113,7 +116,7 @@ class HisHospitalOsModel {
         if (!date) {
             throw new Error('Invalid parameters: date is required');
         }
-        const formattedDate = moment(date).locale('TH').format('YYYY-MM-DD');
+        const formattedDate = (0, moment_timezone_1.default)(date).locale('TH').format('YYYY-MM-DD');
         const result = await db.raw('SELECT * FROM his_connect.fn_get_diagnosis_opd_vwxy(?, ?)', [formattedDate, maxLimit]);
         return result.rows;
     }
@@ -121,7 +124,7 @@ class HisHospitalOsModel {
         if (!date) {
             throw new Error('Invalid parameters: date is required');
         }
-        const formattedDate = moment(date).locale('TH').format('YYYY-MM-DD');
+        const formattedDate = (0, moment_timezone_1.default)(date).locale('TH').format('YYYY-MM-DD');
         const result = await db.raw('SELECT * FROM his_connect.fn_get_diagnosis_sepsis_opd(?, ?)', [formattedDate, maxLimit]);
         return result.rows;
     }
@@ -130,8 +133,8 @@ class HisHospitalOsModel {
             throw new Error('Invalid parameters: dateStart and dateEnd are required');
         }
         const tz = 'Asia/Bangkok';
-        const start = moment.tz(dateStart, tz).startOf('day').format('YYYY-MM-DD HH:mm:ss');
-        const end = moment.tz(dateEnd, tz).endOf('day').format('YYYY-MM-DD HH:mm:ss');
+        const start = moment_timezone_1.default.tz(dateStart, tz).startOf('day').format('YYYY-MM-DD HH:mm:ss');
+        const end = moment_timezone_1.default.tz(dateEnd, tz).endOf('day').format('YYYY-MM-DD HH:mm:ss');
         const result = await db.raw('SELECT * FROM his_connect.fn_get_diagnosis_sepsis_ipd(?, ?, ?, ?)', [start, end, hisHospcode, maxLimit]);
         return result.rows;
     }
@@ -213,8 +216,8 @@ class HisHospitalOsModel {
             throw new Error('Invalid parameters: dateStart and dateEnd are required');
         }
         const tz = 'Asia/Bangkok';
-        const start = moment.tz(dateStart, tz).startOf('day').format('YYYY-MM-DD HH:mm:ss');
-        const end = moment.tz(dateEnd, tz).endOf('day').format('YYYY-MM-DD HH:mm:ss');
+        const start = moment_timezone_1.default.tz(dateStart, tz).startOf('day').format('YYYY-MM-DD HH:mm:ss');
+        const end = moment_timezone_1.default.tz(dateEnd, tz).endOf('day').format('YYYY-MM-DD HH:mm:ss');
         const result = await db.raw('SELECT * FROM his_connect.fn_get_diagnosis_ipd_accident(?, ?, ?, ?)', [start, end, hisHospcode, maxLimit]);
         return result.rows;
     }
@@ -271,7 +274,7 @@ class HisHospitalOsModel {
         if (!visitDate) {
             throw new Error('Invalid parameters: visitDate is required');
         }
-        visitDate = moment(visitDate).format('YYYY-MM-DD');
+        visitDate = (0, moment_timezone_1.default)(visitDate).format('YYYY-MM-DD');
         const result = await db.raw('SELECT * FROM his_connect.fn_get_refer_result(?, ?, ?)', [visitDate, hisHospcode, maxLimit]);
         return result.rows;
     }
@@ -297,8 +300,8 @@ class HisHospitalOsModel {
             throw new Error('Invalid parameters: dateStart and dateEnd are required');
         }
         const tz = 'Asia/Bangkok';
-        const start = moment.tz(dateStart, tz).startOf('day').format('YYYY-MM-DD HH:mm:ss');
-        const end = moment.tz(dateEnd, tz).endOf('day').format('YYYY-MM-DD HH:mm:ss');
+        const start = moment_timezone_1.default.tz(dateStart, tz).startOf('day').format('YYYY-MM-DD HH:mm:ss');
+        const end = moment_timezone_1.default.tz(dateEnd, tz).endOf('day').format('YYYY-MM-DD HH:mm:ss');
         const result = await db.raw('SELECT * FROM his_connect.fn_sum_refer_out(?, ?, ?)', [start, end, hisHospcode]);
         return result.rows;
     }
@@ -307,8 +310,8 @@ class HisHospitalOsModel {
             throw new Error('Invalid parameters: dateStart and dateEnd are required');
         }
         const tz = 'Asia/Bangkok';
-        const start = moment.tz(dateStart, tz).startOf('day').format('YYYY-MM-DD HH:mm:ss');
-        const end = moment.tz(dateEnd, tz).endOf('day').format('YYYY-MM-DD HH:mm:ss');
+        const start = moment_timezone_1.default.tz(dateStart, tz).startOf('day').format('YYYY-MM-DD HH:mm:ss');
+        const end = moment_timezone_1.default.tz(dateEnd, tz).endOf('day').format('YYYY-MM-DD HH:mm:ss');
         const result = await db.raw('SELECT * FROM his_connect.fn_sum_refer_in(?, ?, ?)', [start, end, hisHospcode]);
         return result.rows;
     }
@@ -317,11 +320,11 @@ class HisHospitalOsModel {
             throw new Error('Invalid parameters: date is required');
         }
         const tz = 'Asia/Bangkok';
-        const dateStart = moment.tz(date, tz)
+        const dateStart = moment_timezone_1.default.tz(date, tz)
             .locale('TH')
             .startOf('hour')
             .format('YYYY-MM-DD HH:mm:ss');
-        const dateEnd = moment.tz(date, tz)
+        const dateEnd = moment_timezone_1.default.tz(date, tz)
             .locale('TH')
             .endOf('hour')
             .format('YYYY-MM-DD HH:mm:ss');
@@ -333,11 +336,11 @@ class HisHospitalOsModel {
             throw new Error('Invalid parameters: date is required');
         }
         const tz = 'Asia/Bangkok';
-        const dateStart = moment.tz(date, tz)
+        const dateStart = moment_timezone_1.default.tz(date, tz)
             .locale('TH')
             .startOf('hour')
             .format('YYYY-MM-DD HH:mm:ss');
-        const dateEnd = moment.tz(date, tz)
+        const dateEnd = moment_timezone_1.default.tz(date, tz)
             .locale('TH')
             .endOf('hour')
             .format('YYYY-MM-DD HH:mm:ss');
@@ -348,7 +351,7 @@ class HisHospitalOsModel {
         if (!date) {
             throw new Error('Invalid parameters: date is required');
         }
-        const formattedDate = moment(date).locale('TH').format('YYYY-MM-DD');
+        const formattedDate = (0, moment_timezone_1.default)(date).locale('TH').format('YYYY-MM-DD');
         const result = await db.raw('SELECT * FROM his_connect.fn_sum_opd_visit_by_clinic(?, ?)', [formattedDate, hisHospcode]);
         return result.rows;
     }
@@ -369,7 +372,7 @@ class HisHospitalOsModel {
             throw new Error('Invalid parameters: date is required');
         }
         try {
-            const formattedDate = moment(date).locale('TH').format('YYYY-MM-DD');
+            const formattedDate = (0, moment_timezone_1.default)(date).locale('TH').format('YYYY-MM-DD');
             if (isRowCount) {
                 const result = await db.raw('SELECT * FROM his_connect.fn_count_visit_for_moph_alert(?)', [formattedDate]);
                 return result.rows?.[0] || { row_count: 0 };

@@ -1,21 +1,24 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const moment = require("moment");
-const hismodel_1 = require("./../routes/his/hismodel");
+const moment_1 = __importDefault(require("moment"));
+const hismodel_1 = __importDefault(require("./../routes/his/hismodel"));
 const utils_1 = require("../middleware/utils");
 const dbConnection = require('../plugins/db');
 let db = dbConnection('HIS');
 let hisHospcode = process.env.HOSPCODE;
 let token;
 const processCMI = (async (dateStart = null, dateEnd = null) => {
-    dateStart = dateStart ? moment(dateStart).format('YYYY-MM-DD') : moment().subtract(35, 'days').format('YYYY-MM-DD');
-    dateEnd = dateEnd ? moment(dateEnd).format('YYYY-MM-DD') : moment().subtract(30, 'days').format('YYYY-MM-DD');
+    dateStart = dateStart ? (0, moment_1.default)(dateStart).format('YYYY-MM-DD') : (0, moment_1.default)().subtract(35, 'days').format('YYYY-MM-DD');
+    dateEnd = dateEnd ? (0, moment_1.default)(dateEnd).format('YYYY-MM-DD') : (0, moment_1.default)().subtract(30, 'days').format('YYYY-MM-DD');
     return await getIPD(dateStart, dateEnd);
 });
 const getIPD = (async (dateStart, dateEnd) => {
     try {
-        dateStart = moment(dateStart).format('YYYY-MM-DD');
-        dateEnd = moment(dateEnd).format('YYYY-MM-DD');
+        dateStart = (0, moment_1.default)(dateStart).format('YYYY-MM-DD');
+        dateEnd = (0, moment_1.default)(dateEnd).format('YYYY-MM-DD');
         let rows = [];
         let date = dateStart;
         do {
@@ -23,10 +26,10 @@ const getIPD = (async (dateStart, dateEnd) => {
             if (result && result.length > 0) {
                 rows = [...rows, ...result];
             }
-            date = moment(date).add(1, 'days').format('YYYY-MM-DD');
+            date = (0, moment_1.default)(date).add(1, 'days').format('YYYY-MM-DD');
         } while (date <= dateEnd);
         if (rows.length > 0) {
-            console.log(moment().format('HH:mm:ss'), `DRG/CMI: Discharge founded ${rows.length} IPD discharges on ${dateStart} to ${dateEnd}`);
+            console.log((0, moment_1.default)().format('HH:mm:ss'), `DRG/CMI: Discharge founded ${rows.length} IPD discharges on ${dateStart} to ${dateEnd}`);
             let drgRows = [];
             for (let row of rows) {
                 let data = {
@@ -37,10 +40,10 @@ const getIPD = (async (dateStart, dateEnd) => {
                     seq: row?.vn || row.seq || null,
                     sex: row?.sex, dob: row.dob || null,
                     age: row?.age?.year || 0, ageday: row?.age?.year == 0 ? row?.age?.days : 0,
-                    dateadm: moment(row?.datetime_admit).format('YYYY-MM-DD'),
-                    timeadm: moment(row?.datetime_admit).format('HHmm'),
-                    datedsc: moment(row?.datetime_discharge).format('YYYY-MM-DD'),
-                    timedsc: moment(row?.datetime_discharge).format('HHmm'),
+                    dateadm: (0, moment_1.default)(row?.datetime_admit).format('YYYY-MM-DD'),
+                    timeadm: (0, moment_1.default)(row?.datetime_admit).format('HHmm'),
+                    datedsc: (0, moment_1.default)(row?.datetime_discharge).format('YYYY-MM-DD'),
+                    timedsc: (0, moment_1.default)(row?.datetime_discharge).format('HHmm'),
                     warddsc: row.warddsc || row.warddisch,
                     dischs: row.dischstatus,
                     discht: row.dischtype,
@@ -80,10 +83,10 @@ const getIPD = (async (dateStart, dateEnd) => {
                     if (i++ < 20) {
                         data[`proc${i}`] = op.procedcode.replace(/\/|\-|\*/g, '+').replace('.', '');
                         data[`drop${i}`] = op.provider || op.doctor || null;
-                        data[`datein${i}`] = op.timestart ? moment(op.timestart).format('YYYY-MM-DD') : null;
-                        data[`timein${i}`] = op.timestart ? moment(op.timestart).format('HHmm') : null;
-                        data[`dateout${i}`] = op.timefinish ? moment(op.timefinish).format('YYYY-MM-DD') : null;
-                        data[`timeout${i}`] = op.timefinish ? moment(op.timefinish).format('HHmm') : null;
+                        data[`datein${i}`] = op.timestart ? (0, moment_1.default)(op.timestart).format('YYYY-MM-DD') : null;
+                        data[`timein${i}`] = op.timestart ? (0, moment_1.default)(op.timestart).format('HHmm') : null;
+                        data[`dateout${i}`] = op.timefinish ? (0, moment_1.default)(op.timefinish).format('YYYY-MM-DD') : null;
+                        data[`timeout${i}`] = op.timefinish ? (0, moment_1.default)(op.timefinish).format('HHmm') : null;
                     }
                 }
                 drgRows.push(data);
@@ -91,25 +94,25 @@ const getIPD = (async (dateStart, dateEnd) => {
             return await sendingToMoph(drgRows);
         }
         else {
-            console.error(moment().format('HH:mm:ss'), `DRG/CMI: No data found for IPD discharge on ${date}`);
+            console.error((0, moment_1.default)().format('HH:mm:ss'), `DRG/CMI: No data found for IPD discharge on ${date}`);
             return false;
         }
     }
     catch (error) {
-        console.error(moment().format('HH:mm:ss'), 'DRG/CMI: Error in getIPD:', error.message || error);
+        console.error((0, moment_1.default)().format('HH:mm:ss'), 'DRG/CMI: Error in getIPD:', error.message || error);
         return error;
     }
 });
 async function getIPDDischarge(date) {
     try {
-        date = moment(date).format('YYYY-MM-DD');
+        date = (0, moment_1.default)(date).format('YYYY-MM-DD');
         let rows = await hismodel_1.default.getAdmission(db, 'datedisc', date, '', false);
         if (!rows || rows.length === 0) {
             return [];
         }
         rows = toLowerColumnName(rows);
         for (let row of rows) {
-            row.dob = row?.dob ? moment(row.dob).format('YYYY-MM-DD') : null;
+            row.dob = row?.dob ? (0, moment_1.default)(row.dob).format('YYYY-MM-DD') : null;
             if (row.dob && row?.datetime_admit) {
                 row.age = await (0, utils_1.dateLen)(row.dob, row.datetime_admit);
             }
@@ -141,7 +144,7 @@ async function getIPDDischarge(date) {
         return rows;
     }
     catch (error) {
-        console.error(moment().format('HH:mm:ss'), error.message || error);
+        console.error((0, moment_1.default)().format('HH:mm:ss'), error.message || error);
         throw error;
     }
 }
@@ -174,7 +177,7 @@ async function sendingToMoph(rows) {
         return results;
     }
     catch (error) {
-        console.error(moment().format('HH:mm:ss'), 'DRG/CMI: Error in sendingToMoph:', error.message || error);
+        console.error((0, moment_1.default)().format('HH:mm:ss'), 'DRG/CMI: Error in sendingToMoph:', error.message || error);
         throw error;
     }
 }
@@ -190,7 +193,7 @@ async function sendRow(row) {
         return true;
     }
     catch (error) {
-        console.error(moment().format('HH:mm:ss'), 'DRG/CMI: Error in sendRow:', error.message || error);
+        console.error((0, moment_1.default)().format('HH:mm:ss'), 'DRG/CMI: Error in sendRow:', error.message || error);
         throw error;
     }
 }

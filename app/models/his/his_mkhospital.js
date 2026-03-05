@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisMkhospitalModel = void 0;
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 class HisMkhospitalModel {
@@ -251,9 +254,9 @@ WHERE  date(r1.date)="${date}"`;
         return [];
     }
     concurrentIPDByWard(db, date) {
-        const dateAdmitLimit = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
-        const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
-        const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        const dateAdmitLimit = (0, moment_1.default)(date).subtract(1, 'year').format('YYYY-MM-DD');
+        const dateStart = (0, moment_1.default)(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        const dateEnd = (0, moment_1.default)(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
         let sql = 'select ward as wardcode, count(an) as cases, ' +
             'SUM(CASE WHEN ip.dateTimeAdmit BETWEEN ? AND ? THEN 1 ELSE 0 END) AS new_cases, ' +
             'SUM(CASE WHEN ip.dateTimeDisc BETWEEN ? AND ? THEN 1 ELSE 0 END) AS discharge, ' +

@@ -1,4 +1,4 @@
-import * as moment from 'moment'
+import moment from 'moment';
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 let shell = require("shelljs");
 var crypto = require('crypto');

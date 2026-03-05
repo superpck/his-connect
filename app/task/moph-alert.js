@@ -1,9 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.mophAlertSurvey = void 0;
 const moment = require("moment");
 const moph_refer_1 = require("../middleware/moph-refer");
-const hismodel_1 = require("./../routes/his/hismodel");
+const hismodel_1 = __importDefault(require("./../routes/his/hismodel"));
 const cache_db_1 = require("../plugins/cache-db");
 const dbConnection = require('../plugins/db');
 let db = dbConnection('HIS');

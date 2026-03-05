@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisHiModel = void 0;
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
@@ -159,9 +162,9 @@ class HisHiModel {
             .select(db.raw(`${hcode} as hospcode`), db.raw(`ifnull(nullif(ltrim(substring(iptadm.bedno, 2, 20)), 'ไม่ระบุเตียง'), 'ไม่ระบุเตียง') as bedno`), db.raw(`ifnull(bedtype.type_code, 'N') as bedtype`), db.raw(`ifnull(bedtype.namebedtyp,'-') as bedtype_name`), 'ipt.ward as wardcode', 'idpm.nameidpm as wardname', 'idpm.is_active as isactive', db.raw(`if(bedtype.export_code is null, idpm.export_code, concat(substr(idpm.export_code,1,3),bedtype.export_code)) as std_code`));
     }
     concurrentIPDByWard(db, date) {
-        const dateAdmitLimit = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
-        const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
-        const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        const dateAdmitLimit = (0, moment_1.default)(date).subtract(1, 'year').format('YYYY-MM-DD');
+        const dateStart = (0, moment_1.default)(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        const dateEnd = (0, moment_1.default)(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
         return db('ipt')
             .innerJoin('idpm', 'ipt.ward', 'idpm.idpm')
             .innerJoin('iptadm', 'ipt.an', 'iptadm.an')
@@ -185,9 +188,9 @@ class HisHiModel {
             .groupBy('ipt.ward');
     }
     concurrentIPDByClinic(db, date) {
-        const dateAdmitLimit = moment(date).subtract(1, 'year').format('YYYY-MM-DD');
-        const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
-        const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        const dateAdmitLimit = (0, moment_1.default)(date).subtract(1, 'year').format('YYYY-MM-DD');
+        const dateStart = (0, moment_1.default)(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        const dateEnd = (0, moment_1.default)(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
         return db('ipt')
             .innerJoin('idpm', 'ipt.ward', 'idpm.idpm')
             .innerJoin('iptadm', 'ipt.an', 'iptadm.an')
@@ -212,7 +215,7 @@ class HisHiModel {
             .groupBy('ipt.dept');
     }
     sumOpdVisitByClinic(db, date) {
-        date = moment(date).locale('TH').format('YYYY-MM-DD');
+        date = (0, moment_1.default)(date).locale('TH').format('YYYY-MM-DD');
         return db('ovst as visit')
             .innerJoin('cln', 'visit.cln', 'cln.cln')
             .innerJoin('spclty as spec', 'cln.specialty', 'spec.spclty')
@@ -227,7 +230,7 @@ class HisHiModel {
             .orderBy('cln.specialty');
     }
     async getVisitForMophAlert(db, date, isRowCount = false, start = -1, limit = 1000) {
-        date = moment(date).locale('TH').format('YYYY-MM-DD');
+        date = (0, moment_1.default)(date).locale('TH').format('YYYY-MM-DD');
         let opdQuery = db('ovst as visit')
             .innerJoin('pt as patient', 'visit.hn', 'patient.hn')
             .leftJoin('cln as clinic', 'visit.cln', 'clinic.cln')
