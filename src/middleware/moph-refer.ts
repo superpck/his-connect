@@ -207,9 +207,9 @@ export const sendingError = async (dataArray: any) => {
     return { status: 500, message: 'No nRefer token' };
   }
 
+  const hospcode = process.env.HOSPCODE || hcode || '';
   dataArray = {
-    ...dataArray,
-    hospcode: process.env.HOSPCODE || hcode || '',
+    ...dataArray, hospcode,
     client_detail: {
       his: process.env.HIS_PROVIDER || '',
       port: process.env.PORT || '',
@@ -226,17 +226,13 @@ export const sendingError = async (dataArray: any) => {
     'Source-Agent': 'HISConnect-' + (crontabConfig.version || packageJson?.version || 'x') + '-' + (crontabConfig.subVersion || packageJson?.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
   };
   const option = {
-    url, method: 'POST', headers, data: { data: dataArray }
+    url, method: 'POST', headers, data: { hospcode, data: dataArray }
   };
-  console.log(option);
   try {
     const { status, data } = await axios(option);
-    console.log('status', status);
-    console.log('data', data);
     return { statusCode: status, ...data };
   } catch (error: any) {
-    console.log(error?.status, error?.message || error);
-    console.log('Error data:', error);
+    console.log('Error data:', error.status || '', error.message);
     return error;
   }
 }
