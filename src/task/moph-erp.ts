@@ -69,7 +69,7 @@ const sendBedOccupancyByWard = async (date: any) => {
     return rows;
   } catch (error) {
     sendingError({
-      route_name: 'sendBedOccupancyByWard', error_code: error.status || 500,
+      route_name: 'sendBedOccupancyByWard', error_code: error.status || '500',
       error_message: error.message || ''
     });
     console.error(moment().format('HH:mm:ss'), 'sendBedOccupancy error by ward', date, error.message);
@@ -91,7 +91,7 @@ const sendBedOccupancyByClinic = async (date: any) => {
     return rows;
   } catch (error) {
     sendingError({
-      route_name: 'sendBedOccupancyByClinic', error_code: error.status || 500,
+      route_name: 'sendBedOccupancyByClinic', error_code: error.status || '500',
       error_message: error.message || ''
     });
     console.error(moment().format('HH:mm:ss'), 'sendBedOccupancy by clinic error', date, error.message);
@@ -114,7 +114,7 @@ const sendOpdVisitByClinic = async (date: any) => {
     return rows;
   } catch (error) {
     sendingError({
-      route_name: 'sendOpdVisitByClinic', error_code: error.status || 500,
+      route_name: 'sendOpdVisitByClinic', error_code: error.status || '500',
       error_message: error.message || ''
     });
     console.error(moment().format('HH:mm:ss'), 'sendSumOpdVisit by clinic error', date, error.message);
@@ -183,7 +183,7 @@ export const sendWardName = async () => {
     }
   } catch (error) {
     sendingError({
-      route_name: 'sendWardName', error_code: error.status || 500,
+      route_name: 'sendWardName', error_code: error.status || '500',
       error_message: error.message || ''
     });
     console.log(moment().format('HH:mm:ss'), 'getWard error', error.message);
@@ -232,7 +232,7 @@ export const sendBedNo = async () => {
     return { statusCode: 200, sentResult };
   } catch (error: any) {
     sendingError({
-      route_name: 'sendBedNo', error_code: error.status || 500,
+      route_name: 'sendBedNo', error_code: error.status || '500',
       error_message: error.message || ''
     });
     console.log(moment().format('HH:mm:ss'), 'getBedNo error', error.message);
@@ -274,7 +274,7 @@ export const updateAlive = async () => {
     return result;
   } catch (error: any) {
     sendingError({
-      route_name: 'updateAlive', error_code: error.status || 500,
+      route_name: 'updateAlive', error_code: error.status || '500',
       error_message: error.message || ''
     });
     console.error(moment().format('HH:mm:ss'), '❌ Sent API Alive status error:', error?.status || error?.statusCode || '', error?.message || error || '');
@@ -317,7 +317,7 @@ export const erpAdminRequest = async () => {
     return result;
   } catch (error: any) {
     sendingError({
-      route_name: 'erpAdminRequest', error_code: error.status || 500,
+      route_name: 'erpAdminRequest', error_code: error.status || '500',
       error_message: error.message || ''
     });
     console.log(moment().format('HH:mm:ss'), 'Admin Request error', error.message);

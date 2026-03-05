@@ -155,7 +155,7 @@ async function getData(dateStart: string, dateEnd: string) {
     } while (date <= moment(dateEnd).format('YYYY-MM-DD'))
   } catch (error: any) {
     sendingError({
-      route_name: 'processIoT', error_code: error.status || 500,
+      route_name: 'processIoT', error_code: error.status || '500',
       error_message: error.message || ''
     });
     throw error;
