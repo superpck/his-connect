@@ -165,9 +165,11 @@ async function cronjob(fastify) {
         logScheduledServices(timingSchedule);
     }
     if (processState.isFirstProcess) {
-        (0, moph_erp_1.updateAlive)();
-        (0, moph_erp_1.sendWardName)();
-        (0, moph_erp_1.sendBedNo)();
+        setTimeout(() => {
+            (0, moph_erp_1.updateAlive)();
+            (0, moph_erp_1.sendWardName)();
+            (0, moph_erp_1.sendBedNo)();
+        }, 3000);
     }
     let minuteCount = 0;
     cron.schedule(timingSch, async (req, res) => {
