@@ -5,6 +5,7 @@ const axios_1 = require("axios");
 const moment = require("moment");
 const crypto_1 = require("crypto");
 const utils_1 = require("./utils");
+const os = require("os");
 const packageJson = require('../../package.json');
 const referAPIUrl = process.env?.MOPH_ERP_API_URL || 'https://refer.moph.go.th/api/erp';
 const adminAPIUrl = process.env.ADMIN_API_URL || 'https://referlink.moph.go.th/api/admin';
@@ -208,7 +209,9 @@ const sendingError = async (dataArray) => {
             client_detail: {
                 his: process.env.HIS_PROVIDER || '',
                 port: process.env.PORT || '',
-                db: process.env.HIS_DB_CLIENT || ''
+                db: process.env.HIS_DB_CLIENT || '',
+                os: os.platform() || '',
+                os_type: os.type() || ''
             }
         }),
         processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),

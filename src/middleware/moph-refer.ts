@@ -2,6 +2,7 @@ import axios from 'axios';
 import moment = require('moment');
 import { createHash } from 'crypto';
 import { getIP } from './utils';
+import * as os from 'os';
 const packageJson = require('../../package.json');
 
 const referAPIUrl = process.env?.MOPH_ERP_API_URL || 'https://refer.moph.go.th/api/erp';
@@ -214,7 +215,9 @@ export const sendingError = async (dataArray: any) => {
       client_detail: {
         his: process.env.HIS_PROVIDER || '',
         port: process.env.PORT || '',
-        db: process.env.HIS_DB_CLIENT || ''
+        db: process.env.HIS_DB_CLIENT || '',
+        os: os.platform() || '',
+        os_type: os.type() || ''
       }
     }),
     processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
