@@ -41,7 +41,7 @@ export const mophAlertSurvey = async (date: any = null) => {
     console.log('-'.repeat(70));
   } catch (error: any) {
     sendingError({
-      route_name: 'mophAlertSurvey', error_code: error.status || 500,
+      route_name: 'mophAlertSurvey', error_code: error.status || '500',
       error_message: error.message || ''
     });
     console.log(moment().format('HH:mm:ss'), 'getVisitForMophAlert error', error.message);

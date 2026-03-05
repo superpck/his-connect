@@ -207,22 +207,16 @@ export const sendingError = async (dataArray: any) => {
     return { status: 500, message: 'No nRefer token' };
   }
 
-  const bodyData = {
-    ip: crontabConfig['client_ip'] || '127.0.0.1',
-    hospcode: hcode, data: JSON.stringify({
-      ...dataArray,
-      hospcode: process.env.HOSPCODE || '',
-      client_detail: {
-        his: process.env.HIS_PROVIDER || '',
-        port: process.env.PORT || '',
-        db: process.env.HIS_DB_CLIENT || '',
-        os: os.platform() || '',
-        os_type: os.type() || ''
-      }
-    }),
-    processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
-    sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version || packageJson?.version, subVersion: crontabConfig.subVersion || packageJson?.subVersion,
-    hisProvider: process.env.HIS_PROVIDER
+  dataArray = {
+    ...dataArray,
+    hospcode: process.env.HOSPCODE || hcode || '',
+    client_detail: {
+      his: process.env.HIS_PROVIDER || '',
+      port: process.env.PORT || '',
+      db: process.env.HIS_DB_CLIENT || '',
+      os: os.platform() || '',
+      os_type: os.type() || ''
+    }
   };
 
   const url = referAPIUrl + '/his-connect/save-error';
@@ -231,10 +225,18 @@ export const sendingError = async (dataArray: any) => {
     'Authorization': 'Bearer ' + nReferToken,
     'Source-Agent': 'HISConnect-' + (crontabConfig.version || packageJson?.version || 'x') + '-' + (crontabConfig.subVersion || packageJson?.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
   };
+  const option = {
+    url, method: 'POST', headers, data: { data: dataArray }
+  };
+  console.log(option);
   try {
-    const { status, data } = await axios.post(url, bodyData, { headers });
+    const { status, data } = await axios(option);
+    console.log('status', status);
+    console.log('data', data);
     return { statusCode: status, ...data };
-  } catch (error) {
+  } catch (error: any) {
+    console.log(error?.status, error?.message || error);
+    console.log('Error data:', error);
     return error;
   }
 }

@@ -146,7 +146,7 @@ async function getData(date: string) {
     }
   } catch (error: any) {
     sendingError({
-      route_name: 'moph-appointment', error_code: error.status || 500,
+      route_name: 'moph-appointment', error_code: error.status || '500',
       error_message: error.message || ''
     });
     console.error(moment().format('HH:mm:ss'), 'MOPH Appointment Process Error:', error.message || error);
