@@ -338,17 +338,19 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
 
   // Initial tasks on first process
   if (processState.isFirstProcess) {
-    updateAlive();
-    sendWardName();
-    sendBedNo();
+    setTimeout(() => {
+      updateAlive();
+      sendWardName();
+      sendBedNo();
 
-    // *** for test only ******************
-    // 
-    // mophCMI.processCMI();
-    // mophIot.processIoT();
-    // mophAppointment.process('2026-02-08');
-    //
-    // *** end test ***********************
+      // *** for test only ******************
+      // 
+      // mophCMI.processCMI();
+      // mophIot.processIoT();
+      // mophAppointment.process('2026-02-08');
+      //
+      // *** end test ***********************
+    }, 3000); // Delay 3 seconds
   }
 
   // Optional: Real-time Debug Countdown (ระวัง Log เยอะเกินไปหากเปิดใช้)
