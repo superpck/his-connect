@@ -46,6 +46,7 @@ const app = fastify(serverOption);
 const { name, version, subVersion } = require('./../package.json');
 global.appDetail = { name, subVersion, version };
 
+// app.register(require('@fastify/compress'), { global: true, threshold: 1024 });
 app.register(require('@fastify/formbody'));
 app.register(require('@fastify/cors'), {});
 app.register(require('fastify-no-icon'));

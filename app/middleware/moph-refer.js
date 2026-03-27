@@ -40,6 +40,8 @@ exports.sendingError = exports.updateAdminRequest = exports.checkAdminRequest = 
 const axios_1 = __importDefault(require("axios"));
 const moment = require("moment");
 const crypto_1 = require("crypto");
+const zlib_1 = __importDefault(require("zlib"));
+const util_1 = require("util");
 const utils_1 = require("./utils");
 const os = __importStar(require("os"));
 const packageJson = require('../../package.json');
@@ -55,6 +57,7 @@ let crontabConfig = {
 };
 let nReferToken = null;
 let hospitalConfig = null;
+const gzip = (0, util_1.promisify)(zlib_1.default.gzip);
 const getReferToken = async () => {
     if (nReferToken) {
         const toke = nReferToken.split('.');
@@ -153,14 +156,18 @@ const sendingToMoph = async (uri, dataArray) => {
         sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version || packageJson?.version, subVersion: crontabConfig.subVersion || packageJson?.subVersion,
         hisProvider: process.env.HIS_PROVIDER
     };
-    const url = referAPIUrl + '/nrefer' + uri;
+    const jsonString = JSON.stringify(bodyData);
+    const compressedBody = await gzip(jsonString);
+    const url = 'https://refer.moph.go.th/api/beta/nrefer' + uri;
+    console.log(' ===> ', url, `Compressed body size remaining: ${((compressedBody.length || 0) * 100 / (jsonString.length || 1)).toFixed(2)}%`);
     const headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + nReferToken,
+        'content-encoding': 'gzip',
         'Source-Agent': 'HISConnect-' + (crontabConfig.version || packageJson?.version || 'x') + '-' + (crontabConfig.subVersion || packageJson?.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
     };
     try {
-        const { status, data } = await axios_1.default.post(url, bodyData, { headers });
+        const { status, data } = await axios_1.default.post(url, compressedBody, { headers });
         return { statusCode: status, ...data };
     }
     catch (error) {

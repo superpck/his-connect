@@ -12,7 +12,10 @@ const cacheDbModule = require('../plugins/cache-db');
 const cacheDb = cacheDbModule.default || cacheDbModule;
 let db = dbConnection('HIS');
 let hospitalConfig = null;
+let _cacheOk = true;
 async function createAppointmentTable() {
+    if (!_cacheOk)
+        return;
     try {
         const hasTable = await cacheDb.schema.hasTable('appointment_sent');
         if (!hasTable) {
@@ -31,10 +34,14 @@ async function createAppointmentTable() {
         }
     }
     catch (error) {
-        console.error('Error creating appointment_sent table:', error);
+        _cacheOk = false;
+        console.error('Error creating appointment_sent table:', error.message);
+        console.error('[SQLite] Cache disabled. Fix: run "npm rebuild better-sqlite3" in the app directory.');
     }
 }
 async function cleanOldRecords() {
+    if (!_cacheOk)
+        return;
     try {
         const twoDaysAgo = moment().subtract(2, 'days').format('YYYY-MM-DD');
         const deleted = await cacheDb('appointment_sent')
@@ -45,10 +52,12 @@ async function cleanOldRecords() {
         }
     }
     catch (error) {
-        console.error('Error cleaning old records:', error);
+        console.error('Error cleaning old records:', error.message);
     }
 }
 async function isAlreadySent(vn, clinic) {
+    if (!_cacheOk)
+        return false;
     try {
         const record = await cacheDb('appointment_sent')
             .where({ vn, clinic })
@@ -56,11 +65,13 @@ async function isAlreadySent(vn, clinic) {
         return !!record;
     }
     catch (error) {
-        console.error('Error checking sent record:', error);
+        console.error('Error checking sent record:', error.message);
         return false;
     }
 }
 async function markAsSent(row) {
+    if (!_cacheOk)
+        return;
     try {
         await cacheDb('appointment_sent')
             .insert({
@@ -74,7 +85,7 @@ async function markAsSent(row) {
             .merge();
     }
     catch (error) {
-        console.error('Error marking as sent:', error);
+        console.error('Error marking as sent:', error.message);
     }
 }
 const process = async (date = null) => {
