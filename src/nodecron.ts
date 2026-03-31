@@ -390,7 +390,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
       // mophAppointment.process('2026-02-08');
       //
       // *** end test ***********************
-    }, 3000); // Delay 3 seconds
+    }, 10000); // Delay 3 seconds
   }
 
   // Optional: Real-time Debug Countdown (ระวัง Log เยอะเกินไปหากเปิดใช้)

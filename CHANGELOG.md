@@ -3,6 +3,7 @@
   - ปรับ script ให้ docker pull ใหม่ทุกครั้งที่ restart
   - เพิ่มการ Compress data ก่อนส่งส่วนกลาง
   - เพิ่ม Timeout เพื่อป้องกันการ response ช้าจาก server
+  - ปรับการ run first task ให้ delay 10sec. เพื่อให้ระบบ init ให้ครบทุกคำสั่ง
 
 # 3.10.1
 ## Feature

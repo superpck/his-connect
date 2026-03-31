@@ -204,7 +204,7 @@ async function cronjob(fastify) {
             (0, moph_erp_1.updateAlive)();
             (0, moph_erp_1.sendWardName)();
             (0, moph_erp_1.sendBedNo)();
-        }, 3000);
+        }, 10000);
     }
     let minuteCount = 0;
     cron.schedule(timingSch, async (req, res) => {
