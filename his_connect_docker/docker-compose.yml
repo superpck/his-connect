@@ -26,6 +26,8 @@ services:
     container_name: watchtower
     restart: always
     profiles: ["autoupdate"]
+    environment:
+      TZ: Asia/Bangkok
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command:

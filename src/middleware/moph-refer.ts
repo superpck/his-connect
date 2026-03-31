@@ -206,7 +206,7 @@ export const sendingToMoph = async (uri: string, dataArray: any) => {
     'Content-Type': 'application/json',
     'Authorization': 'Bearer ' + nReferToken,
     'content-encoding': 'gzip',
-    'Source-Agent': 'HISConnect-' + (crontabConfig.version || packageJson?.version || 'x') + '-' + (crontabConfig.subVersion || packageJson?.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+    'source-agent': 'HISConnect-' + (crontabConfig.version || packageJson?.version || 'x') + '-' + (crontabConfig.subVersion || packageJson?.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
   };
   try {
     const { status, data } = await axios.post(url, compressedBody, { headers });
