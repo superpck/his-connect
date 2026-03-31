@@ -15,6 +15,7 @@ const shell = require("shelljs");
 const cron = require('node-cron');
 const referCrontab = require('./routes/refer/crontab');
 const instanceId = process.env.NODE_APP_INSTANCE ? +process.env.NODE_APP_INSTANCE + 1 : null;
+const cronjobStartupTimeoutMs = Math.max(1000, +(process.env.CRONJOB_STARTUP_TIMEOUT_MS || 12000));
 let hospitalConfig = null;
 let onProcess = {};
 const processState = {
@@ -35,6 +36,25 @@ const jobQueue = {
 };
 function getTimestamp() {
     return (0, moment_1.default)().format('HH:mm:ss');
+}
+function getErrorMessage(error) {
+    return error?.message || String(error);
+}
+function withTimeout(promise, timeoutMs, label) {
+    return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+            reject(new Error(`${label} exceeded ${timeoutMs}ms`));
+        }, timeoutMs);
+        promise
+            .then((result) => {
+            clearTimeout(timeout);
+            resolve(result);
+        })
+            .catch((error) => {
+            clearTimeout(timeout);
+            reject(error);
+        });
+    });
 }
 function getMinutesSinceMidnight() {
     return (0, moment_1.default)().hours() * 60 + (0, moment_1.default)().minutes();
@@ -152,7 +172,19 @@ async function getmophUrl() {
     global.mophService = await require('./routes/main/crontab')(global.mophService, {});
 }
 async function cronjob(fastify) {
-    hospitalConfig = await moph_starter_1.default.getMophConfig();
+    const startupAt = Date.now();
+    console.info(`${getTimestamp()} Cronjob plugin init start for hospcode ${process.env.HOSPCODE || 'unknown'}`);
+    try {
+        hospitalConfig = await withTimeout(moph_starter_1.default.getMophConfig({
+            purpose: 'cronjob-startup',
+            timeoutMs: cronjobStartupTimeoutMs
+        }), cronjobStartupTimeoutMs, 'cronjob startup config fetch');
+        console.info(`${getTimestamp()} Cronjob startup config ready in ${Date.now() - startupAt}ms`);
+    }
+    catch (error) {
+        hospitalConfig = null;
+        console.error(`${getTimestamp()} Cronjob startup config unavailable after ${Date.now() - startupAt}ms: ${getErrorMessage(error)}. Continuing startup without blocking cron registration.`);
+    }
     updateProcessState();
     const secondNow = (0, moment_1.default)().seconds();
     const timingSch = `${secondNow} * * * * *`;
@@ -237,4 +269,5 @@ async function cronjob(fastify) {
             }
         }
     });
+    console.info(`${getTimestamp()} Cronjob plugin registered in ${Date.now() - startupAt}ms`);
 }

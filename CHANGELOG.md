@@ -1,3 +1,9 @@
+# 3.10.2
+## Feature
+  - ปรับ script ให้ docker autoupdate เวลา 03:00:00
+  - เพิ่มการ Compress data ก่อนส่งส่วนกลาง
+  - เพิ่ม Timeout เพื่อป้องกันการ response ช้าจาก server
+
 # 3.10.1
 ## Feature
   - เพิ่มการส่ง Error ไปยังส่วนกลาง
@@ -7,6 +13,7 @@
 
 # 3.10.0
 ## Feature
+  - เพิ่มระบบตรวจสอบการส่ง Appointment ไปยัง MOPH Alert
   - เพิ่มการส่งข้อมูล Service จาก nRefer ไปยังหมอพร้อม
 
 # 3.9.9
