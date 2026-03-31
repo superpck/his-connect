@@ -12,6 +12,7 @@ services:
       - ./config:/usr/src/his_connect/config:ro
       - ./sent_result.txt:/usr/src/his_connect/sent_result.txt
     command: ["pm2-runtime", "start", "app/app.js", "-i", "2", "--name", "his-connect-docker"]
+    pull_policy: always
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3004"]
@@ -22,12 +23,14 @@ services:
       com.centurylinklabs.watchtower.enable: *auto_update
 
   watchtower:
-    image: containrrr/watchtower
+    image: containrrr/watchtower:latest
+    pull_policy: always
     container_name: watchtower
     restart: always
-    profiles: ["autoupdate"]
+    # profiles: ["autoupdate"]  # เปิด comment นี้ถ้าต้องการ start watchtower แบบ optional: docker compose --profile autoupdate up -d
     environment:
       TZ: Asia/Bangkok
+      DOCKER_API_VERSION: "1.41"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command:
