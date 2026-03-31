@@ -1,6 +1,6 @@
 # 3.10.2
 ## Feature
-  - ปรับ script ให้ docker autoupdate เวลา 03:00:00
+  - ปรับ script ให้ docker pull ใหม่ทุกครั้งที่ restart
   - เพิ่มการ Compress data ก่อนส่งส่วนกลาง
   - เพิ่ม Timeout เพื่อป้องกันการ response ช้าจาก server
 

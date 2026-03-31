@@ -1,17 +1,15 @@
-x-auto-update: &auto_update "true"   # เปลี่ยนเป็น "false" เพื่อปิด auto update ของ api
-
 services:
   api:
     image: superpck/his-connect:linux-latest
     container_name: his-connect-api
     environment:
-      TZ: Asia/Bangkok
+      - TZ=Asia/Bangkok
     ports:
       - "3004:3004"
     volumes:
       - ./config:/usr/src/his_connect/config:ro
       - ./sent_result.txt:/usr/src/his_connect/sent_result.txt
-    command: ["pm2-runtime", "start", "app/app.js", "-i", "2", "--name", "his-connect-docker"]
+    command: ["pm2-runtime", "start", "app/app.js", "-i", "2", "--name", "his-connect-api"]
     pull_policy: always
     restart: always
     healthcheck:
@@ -19,23 +17,3 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-    labels:
-      com.centurylinklabs.watchtower.enable: *auto_update
-
-  watchtower:
-    image: containrrr/watchtower:latest
-    pull_policy: always
-    container_name: watchtower
-    restart: always
-    # profiles: ["autoupdate"]  # เปิด comment นี้ถ้าต้องการ start watchtower แบบ optional: docker compose --profile autoupdate up -d
-    environment:
-      TZ: Asia/Bangkok
-      DOCKER_API_VERSION: "1.41"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    command:
-      - --label-enable
-      - --schedule
-      - "0 0 3 * * *"
-      - --cleanup
-      - --rolling-restart
