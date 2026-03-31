@@ -4,6 +4,7 @@
   - เพิ่มการ Compress data ก่อนส่งส่วนกลาง
   - เพิ่ม Timeout เพื่อป้องกันการ response ช้าจาก server
   - ปรับการ run first task ให้ delay 10sec. เพื่อให้ระบบ init ให้ครบทุกคำสั่ง
+  - เพิ่มการ run watchtower เพื่อ update docker 03:50 ของทุกวัน
 
 # 3.10.1
 ## Feature

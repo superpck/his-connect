@@ -17,3 +17,23 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    pull_policy: always
+    container_name: watchtower
+    restart: always
+    environment:
+      - TZ=Asia/Bangkok
+      - DOCKER_API_VERSION=1.41
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command:
+      - --label-enable
+      - --schedule
+      - "0 50 3 * * *"
+      - --cleanup
+      - --rolling-restart
+      - his-connect-api
