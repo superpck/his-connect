@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.process = void 0;
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const server_resource_1 = require("../middleware/server-resource");
 const utils_1 = require("../middleware/utils");
 const telegram_1 = require("./../middleware/telegram");
@@ -26,7 +29,7 @@ const sendResourceMonitor = async () => {
             `${memoryPercent > 80 ? '❌' : '✅'} RAM: <code>${memory.usagePercent} (${memory.usedMemory}/${memory.totalMemory})</code>\n` +
             `${diskPercent > 80 ? '❌' : '✅'} Disk: <code>${disk[0].usagePercent} (${disk[0].used}/${disk[0].total})</code>\n` +
             `${loadPercent > 2 ? '❌' : '✅'} Load: <code>${svr.loadAverage[0].toFixed(2)} ${svr.loadAverage[1].toFixed(2)} ${svr.loadAverage[2].toFixed(2)}</code>\n` +
-            `\n⏰ ข้อมูลวันที่ ` + (0, utils_1.thaiDateAbbr)() + ' เวลา ' + moment().format('HH:mm:ss');
+            `\n⏰ ข้อมูลวันที่ ` + (0, utils_1.thaiDateAbbr)() + ' เวลา ' + (0, moment_1.default)().format('HH:mm:ss');
         await (0, telegram_1.sendTelegramMessage)("ICT@KKH Monitoring Notify", message, 'HTML');
     }
     catch (error) {

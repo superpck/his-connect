@@ -9,9 +9,11 @@ const cacheDbModule = require('../plugins/cache-db');
 const cacheDb = cacheDbModule.default || cacheDbModule;
 let db: Knex = dbConnection('HIS');
 let hospitalConfig: any = null;
+let _cacheOk = true; // set to false if better-sqlite3 fails to load
 
 // สร้างตาราง iot_service ถ้ายังไม่มี
 async function createIotServiceTable() {
+  if (!_cacheOk) return;
   try {
     const hasTable = await cacheDb.schema.hasTable('iot_service');
     if (!hasTable) {
@@ -27,12 +29,15 @@ async function createIotServiceTable() {
       console.log(moment().format('HH:mm:ss'), 'Created iot_service table');
     }
   } catch (error) {
-    console.error('Error creating iot_service table:', error);
+    _cacheOk = false;
+    console.error('Error creating iot_service table:', error.message);
+    console.error('[SQLite] Cache disabled. Fix: run "npm rebuild better-sqlite3" in the app directory.');
   }
 }
 
 // ลบข้อมูลย้อนหลัง 48 ชั่วโมง
 async function cleanOldRecords() {
+  if (!_cacheOk) return;
   try {
     const twoDaysAgo = moment().subtract(48, 'hours').format('YYYY-MM-DD HH:mm:ss');
     const deleted = await cacheDb('iot_service')
@@ -42,25 +47,27 @@ async function cleanOldRecords() {
       console.log(moment().format('HH:mm:ss'), `Cleaned ${deleted} old IoT records before ${twoDaysAgo}`);
     }
   } catch (error) {
-    console.error('Error cleaning old IoT records:', error);
+    console.error('Error cleaning old IoT records:', error.message);
   }
 }
 
 // ตรวจสอบว่าข้อมูลถูกส่งไปแล้วหรือยัง
 async function isAlreadySent(seq: string): Promise<boolean> {
+  if (!_cacheOk) return false;
   try {
     const record = await cacheDb('iot_service')
       .where({ seq })
       .first();
     return !!record;
   } catch (error) {
-    console.error('Error checking sent record:', error);
+    console.error('Error checking sent record:', error.message);
     return false;
   }
 }
 
 // บันทึกประวัติการส่ง
 async function markAsSent(row: any) {
+  if (!_cacheOk) return;
   try {
     await cacheDb('iot_service')
       .insert({
@@ -71,7 +78,7 @@ async function markAsSent(row: any) {
       .onConflict('seq')
       .ignore();
   } catch (error) {
-    console.error('Error marking as sent:', error);
+    console.error('Error marking as sent:', error.message);
   }
 }
 

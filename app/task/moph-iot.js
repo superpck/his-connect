@@ -1,15 +1,21 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const moment = require("moment");
 console.log(moment().format('HH:mm:ss'), process.pid, 'Start MOPH IoT Task');
 const moph_refer_1 = require("../middleware/moph-refer");
-const hismodel_1 = require("./../routes/his/hismodel");
+const hismodel_1 = __importDefault(require("./../routes/his/hismodel"));
 const dbConnection = require('../plugins/db');
 const cacheDbModule = require('../plugins/cache-db');
 const cacheDb = cacheDbModule.default || cacheDbModule;
 let db = dbConnection('HIS');
 let hospitalConfig = null;
+let _cacheOk = true;
 async function createIotServiceTable() {
+    if (!_cacheOk)
+        return;
     try {
         const hasTable = await cacheDb.schema.hasTable('iot_service');
         if (!hasTable) {
@@ -26,10 +32,14 @@ async function createIotServiceTable() {
         }
     }
     catch (error) {
-        console.error('Error creating iot_service table:', error);
+        _cacheOk = false;
+        console.error('Error creating iot_service table:', error.message);
+        console.error('[SQLite] Cache disabled. Fix: run "npm rebuild better-sqlite3" in the app directory.');
     }
 }
 async function cleanOldRecords() {
+    if (!_cacheOk)
+        return;
     try {
         const twoDaysAgo = moment().subtract(48, 'hours').format('YYYY-MM-DD HH:mm:ss');
         const deleted = await cacheDb('iot_service')
@@ -40,10 +50,12 @@ async function cleanOldRecords() {
         }
     }
     catch (error) {
-        console.error('Error cleaning old IoT records:', error);
+        console.error('Error cleaning old IoT records:', error.message);
     }
 }
 async function isAlreadySent(seq) {
+    if (!_cacheOk)
+        return false;
     try {
         const record = await cacheDb('iot_service')
             .where({ seq })
@@ -51,11 +63,13 @@ async function isAlreadySent(seq) {
         return !!record;
     }
     catch (error) {
-        console.error('Error checking sent record:', error);
+        console.error('Error checking sent record:', error.message);
         return false;
     }
 }
 async function markAsSent(row) {
+    if (!_cacheOk)
+        return;
     try {
         await cacheDb('iot_service')
             .insert({
@@ -67,7 +81,7 @@ async function markAsSent(row) {
             .ignore();
     }
     catch (error) {
-        console.error('Error marking as sent:', error);
+        console.error('Error marking as sent:', error.message);
     }
 }
 const processIoT = async (date = null) => {

@@ -1,8 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ipdData = void 0;
 const http_status_codes_1 = require("http-status-codes");
-const hismodel_1 = require("../../routes/his/hismodel");
+const hismodel_1 = __importDefault(require("../../routes/his/hismodel"));
 const db = global.dbHIS;
 const ipdData = async (_req, reply) => {
     const an = _req?.params?.an;

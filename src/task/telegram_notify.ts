@@ -1,4 +1,4 @@
-import * as moment from "moment";
+import moment from "moment";
 import { cpuUsage, diskUsage, memoryUsage, serverInformation } from "../middleware/server-resource";
 import { thaiDateAbbr } from "../middleware/utils";
 import { sendTelegramMessage } from "./../middleware/telegram";

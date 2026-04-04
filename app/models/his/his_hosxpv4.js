@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisHosxpv4Model = void 0;
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const maxLimit = 1000;
 let hisHospcode = process.env.HOSPCODE;
 const hisVersion = process.env.HIS_PROVIDER.toLowerCase() == 'hosxpv3' ? '3' : '4';
@@ -9,18 +12,23 @@ const dbClient = process.env.HIS_DB_CLIENT ? process.env.HIS_DB_CLIENT.toLowerCa
 let hospcodeConfig = null;
 const getDatetimeExpr = (db, dateCol, timeCol) => {
     const clientType = (db.client?.config?.client || dbClient).toLowerCase();
+    let sql;
     switch (clientType) {
         case 'pg':
         case 'postgres':
         case 'postgresql':
-            return db.raw(`${dateCol}::text || ' ' || ${timeCol}::text`);
+            sql = `${dateCol}::text || ' ' || ${timeCol}::text`;
+            break;
         case 'mssql':
-            return db.raw(`CAST(${dateCol} AS VARCHAR) + ' ' + CAST(${timeCol} AS VARCHAR)`);
+            sql = `CAST(${dateCol} AS VARCHAR) + ' ' + CAST(${timeCol} AS VARCHAR)`;
+            break;
         case 'oracledb':
-            return db.raw(`${dateCol} || ' ' || ${timeCol}`);
+            sql = `${dateCol} || ' ' || ${timeCol}`;
+            break;
         default:
-            return db.raw(`CONCAT(${dateCol}, ' ', ${timeCol})`);
+            sql = `CONCAT(${dateCol}, ' ', ${timeCol})`;
     }
+    return { sql };
 };
 const getHospcode = async () => {
     try {
@@ -196,8 +204,8 @@ class HisHosxpv4Model {
     }
     async getReferOut(db, date, hospCode = hisHospcode, visitNo = null) {
         try {
-            date = moment(date).format('YYYY-MM-DD');
-            const limitDate = moment().subtract(1, 'months').format('YYYY-MM-DD');
+            date = (0, moment_1.default)(date).format('YYYY-MM-DD');
+            const limitDate = (0, moment_1.default)().subtract(1, 'months').format('YYYY-MM-DD');
             hospCode = await this.hospCodeFromTable(db);
             let query = db('referout as r');
             if (visitNo) {
@@ -1257,13 +1265,13 @@ class HisHosxpv4Model {
         }
         if (columnName === "fu_date" || columnName === "visit_date") {
             if (Array.isArray(searchValue)) {
-                searchValue = searchValue.map((d) => moment(d).format("YYYY-MM-DD"));
+                searchValue = searchValue.map((d) => (0, moment_1.default)(d).format("YYYY-MM-DD"));
             }
             else {
-                searchValue = moment(searchValue).format("YYYY-MM-DD");
+                searchValue = (0, moment_1.default)(searchValue).format("YYYY-MM-DD");
             }
         }
-        lastupdateLimit = lastupdateLimit || moment().subtract(120, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+        lastupdateLimit = lastupdateLimit || (0, moment_1.default)().subtract(120, 'minutes').format('YYYY-MM-DD HH:mm:ss');
         let query = db({ o: "oapp" })
             .join({ p: "patient" }, "o.hn", "p.hn")
             .join({ c: "clinic" }, "c.clinic", "o.clinic")
@@ -1417,7 +1425,7 @@ class HisHosxpv4Model {
     }
     async getReferResult(db, visitDate, hospCode = hisHospcode) {
         try {
-            visitDate = moment(visitDate).format('YYYY-MM-DD');
+            visitDate = (0, moment_1.default)(visitDate).format('YYYY-MM-DD');
             const hospCode = await this.hospCodeFromTable(db);
             const lenFunc = db.client.driverName === 'mssql' ? 'LEN' : 'LENGTH';
             const result = await db('referin')
@@ -1587,8 +1595,8 @@ class HisHosxpv4Model {
     async sumReferOut(db, dateStart, dateEnd) {
         try {
             const hospCode = await this.hospCodeFromTable(db);
-            dateStart = moment(dateStart).format('YYYY-MM-DD');
-            dateEnd = moment(dateEnd).format('YYYY-MM-DD');
+            dateStart = (0, moment_1.default)(dateStart).format('YYYY-MM-DD');
+            dateEnd = (0, moment_1.default)(dateEnd).format('YYYY-MM-DD');
             return db('referout as r')
                 .select('r.refer_date')
                 .count('r.vn as cases')
@@ -1606,8 +1614,8 @@ class HisHosxpv4Model {
     }
     async sumReferIn(db, dateStart, dateEnd) {
         try {
-            dateStart = moment(dateStart).format('YYYY-MM-DD');
-            dateEnd = moment(dateEnd).format('YYYY-MM-DD');
+            dateStart = (0, moment_1.default)(dateStart).format('YYYY-MM-DD');
+            dateEnd = (0, moment_1.default)(dateEnd).format('YYYY-MM-DD');
             const hospCode = await this.hospCodeFromTable(db);
             return db('referin')
                 .leftJoin('ovst', 'referin.vn', 'ovst.vn')
@@ -1672,11 +1680,11 @@ class HisHosxpv4Model {
     }
     concurrentIPDByWard(db, date) {
         try {
-            const dateStart = moment(date)
+            const dateStart = (0, moment_1.default)(date)
                 .locale('TH')
                 .startOf('hour')
                 .format('YYYY-MM-DD HH:mm:ss');
-            const dateEnd = moment(date)
+            const dateEnd = (0, moment_1.default)(date)
                 .locale('TH')
                 .endOf('hour')
                 .format('YYYY-MM-DD HH:mm:ss');
@@ -1717,7 +1725,7 @@ class HisHosxpv4Model {
     }
     concurrentIPDByClinic(db, date) {
         try {
-            const formattedDate = moment(date).locale('TH').format('YYYY-MM-DD');
+            const formattedDate = (0, moment_1.default)(date).locale('TH').format('YYYY-MM-DD');
             let sql = db('ipt')
                 .leftJoin('iptadm', 'ipt.an', 'iptadm.an')
                 .leftJoin('ward', 'ipt.ward', 'ward.ward')
@@ -1754,7 +1762,7 @@ class HisHosxpv4Model {
     }
     async getVisitForMophAlert(db, date, isRowCount = false, start = -1, limit = 1000) {
         try {
-            date = moment(date).locale('TH').format('YYYY-MM-DD');
+            date = (0, moment_1.default)(date).locale('TH').format('YYYY-MM-DD');
             if (isRowCount) {
                 return db('ovst').where('ovst.vstdate', date).count('ovst.vn as row_count').first();
             }

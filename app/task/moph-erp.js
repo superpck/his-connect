@@ -1,9 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.erpAdminRequest = exports.updateAlive = exports.sendBedNo = exports.sendWardName = exports.mophErpProcessTask = exports.sendBedOccupancy = void 0;
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const moph_refer_1 = require("../middleware/moph-refer");
-const hismodel_1 = require("./../routes/his/hismodel");
+const hismodel_1 = __importDefault(require("./../routes/his/hismodel"));
 const os_1 = require("os");
 const fs = require('fs');
 const utils_1 = require("../middleware/utils");
@@ -19,12 +22,12 @@ const sendBedOccupancy = async (dateProcess = null) => {
     let whatUTC = Intl?.DateTimeFormat().resolvedOptions().timeZone || '';
     let currDate;
     if (whatUTC == 'UTC' || whatUTC == 'Etc/UTC') {
-        currDate = moment().locale('TH').add(7, 'hours').subtract(1, 'hours').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        currDate = (0, moment_1.default)().locale('TH').add(7, 'hours').subtract(1, 'hours').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
     }
     else {
-        currDate = moment().locale('TH').subtract(1, 'hours').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        currDate = (0, moment_1.default)().locale('TH').subtract(1, 'hours').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
     }
-    dateProcess = dateProcess ? moment(dateProcess).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss') : null;
+    dateProcess = dateProcess ? (0, moment_1.default)(dateProcess).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss') : null;
     let dateIPD = dateProcess || currDate;
     let opdResult = null;
     let wardResult = await sendBedOccupancyByWard(dateIPD);
@@ -34,7 +37,7 @@ const sendBedOccupancy = async (dateProcess = null) => {
         [opdResult] = await Promise.all([
             sendOpdVisitByClinic(dateOpd)
         ]);
-        dateOpd = moment(dateOpd).add(1, 'day').format('YYYY-MM-DD');
+        dateOpd = (0, moment_1.default)(dateOpd).add(1, 'day').format('YYYY-MM-DD');
     } while (dateOpd <= currDate);
     console.log('-'.repeat(70));
     return { clinicResult, wardResult, opdResult };
@@ -42,19 +45,19 @@ const sendBedOccupancy = async (dateProcess = null) => {
 exports.sendBedOccupancy = sendBedOccupancy;
 const sendBedOccupancyByWard = async (date) => {
     try {
-        const occupancy_date = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        const occupancy_date = (0, moment_1.default)(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
         let rows = await hismodel_1.default.concurrentIPDByWard(db, date);
         if (rows && rows.length) {
             rows = rows.map((v) => {
                 return {
                     ...v, occupancy_date,
-                    date: moment(date).format('YYYY-MM-DD'),
+                    date: (0, moment_1.default)(date).format('YYYY-MM-DD'),
                     hospcode,
                     his: hisProvider || ''
                 };
             });
             const result = await (0, moph_refer_1.sendingToMoph)('/save-occupancy-rate-by-ward', rows);
-            console.log(moment().format('HH:mm:ss'), 'send Occ Rate by ward', date, result.status || '', result.message || '', rows.length, 'rows');
+            console.log((0, moment_1.default)().format('HH:mm:ss'), 'send Occ Rate by ward', date, result.status || '', result.message || '', rows.length, 'rows');
         }
         console.log('-'.repeat(70));
         return rows;
@@ -64,7 +67,7 @@ const sendBedOccupancyByWard = async (date) => {
             route_name: 'sendBedOccupancyByWard', error_code: error.status || '500',
             error_message: error.message || ''
         });
-        console.error(moment().format('HH:mm:ss'), 'sendBedOccupancy error by ward', date, error.message);
+        console.error((0, moment_1.default)().format('HH:mm:ss'), 'sendBedOccupancy error by ward', date, error.message);
         console.log('-'.repeat(70));
         return false;
     }
@@ -77,7 +80,7 @@ const sendBedOccupancyByClinic = async (date) => {
                 return { ...v, date, hospcode, his: hisProvider || '' };
             });
             const result = await (0, moph_refer_1.sendingToMoph)('/save-occupancy-rate-by-clinic', rows);
-            console.log(moment().format('HH:mm:ss'), 'send Occ rate by clinic', date, result.status || '', result.message || '', rows.length, 'rows');
+            console.log((0, moment_1.default)().format('HH:mm:ss'), 'send Occ rate by clinic', date, result.status || '', result.message || '', rows.length, 'rows');
         }
         return rows;
     }
@@ -86,7 +89,7 @@ const sendBedOccupancyByClinic = async (date) => {
             route_name: 'sendBedOccupancyByClinic', error_code: error.status || '500',
             error_message: error.message || ''
         });
-        console.error(moment().format('HH:mm:ss'), 'sendBedOccupancy by clinic error', date, error.message);
+        console.error((0, moment_1.default)().format('HH:mm:ss'), 'sendBedOccupancy by clinic error', date, error.message);
         return false;
     }
 };
@@ -100,7 +103,7 @@ const sendOpdVisitByClinic = async (date) => {
                 };
             });
             const result = await (0, moph_refer_1.sendingToMoph)('/save-sum-opd-visit-by-clinic', rows);
-            console.log(moment().format('HH:mm:ss'), 'send Sum OPD visit by clinic', date, result.status || '', result.message || '', rows.length, 'rows');
+            console.log((0, moment_1.default)().format('HH:mm:ss'), 'send Sum OPD visit by clinic', date, result.status || '', result.message || '', rows.length, 'rows');
         }
         return rows;
     }
@@ -109,7 +112,7 @@ const sendOpdVisitByClinic = async (date) => {
             route_name: 'sendOpdVisitByClinic', error_code: error.status || '500',
             error_message: error.message || ''
         });
-        console.error(moment().format('HH:mm:ss'), 'sendSumOpdVisit by clinic error', date, error.message);
+        console.error((0, moment_1.default)().format('HH:mm:ss'), 'sendSumOpdVisit by clinic error', date, error.message);
         return false;
     }
 };
@@ -155,12 +158,12 @@ const sendWardName = async () => {
                 return { ...v, hospcode: process.env.HOSPCODE || '' };
             });
             const result = await (0, moph_refer_1.sendingToMoph)('/save-ward', rows);
-            console.log(moment().format('HH:mm:ss'), 'sendWardName', result.status || '', result.message || '', rows.length, 'rows');
+            console.log((0, moment_1.default)().format('HH:mm:ss'), 'sendWardName', result.status || '', result.message || '', rows.length, 'rows');
             console.log('-'.repeat(70));
             return result;
         }
         else {
-            console.log(moment().format('HH:mm:ss'), 'sendWardName', 'No ward data');
+            console.log((0, moment_1.default)().format('HH:mm:ss'), 'sendWardName', 'No ward data');
             console.log('-'.repeat(70));
             return { statusCode: 200, message: 'No ward data' };
         }
@@ -170,7 +173,7 @@ const sendWardName = async () => {
             route_name: 'sendWardName', error_code: error.status || '500',
             error_message: error.message || ''
         });
-        console.log(moment().format('HH:mm:ss'), 'getWard error', error.message);
+        console.log((0, moment_1.default)().format('HH:mm:ss'), 'getWard error', error.message);
         console.log('-'.repeat(70));
         return [];
     }
@@ -210,7 +213,7 @@ const sendBedNo = async () => {
             startRow += limitRow;
             times++;
         } while (startRow < countBed && countBed != 0);
-        console.log(moment().format('HH:mm:ss'), `sendBedNo ${countBed} rows (${times} times)`, error);
+        console.log((0, moment_1.default)().format('HH:mm:ss'), `sendBedNo ${countBed} rows (${times} times)`, error);
         console.log('-'.repeat(70));
         return { statusCode: 200, sentResult };
     }
@@ -219,7 +222,7 @@ const sendBedNo = async () => {
             route_name: 'sendBedNo', error_code: error.status || '500',
             error_message: error.message || ''
         });
-        console.log(moment().format('HH:mm:ss'), 'getBedNo error', error.message);
+        console.log((0, moment_1.default)().format('HH:mm:ss'), 'getBedNo error', error.message);
         console.log('-'.repeat(70));
         return { statusCode: error.status || 500, message: error.message || error };
     }
@@ -231,7 +234,7 @@ const updateAlive = async () => {
         const apiEnv = await detectRuntimeEnvironment();
         let data = {
             api_date: global.apiStartTime,
-            server_date: moment().format('YYYY-MM-DD HH:mm:ss'),
+            server_date: (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss'),
             hospcode,
             version: packageJson.version || '',
             subversion: packageJson.subVersion || '',
@@ -246,10 +249,10 @@ const updateAlive = async () => {
         const result = await (0, moph_refer_1.updateHISAlive)(data);
         const status = result.status == 200 || result.statusCode == 200 ? true : false;
         if (status) {
-            console.log(moment().format('HH:mm:ss'), '✅ Sent API Alive status result', result.status || '', result.statusCode || '', result?.message || '');
+            console.log((0, moment_1.default)().format('HH:mm:ss'), '✅ Sent API Alive status result', result.status || '', result.statusCode || '', result?.message || '');
         }
         else {
-            console.error(moment().format('HH:mm:ss'), '❌ Sent API Alive status result', result.status || '', result.statusCode || '', result?.message || '');
+            console.error((0, moment_1.default)().format('HH:mm:ss'), '❌ Sent API Alive status result', result.status || '', result.statusCode || '', result?.message || '');
         }
         console.log('-'.repeat(70));
         return result;
@@ -259,7 +262,7 @@ const updateAlive = async () => {
             route_name: 'updateAlive', error_code: error.status || '500',
             error_message: error.message || ''
         });
-        console.error(moment().format('HH:mm:ss'), '❌ Sent API Alive status error:', error?.status || error?.statusCode || '', error?.message || error || '');
+        console.error((0, moment_1.default)().format('HH:mm:ss'), '❌ Sent API Alive status error:', error?.status || error?.statusCode || '', error?.message || error || '');
         console.log('-'.repeat(70));
         return [];
     }
@@ -274,30 +277,30 @@ const erpAdminRequest = async () => {
             for (let row of rows) {
                 if (row.request_type == 'bed') {
                     requestResult = await (0, exports.sendBedNo)();
-                    console.log(moment().format('HH:mm:ss'), 'ERP admin request get bed no.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+                    console.log((0, moment_1.default)().format('HH:mm:ss'), 'ERP admin request get bed no.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
                 }
                 else if (row.request_type == 'ward') {
                     requestResult = await (0, exports.sendWardName)();
-                    console.log(moment().format('HH:mm:ss'), 'ERP admin request get ward name.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+                    console.log((0, moment_1.default)().format('HH:mm:ss'), 'ERP admin request get ward name.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
                 }
                 else if (row.request_type == 'alive') {
                     requestResult = await (0, exports.updateAlive)();
-                    console.log(moment().format('HH:mm:ss'), 'ERP admin request send alive status.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+                    console.log((0, moment_1.default)().format('HH:mm:ss'), 'ERP admin request send alive status.', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
                 }
                 else if (row.request_type == 'occupancy') {
                     requestResult = await (0, exports.sendBedOccupancy)();
-                    console.log(moment().format('HH:mm:ss'), 'ERP admin request occupancy', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
+                    console.log((0, moment_1.default)().format('HH:mm:ss'), 'ERP admin request occupancy', requestResult?.statusCode || requestResult?.status || '', requestResult?.message || '');
                 }
                 const updateResult = await (0, moph_refer_1.updateAdminRequest)({
                     request_id: row.request_id,
                     status: requestResult?.statusCode == 200 || requestResult?.status == 200 ? 'success' : `failed ${requestResult?.status || requestResult?.statusCode || ''}`,
                     isactive: 0
                 });
-                console.log(moment().format('HH:mm:ss'), 'ERP admin request update status', updateResult?.statusCode || updateResult?.status || '', updateResult?.message || '');
+                console.log((0, moment_1.default)().format('HH:mm:ss'), 'ERP admin request update status', updateResult?.statusCode || updateResult?.status || '', updateResult?.message || '');
             }
         }
         else {
-            console.log(moment().format('HH:mm:ss'), 'No admin request', result.status || result?.statusCode || '', result?.data?.message || result?.message || '');
+            console.log((0, moment_1.default)().format('HH:mm:ss'), 'No admin request', result.status || result?.statusCode || '', result?.data?.message || result?.message || '');
         }
         console.log('-'.repeat(70));
         return result;
@@ -307,7 +310,7 @@ const erpAdminRequest = async () => {
             route_name: 'erpAdminRequest', error_code: error.status || '500',
             error_message: error.message || ''
         });
-        console.log(moment().format('HH:mm:ss'), 'Admin Request error', error.message);
+        console.log((0, moment_1.default)().format('HH:mm:ss'), 'Admin Request error', error.message);
         console.log('-'.repeat(70));
         return [];
     }

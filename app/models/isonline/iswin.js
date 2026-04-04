@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.IswinModel = void 0;
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const dbName = process.env.DB_NAME;
 const defaultHCode = process.env.HOSPCODE;
 class IswinModel {
@@ -228,7 +231,7 @@ class IswinModel {
             await db('is_deleted').insert({
                 is_id: isData[0].id,
                 hcode: isData[0].hosp,
-                date: moment().locale('th').format('YYYY-MM-DD HH:mm:ss')
+                date: (0, moment_1.default)().locale('th').format('YYYY-MM-DD HH:mm:ss')
             });
         }
         return db('is')

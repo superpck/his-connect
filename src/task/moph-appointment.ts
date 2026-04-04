@@ -9,9 +9,11 @@ const cacheDbModule = require('../plugins/cache-db');
 const cacheDb = cacheDbModule.default || cacheDbModule;
 let db: Knex = dbConnection('HIS');
 let hospitalConfig: any = null;
+let _cacheOk = true; // set to false if better-sqlite3 fails to load
 
 // สร้างตาราง appointment_sent ถ้ายังไม่มี
 async function createAppointmentTable() {
+  if (!_cacheOk) return;
   try {
     const hasTable = await cacheDb.schema.hasTable('appointment_sent');
     if (!hasTable) {
@@ -29,12 +31,15 @@ async function createAppointmentTable() {
       console.log(moment().format('HH:mm:ss'), 'Created appointment_sent table');
     }
   } catch (error) {
-    console.error('Error creating appointment_sent table:', error);
+    _cacheOk = false;
+    console.error('Error creating appointment_sent table:', error.message);
+    console.error('[SQLite] Cache disabled. Fix: run "npm rebuild better-sqlite3" in the app directory.');
   }
 }
 
 // ลบข้อมูลย้อนหลัง 2 วัน
 async function cleanOldRecords() {
+  if (!_cacheOk) return;
   try {
     const twoDaysAgo = moment().subtract(2, 'days').format('YYYY-MM-DD');
     const deleted = await cacheDb('appointment_sent')
@@ -44,25 +49,27 @@ async function cleanOldRecords() {
       console.log(moment().format('HH:mm:ss'), `Cleaned ${deleted} old records before ${twoDaysAgo}`);
     }
   } catch (error) {
-    console.error('Error cleaning old records:', error);
+    console.error('Error cleaning old records:', error.message);
   }
 }
 
 // ตรวจสอบว่าข้อมูลถูกส่งไปแล้วหรือยัง
 async function isAlreadySent(vn: string, clinic: string): Promise<boolean> {
+  if (!_cacheOk) return false;
   try {
     const record = await cacheDb('appointment_sent')
       .where({ vn, clinic })
       .first();
     return !!record;
   } catch (error) {
-    console.error('Error checking sent record:', error);
+    console.error('Error checking sent record:', error.message);
     return false;
   }
 }
 
 // บันทึกประวัติการส่ง
 async function markAsSent(row: any) {
+  if (!_cacheOk) return;
   try {
     await cacheDb('appointment_sent')
       .insert({
@@ -75,7 +82,7 @@ async function markAsSent(row: any) {
       .onConflict(['vn', 'clinic'])
       .merge();
   } catch (error) {
-    console.error('Error marking as sent:', error);
+    console.error('Error marking as sent:', error.message);
   }
 }
 

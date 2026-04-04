@@ -1,6 +1,6 @@
 import * as si from "systeminformation";
 import * as os from 'os';
-import * as moment from "moment";
+import moment from "moment";
 
 export const serverInformation = () => {
   let ip: any = [];

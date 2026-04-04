@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisHosxpPcuModel = void 0;
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 class HisHosxpPcuModel {
@@ -1178,7 +1181,7 @@ class HisHosxpPcuModel {
         return result[0];
     }
     getReferResult(db, visitDate, hospCode = hcode) {
-        visitDate = moment(visitDate).format('YYYY-MM-DD');
+        visitDate = (0, moment_1.default)(visitDate).format('YYYY-MM-DD');
         return db('referin')
             .leftJoin('patient', 'referin.hn', 'patient.hn')
             .leftJoin('ovst', 'referin.vn', 'ovst.vn')

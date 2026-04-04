@@ -1,4 +1,4 @@
-import * as moment from 'moment';
+import moment from 'moment';
 import hisModel from './../routes/his/hismodel';
 import { Knex } from 'knex';
 import { dateLen } from '../middleware/utils';

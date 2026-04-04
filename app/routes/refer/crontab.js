@@ -1,4 +1,7 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const path = require("path");
 require('dotenv').config({
@@ -7,9 +10,9 @@ require('dotenv').config({
     debug: false
 });
 var fastify = require('fastify');
-const moment = require("moment");
-const axios_1 = require("axios");
-const hismodel_1 = require("./../his/hismodel");
+const moment_1 = __importDefault(require("moment"));
+const axios_1 = __importDefault(require("axios"));
+const hismodel_1 = __importDefault(require("./../his/hismodel"));
 const moph_refer_1 = require("../../middleware/moph-refer");
 var fs = require('fs');
 const hcode = process.env.HOSPCODE;
@@ -38,7 +41,7 @@ const processSend = async (request, reply, dbConn, config = {}) => {
             crontabConfig['client_ip'] = request.ip || crontabConfig['client_ip'];
         }
     }
-    console.log(moment().format('HH:mm:ss'), `Start 'nRefer' task on PID ${process.pid}`);
+    console.log((0, moment_1.default)().format('HH:mm:ss'), `Start 'nRefer' task on PID ${process.pid}`);
     let result;
     if (crontabConfig?.service == 'ipdChecking') {
         result = await ipdChecking(request, reply);
@@ -50,9 +53,9 @@ const processSend = async (request, reply, dbConn, config = {}) => {
     return result;
 };
 async function sendMoph(req, reply, db) {
-    const dateNow = moment().format('YYYY-MM-DD');
+    const dateNow = (0, moment_1.default)().format('YYYY-MM-DD');
     sentContent = `${global.appDetail.name} v.${global.appDetail.version}-${global.appDetail.subVersion} ` +
-        moment().format('YYYY-MM-DD HH:mm:ss') + ' data:' + dateNow + "\r\n";
+        (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss') + ' data:' + dateNow + "\r\n";
     const resultToken = await getNReferToken(apiKey, secretKey);
     if (resultToken && resultToken.statusCode == 200 && resultToken.token) {
         nReferToken = resultToken.token;
@@ -64,25 +67,25 @@ async function sendMoph(req, reply, db) {
         writeResult(resultText, sentContent);
         return false;
     }
-    const hourNow = +moment().get('hours');
-    const minuteNow = +moment().get('minutes');
+    const hourNow = +(0, moment_1.default)().get('hours');
+    const minuteNow = +(0, moment_1.default)().get('minutes');
     if ((hourNow == 1 || hourNow == 8 || hourNow == 12 || hourNow == 18 || hourNow == 22)
         && minuteNow - 1 < sendEveryMinute) {
-        const date = moment().subtract(1, 'days').format('YYYY-MM-DD');
+        const date = (0, moment_1.default)().subtract(1, 'days').format('YYYY-MM-DD');
         var [referOut, referResult] = await sendRefer(db, date);
     }
     else if (hourNow == 4 && minuteNow > (59 - sendEveryMinute)) {
-        let oldDate = moment(dateNow).subtract(1, 'months').format('YYYY-MM-DD');
+        let oldDate = (0, moment_1.default)(dateNow).subtract(1, 'months').format('YYYY-MM-DD');
         while (oldDate < dateNow) {
             var [referOut, referResult] = await sendRefer(db, oldDate);
-            oldDate = moment(oldDate).add(1, 'days').format('YYYY-MM-DD');
+            oldDate = (0, moment_1.default)(oldDate).add(1, 'days').format('YYYY-MM-DD');
         }
     }
     else if ([3, 14].indexOf(hourNow) >= 0 && minuteNow - 1 > sendEveryMinute) {
-        let oldDate = moment(dateNow).subtract(7, 'days').format('YYYY-MM-DD');
+        let oldDate = (0, moment_1.default)(dateNow).subtract(7, 'days').format('YYYY-MM-DD');
         while (oldDate < dateNow) {
             var [referOut, referResult] = await sendRefer(db, oldDate);
-            oldDate = moment(oldDate).add(1, 'days').format('YYYY-MM-DD');
+            oldDate = (0, moment_1.default)(oldDate).add(1, 'days').format('YYYY-MM-DD');
         }
     }
     var [referOut, referResult] = await sendRefer(db, dateNow);
@@ -148,9 +151,9 @@ async function getReferOut(db, date) {
             const procedureIpd = await getProcedureIpd(db, an);
             index += 1;
             if (referout.length <= index) {
-                sentContent += moment().format('HH:mm:ss.SSS') + ' crontab finished...\r\r';
+                sentContent += (0, moment_1.default)().format('HH:mm:ss.SSS') + ' crontab finished...\r\r';
                 await writeResult(resultText, sentContent);
-                console.log(moment().format('HH:mm:ss.SSS'), 'finished...');
+                console.log((0, moment_1.default)().format('HH:mm:ss.SSS'), 'finished...');
             }
         }
         await getProvider(db, drList, sentResult);
@@ -159,7 +162,7 @@ async function getReferOut(db, date) {
     }
     catch (error) {
         console.error('getReferOut, crontab error:', error.message);
-        sentContent += moment().format('HH:mm:ss.SSS') + 'crontab error ' + error.message + '\r\r';
+        sentContent += (0, moment_1.default)().format('HH:mm:ss.SSS') + 'crontab error ' + error.message + '\r\r';
         return [];
     }
 }
@@ -193,7 +196,7 @@ async function getReferIn(db, date) {
         }
         sentContent += `\rsave refer_result ${date} \r`;
         sentContent += `\rsave refer service data ${date} \r`;
-        console.log(moment().format('HH:mm:ss'), process.env.HOSPCODE, 'refer result (refer in)=', referResult.length, 'row');
+        console.log((0, moment_1.default)().format('HH:mm:ss'), process.env.HOSPCODE, 'refer result (refer in)=', referResult.length, 'row');
         for (let row of referResult) {
             const hn = row.PID_IN;
             const seq = row.SEQ_IN;
@@ -212,41 +215,41 @@ async function getReferIn(db, date) {
             await getLabResult(db, row, sentResultResult);
             index += 1;
             if (referResult.length <= index) {
-                sentContent += moment().format('HH:mm:ss.SSS') + ' crontab finished...\r\r';
+                sentContent += (0, moment_1.default)().format('HH:mm:ss.SSS') + ' crontab finished...\r\r';
                 await writeResult(resultText, sentContent);
-                console.log(moment().format('HH:mm:ss.SSS'), 'finished...');
+                console.log((0, moment_1.default)().format('HH:mm:ss.SSS'), 'finished...');
             }
         }
         getProvider(db, drList, sentResultResult);
-        console.log(moment().format('HH:mm:ss.SSS'), 'sent >> refer result (refer in)', sentResultResult);
+        console.log((0, moment_1.default)().format('HH:mm:ss.SSS'), 'sent >> refer result (refer in)', sentResultResult);
         await getReferInIPDByDateDisc(db, sentResultResult);
         return referResult;
     }
     catch (error) {
         console.log('getReferIn, crontab error:', error.message);
-        sentContent += moment().format('HH:mm:ss.SSS') + 'crontab error ' + error.message + '\r\r';
+        sentContent += (0, moment_1.default)().format('HH:mm:ss.SSS') + 'crontab error ' + error.message + '\r\r';
         return [];
     }
 }
 async function getReferInIPDByDateDisc(db, sentResultResult) {
     try {
         let backward = 2;
-        let today = moment().format('YYYY-MM-DD');
-        let dateEnd = moment().format('YYYY-MM-DD');
-        const hour = moment().get('hour');
-        if ([2, 12, 17].indexOf(hour) > 0 && moment().get('minute') >= (60 - crontabConfig.minute)) {
+        let today = (0, moment_1.default)().format('YYYY-MM-DD');
+        let dateEnd = (0, moment_1.default)().format('YYYY-MM-DD');
+        const hour = (0, moment_1.default)().get('hour');
+        if ([2, 12, 17].indexOf(hour) > 0 && (0, moment_1.default)().get('minute') >= (60 - crontabConfig.minute)) {
             if (hour == 12) {
                 backward = 7;
             }
             else {
                 backward = hour == 2 ? 21 : 7;
-                dateEnd = moment().subtract(7, 'days').format('YYYY-MM-DD');
+                dateEnd = (0, moment_1.default)().subtract(7, 'days').format('YYYY-MM-DD');
             }
         }
-        let date = moment().subtract(backward, 'days').format('YYYY-MM-DD');
+        let date = (0, moment_1.default)().subtract(backward, 'days').format('YYYY-MM-DD');
         do {
             await getReferInIPD(db, date, 0, sentResultResult);
-            date = moment(date).add(1, 'day').format('YYYY-MM-DD');
+            date = (0, moment_1.default)(date).add(1, 'day').format('YYYY-MM-DD');
         } while (date <= dateEnd && date <= today);
         console.log(process.env.HOSPCODE, ' refer result (refer in)', sentResultResult);
         return true;
@@ -257,11 +260,11 @@ async function getReferInIPDByDateDisc(db, sentResultResult) {
     }
 }
 async function getReferInIPD(db, dateDisc, resultOnly, sentResultResult) {
-    if (!dateDisc || dateDisc > moment().format('YYYY-MM-DD')) {
+    if (!dateDisc || dateDisc > (0, moment_1.default)().format('YYYY-MM-DD')) {
         return null;
     }
     let ipdData = await hismodel_1.default.getAdmission(db, 'datedisc', dateDisc);
-    console.log(moment().format('HH:mm:ss'), process.env.HOSPCODE, `Get refer result from IPD discharge date ${dateDisc} = ${ipdData.length} case`);
+    console.log((0, moment_1.default)().format('HH:mm:ss'), process.env.HOSPCODE, `Get refer result from IPD discharge date ${dateDisc} = ${ipdData.length} case`);
     for (let row of ipdData) {
         await sendReferInIPD(db, row, sentResultResult);
     }
@@ -282,7 +285,7 @@ async function sendReferInIPD(db, row, sentResultResult) {
     const procedureIpd = await getProcedureIpd(db, an);
 }
 async function sendReferOut(row, sentResult) {
-    const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
+    const d_update = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss');
     if (row) {
         for (let fld in row) {
             row[fld.toLowerCase()] = row[fld];
@@ -303,9 +306,9 @@ async function sendReferOut(row, sentResult) {
             SEQ,
             AN: row.an || '',
             CID: row.cid,
-            DATETIME_SERV: moment(dServe).format('YYYY-MM-DD HH:mm:ss'),
-            DATETIME_ADMIT: moment(dAdmit).format('YYYY-MM-DD HH:mm:ss') || null,
-            DATETIME_REFER: moment(dRefer).format('YYYY-MM-DD HH:mm:ss'),
+            DATETIME_SERV: (0, moment_1.default)(dServe).format('YYYY-MM-DD HH:mm:ss'),
+            DATETIME_ADMIT: (0, moment_1.default)(dAdmit).format('YYYY-MM-DD HH:mm:ss') || null,
+            DATETIME_REFER: (0, moment_1.default)(dRefer).format('YYYY-MM-DD HH:mm:ss'),
             HOSP_DESTINATION: destHosp,
             REFERID_ORIGIN: row.referid_origin || '',
             HOSPCODE_ORIGIN: row.hospcode_origin || '',
@@ -348,7 +351,7 @@ async function sendReferOut(row, sentResult) {
     }
 }
 async function sendReferIn(row, sentResult) {
-    const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
+    const d_update = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss');
     if (row) {
         const data = {
             HOSPCODE: row.HOSPCODE,
@@ -361,8 +364,8 @@ async function sendReferIn(row, sentResult) {
             CID_IN: row.CID_IN + '',
             HOSP_SOURCE: row.HOSP_SOURCE,
             REFER_RESULT: row.REFER_RESULT || 1,
-            DATETIME_REFER: row.DATETIME_REFER ? moment(row.DATETIME_REFER).format('YYYY-MM-DD HH:mm:ss') : null,
-            DATETIME_IN: moment(row.DATETIME_IN).format('YYYY-MM-DD HH:mm:ss'),
+            DATETIME_REFER: row.DATETIME_REFER ? (0, moment_1.default)(row.DATETIME_REFER).format('YYYY-MM-DD HH:mm:ss') : null,
+            DATETIME_IN: (0, moment_1.default)(row.DATETIME_IN).format('YYYY-MM-DD HH:mm:ss'),
             REASON: row.REASON || null,
             D_UPDATE: row.D_UPDATE || d_update,
             detail: row.detail || null,
@@ -390,7 +393,7 @@ async function sendReferIn(row, sentResult) {
 }
 async function getPerson(db, pid, sentResult) {
     try {
-        const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
+        const d_update = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss');
         let rows = await hismodel_1.default.getPerson(db, 'hn', pid, hcode);
         sentContent += '  - person = ' + rows.length + '\r';
         if (rows && rows.length > 0) {
@@ -439,7 +442,7 @@ async function getPerson(db, pid, sentResult) {
 }
 async function getAddress(db, pid, sentResult) {
     if (pid) {
-        const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
+        const d_update = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss');
         const rows = await hismodel_1.default.getAddress(db, 'hn', pid, hcode);
         sentContent += '  - address = ' + (rows ? rows.length : 0) + '\r';
         if (rows && rows.length) {
@@ -483,7 +486,7 @@ async function getAddress(db, pid, sentResult) {
 async function getService(db, visitNo, sentResult) {
     const rows = await hismodel_1.default.getService(db, 'visitNo', visitNo, hcode);
     sentContent += '  - service = ' + rows.length + '\r';
-    const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
+    const d_update = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss');
     if (rows && rows.length) {
         for (const row of rows) {
             for (let r in row) {
@@ -587,7 +590,7 @@ async function getDiagnosisOpd(db, visitNo, sentResult) {
     return rows;
 }
 async function getProcedureOpd(db, visitNo, sentResult) {
-    const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
+    const d_update = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss');
     const rows = await hismodel_1.default.getProcedureOpd(db, visitNo, hcode);
     sentContent += '  - procedure_opd = ' + rows.length + '\r';
     let rowSave = [];
@@ -669,7 +672,7 @@ async function getLabResult(db, row, sentResult) {
     const visitNo = row.seq || row.SEQ || row.SEQ_IN || row.vn;
     const referID = row.REFERID || row.referid || row.REFERID_SOURCE;
     let rowsSave = [];
-    const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
+    const d_update = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss');
     const rowsLabResult = await hismodel_1.default.getLabResult(db, 'visitNo', visitNo);
     sentContent += '  - lab result = ' + rowsLabResult.length + '\r';
     if (rowsLabResult && rowsLabResult.length) {
@@ -736,9 +739,9 @@ async function ipdChecking(req, res) {
             drugIpd: { success: 0, fail: 0 },
             diagnosisIpd: { success: 0, fail: 0 },
         };
-        let today = moment().format('YYYY-MM-DD');
-        let dateStart = moment().subtract(2, 'months').format('YYYY-MM-DD');
-        let dateEnd = moment().subtract(1, 'days').format('YYYY-MM-DD');
+        let today = (0, moment_1.default)().format('YYYY-MM-DD');
+        let dateStart = (0, moment_1.default)().subtract(2, 'months').format('YYYY-MM-DD');
+        let dateEnd = (0, moment_1.default)().subtract(1, 'days').format('YYYY-MM-DD');
         let date = dateStart;
         do {
             const result = await getNReferIPD({ date });
@@ -753,14 +756,14 @@ async function ipdChecking(req, res) {
                     await getAdmission(db, 'vn', vn);
                 }
             }
-            console.log(moment().format('HH:mm:ss'), `Send IPD backward: ${date} founed: ${rows.length} rows, IPD sent: ${anList.length} rows`);
-            date = moment(date).add(1, 'day').format('YYYY-MM-DD');
+            console.log((0, moment_1.default)().format('HH:mm:ss'), `Send IPD backward: ${date} founed: ${rows.length} rows, IPD sent: ${anList.length} rows`);
+            date = (0, moment_1.default)(date).add(1, 'day').format('YYYY-MM-DD');
         } while (date <= dateEnd && date <= today);
         console.log(sentResult);
         return sentResult;
     }
     catch (error) {
-        console.log(moment().format('HH:mm:ss'), 'ipdChecking', error.message);
+        console.log((0, moment_1.default)().format('HH:mm:ss'), 'ipdChecking', error.message);
     }
 }
 async function getAdmission(db, type = 'VN', searchValue) {
@@ -842,7 +845,7 @@ async function drugIPD(db, an) {
     }
 }
 async function sendAdmission(row) {
-    const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
+    const d_update = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss');
     for (let r in row) {
         row[r.toLowerCase()] = row[r];
     }
@@ -949,7 +952,7 @@ async function getProcedureIpd(db, an) {
     if (!an) {
         return [];
     }
-    const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
+    const d_update = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss');
     const rows = await hismodel_1.default.getProcedureIpd(db, an, hcode);
     sentContent += '  - procedure_ipd = ' + rows.length + '\r';
     let rowSave = [];
@@ -980,7 +983,7 @@ async function getDrugAllergy(db, hn, sentResult) {
     if (!hn) {
         return [];
     }
-    const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
+    const d_update = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss');
     try {
         let rowSave = [];
         const rows = await hismodel_1.default.getDrugAllergy(db, hn, hcode);
@@ -1046,7 +1049,7 @@ async function getProvider(db, drList, sentResult) {
                 OFFICETYPE: row.officetype || 0,
                 HOSTOFFICE: row.hostoffice || '',
                 ID: row.id || '',
-                D_UPDATE: row.d_update || moment().format('YYYY-MM-DD HH:mm:ss')
+                D_UPDATE: row.d_update || (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss')
             });
         }
         const saveResult = await (0, moph_refer_1.sendingToMoph)('/save-provider', rowSave);
@@ -1059,7 +1062,7 @@ async function referSending(path, dataArray) {
     const bodyData = {
         ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
         hospcode: hcode, data: JSON.stringify(dataArray),
-        processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
+        processPid: process.pid, dateTime: (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss'),
         sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version, subVersion: crontabConfig.subVersion,
         hisProvider: process.env.HIS_PROVIDER
     };
@@ -1067,7 +1070,7 @@ async function referSending(path, dataArray) {
     const headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + nReferToken,
-        'Source-Agent': 'HISConnect-' + (crontabConfig.version || 'x') + '-' + (crontabConfig.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+        'Source-Agent': 'HISConnect-' + (crontabConfig.version || 'x') + '-' + (crontabConfig.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + (0, moment_1.default)().format('x') + '-' + Math.random().toString(36).substring(2, 10),
     };
     try {
         const { status, data } = await axios_1.default.post(url, bodyData, { headers });
@@ -1084,13 +1087,13 @@ async function getNReferToken(apiKey, secretKey) {
     const bodyData = {
         ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
         apiKey, secretKey, hospcode: hcode,
-        processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
+        processPid: process.pid, dateTime: (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss'),
         sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version, subVersion: crontabConfig.subVersion,
         hisProvider: process.env.HIS_PROVIDER
     };
     const headers = {
         'Content-Type': 'application/json',
-        'Source-Agent': 'HISConnect-' + crontabConfig.version + '-' + crontabConfig.subVersion + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+        'Source-Agent': 'HISConnect-' + crontabConfig.version + '-' + crontabConfig.subVersion + '-' + (process.env.HOSPCODE || 'hosp') + '-' + (0, moment_1.default)().format('x') + '-' + Math.random().toString(36).substring(2, 10),
     };
     try {
         const { status, data } = await axios_1.default.post(url, bodyData, { headers });
@@ -1106,7 +1109,7 @@ async function getNReferIPD(bodyData = {}) {
     const body = {
         ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
         ...bodyData,
-        processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
+        processPid: process.pid, dateTime: (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss'),
         sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version, subVersion: crontabConfig.subVersion,
         hisProvider: process.env.HIS_PROVIDER
     };
@@ -1114,7 +1117,7 @@ async function getNReferIPD(bodyData = {}) {
     const headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + nReferToken,
-        'Source-Agent': 'HISConnect-' + (crontabConfig.version || 'x') + '-' + (crontabConfig.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+        'Source-Agent': 'HISConnect-' + (crontabConfig.version || 'x') + '-' + (crontabConfig.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + (0, moment_1.default)().format('x') + '-' + Math.random().toString(36).substring(2, 10),
     };
     try {
         const { status, data } = await axios_1.default.post(url, body, { headers });

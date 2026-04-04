@@ -1,6 +1,9 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const http_status_codes_1 = require("http-status-codes");
 let shell = require("shelljs");
 var crypto = require('crypto');
@@ -14,7 +17,7 @@ const router = (fastify, {}, next) => {
     fastify.get('/', async (req, reply) => {
         reply.send({
             status: 200, statusCode: 200, ok: true,
-            date: moment().format('YYYY-MM-DD HH:mm:ss'),
+            date: (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss'),
             apiName: global.appDetail.name,
             version: global.appDetail.version,
             subVersion: global.appDetail.subVersion,
@@ -24,7 +27,7 @@ const router = (fastify, {}, next) => {
     fastify.post('/', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         let res = {
             statusCode: 200,
-            date: moment().format('YYYY-MM-DD HH:mm:ss'),
+            date: (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss'),
             apiName: global.appDetail.name,
             version: global.appDetail.version,
             subVersion: global.appDetail.subVersion,
@@ -58,7 +61,7 @@ const router = (fastify, {}, next) => {
         const key = req.params.key;
         const trust = req.headers.host.search('localhost|127.0.0.1|192.168.0.89') > -1 || ip.indexOf('203.157.') >= 0;
         if (trust) {
-            const now = moment().locale('th').format('YYYYMMDDTHHmmss');
+            const now = (0, moment_1.default)().locale('th').format('YYYYMMDDTHHmmss');
             var appkey = crypto.createHash('sha256').update(now + process.env.REQUEST_KEY).digest('hex');
             var skey = crypto.createHash('md5').update(now + key).digest('hex');
             const token = fastify.jwt.sign({
@@ -144,19 +147,19 @@ const router = (fastify, {}, next) => {
                 || ((+userInfo.status === 25 || +userInfo.status === 35) && +province === 1))) {
             const configFileName = 'config';
             const configFileNameBak = configFileName + '_' +
-                moment().locale('th').format('YYYYMMDD_HHmmss') + '.bak';
+                (0, moment_1.default)().locale('th').format('YYYYMMDD_HHmmss') + '.bak';
             const resultRename = await renameFile(configFileName, configFileNameBak);
-            console.log('====> resultRename', resultRename, moment().locale('th').format('HH:mm:ss.SS'));
+            console.log('====> resultRename', resultRename, (0, moment_1.default)().locale('th').format('HH:mm:ss.SS'));
             const resultSaveConfig = await saveConfig(req.raw['ip'], body, userInfo, configFileName, configFileNameBak);
-            console.log('====> resultSaveConfig', resultSaveConfig, moment().locale('th').format('HH:mm:ss.SS'));
+            console.log('====> resultSaveConfig', resultSaveConfig, (0, moment_1.default)().locale('th').format('HH:mm:ss.SS'));
             if (+body.api.AUTO_RESTART === 1 && body.api.START_TOOL === 'pm2') {
                 reloadPM2(body.api)
                     .then(resultRestartPm2 => {
-                    console.log('====> resultRestartPM2', resultRestartPm2, moment().locale('th').format('HH:mm:ss.SS'));
+                    console.log('====> resultRestartPM2', resultRestartPm2, (0, moment_1.default)().locale('th').format('HH:mm:ss.SS'));
                     reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, message: resultRestartPm2 });
                 })
                     .catch(err => {
-                    console.log('====> resultRestartPM2', err, moment().locale('th').format('HH:mm:ss.SS'));
+                    console.log('====> resultRestartPM2', err, (0, moment_1.default)().locale('th').format('HH:mm:ss.SS'));
                     reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, message: err });
                 });
             }
@@ -225,7 +228,7 @@ const router = (fastify, {}, next) => {
         });
         reply.send({
             statusCode: 200,
-            date_response: moment().locale('th').format('YYYY-MM-DD HH:mm:ss'),
+            date_response: (0, moment_1.default)().locale('th').format('YYYY-MM-DD HH:mm:ss'),
             serviceName: 'HIS Connection API',
             startServer: startServer,
             hospcode: process.env.HOSPCODE,
@@ -270,7 +273,7 @@ const router = (fastify, {}, next) => {
     async function saveConfig(ip, body, userInfo, configFileName, configFileNameBak) {
         return new Promise(async (resolve, reject) => {
             let content = "// FIle: " + configFileName + "\r\n";
-            content += "// Date: " + moment().locale('th').format('YYYY-MM-DD HH:mm:ss') + "\r\n";
+            content += "// Date: " + (0, moment_1.default)().locale('th').format('YYYY-MM-DD HH:mm:ss') + "\r\n";
             content += "// ผู้แก้ไข " + userInfo.fullname + ' ' +
                 userInfo.position + userInfo.position_level + "\r\n";
             content += "// IP: " + ip + "\r\n";
@@ -354,17 +357,17 @@ const router = (fastify, {}, next) => {
         return new Promise(async (resolve, reject) => {
             const pm2Name = api.PM2_NAME === '' ? '' : api.PM2_NAME;
             const pm2Instance = +api.PM2_INSTANCE > 0 ? +api.PM2_INSTANCE : 1;
-            console.log(' ====> restart PM2:', pm2Name, moment().locale('th').format('HH:mm:ss.SS'));
+            console.log(' ====> restart PM2:', pm2Name, (0, moment_1.default)().locale('th').format('HH:mm:ss.SS'));
             await shell.exec('tsc');
             await shell.exec("find ./app -name '*.map' -type f -delete");
             await shell.exec('pm2 flush');
             const shellExecute1 = `pm2 scale ${pm2Name} ${pm2Instance}`;
             await shell.exec(shellExecute1, (err, r) => {
-                console.log(' ====> shellScaling', shellExecute1, r, moment().locale('th').format('HH:mm:ss.SS'));
+                console.log(' ====> shellScaling', shellExecute1, r, (0, moment_1.default)().locale('th').format('HH:mm:ss.SS'));
             });
             const shellExecute2 = `pm2 restart ${pm2Name}`;
             shell.exec(shellExecute2, (err, shellCode) => {
-                console.log(' ====> shellCode', shellExecute2, shellCode, err, moment().locale('th').format('HH:mm:ss.SS'));
+                console.log(' ====> shellCode', shellExecute2, shellCode, err, (0, moment_1.default)().locale('th').format('HH:mm:ss.SS'));
                 resolve(true);
             });
         });

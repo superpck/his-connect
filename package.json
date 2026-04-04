@@ -1,7 +1,7 @@
 {
   "name": "his-connect",
-  "version": "3.10.1",
-  "subVersion": "2026.03.05-3",
+  "version": "3.10.2",
+  "subVersion": "2026.03.31-4",
   "private": true,
   "license": "MIT",
   "scripts": {
@@ -10,11 +10,13 @@
     "build": "node -e \"require('fs').rmSync('app', { recursive: true, force: true })\" && npx tsc"
   },
   "dependencies": {
+    "@fastify/compress": "^8.3.1",
     "@fastify/cors": "^11.1.0",
     "@fastify/formbody": "^8.0.2",
     "@fastify/helmet": "^13.0.1",
     "@fastify/jwt": "^10.0.0",
     "@fastify/rate-limit": "^10.3.0",
+    "@fastify/static": "^9.0.0",
     "@fastify/view": "^11.1.1",
     "axios": "^1.12.2",
     "better-sqlite3": "^12.5.0",
@@ -48,8 +50,6 @@
     "tslint": "^6.1.3"
   },
   "devDependencies": {
-    "@fastify/compress": "^8.1.0",
-    "@fastify/static": "^8.2.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/knex": "^0.16.1",

@@ -8,6 +8,8 @@
     "rootDir": "src",
     "outDir": "app",
     "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "typeRoots": [
       "node_modules/@types"
     ]

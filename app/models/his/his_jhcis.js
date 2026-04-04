@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisJhcisModel = void 0;
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
@@ -303,7 +306,7 @@ class HisJhcisModel {
         return [];
     }
     async getVisitForMophAlert(db, date, isRowCount = false, limit = 1000, start = -1) {
-        date = moment(date).locale('th').format('YYYY-MM-DD');
+        date = (0, moment_1.default)(date).locale('th').format('YYYY-MM-DD');
         let sql = ` FROM visit
                 LEFT JOIN person ON visit.pid=person.pid
             WHERE visit.visitdate = ? AND LENGTH(person.idcard)==13 AND visit.flagservice='03'`;

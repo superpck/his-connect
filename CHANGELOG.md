@@ -1,11 +1,21 @@
+# 3.10.2
+## Feature
+  - ปรับ script ให้ docker pull ใหม่ทุกครั้งที่ restart
+  - เพิ่มการ Compress data ก่อนส่งส่วนกลาง
+  - เพิ่ม Timeout เพื่อป้องกันการ response ช้าจาก server
+  - ปรับการ run first task ให้ delay 10sec. เพื่อให้ระบบ init ให้ครบทุกคำสั่ง
+  - เพิ่มการ run watchtower เพื่อ update docker 03:50 ของทุกวัน
+
 # 3.10.1
 ## Feature
   - เพิ่มการส่ง Error ไปยังส่วนกลาง
   - แก้ไขกรณีที่บาง function error แล้วทำให้ function ต่อไปไม่ทำงาน
   - ปรับการแสดงผลการส่ง Error ไปยังส่วนกลาง
+  - ปรับ esModuleInterop
 
 # 3.10.0
 ## Feature
+  - เพิ่มระบบตรวจสอบการส่ง Appointment ไปยัง MOPH Alert
   - เพิ่มการส่งข้อมูล Service จาก nRefer ไปยังหมอพร้อม
 
 # 3.9.9

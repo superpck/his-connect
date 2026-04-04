@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisPmkModel = void 0;
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const maxLimit = 250;
 const hcode = process.env.HOSPCODE;
 const dbName = process.env.HIS_DB_NAME;
@@ -23,7 +26,7 @@ class HisPmkModel {
         }
     }
     async getReferOut(db, date, hospCode = hcode) {
-        date = moment(date).format('YYYY-MM-DD');
+        date = (0, moment_1.default)(date).format('YYYY-MM-DD');
         let where = `REFER_IN_DATETIME BETWEEN TO_DATE('${date} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE('${date} 23:59:59', 'YYYY-MM-DD HH24:MI:SS') AND "referout".REFERTYPE=2`;
         const result = await db('PATIENTS_REFER_HX as referout')
             .join('OPDS', 'referout.OPD_NO', 'OPDS.OPD_NO')
@@ -47,7 +50,7 @@ class HisPmkModel {
             where = `"referout".REFER_NO='${searchNo}' AND "referout".REFERTYPE=2`;
         }
         else if (columnName == 'date' || columnName == 'referDate') {
-            const date = moment(searchNo).format('YYYY-MM-DD');
+            const date = (0, moment_1.default)(searchNo).format('YYYY-MM-DD');
             where = `REFER_IN_DATETIME BETWEEN TO_DATE('${date} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE('${date} 23:59:59', 'YYYY-MM-DD HH24:MI:SS') AND "referout".REFERTYPE=2`;
         }
         else {
@@ -69,7 +72,7 @@ class HisPmkModel {
         return [];
     }
     getReferResult1(db, date, hospCode = hcode) {
-        date = moment(date).format('YYYY-MM-DD');
+        date = (0, moment_1.default)(date).format('YYYY-MM-DD');
         let where = `REFER_IN_DATETIME BETWEEN TO_DATE('${date} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE('${date} 23:59:59', 'YYYY-MM-DD HH24:MI:SS') AND "referout".REFERTYPE=2`;
         return db('PATIENTS_REFER_HX as referout')
             .join('OPDS', 'referout.OPD_NO', 'OPDS.OPD_NO')
@@ -198,13 +201,13 @@ class HisPmkModel {
                 await data.push({
                     HOSPCODE: hospCode,
                     PID: row.HN, SEQ: row.SEQ,
-                    DATE_SERV: moment(row.DATE_SERV).format('YYYY-MM-DD') +
-                        moment(row.TIME_SERV).format(' HH:mm:ss'),
+                    DATE_SERV: (0, moment_1.default)(row.DATE_SERV).format('YYYY-MM-DD') +
+                        (0, moment_1.default)(row.TIME_SERV).format(' HH:mm:ss'),
                     AMOUNT: row.QTY, UNIT: row.UNIT,
                     drug_usage: line[1] + ' ' + line[2],
                     caution: line[3],
-                    D_UPDATE: moment(row.DATE_SERV).format('YYYY-MM-DD') +
-                        moment(row.TIME_SERV).format(' HH:mm:ss'),
+                    D_UPDATE: (0, moment_1.default)(row.DATE_SERV).format('YYYY-MM-DD') +
+                        (0, moment_1.default)(row.TIME_SERV).format(' HH:mm:ss'),
                 });
             }
             return data;

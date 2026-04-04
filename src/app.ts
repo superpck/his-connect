@@ -10,7 +10,7 @@ require('dotenv').config({
 
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import fastify, { FastifyRequest } from 'fastify';
-import * as moment from 'moment';
+import moment from 'moment';
 import cronjob from './nodecron';
 
 const serveStatic = require('serve-static');
@@ -46,6 +46,7 @@ const app = fastify(serverOption);
 const { name, version, subVersion } = require('./../package.json');
 global.appDetail = { name, subVersion, version };
 
+// app.register(require('@fastify/compress'), { global: true, threshold: 1024 });
 app.register(require('@fastify/formbody'));
 app.register(require('@fastify/cors'), {});
 app.register(require('fastify-no-icon'));

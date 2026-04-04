@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HisHosxpv3Model = void 0;
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 const maxLimit = 250;
 const hn_len = +process.env.HN_LENGTH || 6;
 let hisHospcode = process.env.HOSPCODE;
@@ -1271,13 +1274,13 @@ class HisHosxpv3Model {
         }
         if (columnName === "fu_date" || columnName === "visit_date") {
             if (Array.isArray(searchValue)) {
-                searchValue = searchValue.map((d) => moment(d).format("YYYY-MM-DD"));
+                searchValue = searchValue.map((d) => (0, moment_1.default)(d).format("YYYY-MM-DD"));
             }
             else {
-                searchValue = moment(searchValue).format("YYYY-MM-DD");
+                searchValue = (0, moment_1.default)(searchValue).format("YYYY-MM-DD");
             }
         }
-        lastupdateLimit = lastupdateLimit || moment().subtract(120, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+        lastupdateLimit = lastupdateLimit || (0, moment_1.default)().subtract(120, 'minutes').format('YYYY-MM-DD HH:mm:ss');
         let query = db({ o: "oapp" })
             .join({ p: "patient" }, "o.hn", "p.hn")
             .join({ c: "clinic" }, "c.clinic", "o.clinic")
@@ -1451,7 +1454,7 @@ class HisHosxpv3Model {
         return result[0];
     }
     getReferResult(db, visitDate, hospCode = hisHospcode) {
-        visitDate = moment(visitDate).format('YYYY-MM-DD');
+        visitDate = (0, moment_1.default)(visitDate).format('YYYY-MM-DD');
         return db('referin')
             .leftJoin('patient', 'referin.hn', 'patient.hn')
             .leftJoin('ovst', 'referin.vn', 'ovst.vn')
@@ -1592,8 +1595,8 @@ class HisHosxpv3Model {
             .orderBy('bedno.bedno');
     }
     concurrentIPDByWard_(db, date) {
-        const dateStart = moment(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
-        const dateEnd = moment(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        const dateStart = (0, moment_1.default)(date).locale('TH').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+        const dateEnd = (0, moment_1.default)(date).locale('TH').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
         const clientType = db.client.config.client;
         let sql = db('ipt')
             .leftJoin('iptadm', 'ipt.an', 'iptadm.an')
@@ -1627,11 +1630,11 @@ class HisHosxpv3Model {
     }
     concurrentIPDByWard(db, date) {
         try {
-            const dateStart = moment(date)
+            const dateStart = (0, moment_1.default)(date)
                 .locale('TH')
                 .startOf('hour')
                 .format('YYYY-MM-DD HH:mm:ss');
-            const dateEnd = moment(date)
+            const dateEnd = (0, moment_1.default)(date)
                 .locale('TH')
                 .endOf('hour')
                 .format('YYYY-MM-DD HH:mm:ss');
@@ -1698,7 +1701,7 @@ class HisHosxpv3Model {
             .orderBy('spclty.nhso_code');
     }
     async getVisitForMophAlert(db, date, isRowCount = false, start = -1, limit = 1000) {
-        date = moment(date).locale('TH').format('YYYY-MM-DD');
+        date = (0, moment_1.default)(date).locale('TH').format('YYYY-MM-DD');
         if (isRowCount) {
             return db('ovst').where('ovst.vstdate', date).count('ovst.vn as row_count').first();
         }

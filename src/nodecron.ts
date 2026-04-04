@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import * as moment from 'moment';
+import moment from 'moment';
 import { execSync } from 'child_process';
 import { sendWardName, sendBedNo, sendBedOccupancy, updateAlive, erpAdminRequest, mophErpProcessTask } from "./task/moph-erp";
 import mophIot from "./task/moph-iot";
@@ -51,6 +51,7 @@ const shell = require("shelljs");
 const cron = require('node-cron');
 const referCrontab = require('./routes/refer/crontab');
 const instanceId = process.env.NODE_APP_INSTANCE ? +process.env.NODE_APP_INSTANCE + 1 : null;
+const cronjobStartupTimeoutMs = Math.max(1000, +(process.env.CRONJOB_STARTUP_TIMEOUT_MS || 12000));
 
 let hospitalConfig = null;
 let onProcess: any = {};
@@ -80,6 +81,28 @@ const jobQueue: JobQueue = {
 // Helper function to get timestamp
 function getTimestamp(): string {
   return moment().format('HH:mm:ss');
+}
+
+function getErrorMessage(error: any): string {
+  return error?.message || String(error);
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error(`${label} exceeded ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    promise
+      .then((result) => {
+        clearTimeout(timeout);
+        resolve(result);
+      })
+      .catch((error) => {
+        clearTimeout(timeout);
+        reject(error);
+      });
+  });
 }
 
 // Helper function to get minutes since midnight
@@ -312,7 +335,24 @@ async function getmophUrl(): Promise<void> {
  */
 export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   // Initialize process state
-  hospitalConfig = await mophStartTask.getMophConfig();
+  const startupAt = Date.now();
+  console.info(`${getTimestamp()} Cronjob plugin init start for hospcode ${process.env.HOSPCODE || 'unknown'}`);
+
+  try {
+    hospitalConfig = await withTimeout(
+      mophStartTask.getMophConfig({
+        purpose: 'cronjob-startup',
+        timeoutMs: cronjobStartupTimeoutMs
+      }),
+      cronjobStartupTimeoutMs,
+      'cronjob startup config fetch'
+    );
+    console.info(`${getTimestamp()} Cronjob startup config ready in ${Date.now() - startupAt}ms`);
+  } catch (error) {
+    hospitalConfig = null;
+    console.error(`${getTimestamp()} Cronjob startup config unavailable after ${Date.now() - startupAt}ms: ${getErrorMessage(error)}. Continuing startup without blocking cron registration.`);
+  }
+
   updateProcessState();
 
   // Create cron schedule (run every minute)
@@ -350,7 +390,7 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
       // mophAppointment.process('2026-02-08');
       //
       // *** end test ***********************
-    }, 3000); // Delay 3 seconds
+    }, 10000); // Delay 3 seconds
   }
 
   // Optional: Real-time Debug Countdown (ระวัง Log เยอะเกินไปหากเปิดใช้)
@@ -472,4 +512,6 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
       }
     }
   });
+
+  console.info(`${getTimestamp()} Cronjob plugin registered in ${Date.now() - startupAt}ms`);
 }

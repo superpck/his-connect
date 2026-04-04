@@ -1,11 +1,14 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var fastify = require('fastify');
-const moment = require("moment");
+const moment_1 = __importDefault(require("moment"));
 var fs = require('fs');
 var http = require('http');
 var querystring = require('querystring');
-const hismodel_1 = require("./../his/hismodel");
+const hismodel_1 = __importDefault(require("./../his/hismodel"));
 const hcode = process.env.HOSPCODE;
 const resultText = 'sent_result.txt';
 let sentContent = '';
@@ -14,8 +17,8 @@ let reqToken = {};
 let crontabConfig;
 let apiVersion = '-';
 async function sendMoph(req, reply, db) {
-    const dateNow = moment().locale('th').format('YYYY-MM-DD');
-    sentContent = moment().locale('th').format('YYYY-MM-DD HH:mm:ss') + ' data:' + dateNow + "\r\n";
+    const dateNow = (0, moment_1.default)().locale('th').format('YYYY-MM-DD');
+    sentContent = (0, moment_1.default)().locale('th').format('YYYY-MM-DD HH:mm:ss') + ' data:' + dateNow + "\r\n";
     reqToken = await getToken();
     if (reqToken && reqToken.statusCode === 200 && reqToken.token) {
         dcToken = reqToken.token;
@@ -27,17 +30,17 @@ async function sendMoph(req, reply, db) {
         writeResult(resultText, sentContent);
         return false;
     }
-    const hourNow = +moment().locale('th').get('hours');
-    const minuteNow = +moment().locale('th').get('minutes');
+    const hourNow = +(0, moment_1.default)().locale('th').get('hours');
+    const minuteNow = +(0, moment_1.default)().locale('th').get('minutes');
     if ((hourNow == 1 || hourNow == 8 || hourNow == 12 || hourNow == 18 || hourNow == 22)
         && minuteNow - 1 < +process.env.NREFER_AUTO_SEND_EVERY_MINUTE) {
-        const date = moment().locale('th').subtract(1, 'days').format('YYYY-MM-DD');
+        const date = (0, moment_1.default)().locale('th').subtract(1, 'days').format('YYYY-MM-DD');
         await getService(db, date);
     }
     else if (hourNow == 3 && minuteNow - 1 < +process.env.NREFER_AUTO_SEND_EVERY_MINUTE) {
-        let oldDate = moment(dateNow).subtract(7, 'days').format('YYYY-MM-DD');
+        let oldDate = (0, moment_1.default)(dateNow).subtract(7, 'days').format('YYYY-MM-DD');
         while (oldDate < dateNow) {
-            oldDate = moment(oldDate).add(1, 'days').format('YYYY-MM-DD');
+            oldDate = (0, moment_1.default)(oldDate).add(1, 'days').format('YYYY-MM-DD');
         }
     }
     const sendDataCenter = await getService(db, dateNow);
@@ -54,7 +57,7 @@ async function getService(db, date) {
     };
     const rows = await hismodel_1.default.getService(db, 'date_serv', date, hcode);
     sentContent += '  - service = ' + rows.length + '\r';
-    const d_update = moment().locale('th').format('YYYY-MM-DD HH:mm:ss');
+    const d_update = (0, moment_1.default)().locale('th').format('YYYY-MM-DD HH:mm:ss');
     if (rows && rows.length) {
         sentResult.service.success = rows.length;
         for (const row of rows) {
@@ -65,7 +68,7 @@ async function getService(db, date) {
             await getDrugOpd(db, row.SEQ || row.seq, sentResult);
         }
     }
-    console.log(moment().format('HH:mm:ss'), ' Data Center sent result ', sentResult);
+    console.log((0, moment_1.default)().format('HH:mm:ss'), ' Data Center sent result ', sentResult);
     return sentResult;
 }
 async function person(db, pid, sentResult) {
@@ -155,7 +158,7 @@ async function sendToApi(path, dataArray) {
     const mophUrl = fixedUrl.split('/');
     const dataSending = querystring.stringify({
         hospcode: hcode, data: JSON.stringify(dataArray),
-        processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
+        processPid: process.pid, dateTime: (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss'),
         sourceApiName: 'HIS-connect version ' + apiVersion
     });
     const options = {
@@ -169,7 +172,7 @@ async function sendToApi(path, dataArray) {
         },
         body: {
             hospcode: hcode, data: dataArray,
-            processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
+            processPid: process.pid, dateTime: (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss'),
             sourceApiName: 'HIS connect version',
             sourceApiVersion: apiVersion
         }
