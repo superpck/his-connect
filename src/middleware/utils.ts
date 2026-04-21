@@ -1,6 +1,9 @@
 import moment from 'moment';
 import * as os from 'os';
 
+import zlib from 'zlib';
+import { promisify } from 'util';
+
 export const randomString = async (length: number, format = 'AlphaNumeric') => {
   // format AlphaNumeric=String+number, Special=AlphaNumeric+Special characters
   length = Math.max(1, Math.min(1024, length));
@@ -83,3 +86,32 @@ export const getIP = () => {
   }
   return { ip: null, interfaces };
 };
+
+export const getClientIp = (req: any) => {
+  const xForwardedFor = req.headers['x-forwarded-for'] || req.headers['X-Forwarded-For'] || req.headers['X-Real-IP'] || req.headers['x-real-ip'];
+  if (xForwardedFor) {
+    const ips = xForwardedFor.split(',').map(ip => ip.trim());
+    return ips[0];
+  }
+  return req.connection.remoteAddress || req.socket.remoteAddress || (req.connection.socket ? req.connection.socket.remoteAddress : null);
+}
+
+export const gzip = async (data: any) => {
+  const gzip = promisify(zlib.gzip);
+  const dataString = typeof data === 'string' ? data : JSON.stringify(data);
+  const compressedString = await gzip(dataString);
+
+  return compressedString;
+}
+
+export const unGzip = async (compressedString: string) => {
+  const unzip = promisify(zlib.unzip);
+  const decompressedString = await unzip(compressedString);
+  return decompressedString.toString();
+}
+
+export const replyGzip = async (reply: any, data: any) => {
+  const compressedData = await gzip(data);
+  reply.header('content-encoding', 'gzip');
+  return compressedData;
+}
