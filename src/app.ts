@@ -49,7 +49,14 @@ global.appDetail = { name, subVersion, version };
 
 // app.register(require('@fastify/compress'), { global: true, threshold: 1024 });
 app.register(require('@fastify/formbody'));
-app.register(require('@fastify/cors'), {});
+app.register(require('@fastify/cors'), {
+  origin: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'localkey', 'content-encoding', 'content-length', 'source-agent', 'client-ip'],
+  credentials: true,
+  strictPreflight: false,
+  allowPrivateNetwork: true
+});
 app.register(require('fastify-no-icon'));
 app.register(helmet, {});
 app.register(require('@fastify/rate-limit'), {

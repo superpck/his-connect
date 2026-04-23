@@ -17,6 +17,7 @@ const nodecron_1 = __importDefault(require("./nodecron"));
 const serveStatic = require('serve-static');
 var crypto = require('crypto');
 const utils_1 = require("./middleware/utils");
+const stream_1 = require("stream");
 const helmet = require("@fastify/helmet");
 var serverOption = {};
 if (process.env.SSL_ENABLE && process.env.SSL_ENABLE == '1' && process.env.SSL_KEY) {
@@ -44,7 +45,14 @@ const app = (0, fastify_1.default)(serverOption);
 const { name, version, subVersion } = require('./../package.json');
 global.appDetail = { name, subVersion, version };
 app.register(require('@fastify/formbody'));
-app.register(require('@fastify/cors'), {});
+app.register(require('@fastify/cors'), {
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'localkey', 'content-encoding', 'content-length', 'source-agent', 'client-ip'],
+    credentials: true,
+    strictPreflight: false,
+    allowPrivateNetwork: true
+});
 app.register(require('fastify-no-icon'));
 app.register(helmet, {});
 app.register(require('@fastify/rate-limit'), {
@@ -97,6 +105,26 @@ app.decorate("checkRequestKey", async (request, reply) => {
     }
 });
 var geoip = require('geoip-lite');
+app.addHook('preParsing', async (request, reply, payload) => {
+    const contentEncoding = request.headers['content-encoding'];
+    const contentLength = request.headers['content-length'];
+    if (contentEncoding && contentEncoding.toLowerCase() === 'gzip' &&
+        contentLength && parseInt(contentLength) > 0) {
+        const chunks = [];
+        for await (const chunk of payload) {
+            chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+        }
+        if (chunks.length === 0)
+            return payload;
+        const compressed = Buffer.concat(chunks);
+        const decompressed = await (0, utils_1.unGzip)(compressed);
+        const readable = new stream_1.Readable();
+        readable.push(decompressed);
+        readable.push(null);
+        return readable;
+    }
+    return payload;
+});
 app.addHook('onRequest', async (req, reply) => {
     const unBlockIP = process.env.UNBLOCK_IP || '??';
     let ipAddr = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;

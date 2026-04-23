@@ -36,9 +36,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getIP = exports.timeSecond = exports.timeMinute = exports.thaiDateFull = exports.thaiDateAbbr = exports.thaiDate = exports.dateLen = exports.isNumeric = exports.randomString = void 0;
+exports.replyGzip = exports.unGzip = exports.gzip = exports.getClientIp = exports.getIP = exports.timeSecond = exports.timeMinute = exports.thaiDateFull = exports.thaiDateAbbr = exports.thaiDate = exports.dateLen = exports.isNumeric = exports.randomString = void 0;
 const moment_1 = __importDefault(require("moment"));
 const os = __importStar(require("os"));
+const zlib_1 = __importDefault(require("zlib"));
+const util_1 = require("util");
 const randomString = async (length, format = 'AlphaNumeric') => {
     length = Math.max(1, Math.min(1024, length));
     let result = '';
@@ -121,3 +123,31 @@ const getIP = () => {
     return { ip: null, interfaces };
 };
 exports.getIP = getIP;
+const getClientIp = (req) => {
+    const xForwardedFor = req.headers['x-forwarded-for'] || req.headers['X-Forwarded-For'] || req.headers['X-Real-IP'] || req.headers['x-real-ip'];
+    if (xForwardedFor) {
+        const ips = xForwardedFor.split(',').map(ip => ip.trim());
+        return ips[0];
+    }
+    return req.connection.remoteAddress || req.socket.remoteAddress || (req.connection.socket ? req.connection.socket.remoteAddress : null);
+};
+exports.getClientIp = getClientIp;
+const gzip = async (data) => {
+    const gzip = (0, util_1.promisify)(zlib_1.default.gzip);
+    const dataString = typeof data === 'string' ? data : JSON.stringify(data);
+    const compressedString = await gzip(dataString);
+    return compressedString;
+};
+exports.gzip = gzip;
+const unGzip = async (compressedString) => {
+    const unzip = (0, util_1.promisify)(zlib_1.default.unzip);
+    const decompressedString = await unzip(compressedString);
+    return decompressedString.toString();
+};
+exports.unGzip = unGzip;
+const replyGzip = async (reply, data) => {
+    const compressedData = await (0, exports.gzip)(data);
+    reply.header('content-encoding', 'gzip');
+    return compressedData;
+};
+exports.replyGzip = replyGzip;
