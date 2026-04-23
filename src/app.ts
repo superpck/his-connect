@@ -16,7 +16,8 @@ import cronjob from './nodecron';
 const serveStatic = require('serve-static');
 var crypto = require('crypto');
 
-import { getIP } from './middleware/utils';
+import { getIP, unGzip } from './middleware/utils';
+import { Readable } from 'stream';
 import helmet = require('@fastify/helmet');
 
 var serverOption = {}
@@ -48,7 +49,14 @@ global.appDetail = { name, subVersion, version };
 
 // app.register(require('@fastify/compress'), { global: true, threshold: 1024 });
 app.register(require('@fastify/formbody'));
-app.register(require('@fastify/cors'), {});
+app.register(require('@fastify/cors'), {
+  origin: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'localkey', 'content-encoding', 'content-length', 'source-agent', 'client-ip'],
+  credentials: true,
+  strictPreflight: false,
+  allowPrivateNetwork: true
+});
 app.register(require('fastify-no-icon'));
 app.register(helmet, {});
 app.register(require('@fastify/rate-limit'), {
@@ -114,6 +122,45 @@ app.decorate("checkRequestKey", async (request: FastifyRequest, reply) => {
 
 // addHook pre-process ================================
 var geoip = require('geoip-lite');
+
+/**
+ * preParsing hook: ตรวจสอบ request ที่ส่งมาพร้อม header `content-encoding: gzip`
+ * และมี body (content-length > 0) แล้วทำการ decompress ด้วย unGzip()
+ * ก่อนที่ Fastify จะ parse body เป็น JSON หรือ form data
+ *
+ * ลำดับการทำงาน: onRequest → preParsing → preValidation → preHandler → handler
+ */
+app.addHook('preParsing', async (request: any, reply, payload) => {
+  const contentEncoding = request.headers['content-encoding'];
+  const contentLength = request.headers['content-length'];
+
+  // ตรวจสอบว่า header บอกว่าเป็น gzip และมี body จริง
+  if (contentEncoding && contentEncoding.toLowerCase() === 'gzip' &&
+    contentLength && parseInt(contentLength) > 0) {
+
+    // รวบรวม chunks จาก readable stream
+    const chunks: Buffer[] = [];
+    for await (const chunk of payload as any) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+
+    // ถ้าไม่มีข้อมูลจริงให้ส่ง payload เดิมกลับไป
+    if (chunks.length === 0) return payload;
+
+    // รวม chunks เป็น Buffer เดียว แล้ว decompress
+    const compressed = Buffer.concat(chunks);
+    const decompressed = await unGzip(compressed as any);
+
+    // คืน readable stream ที่ decompressed แล้วเพื่อให้ Fastify parse ต่อ
+    const readable = new Readable();
+    readable.push(decompressed);
+    readable.push(null);
+    return readable;
+  }
+
+  // ถ้าไม่ใช่ gzip ให้ส่ง payload เดิมผ่านไปเลย
+  return payload;
+});
 
 // Process sequence onRequest -> preHandler
 app.addHook('onRequest', async (req: any, reply) => {

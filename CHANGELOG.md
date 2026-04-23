@@ -1,3 +1,8 @@
+# 3.10.3
+## Feature
+  - เพิ่มการ Compress json ขารับ request เพื่อลดการใช้ bandwidth
+  - เพิ่มการตรวจสอบ IP ต้นทาง ด้วย client-ip ใน Headers
+
 # 3.10.2
 ## Feature
   - ปรับ script ให้ docker pull ใหม่ทุกครั้งที่ restart
