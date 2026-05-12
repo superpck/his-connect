@@ -26,6 +26,7 @@ if (process.env.SSL_ENABLE && process.env.SSL_ENABLE == '1' && process.env.SSL_K
     logger: {
       level: 'error',
     },
+    ignoreTrailingSlash: true,
     bodyLimit: 20 * 1024 * 1024,    // 20 MB
     // http2: true,
     https: {
@@ -38,6 +39,7 @@ if (process.env.SSL_ENABLE && process.env.SSL_ENABLE == '1' && process.env.SSL_K
     logger: {
       level: 'error',
     },
+    ignoreTrailingSlash: true,
     bodyLimit: 20 * 1024 * 1024,    // 20 MB
     connectionTimeout: 10000
   }
@@ -52,13 +54,15 @@ app.register(require('@fastify/formbody'));
 app.register(require('@fastify/cors'), {
   origin: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'localkey', 'content-encoding', 'content-length', 'source-agent', 'client-ip'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'localkey', 'content-encoding', 'content-length', 'source-agent', 'client-ip','uid'],
   credentials: true,
   strictPreflight: false,
   allowPrivateNetwork: true
 });
 app.register(require('fastify-no-icon'));
-app.register(helmet, {});
+app.register(helmet, {
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+});
 app.register(require('@fastify/rate-limit'), {
   max: +process.env.MAX_CONNECTION_PER_MINUTE || 1000,
   timeWindow: '1 minute'
