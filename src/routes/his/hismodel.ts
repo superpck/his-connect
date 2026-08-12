@@ -67,10 +67,6 @@ switch (hisProvider) {
   case 'haos':
     hisModel = new (require('../../models/his/his_haos').HisHaosModel)();
     break;
-  case 'spdc':
-  case 'kpstat':
-    hisModel = new (require('../../models/his/his_kpstat').HisKpstatModel)();
-    break;
   case 'mitnet':
     hisModel = new (require('../../models/his/his_mitnet').HisMitnetModel)();
     break;

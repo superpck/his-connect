@@ -1,3 +1,75 @@
+/**
+ * HIS HOSxP v4 Model
+ * 
+ * Model สำหรับเชื่อมต่อและดึงข้อมูลจาก HOSxP version 3/4
+ * รองรับ MySQL, PostgreSQL, MSSQL, Oracle
+ * 
+ * === CORE FUNCTIONS ===
+ * - check(): ตรวจสอบว่า model พร้อมใช้งาน
+ * - hospCodeFromTable(): ดึงรหัสโรงพยาบาลจาก database หรือ config
+ * - testConnect(): ทดสอบการเชื่อมต่อกับ HIS database
+ * - getTableName(): ดึงรายชื่อตารางทั้งหมดใน database
+ * 
+ * === MASTER DATA ===
+ * - getDepartment(): ดึงข้อมูลแผนก/คลินิก
+ * - getWard(), getWard_(): ดึงข้อมูลหอผู้ป่วย/Ward พร้อมจำนวนเตียง
+ * - getDr(): ดึงข้อมูลแพทย์
+ * - getProvider(), getProviderDr(), getProviderDr_(): ดึงข้อมูลผู้ให้บริการ
+ * 
+ * === PATIENT DATA (ข้อมูลผู้ป่วย) ===
+ * - getPerson(): ดึงข้อมูลส่วนบุคคลผู้ป่วย (ประชากร)
+ * - getAddress(): ดึงที่อยู่ผู้ป่วย
+ * - getDrugAllergy(): ดึงประวัติการแพ้ยา
+ * 
+ * === OPD (ผู้ป่วยนอก) ===
+ * - getService(): ดึงข้อมูลการรับบริการผู้ป่วยนอก
+ * - getDiagnosisOpd(): ดึงข้อมูลวินิจฉัยโรค OPD
+ * - getProcedureOpd(): ดึงข้อมูลหัตถการ OPD
+ * - getChargeOpd(): ดึงข้อมูลค่าใช้จ่าย OPD
+ * - getDrugOpd(): ดึงข้อมูลการจ่ายยา OPD
+ * 
+ * === IPD (ผู้ป่วยใน) ===
+ * - getAdmission(): ดึงข้อมูลการ Admit ผู้ป่วยใน
+ * - getDiagnosisIpd(), getDiagnosisIpd_(): ดึงข้อมูลวินิจฉัยโรค IPD
+ * - getProcedureIpd(): ดึงข้อมูลหัตถการ IPD
+ * - getChargeIpd(): ดึงข้อมูลค่าใช้จ่าย IPD
+ * - getDrugIpd(), getDrugIpd_(): ดึงข้อมูลการจ่ายยา IPD
+ * 
+ * === LAB/INVESTIGATION (ตรวจสอบทางห้องปฏิบัติการ) ===
+ * - getLabRequest(): ดึงรายการตรวจแลป
+ * - getLabResult(): ดึงผลการตรวจแลป
+ * - getInvestigation(): ดึงข้อมูลการตรวจสอบ (alias ของ getLabResult)
+ * 
+ * === REFER (การส่งต่อ) ===
+ * - getReferOut(): ดึงข้อมูลการส่งต่อผู้ป่วยออก
+ * - getReferHistory(): ดึงประวัติการส่งต่อ
+ * - getReferResult(): ดึงผลการส่งต่อ
+ * - getClinicalRefer(): ดึงข้อมูลทางคลินิกสำหรับการส่งต่อ
+ * - getInvestigationRefer(): ดึงข้อมูลการตรวจสอบสำหรับการส่งต่อ
+ * - getCareRefer(): ดึงข้อมูลการดูแลสำหรับการส่งต่อ
+ * 
+ * === SPECIAL CASES (กรณีพิเศษ) ===
+ * - getAccident(): ดึงข้อมูลอุบัติเหตุฉุกเฉิน
+ * - getDiagnosisOpdAccident(): ดึงข้อมูลวินิจฉัยอุบัติเหตุ OPD
+ * - getDiagnosisOpdVWXY(): ดึงข้อมูลวินิจฉัยที่เกี่ยวข้องกับอุบัติเหตุ (ICD10: V,W,X,Y,S,T)
+ * - getDiagnosisSepsisOpd(): ดึงข้อมูลวินิจฉัย Sepsis OPD
+ * - getDiagnosisSepsisIpd(): ดึงข้อมูลวินิจฉัย Sepsis IPD
+ * 
+ * === APPOINTMENT (นัดหมาย) ===
+ * - getAppointment(): ดึงข้อมูลการนัดหมาย
+ * 
+ * === UTILITY & SUMMARY (ฟังก์ชันเสริม) ===
+ * - getData(): ดึงข้อมูลทั่วไปจากตารางที่ระบุ
+ * - sumReferOut(): สรุปจำนวนการส่งต่อออก
+ * - sumReferIn(): สรุปจำนวนการส่งต่อเข้า
+ * - getBedNo(): ดึงข้อมูลเตียงผู้ป่วย
+ * - getVisitForMophAlert(): ดึงข้อมูลการเข้ารับบริการสำหรับการแจ้งเตือน MOPH
+ * 
+ * === HELPER FUNCTIONS ===
+ * - getDatetimeExpr(): สร้าง SQL expression สำหรับรวม date + time (รองรับหลาย DB)
+ * - getHospcode(): ดึงรหัสโรงพยาบาลจาก config ตอน initialization
+ */
+
 import { Knex } from 'knex';
 import moment from 'moment';
 
