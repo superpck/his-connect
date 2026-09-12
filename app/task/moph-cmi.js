@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const moment_1 = __importDefault(require("moment"));
 const hismodel_1 = __importDefault(require("./../routes/his/hismodel"));
-const utils_1 = require("../middleware/utils");
+const utils_1 = require("../utils/utils");
 const dbConnection = require('../plugins/db');
 let db = dbConnection('HIS');
 let hisHospcode = process.env.HOSPCODE;

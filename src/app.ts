@@ -16,7 +16,7 @@ import cronjob from './nodecron';
 const serveStatic = require('serve-static');
 var crypto = require('crypto');
 
-import { getIP, unGzip } from './middleware/utils';
+import { getIP, unGzip } from './utils/utils';
 import { Readable } from 'stream';
 import helmet = require('@fastify/helmet');
 

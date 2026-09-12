@@ -3,8 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const moment = require("moment");
-console.log(moment().format('HH:mm:ss'), process.pid, 'Start MOPH IoT Task');
+const moment_1 = __importDefault(require("moment"));
 const moph_refer_1 = require("../middleware/moph-refer");
 const hismodel_1 = __importDefault(require("./../routes/his/hismodel"));
 const dbConnection = require('../plugins/db');
@@ -28,7 +27,7 @@ async function createIotServiceTable() {
                 table.index(['date_serv']);
                 table.index(['sent_at']);
             });
-            console.log(moment().format('HH:mm:ss'), 'Created iot_service table');
+            console.log((0, moment_1.default)().format('HH:mm:ss'), 'Created iot_service table');
         }
     }
     catch (error) {
@@ -41,12 +40,12 @@ async function cleanOldRecords() {
     if (!_cacheOk)
         return;
     try {
-        const twoDaysAgo = moment().subtract(48, 'hours').format('YYYY-MM-DD HH:mm:ss');
+        const twoDaysAgo = (0, moment_1.default)().subtract(48, 'hours').format('YYYY-MM-DD HH:mm:ss');
         const deleted = await cacheDb('iot_service')
             .where('sent_at', '<', twoDaysAgo)
             .delete();
         if (deleted > 0) {
-            console.log(moment().format('HH:mm:ss'), `Cleaned ${deleted} old IoT records before ${twoDaysAgo}`);
+            console.log((0, moment_1.default)().format('HH:mm:ss'), `Cleaned ${deleted} old IoT records before ${twoDaysAgo}`);
         }
     }
     catch (error) {
@@ -89,12 +88,12 @@ const processIoT = async (date = null) => {
     await cleanOldRecords();
     hospitalConfig = await (0, moph_refer_1.getHospitalConfig)();
     if (!hospitalConfig || !hospitalConfig.configure || !hospitalConfig.configure?.iot_service || hospitalConfig.configure?.iot_service?.enable != 1) {
-        console.error(moment().format('HH:mm:ss'), 'MOPH IoT Process Stop: IoT Service Disabled');
+        console.error((0, moment_1.default)().format('HH:mm:ss'), 'MOPH IoT Process Stop: IoT Service Disabled');
         return false;
     }
-    date = date || moment();
-    const dateStart = moment(date).subtract(6, 'hours').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
-    const dateEnd = moment(date).subtract(6, 'hours').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
+    date = date || (0, moment_1.default)();
+    const dateStart = (0, moment_1.default)(date).subtract(6, 'hours').startOf('hour').format('YYYY-MM-DD HH:mm:ss');
+    const dateEnd = (0, moment_1.default)(date).subtract(6, 'hours').endOf('hour').format('YYYY-MM-DD HH:mm:ss');
     console.log(' ');
     const result = await getData(dateStart, dateEnd);
     console.log('-'.repeat(70));
@@ -102,7 +101,7 @@ const processIoT = async (date = null) => {
 };
 async function getData(dateStart, dateEnd) {
     try {
-        let date = moment(dateStart).format('YYYY-MM-DD');
+        let date = (0, moment_1.default)(dateStart).format('YYYY-MM-DD');
         do {
             let opdVisit = await hismodel_1.default.getService(db, 'date_serv', date);
             let rows = (opdVisit ? (opdVisit || []) : []).filter((row) => (row?.typeout || row?.TYPEOUT) == '1' &&
@@ -110,7 +109,7 @@ async function getData(dateStart, dateEnd) {
                 ((row.cid || row.CID).trim().length == 13));
             if (rows.length > 0) {
                 let sentResults = [];
-                console.log(moment().format('HH:mm:ss'), 'MOPH IoT Process:', date, ' founded:', opdVisit.length, 'rows');
+                console.log((0, moment_1.default)().format('HH:mm:ss'), 'MOPH IoT Process:', date, ' founded:', opdVisit.length, 'rows');
                 let recno = 0;
                 for (let row of rows) {
                     row.input_src = 'IoT';
@@ -131,12 +130,12 @@ async function getData(dateStart, dateEnd) {
                         continue;
                     }
                     row.dob = row.dob || row.birth || null;
-                    row.dob = moment(row.dob).isValid() ? moment(row.dob).format('YYYY-MM-DD') : null;
-                    row.date_serv = moment(row.date_serv).format('YYYY-MM-DD');
+                    row.dob = (0, moment_1.default)(row.dob).isValid() ? (0, moment_1.default)(row.dob).format('YYYY-MM-DD') : null;
+                    row.date_serv = (0, moment_1.default)(row.date_serv).format('YYYY-MM-DD');
                     if (row.time_servlength > 3 && row.time_serv.indexOf(':') === -1) {
                         row.time_serv = row.time_serv ? row.time_serv.replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3') : '';
                     }
-                    row.datetime_serv = moment(row.date_serv + ' ' + (row.time_serv || '')).format('YYYY-MM-DD HH:mm:ss');
+                    row.datetime_serv = (0, moment_1.default)(row.date_serv + ' ' + (row.time_serv || '')).format('YYYY-MM-DD HH:mm:ss');
                     const sentResult = await (0, moph_refer_1.sendingToMoph)('/save-service', row);
                     if (sentResult && sentResult.statusCode === 200) {
                         await markAsSent(row);
@@ -144,13 +143,13 @@ async function getData(dateStart, dateEnd) {
                     sentResults.push({ rowno: ++recno, ...sentResult, vn: row.seq });
                 }
                 ;
-                console.log(moment().format('HH:mm:ss'), 'MOPH IoT Process Date:', date, 'service:', opdVisit.length, 'records, Sent:', sentResults.length, 'records');
+                console.log((0, moment_1.default)().format('HH:mm:ss'), 'MOPH IoT Process Date:', date, 'service:', opdVisit.length, 'records, Sent:', sentResults.length, 'records');
             }
             else {
-                console.log(moment().format('HH:mm:ss'), 'MOPH IoT Process Date:', date, 'No Records Found');
+                console.log((0, moment_1.default)().format('HH:mm:ss'), 'MOPH IoT Process Date:', date, 'No Records Found');
             }
-            date = moment(date).add(1, 'day').format('YYYY-MM-DD');
-        } while (date <= moment(dateEnd).format('YYYY-MM-DD'));
+            date = (0, moment_1.default)(date).add(1, 'day').format('YYYY-MM-DD');
+        } while (date <= (0, moment_1.default)(dateEnd).format('YYYY-MM-DD'));
     }
     catch (error) {
         (0, moph_refer_1.sendingError)({

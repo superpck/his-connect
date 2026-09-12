@@ -2,6 +2,7 @@
 ## Feature
   - เพิ่มการ Compress json ขารับ request เพื่อลดการใช้ bandwidth
   - เพิ่มการตรวจสอบ IP ต้นทาง ด้วย client-ip ใน Headers
+  - เพิ่ม sql util เพื่อใช้สร้าง function แยกตามประเภทฐานข้อมูล
 
 # 3.10.2
 ## Feature

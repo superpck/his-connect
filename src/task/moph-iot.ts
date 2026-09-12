@@ -1,6 +1,4 @@
-import moment = require('moment');
-console.log(moment().format('HH:mm:ss'), process.pid, 'Start MOPH IoT Task');
-
+import moment from 'moment';
 import { Knex } from 'knex';
 import { sendingToMoph, getHospitalConfig, sendingError } from '../middleware/moph-refer';
 import hisModel from './../routes/his/hismodel';

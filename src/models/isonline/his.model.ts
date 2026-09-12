@@ -1,5 +1,4 @@
 import { Knex } from 'knex';
-import moment from 'moment';
 const dbName = process.env.HIS_DB_NAME;
 const dbClient = process.env.HIS_DB_CLIENT;
 const maxLimit = 100;

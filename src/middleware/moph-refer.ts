@@ -3,7 +3,7 @@ import moment = require('moment');
 import { createHash } from 'crypto';
 import zlib from 'zlib';
 import { promisify } from 'util';
-import { getIP } from './utils';
+import { getIP } from '../utils/utils';
 import * as os from 'os';
 const packageJson = require('../../package.json');
 

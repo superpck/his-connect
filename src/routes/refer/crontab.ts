@@ -95,7 +95,7 @@ async function sendMoph(req, reply, db) {
 }
 
 async function sendRefer(db: Knex, date: any) {
-  var [referOut, referResult] = await Promise.all([
+  var [referOut, referResult] = await Promise.allSettled([
     getReferOut(db, date),
     getReferIn(db, date)
   ]);
@@ -112,13 +112,6 @@ async function getReferOut(db: Knex, date: any) {
 
     // list of provider/dr
     let drList: any = [];
-    // for (let r of referout) {
-    //   const dr = r.dr || r.provider;
-    //   if (dr && drList.indexOf(dr) < 0) {
-    //     drList.push(r.dr || r.provider);
-    //   }
-    // }
-
     sentContent += `\rsave refer_history ${date} \r`;
     sentContent += `\rsave refer service data ${date} \r`;
     let index = 0;
@@ -146,7 +139,11 @@ async function getReferOut(db: Knex, date: any) {
       }
       // transform column name to lowercase
       for (let fld in row) {
-        row[fld.toLowerCase()] = row[fld];
+        const field = fld.toLowerCase();
+        if (field != fld) {
+          row[fld.toLowerCase()] = row[fld];
+          delete row[fld];
+        }
       }
 
       row.hospcode = row?.hospcode || hcode;
@@ -154,7 +151,7 @@ async function getReferOut(db: Knex, date: any) {
       const seq = row.seq || row.vn;
       sentContent += (index + 1) + '. refer no.' + row.referid + ', hn ' + hn + ', seq ' + seq + '\r';
 
-      await Promise.all([
+      await Promise.allSettled([
         sendReferOut(row, sentResult),
         getPerson(db, hn, sentResult),
         getAddress(db, hn, sentResult),
@@ -225,7 +222,7 @@ async function getReferIn(db, date) {
       const referid = row.REFERID_SOURCE;
       sentContent += (index + 1) + '. refer no.' + referid + ', hn ' + hn + ', seq ' + seq + '\r';
 
-      await Promise.all([
+      await Promise.allSettled([
         sendReferIn(row, sentResultResult),
         getPerson(db, hn, sentResultResult),
         getAddress(db, hn, sentResultResult),
@@ -844,7 +841,7 @@ async function getAdmission(db: Knex, type = 'VN', searchValue: string) {
     for (const row of rows) {
       const an = row.AN || row.an;
       await sendAdmission(row);
-      const [resultIpd, resultIpdDx] = await Promise.all([
+      const [resultIpd, resultIpdDx] = await Promise.allSettled([
         drugIPD(db, an),
         getDiagnosisIpd(db, an),
       ]).finally(() => { });

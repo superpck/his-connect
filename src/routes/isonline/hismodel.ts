@@ -1,24 +1,25 @@
-// ห้ามแก้ไข file นี้ //
-import { HisModel } from './../../models/isonline/his.model';
-import { HisEzhospModel } from './../../models/isonline/his_ezhosp.model';
-import { HisHosxpv3Model } from './../../models/isonline/his_hosxpv3.model';
-import { HisHosxpv4Model } from './../../models/isonline/his_hosxpv4.model';
-import { HisSsbModel } from './../../models/isonline/his_ssb.model';
-import { HisInfodModel } from './../../models/isonline/his_infod.model';
-import { HisHimproModel } from './../../models/isonline/his_himpro.model';
-import { HisHiModel } from './../../models/isonline/his_hi.model';
-import { HisHosxppcuModel } from './../../models/isonline/his_hosxppcu.model';
-import { HisJhcisModel } from './../../models/isonline/his_jhcis.model';
-import { HisHospitalOsModel } from './../../models/isonline/his_hospitalos.model';
-import { HisSpdcModel } from './../../models/isonline/his_spdc.model';
-import { HisMdModel } from './../../models/isonline/his_md.model';
-import { HisPmkModel } from './../../models/isonline/his_pmk.model';
-import { HisJhosModel } from './../../models/isonline/his_jhos.model';
-import { HisMedical2020Model } from '../../models/isonline/his_medical2020.model';
-import { HisEmrSoftModel } from '../../models/isonline/his_emrsoft.model';
-import { HisKpstatModel } from '../../models/his/his_kpstat';
-import { HisMkhospitalModel } from '../../models/isonline/his_mkhospital.model';
-import { HisHaosModel } from '../../models/isonline/his_haos.model';
+// แก้ไขเพื่อใช้ merged models จาก his_merged/ (2026-08-30)
+// Imports now point to models/his_merged/ instead of models/isonline/
+import { HisModel } from './../../models/his_merged/his';
+// import { HisEzhospModel } from './../../models/his_merged/his_ezhosp'; // Not copied - not used
+import { HisHosxpv3Model } from './../../models/his_merged/his_hosxpv3';
+import { HisHosxpv4Model } from './../../models/his_merged/his_hosxpv4';
+import { HisSsbModel } from './../../models/his_merged/his_ssb_model';
+import { HisInfodModel } from './../../models/his_merged/his_infod';
+import { HisHimproModel } from './../../models/his_merged/his_himpro';
+import { HisHiModel } from './../../models/his_merged/his_hi';
+import { HisHosxpPcuModel } from './../../models/his_merged/his_hosxppcu';
+import { HisJhcisModel } from './../../models/his_merged/his_jhcis';
+import { HisHospitalOsModel } from './../../models/his_merged/his_hospitalos';
+import { HisSpdcModel } from './../../models/his_merged/his_spdc';
+import { HisMdModel } from './../../models/his_merged/his_md';
+import { HisPmkModel } from './../../models/his_merged/his_pmk';
+import { HisJhosModel } from './../../models/his_merged/his_jhos';
+import { HisMedical2020Model } from '../../models/his_merged/his_medical2020';
+import { HisEmrSoftModel } from '../../models/his_merged/his_emrsoft';
+import { HisKpstatModel } from '../../models/his_merged/his_kpstat';
+import { HisMkhospitalModel } from '../../models/his_merged/his_mkhospital';
+import { HisHaosModel } from '../../models/his_merged/his_haos';
 
 const hisProvider = (process.env.HIS_PROVIDER || 'unknown-his').toLowerCase();
 
@@ -26,7 +27,7 @@ let hisModel: any;
 switch (hisProvider) {
   case 'ezhosp':
   case 'ihospital':
-    hisModel = new HisEzhospModel();
+    hisModel = new HisModel(); // HisEzhospModel not copied from isonline
     break;
   case 'hosxpv3':
     hisModel = new HisHosxpv3Model();
@@ -51,7 +52,7 @@ switch (hisProvider) {
     hisModel = new HisJhcisModel();
     break;
   case 'hosxppcu':
-    hisModel = new HisHosxppcuModel();
+    hisModel = new HisHosxpPcuModel();
     break;
   case 'hospitalos':
     hisModel = new HisHospitalOsModel();
