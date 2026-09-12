@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+import { SqlFn } from '../../utils/sql-util';
 const dbName = process.env.HIS_DB_NAME;
 const maxLimit = 500;
 
@@ -30,6 +31,7 @@ export class HisHosxpv4Model {
     }
 
     getPerson(db: Knex, columnName: string, searchText: any) {
+        const sqlFn = new SqlFn(db);
         let sql = db('patient');
         if (typeof searchText === 'string') {
             sql.where(columnName, searchText);
@@ -156,21 +158,35 @@ export class HisHosxpv4Model {
             .where('vn', "=", visitno);
     }
     async getDiagnosisOpdVWXY(db: Knex, date: any) {
-        let sql = `SELECT hn, vn AS visitno, dx.vstdate as date, icd10 AS diagcode
-                , icd.name AS diag_name
-                , dx.diagtype AS diag_type, doctor AS dr
-                , dx.episode
-                , "IT" as codeset, update_datetime as d_update
-            FROM ovstdiag as dx
-                LEFT JOIN icd10_sss as icd ON dx.icd10 = icd.code
-            WHERE vn IN (
-                SELECT vn FROM ovstdiag as dx
-                WHERE dx.vstdate= ? AND LEFT(icd10,1) IN ('V','W','X','Y'))
-                AND LEFT(icd10,1) IN ('S','T','V','W','X','Y')
-            ORDER BY vn, diagtype, update_datetime LIMIT `+ maxLimit;
+        let query = db('ovstdiag as dx')
+            .select('hn', 'vn AS visitno', 'dx.vstdate as date', 'icd10 AS diagcode'
+                , 'icd.name AS diag_name'
+                , 'dx.diagtype AS diag_type', 'doctor AS dr'
+                , 'dx.episode'
+                , db.raw(`"IT" as codeset`), 'update_datetime as d_update')
+            .leftJoin('icd10_sss as icd', 'dx.icd10', 'icd.code')
+            .where('dx.vstdate', '=', date)
+            .andWhere(function () {
+                this.whereRaw(`LEFT(icd10,1) IN ('V','W','X','Y')`);
+            })
+            .orderBy(['vn', 'diagtype', 'update_datetime'])
+            .limit(maxLimit);
+        return query;
+        // let sql = `SELECT hn, vn AS visitno, dx.vstdate as date, icd10 AS diagcode
+        //         , icd.name AS diag_name
+        //         , dx.diagtype AS diag_type, doctor AS dr
+        //         , dx.episode
+        //         , "IT" as codeset, update_datetime as d_update
+        //     FROM ovstdiag as dx
+        //         LEFT JOIN icd10_sss as icd ON dx.icd10 = icd.code
+        //     WHERE vn IN (
+        //         SELECT vn FROM ovstdiag as dx
+        //         WHERE dx.vstdate= ? AND LEFT(icd10,1) IN ('V','W','X','Y'))
+        //         AND LEFT(icd10,1) IN ('S','T','V','W','X','Y')
+        //     ORDER BY vn, diagtype, update_datetime LIMIT `+ maxLimit;
 
-        const result = await db.raw(sql, [date]);
-        return result[0];
+        // const result = await db.raw(sql, [date]);
+        // return result[0];
     }
 
     getProcedureOpd(knex, columnName, searchNo, hospCode) {

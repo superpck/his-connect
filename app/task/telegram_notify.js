@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.process = void 0;
 const moment_1 = __importDefault(require("moment"));
 const server_resource_1 = require("../middleware/server-resource");
-const utils_1 = require("../middleware/utils");
+const utils_1 = require("../utils/utils");
 const telegram_1 = require("./../middleware/telegram");
 const process = async () => {
     return sendResourceMonitor();

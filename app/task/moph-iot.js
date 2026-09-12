@@ -4,7 +4,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const moment_1 = __importDefault(require("moment"));
-console.log((0, moment_1.default)().format('HH:mm:ss'), process.pid, 'Start MOPH IoT Task');
 const moph_refer_1 = require("../middleware/moph-refer");
 const hismodel_1 = __importDefault(require("./../routes/his/hismodel"));
 const dbConnection = require('../plugins/db');

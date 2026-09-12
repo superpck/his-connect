@@ -1,87 +1,88 @@
 // ห้ามแก้ไข file นี้ //
 console.log('HIS Provider:', process.env.HIS_PROVIDER);
 const hisProvider = (process.env.HIS_PROVIDER || 'unknown-his').toLowerCase();
+const modelPath = '../../models/his';
 
 let hisModel: any;
 switch (hisProvider) {
   case 'ihospital':
   case 'ezhosp':
-    hisModel = new (require('../../models/his/his_ihospital').HisIHospitalModel)();
+    hisModel = new (require(modelPath + '/his_ihospital').HisIHospitalModel)();
     break;
   case 'thiades':
-    hisModel = new (require('../../models/his/his_thiades').HisThiadesModel)();
+    hisModel = new (require(modelPath + '/his_thiades').HisThiadesModel)();
     break;
   case 'hosxpv3':
-    hisModel = new (require('../../models/his/his_hosxpv3').HisHosxpv3Model)();
+    hisModel = new (require(modelPath + '/his_hosxpv3').HisHosxpv3Model)();
     break;
   case 'hosxpv4':
-    hisModel = new (require('../../models/his/his_hosxpv4').HisHosxpv4Model)();
+    hisModel = new (require(modelPath + '/his_hosxpv4').HisHosxpv4Model)();
     break;
   case 'hosxppcu':
-    hisModel = new (require('../../models/his/his_hosxppcu').HisHosxpPcuModel)();
+    hisModel = new (require(modelPath + '/his_hosxppcu').HisHosxpPcuModel)();
     break;
   case 'mkhospital':
-    hisModel = new (require('../../models/his/his_mkhospital').HisMkhospitalModel)();
+    hisModel = new (require(modelPath + '/his_mkhospital').HisMkhospitalModel)();
     break;
   case 'nemo':
   case 'nemo_refer':
-    hisModel = new (require('../../models/his/his_nemo').HisNemoModel)();
+    hisModel = new (require(modelPath + '/his_nemo').HisNemoModel)();
     break;
   case 'ssb':
-    hisModel = new (require('../../models/his/his_ssb_srih').HisSsbSriHModel)();
+    hisModel = new (require(modelPath + '/his_ssb_srih').HisSsbSriHModel)();
     break;
   case 'infod':
   case 'homc':
-    hisModel = new (require('../../models/his/his_homc').HisHomCHModel)();
+    hisModel = new (require(modelPath + '/his_homc').HisHomCHModel)();
     break;
   case 'hi':
-    hisModel = new (require('../../models/his/his_hi').HisHiModel)();
+    hisModel = new (require(modelPath + '/his_hi').HisHiModel)();
     break;
   case 'himpro':
-    hisModel = new (require('../../models/his/his_himpro').HisHimproModel)();
+    hisModel = new (require(modelPath + '/his_himpro').HisHimproModel)();
     break;
   case 'jhcis':
-    hisModel = new (require('../../models/his/his_jhcis').HisJhcisModel)();
+    hisModel = new (require(modelPath + '/his_jhcis').HisJhcisModel)();
     break;
   case 'mypcu':
-    hisModel = new (require('../../models/his/his_mypcu').HisMyPcuModel)();
+    hisModel = new (require(modelPath + '/his_mypcu').HisMyPcuModel)();
     break;
   case 'hospitalos':
-    hisModel = new (require('../../models/his/his_hospitalos').HisHospitalOsModel)();
+    hisModel = new (require(modelPath + '/his_hospitalos').HisHospitalOsModel)();
     break;
   case 'hospitalosv4':
-    hisModel = new (require('../../models/his/his_hospitalos.v4').HisHospitalOsV4Model)();
+    hisModel = new (require(modelPath + '/his_hospitalos.v4').HisHospitalOsV4Model)();
     break;
   case 'vpm':
-    hisModel = new (require('../../models/his/his_vpm').HisVpmHModel)();
+    hisModel = new (require(modelPath + '/his_vpm').HisVpmHModel)();
     break;
   case 'pmk':
-    hisModel = new (require('../../models/his/his_pmk').HisPmkModel)();
+    hisModel = new (require(modelPath + '/his_pmk').HisPmkModel)();
     break;
   case 'md':
-    hisModel = new (require('../../models/his/his_md').HisMdModel)();
+    hisModel = new (require(modelPath + '/his_md').HisMdModel)();
     break;
   case 'emrsoft':
-    hisModel = new (require('../../models/his/his_emrsoft').HisEmrSoftModel)();
+    hisModel = new (require(modelPath + '/his_emrsoft').HisEmrSoftModel)();
     break;
   case 'haos':
-    hisModel = new (require('../../models/his/his_haos').HisHaosModel)();
+    hisModel = new (require(modelPath + '/his_haos').HisHaosModel)();
     break;
   case 'mitnet':
-    hisModel = new (require('../../models/his/his_mitnet').HisMitnetModel)();
+    hisModel = new (require(modelPath + '/his_mitnet').HisMitnetModel)();
     break;
   case 'epis':
   case 'ephis':
-    hisModel = new (require('../../models/his/his_epis').HisEPisModel)();
+    hisModel = new (require(modelPath + '/his_epis').HisEPisModel)();
     break;
   case 'mbase':
-    hisModel = new (require('../../models/his/his_mbase').HisMBaseModel)();
+    hisModel = new (require(modelPath + '/his_mbase').HisMBaseModel)();
     break;
   case 'medical2020':
-    hisModel = new (require('../../models/his/his_medical2020').HisMedical2020Model)();
+    hisModel = new (require(modelPath + '/his_medical2020').HisMedical2020Model)();
     break;
   default:
-    hisModel = new (require('../../models/his/his').HisModel)();
+    hisModel = new (require(modelPath + '/his').HisModel)();
 }
 
 export default hisModel;

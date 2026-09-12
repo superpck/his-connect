@@ -4,7 +4,7 @@ import hisModel from './../routes/his/hismodel';
 import { Knex } from 'knex';
 import { platform, release } from "os";
 const fs = require('fs');
-import { getIP } from "../middleware/utils";
+import { getIP } from "../utils/utils";
 const packageJson = require('../../package.json');
 
 const dbConnection = require('../plugins/db');

@@ -1,7 +1,7 @@
 import moment from 'moment';
 import hisModel from './../routes/his/hismodel';
 import { Knex } from 'knex';
-import { dateLen } from '../middleware/utils';
+import { dateLen } from '../utils/utils';
 
 const dbConnection = require('../plugins/db');
 let db: Knex = dbConnection('HIS');
