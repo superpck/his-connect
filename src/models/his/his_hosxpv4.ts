@@ -1713,50 +1713,84 @@ export class HisHosxpv4Model {
     return result[0];
   }
 
-  async getAccident(db: Knex, visitNo, hospCode = hisHospcode) {
-    const sql = `
-            select 
-                ? as hospcode,
-                p.hn, p.hn as pid, p.cid,
-                q.seq_id, q.vn as seq,
-                date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_serv,
-                date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_ae,
-                ifnull(lpad(d.er_accident_type_id,2,'0'),'') aetype,
-                ifnull(lpad(d.accident_place_type_id,2,'0'),'99') aeplace,
-                ifnull(vt.export_code, '1') typein_ae,
-                ifnull(d.accident_person_type_id,'9') traffic,
-                ifnull(tt.export_code, '99') vehicle,
-                ifnull(d.accident_alcohol_type_id,'9') alcohol,
-                ifnull(d.accident_drug_type_id,'9') nacrotic_drug,
-                ifnull(d.accident_belt_type_id,'9') belt,
-                ifnull(d.accident_helmet_type_id,'9') helmet,
-                ifnull(d.accident_airway_type_id,'3') airway,
-                ifnull(d.accident_bleed_type_id,'3') stopbleed,
-                ifnull(d.accident_splint_type_id,'3') splint,
-                ifnull(d.accident_fluid_type_id,'3') fluid,
-                ifnull(d.er_emergency_type, '6') urgency,
-                IF (d.gcs_e IN (1, 2, 3, 4),d.gcs_e,'4') coma_eye,
-                IF (d.gcs_v IN (1, 2, 3, 4, 5),d.gcs_v,'5') coma_speak,
-                IF (d.gcs_m IN (1, 2, 3, 4, 5, 6),d.gcs_m,'6') coma_movement,
-                date_format(now(), '%Y-%m-%d %H:%i:%s') d_update
-            FROM
-                er_regist er
-            LEFT JOIN ovst o ON er.vn = o.vn
-            LEFT JOIN er_pt_type t ON t.er_pt_type = er.er_pt_type
-            LEFT JOIN ovst_seq q ON o.vn = q.vn
-            LEFT JOIN patient pt ON pt.hn = o.hn
-            LEFT JOIN person p ON p.patient_hn = pt.hn
-            LEFT JOIN er_nursing_detail d ON er.vn = d.vn
-            LEFT JOIN er_nursing_visit_type vt ON vt.visit_type = d.visit_type
-            LEFT JOIN accident_transport_type tt ON tt.accident_transport_type_id = d.accident_transport_type_id                   
-            where                 
-                q.vn =?
-            `;
-    const result = await db.raw(sql, [hisHospcode, visitNo]);
-    return result[0];
+  async getAccident(db: Knex, visitNo: string, hospCode = hisHospcode) {
+    // const sql = `
+    //         select 
+    //             ? as hospcode,
+    //             p.hn, p.hn as pid, p.cid,
+    //             q.seq_id, q.vn as seq,
+    //             date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_serv,
+    //             date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_ae,
+    //             ifnull(lpad(d.er_accident_type_id,2,'0'),'') aetype,
+    //             ifnull(lpad(d.accident_place_type_id,2,'0'),'99') aeplace,
+    //             ifnull(vt.export_code, '1') typein_ae,
+    //             ifnull(d.accident_person_type_id,'9') traffic,
+    //             ifnull(tt.export_code, '99') vehicle,
+    //             ifnull(d.accident_alcohol_type_id,'9') alcohol,
+    //             ifnull(d.accident_drug_type_id,'9') nacrotic_drug,
+    //             ifnull(d.accident_belt_type_id,'9') belt,
+    //             ifnull(d.accident_helmet_type_id,'9') helmet,
+    //             ifnull(d.accident_airway_type_id,'3') airway,
+    //             ifnull(d.accident_bleed_type_id,'3') stopbleed,
+    //             ifnull(d.accident_splint_type_id,'3') splint,
+    //             ifnull(d.accident_fluid_type_id,'3') fluid,
+    //             ifnull(d.er_emergency_type, '6') urgency,
+    //             IF (d.gcs_e IN (1, 2, 3, 4),d.gcs_e,'4') coma_eye,
+    //             IF (d.gcs_v IN (1, 2, 3, 4, 5),d.gcs_v,'5') coma_speak,
+    //             IF (d.gcs_m IN (1, 2, 3, 4, 5, 6),d.gcs_m,'6') coma_movement,
+    //             date_format(now(), '%Y-%m-%d %H:%i:%s') d_update
+    //         FROM
+    //             er_regist er
+    //         LEFT JOIN ovst o ON er.vn = o.vn
+    //         LEFT JOIN er_pt_type t ON t.er_pt_type = er.er_pt_type
+    //         LEFT JOIN ovst_seq q ON o.vn = q.vn
+    //         LEFT JOIN patient pt ON pt.hn = o.hn
+    //         LEFT JOIN person p ON p.patient_hn = pt.hn
+    //         LEFT JOIN er_nursing_detail d ON er.vn = d.vn
+    //         LEFT JOIN er_nursing_visit_type vt ON vt.visit_type = d.visit_type
+    //         LEFT JOIN accident_transport_type tt ON tt.accident_transport_type_id = d.accident_transport_type_id                   
+    //         where                 
+    //             q.vn =?
+    //         `;
+    // const result = await db.raw(sql, [hisHospcode, visitNo]);
+    // return result[0];
+
+    return await db('er_regist as er')
+      .leftJoin('ovst as o', 'er.vn', 'o.vn')
+      .leftJoin('er_pt_type as t', 't.er_pt_type', 'er.er_pt_type')
+      .leftJoin('ovst_seq as q', 'o.vn', 'q.vn')
+      .leftJoin('patient as pt', 'pt.hn', 'o.hn')
+      .leftJoin('person as p', 'p.patient_hn', 'pt.hn')
+      .leftJoin('er_nursing_detail as d', 'er.vn', 'd.vn')
+      .leftJoin('er_nursing_visit_type as vt', 'vt.visit_type', 'd.visit_type')
+      .leftJoin('accident_transport_type as tt', 'tt.accident_transport_type_id', 'd.accident_transport_type_id')
+      .select(db.raw('? as HOSPCODE', [hisHospcode]), 'p.hn',
+        'p.hn as pid', 'p.cid as cid',
+        'q.seq_id', 'q.vn as seq',
+        db.raw("date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_serv"),
+        db.raw("date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_ae"),
+        db.raw("ifnull(lpad(d.er_accident_type_id,2,'0'),'') aetype"),
+        db.raw("ifnull(lpad(d.accident_place_type_id,2,'0'),'99') aeplace"),
+        db.raw("ifnull(vt.export_code, '1') typein_ae"),
+        db.raw("ifnull(d.accident_person_type_id,'9') traffic"),
+        db.raw("ifnull(tt.export_code, '99') vehicle"),
+        db.raw("ifnull(d.accident_alcohol_type_id,'9') alcohol"),
+        db.raw("ifnull(d.accident_drug_type_id,'9') nacrotic_drug"),
+        db.raw("ifnull(d.accident_belt_type_id,'9') belt"),
+        db.raw("ifnull(d.accident_helmet_type_id,'9') helmet"),
+        db.raw("ifnull(d.accident_airway_type_id,'3') airway"),
+        db.raw("ifnull(d.accident_bleed_type_id,'3') stopbleed"),
+        db.raw("ifnull(d.accident_splint_type_id,'3') splint"),
+        db.raw("ifnull(d.accident_fluid_type_id,'3') fluid"),
+        db.raw("ifnull(d.er_emergency_type, '6') urgency"),
+        db.raw("IF (d.gcs_e IN (1, 2, 3, 4),d.gcs_e,'4') coma_eye"),
+        db.raw("IF (d.gcs_v IN (1, 2, 3, 4, 5),d.gcs_v,'5') coma_speak"),
+        db.raw("IF (d.gcs_m IN (1, 2, 3, 4, 5, 6),d.gcs_m,'6') coma_movement"),
+        db.raw("date_format(now(), '%Y-%m-%d %H:%i:%s') d_update"))
+      .where('q.vn', visitNo);
   }
 
-  async getDrugAllergy(db: Knex, hn, hospCode = hisHospcode) {
+  async getDrugAllergy(db: Knex, hn: string, hospCode = hisHospcode) {
     return db('opd_allergy as oe')
       .leftJoin('drugitems_register as di', 'oe.agent', 'di.drugname')
       .leftJoin('patient', 'oe.hn', 'patient.hn')
