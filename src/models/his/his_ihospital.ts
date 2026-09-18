@@ -202,11 +202,6 @@ export class HisIHospitalModel {
   getAddress(db: Knex, columnName, searchNo, hospCode = hisHospcode) {
     columnName = columnName === 'cid' ? 'CID' : columnName;
     return db('view_address_hdc')
-      .select('HOSPCODE', `PID`, `ADDRESSTYPE`, `HOUSE_ID`, `HOUSETYPE`,
-        `ROOMNO`, `CONDO`, `HOUSENO`, `SOISUB`,
-        `SOIMAIN`, `ROAD`, `VILLANAME`, `VILLAGE`,
-        `TAMBON`, `AMPUR`, `CHANGWAT`, `TELEPHONE`,
-        `MOBILE`, `D_UPDATE`)
       .where(columnName, "=", searchNo)
       .orderBy('ADDRESSTYPE')
       .limit(maxLimit);
@@ -524,7 +519,7 @@ export class HisIHospitalModel {
     } else {
       query.where('an', an)
     }
-    return query.select(db.raw('? as HOSPCODE', [hcode]))
+    return query.select(db.raw('? as HOSPCODE', [hospCode]))
       .select('hn as PID', 'an as AN', 'vn as SEQ')
       .select(db.raw('concat(admite, " " , timeadmit) as DATETIME_ADMIT'))
       .select('clinic_std as WARDSTAY', 'op as PROCEDCODE',
@@ -542,14 +537,14 @@ export class HisIHospitalModel {
       query.where('an', an)
     }
     return query
-      .select(db.raw('? as hospcode', [hcode]))
+      .select(db.raw('? as hospcode', [hospCode]))
       .limit(maxLimit);
   }
 
   async getDrugIpd(db: Knex, an: string, hospCode = hisHospcode) {
     try {
       return await db('pharmacy.view_supreme_prescriptiondetail as drug')
-        .select(db.raw('"' + hcode + '" as hospcode')
+        .select(db.raw('? as hospcode', [hospCode])
           , 'hn as pid', 'an', 'cid'
           , db.raw("date_format(dateadm,'%Y-%m-%d %H:%i:%s') as DATETIME_ADMIT")
           , 'prioritycode as TYPEDRUG'
@@ -570,17 +565,44 @@ export class HisIHospitalModel {
   }
 
   getAccident(db: Knex, visitNo: string, hospCode = hisHospcode) {
-    return db('accident')
-      .select('*')
-      .select(db.raw('"' + hcode + '" as hospcode'))
-      .where('vn', visitNo)
-      .limit(maxLimit);
+    return db('opd_visit as visit')
+      .leftJoin('opd_vs as vs', 'visit.vn', 'vs.vn')
+      .leftJoin('er_triage as triage', 'visit.vn', 'triage.vn')
+      .select(db.raw('? as hospcode', [hospCode]),
+        'visit.hn as hn', 'visit.vn as vn', 'visit.vn as seq',
+        db.raw('concat(visit.date, " ", visit.time) as datetime_serv'),
+        'vs.date_ill as datetime_ae',
+        'vs.bp as sbp', 'vs.bp1 as dbp', 'vs.puls as pulse', 'vs.rr as rr',
+        'vs.weigh as weight', 'vs.high as height',
+        'vs.t as temperature', 'triage.e as coma_eye',
+        'triage.v as coma_verbal', 'triage.m as coma_motor', 'triage.gcs as gcs',
+        'visit.emg as urgency'
+      )
+      .where('visit.vn', visitNo)
+      .groupBy('visit.vn');
+
+    //             ifnull(lpad(d.er_accident_type_id,2,'0'),'') aetype,
+    //             ifnull(lpad(d.accident_place_type_id,2,'0'),'99') aeplace,
+    //             ifnull(vt.export_code, '1') typein_ae,
+    //             ifnull(d.accident_person_type_id,'9') traffic,
+    //             ifnull(tt.export_code, '99') vehicle,
+    //             ifnull(d.accident_alcohol_type_id,'9') alcohol,
+    //             ifnull(d.accident_drug_type_id,'9') nacrotic_drug,
+    //             ifnull(d.accident_belt_type_id,'9') belt,
+    //             ifnull(d.accident_helmet_type_id,'9') helmet,
+    //             ifnull(d.accident_airway_type_id,'3') airway,
+    //             ifnull(d.accident_bleed_type_id,'3') stopbleed,
+    //             ifnull(d.accident_splint_type_id,'3') splint,
+    //             ifnull(d.accident_fluid_type_id,'3') fluid,
+    //             ifnull(d.er_emergency_type, '6') urgency,
+    //             IF (d.gcs_v IN (1, 2, 3, 4, 5),d.gcs_v,'5') coma_speak,
+    //             date_format(now(), '%Y-%m-%d %H:%i:%s') d_update
   }
 
   getDrugAllergy(db: Knex, hn, hospCode = hisHospcode) {
     return db('view_drug_allergy')
       .select('*')
-      .select(db.raw('"' + hcode + '" as hospcode'))
+      .select(db.raw('? as hospcode', [hospCode]))
       .where('hn', hn)
       .limit(maxLimit);
   }
@@ -626,7 +648,7 @@ export class HisIHospitalModel {
       .select([
         db.raw("? as hospcode", [hisHospcode]),
         db.raw("ref AS appointment_id"),
-        "hn", "an", "vn", db.raw("? as visit_vn", [null]),'cid',
+        "hn", "an", "vn", db.raw("? as visit_vn", [null]), 'cid',
         db.raw("0 AS isvisited"),
         db.raw("CONCAT(date,' ',time) AS visit_date"),
         db.raw("fu_date AS apdate"),
