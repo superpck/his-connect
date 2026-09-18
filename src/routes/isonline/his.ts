@@ -1,26 +1,25 @@
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
-// แก้ไขเพื่อใช้ merged models จาก his_merged/ (2026-08-30)
+// แก้ไขเพื่อใช้ merged models จาก isonline/ (2026-08-3.model0)
 // Imports now point to models/his_merged/ instead of models/isonline/
-import { HisModel } from './../../models/his_merged/his';
-// import { HisEzhospModel } from './../../models/his_merged/his_ezhosp'; // Not copied - not used
-import { HisHosxpv3Model } from './../../models/his_merged/his_hosxpv3';
-import { HisHosxpv4Model } from './../../models/his_merged/his_hosxpv4';
-import { HisSsbModel } from './../../models/his_merged/his_ssb_model';
-import { HisInfodModel } from './../../models/his_merged/his_infod';
-import { HisHimproModel } from './../../models/his_merged/his_himpro';
-import { HisHiModel } from './../../models/his_merged/his_hi';
-import { HisHosxpPcuModel } from './../../models/his_merged/his_hosxppcu';
-import { HisJhcisModel } from './../../models/his_merged/his_jhcis';
-import { HisHospitalOsModel } from './../../models/his_merged/his_hospitalos';
-import { HisSpdcModel } from './../../models/his_merged/his_spdc';
-import { HisMdModel } from './../../models/his_merged/his_md';
-import { HisPmkModel } from './../../models/his_merged/his_pmk';
-import { HisJhosModel } from './../../models/his_merged/his_jhos';
-import { HisMedical2020Model } from '../../models/his_merged/his_medical2020';
-import { HisEmrSoftModel } from '../../models/his_merged/his_emrsoft';
-import { HisKpstatModel } from '../../models/his_merged/his_kpstat';
-import { HisMkhospitalModel } from '../../models/his_merged/his_mkhospital';
-import { HisHaosModel } from '../../models/his_merged/his_haos';
+import { HisModel } from './../../models/isonline/his.model';
+import { HisHosxpv3Model } from './../../models/isonline/his_hosxpv3.model';
+import { HisHosxpv4Model } from './../../models/isonline/his_hosxpv4.model';
+import { HisSsbModel } from './../../models/isonline/his_ssb.model';
+import { HisInfodModel } from './../../models/isonline/his_infod.model';
+import { HisHimproModel } from './../../models/isonline/his_himpro.model';
+import { HisHiModel } from './../../models/isonline/his_hi.model';
+import { HisHosxppcuModel } from './../../models/isonline/his_hosxppcu.model';
+import { HisJhcisModel } from './../../models/isonline/his_jhcis.model';
+import { HisHospitalOsModel } from './../../models/isonline/his_hospitalos.model';
+import { HisSpdcModel } from './../../models/isonline/his_spdc.model';
+import { HisMdModel } from './../../models/isonline/his_md.model';
+import { HisPmkModel } from './../../models/isonline/his_pmk.model';
+import { HisJhosModel } from './../../models/isonline/his_jhos.model';
+import { HisMedical2020Model } from './../../models/isonline/his_medical2020.model';
+import { HisEmrSoftModel } from '../../models/isonline/his_emrsoft.model';
+import { HisKpstatModel } from '../../models/isonline/his_kpstat.model';
+import { HisMkhospitalModel } from '../../models/isonline/his_mkhospital.model';
+import { HisHaosModel } from '../../models/isonline/his_haos.model';
 
 import { Jwt } from './../../plugins/jwt';
 import moment = require('moment');
@@ -57,7 +56,7 @@ switch (provider) {
     hisModel = new HisJhcisModel();
     break;
   case 'hosxppcu':
-    hisModel = new HisHosxpPcuModel();
+    hisModel = new HisHosxppcuModel();
     break;
   case 'hospitalos':
   case 'hospitalosv4':
@@ -299,6 +298,25 @@ const router = (fastify, { }, next) => {
       })
     }
   });
+
+  fastify.post('/accident', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
+
+    const visitNo = req.body.visitNo;
+    const hospcode = req.body.hospcode || process.env.HOSPCODE;
+
+    if (!visitNo) {
+      reply.status(StatusCodes.BAD_REQUEST).send({ statusCode: StatusCodes.BAD_REQUEST, message: getReasonPhrase(StatusCodes.BAD_REQUEST) })
+      return;
+    }
+
+    try {
+      const rows = await hisModel.getAccident(global.dbHIS, visitNo, hospcode);
+      reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
+    } catch (error) {
+      console.log('accident', error.message);
+      reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: StatusCodes.INTERNAL_SERVER_ERROR, message: error.message })
+    }
+  })
 
   async function decodeToken(req) {
     let token: string = null;

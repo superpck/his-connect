@@ -1713,50 +1713,168 @@ export class HisHosxpv4Model {
     return result[0];
   }
 
-  async getAccident(db: Knex, visitNo, hospCode = hisHospcode) {
-    const sql = `
-            select 
-                ? as hospcode,
-                p.hn, p.hn as pid, p.cid,
-                q.seq_id, q.vn as seq,
-                date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_serv,
-                date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_ae,
-                ifnull(lpad(d.er_accident_type_id,2,'0'),'') aetype,
-                ifnull(lpad(d.accident_place_type_id,2,'0'),'99') aeplace,
-                ifnull(vt.export_code, '1') typein_ae,
-                ifnull(d.accident_person_type_id,'9') traffic,
-                ifnull(tt.export_code, '99') vehicle,
-                ifnull(d.accident_alcohol_type_id,'9') alcohol,
-                ifnull(d.accident_drug_type_id,'9') nacrotic_drug,
-                ifnull(d.accident_belt_type_id,'9') belt,
-                ifnull(d.accident_helmet_type_id,'9') helmet,
-                ifnull(d.accident_airway_type_id,'3') airway,
-                ifnull(d.accident_bleed_type_id,'3') stopbleed,
-                ifnull(d.accident_splint_type_id,'3') splint,
-                ifnull(d.accident_fluid_type_id,'3') fluid,
-                ifnull(d.er_emergency_type, '6') urgency,
-                IF (d.gcs_e IN (1, 2, 3, 4),d.gcs_e,'4') coma_eye,
-                IF (d.gcs_v IN (1, 2, 3, 4, 5),d.gcs_v,'5') coma_speak,
-                IF (d.gcs_m IN (1, 2, 3, 4, 5, 6),d.gcs_m,'6') coma_movement,
-                date_format(now(), '%Y-%m-%d %H:%i:%s') d_update
-            FROM
-                er_regist er
-            LEFT JOIN ovst o ON er.vn = o.vn
-            LEFT JOIN er_pt_type t ON t.er_pt_type = er.er_pt_type
-            LEFT JOIN ovst_seq q ON o.vn = q.vn
-            LEFT JOIN patient pt ON pt.hn = o.hn
-            LEFT JOIN person p ON p.patient_hn = pt.hn
-            LEFT JOIN er_nursing_detail d ON er.vn = d.vn
-            LEFT JOIN er_nursing_visit_type vt ON vt.visit_type = d.visit_type
-            LEFT JOIN accident_transport_type tt ON tt.accident_transport_type_id = d.accident_transport_type_id                   
-            where                 
-                q.vn =?
-            `;
-    const result = await db.raw(sql, [hisHospcode, visitNo]);
-    return result[0];
+  async getAccident(db: Knex, visitNo: string, hospCode = hisHospcode) {
+    // const sql = `
+    //         select 
+    //             ? as hospcode,
+    //             p.hn, p.hn as pid, p.cid,
+    //             q.seq_id, q.vn as seq,
+    //             date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_serv,
+    //             date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_ae,
+    //             ifnull(lpad(d.er_accident_type_id,2,'0'),'') aetype,
+    //             ifnull(lpad(d.accident_place_type_id,2,'0'),'99') aeplace,
+    //             ifnull(vt.export_code, '1') typein_ae,
+    //             ifnull(d.accident_person_type_id,'9') traffic,
+    //             ifnull(tt.export_code, '99') vehicle,
+    //             ifnull(d.accident_alcohol_type_id,'9') alcohol,
+    //             ifnull(d.accident_drug_type_id,'9') nacrotic_drug,
+    //             ifnull(d.accident_belt_type_id,'9') belt,
+    //             ifnull(d.accident_helmet_type_id,'9') helmet,
+    //             ifnull(d.accident_airway_type_id,'3') airway,
+    //             ifnull(d.accident_bleed_type_id,'3') stopbleed,
+    //             ifnull(d.accident_splint_type_id,'3') splint,
+    //             ifnull(d.accident_fluid_type_id,'3') fluid,
+    //             ifnull(d.er_emergency_type, '6') urgency,
+    //             IF (d.gcs_e IN (1, 2, 3, 4),d.gcs_e,'4') coma_eye,
+    //             IF (d.gcs_v IN (1, 2, 3, 4, 5),d.gcs_v,'5') coma_speak,
+    //             IF (d.gcs_m IN (1, 2, 3, 4, 5, 6),d.gcs_m,'6') coma_movement,
+    //             date_format(now(), '%Y-%m-%d %H:%i:%s') d_update
+    //         FROM
+    //             er_regist er
+    //         LEFT JOIN ovst o ON er.vn = o.vn
+    //         LEFT JOIN er_pt_type t ON t.er_pt_type = er.er_pt_type
+    //         LEFT JOIN ovst_seq q ON o.vn = q.vn
+    //         LEFT JOIN patient pt ON pt.hn = o.hn
+    //         LEFT JOIN person p ON p.patient_hn = pt.hn
+    //         LEFT JOIN er_nursing_detail d ON er.vn = d.vn
+    //         LEFT JOIN er_nursing_visit_type vt ON vt.visit_type = d.visit_type
+    //         LEFT JOIN accident_transport_type tt ON tt.accident_transport_type_id = d.accident_transport_type_id                   
+    //         where                 
+    //             q.vn =?
+    //         `;
+    // const result = await db.raw(sql, [hisHospcode, visitNo]);
+    // return result[0];
+
+    return await db('er_regist as er')
+      .leftJoin('ovst as o', 'er.vn', 'o.vn')
+      .leftJoin('er_pt_type as t', 't.er_pt_type', 'er.er_pt_type')
+      .leftJoin('ovst_seq as q', 'o.vn', 'q.vn')
+      .leftJoin('patient as pt', 'pt.hn', 'o.hn')
+      .leftJoin('person as p', 'p.patient_hn', 'pt.hn')
+      .leftJoin('er_nursing_detail as d', 'er.vn', 'd.vn')
+      .leftJoin('er_nursing_visit_type as vt', 'vt.visit_type', 'd.visit_type')
+      .leftJoin('accident_transport_type as tt', 'tt.accident_transport_type_id', 'd.accident_transport_type_id')
+      .select(db.raw('? as HOSPCODE', [hisHospcode]), 'p.hn',
+        'p.hn as pid', 'p.cid as cid',
+        'q.seq_id', 'q.vn as seq',
+        db.raw("date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_serv"),
+        db.raw("date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_ae"),
+        db.raw("ifnull(lpad(d.er_accident_type_id,2,'0'),'') aetype"),
+        db.raw("ifnull(lpad(d.accident_place_type_id,2,'0'),'99') aeplace"),
+        db.raw("ifnull(vt.export_code, '1') typein_ae"),
+        db.raw("ifnull(d.accident_person_type_id,'9') traffic"),
+        db.raw("ifnull(tt.export_code, '99') vehicle"),
+        db.raw("ifnull(d.accident_alcohol_type_id,'9') alcohol"),
+        db.raw("ifnull(d.accident_drug_type_id,'9') nacrotic_drug"),
+        db.raw("ifnull(d.accident_belt_type_id,'9') belt"),
+        db.raw("ifnull(d.accident_helmet_type_id,'9') helmet"),
+        db.raw("ifnull(d.accident_airway_type_id,'3') airway"),
+        db.raw("ifnull(d.accident_bleed_type_id,'3') stopbleed"),
+        db.raw("ifnull(d.accident_splint_type_id,'3') splint"),
+        db.raw("ifnull(d.accident_fluid_type_id,'3') fluid"),
+        db.raw("ifnull(d.er_emergency_type, '6') urgency"),
+        db.raw("IF (d.gcs_e IN (1, 2, 3, 4),d.gcs_e,'4') coma_eye"),
+        db.raw("IF (d.gcs_v IN (1, 2, 3, 4, 5),d.gcs_v,'5') coma_verbal"),
+        db.raw("IF (d.gcs_m IN (1, 2, 3, 4, 5, 6),d.gcs_m,'6') coma_motor"),
+        db.raw("date_format(now(), '%Y-%m-%d %H:%i:%s') d_update"),
+        'dba'
+      )
+      .where('q.vn', visitNo);
+      /*
+        `er_nursing_detail`:
+        `vn` varchar(13) NOT NULL DEFAULT '',
+        `arrive_time` datetime DEFAULT NULL,
+        `referin_person` varchar(50) DEFAULT NULL,
+        `trauma` char(1) DEFAULT NULL,
+        `bba` char(1) DEFAULT NULL,
+        `dba` char(1) DEFAULT NULL,
+        `psychic` char(1) DEFAULT NULL,
+        `revisit48hr` char(1) DEFAULT NULL,
+        `gcs_e` double(15,3) DEFAULT NULL,
+        `gcs_v` double(15,3) DEFAULT NULL,
+        `gcs_m` double(15,3) DEFAULT NULL,
+        `pupil_l` double(15,3) DEFAULT NULL,
+        `pupil_r` double(15,3) DEFAULT NULL,
+        `inform_person` varchar(50) DEFAULT NULL,
+        `interview_person` varchar(50) DEFAULT NULL,
+        `report_doctor_time` datetime DEFAULT NULL,
+        `doctor_finish_time` datetime DEFAULT NULL,
+        `support_information` varchar(250) DEFAULT NULL,
+        `visit_type` char(1) DEFAULT NULL,
+        `transporter` varchar(50) DEFAULT NULL,
+        `er_accident_type_id` int(11) DEFAULT NULL,
+        `er_emergency_type` int(11) DEFAULT NULL,
+        `er_refer_hosptype_id` int(11) DEFAULT NULL,
+        `er_refer_sender_id` int(11) DEFAULT NULL,
+        `discharge_date` date DEFAULT NULL,
+        `discharge_time` time DEFAULT NULL,
+        `admit_2hr` char(1) DEFAULT NULL,
+        `er_transfer_hosptype_id` int(11) DEFAULT NULL,
+        `accident_in_province` char(1) DEFAULT NULL,
+        `accident_admit` char(1) DEFAULT NULL,
+        `accident_dead_before_arrive` char(1) DEFAULT NULL,
+        `accident_dead_in_hospital` char(1) DEFAULT NULL,
+        `accident_transport_type_id` int(11) DEFAULT NULL,
+        `accident_type_1` int(11) DEFAULT NULL,
+        `accident_type_2` int(11) DEFAULT NULL,
+        `accident_type_3` int(11) DEFAULT NULL,
+        `hos_guid` varchar(38) DEFAULT NULL,
+        `accident_type_4` int(11) DEFAULT NULL,
+        `accident_type_5` int(11) DEFAULT NULL,
+        `accident_type_6` int(11) DEFAULT NULL,
+        `o2sat` double(15,3) DEFAULT NULL,
+        `accident_place_type_id` int(11) DEFAULT NULL,
+        `accident_person_type_id` int(11) DEFAULT NULL,
+        `accident_alcohol_type_id` int(11) DEFAULT NULL,
+        `accident_drug_type_id` int(11) DEFAULT NULL,
+        `accident_airway_type_id` int(11) DEFAULT NULL,
+        `accident_bleed_type_id` int(11) DEFAULT NULL,
+        `accident_belt_type_id` int(11) DEFAULT NULL,
+        `accident_helmet_type_id` int(11) DEFAULT NULL,
+        `accident_splint_type_id` int(11) DEFAULT NULL,
+        `accident_fluid_type_id` int(11) DEFAULT NULL,
+        `accident_note_text` text,
+        `accident_gis_lat` varchar(50) DEFAULT NULL,
+        `accident_gis_long` varchar(50) DEFAULT NULL,
+        `accident_datetime` datetime DEFAULT NULL,
+        `accident_place` varchar(200) DEFAULT NULL,
+        `pupil_l_text` varchar(200) DEFAULT NULL,
+        `pupil_r_text` varchar(200) DEFAULT NULL,
+        `accident_immo_cs_type_id` int(11) DEFAULT NULL,
+        `accident_vehicle_regno` varchar(100) DEFAULT NULL,
+        `coma_score` int(11) DEFAULT NULL,
+        `br1` int(11) DEFAULT NULL,
+        `br2` int(11) DEFAULT NULL,
+        `br3` int(11) DEFAULT NULL,
+        `br4` int(11) DEFAULT NULL,
+        `br5` int(11) DEFAULT NULL,
+        `br6` int(11) DEFAULT NULL,
+        `ais1` int(11) DEFAULT NULL,
+        `ais2` int(11) DEFAULT NULL,
+        `ais3` int(11) DEFAULT NULL,
+        `ais4` int(11) DEFAULT NULL,
+        `ais5` int(11) DEFAULT NULL,
+        `ais6` int(11) DEFAULT NULL,
+        `gcs` int(11) DEFAULT NULL,
+        `rts` double(22,6) DEFAULT NULL,
+        `ps` double(22,3) DEFAULT NULL,
+        `iss` double(22,6) DEFAULT NULL,
+        `is_blunt` char(1) DEFAULT NULL,
+        `coma_score_code` varchar(10) DEFAULT NULL,
+      */
   }
 
-  async getDrugAllergy(db: Knex, hn, hospCode = hisHospcode) {
+  async getDrugAllergy(db: Knex, hn: string, hospCode = hisHospcode) {
     return db('opd_allergy as oe')
       .leftJoin('drugitems_register as di', 'oe.agent', 'di.drugname')
       .leftJoin('patient', 'oe.hn', 'patient.hn')

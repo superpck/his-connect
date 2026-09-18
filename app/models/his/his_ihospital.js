@@ -161,7 +161,6 @@ class HisIHospitalModel {
     getAddress(db, columnName, searchNo, hospCode = hisHospcode) {
         columnName = columnName === 'cid' ? 'CID' : columnName;
         return db('view_address_hdc')
-            .select('HOSPCODE', `PID`, `ADDRESSTYPE`, `HOUSE_ID`, `HOUSETYPE`, `ROOMNO`, `CONDO`, `HOUSENO`, `SOISUB`, `SOIMAIN`, `ROAD`, `VILLANAME`, `VILLAGE`, `TAMBON`, `AMPUR`, `CHANGWAT`, `TELEPHONE`, `MOBILE`, `D_UPDATE`)
             .where(columnName, "=", searchNo)
             .orderBy('ADDRESSTYPE')
             .limit(maxLimit);
@@ -385,7 +384,7 @@ class HisIHospitalModel {
         else {
             query.where('an', an);
         }
-        return query.select(db.raw('? as HOSPCODE', [hcode]))
+        return query.select(db.raw('? as HOSPCODE', [hospCode]))
             .select('hn as PID', 'an as AN', 'vn as SEQ')
             .select(db.raw('concat(admite, " " , timeadmit) as DATETIME_ADMIT'))
             .select('clinic_std as WARDSTAY', 'op as PROCEDCODE', 'desc as PROCEDNAME', 'dr as PROVIDER', 'price as SERVICEPRICE', 'cid as CID', 'lastupdate as D_UPDATE')
@@ -400,13 +399,13 @@ class HisIHospitalModel {
             query.where('an', an);
         }
         return query
-            .select(db.raw('? as hospcode', [hcode]))
+            .select(db.raw('? as hospcode', [hospCode]))
             .limit(maxLimit);
     }
     async getDrugIpd(db, an, hospCode = hisHospcode) {
         try {
             return await db('pharmacy.view_supreme_prescriptiondetail as drug')
-                .select(db.raw('"' + hcode + '" as hospcode'), 'hn as pid', 'an', 'cid', db.raw("date_format(dateadm,'%Y-%m-%d %H:%i:%s') as DATETIME_ADMIT"), 'prioritycode as TYPEDRUG', 'ward_standard as WARDSTAY', 'orderitemcode as DID', 'orderitemname as DNAME', 'orderqty as AMOUNT', 'orderunitcode as UNIT', 'startdate as DATESTART', 'enddate as DATEFINISH', 'totalprice as DRUGPRICE', 'freetext2 as drug_usage', 'tmtcode as DID_TMT', 'tmtcode as tmt', 'tmtcode as DIDSTD', 'dr_disc as provider', 'lastmodified as D_UPDATE')
+                .select(db.raw('? as hospcode', [hospCode]), 'hn as pid', 'an', 'cid', db.raw("date_format(dateadm,'%Y-%m-%d %H:%i:%s') as DATETIME_ADMIT"), 'prioritycode as TYPEDRUG', 'ward_standard as WARDSTAY', 'orderitemcode as DID', 'orderitemname as DNAME', 'orderqty as AMOUNT', 'orderunitcode as UNIT', 'startdate as DATESTART', 'enddate as DATEFINISH', 'totalprice as DRUGPRICE', 'freetext2 as drug_usage', 'tmtcode as DID_TMT', 'tmtcode as tmt', 'tmtcode as DIDSTD', 'dr_disc as provider', 'lastmodified as D_UPDATE')
                 .where({ an, prioritycode: 'H' })
                 .where('orderqty', '>', 0)
                 .limit(1000);
@@ -417,16 +416,17 @@ class HisIHospitalModel {
         }
     }
     getAccident(db, visitNo, hospCode = hisHospcode) {
-        return db('accident')
-            .select('*')
-            .select(db.raw('"' + hcode + '" as hospcode'))
-            .where('vn', visitNo)
-            .limit(maxLimit);
+        return db('opd_visit as visit')
+            .leftJoin('opd_vs as vs', 'visit.vn', 'vs.vn')
+            .leftJoin('er_triage as triage', 'visit.vn', 'triage.vn')
+            .select(db.raw('? as hospcode', [hospCode]), 'visit.hn as hn', 'visit.vn as vn', 'visit.vn as seq', db.raw('concat(visit.date, " ", visit.time) as datetime_serv'), 'vs.date_ill as datetime_ae', 'vs.bp as sbp', 'vs.bp1 as dbp', 'vs.puls as pulse', 'vs.rr as rr', 'vs.weigh as weight', 'vs.high as height', 'vs.t as temperature', 'triage.e as coma_eye', 'triage.v as coma_verbal', 'triage.m as coma_motor', 'triage.gcs as gcs', 'visit.emg as urgency')
+            .where('visit.vn', visitNo)
+            .groupBy('visit.vn');
     }
     getDrugAllergy(db, hn, hospCode = hisHospcode) {
         return db('view_drug_allergy')
             .select('*')
-            .select(db.raw('"' + hcode + '" as hospcode'))
+            .select(db.raw('? as hospcode', [hospCode]))
             .where('hn', hn)
             .limit(maxLimit);
     }
