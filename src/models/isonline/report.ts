@@ -2,9 +2,9 @@ import { Knex } from 'knex';
 import moment from 'moment';
 
 export class IsReportModel {
-  getReport1(knex: Knex, reportCond) {
-    let date1 = reportCond.date1 + ' 00:00:00';
-    let date2 = reportCond.date2 + ' 23:59:59';
+  getReport1(knex: Knex, reportCond: any) {
+    let date1 = reportCond?.date1 + ' 00:00:00';
+    let date2 = reportCond?.date2 + ' 23:59:59';
     let Sql = `
       select b.code, b.name as reportname, c.*, h.changwatcode, h.region
       from (select case when a.icdcause between 'W00' and 'W19' then '02'

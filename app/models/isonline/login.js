@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.IsLoginModel = void 0;
 const moment_1 = __importDefault(require("moment"));
-const dbName = process.env.DB_NAME;
 class IsLoginModel {
     doLogin(db, username, password) {
         return db('is_user')

@@ -196,7 +196,7 @@ const router = (fastify, { }, next) => {
   fastify.post('/person', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
     let columnName: string = req.body.columnName;
     let searchText: any = req.body.searchText;
-    if (columnName && searchText) {
+    if (columnName && searchText && ['hn', 'cid', 'pid', 'name', 'hid'].includes(columnName)) {
       try {
         const rows = await hisModel.getPerson(global.dbHIS, columnName, searchText);
         res.send({ statusCode: StatusCodes.OK, rows });
@@ -207,6 +207,11 @@ const router = (fastify, { }, next) => {
           message: error.message
         })
       }
+    } else {
+      res.send({
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: getReasonPhrase(StatusCodes.BAD_REQUEST)
+      });
     }
   });
 
