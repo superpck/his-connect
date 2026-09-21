@@ -180,7 +180,6 @@ const router = (fastify, {}, next) => {
         const cid = body.cid;
         const hospcode = body.hospcode || process.env.HOSPCODE;
         try {
-            const now = (0, moment_1.default)().locale('th').format('YYYY-MM-DD HH:mm:ss');
             let typeSearch = 'hn';
             let textSearch = hn;
             if (cid) {

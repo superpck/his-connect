@@ -18,18 +18,17 @@ class IsUserModel {
         }
     }
     selectSql(knex, tableName, selectText, whereText, groupBy, orderBy) {
-        let sql = 'select ' + selectText + ' from ' + tableName;
+        let query = knex(tableName).select(knex.raw(selectText));
         if (whereText != '') {
-            sql = sql + ' where ' + whereText;
+            query = query.whereRaw(whereText);
         }
         if (groupBy != '') {
-            sql = sql + ' group by ' + groupBy;
+            query = query.groupByRaw(groupBy);
         }
         if (orderBy != '') {
-            sql = sql + ' order by ' + orderBy;
+            query = query.orderByRaw(orderBy);
         }
-        sql = sql + ' limit 0,500';
-        return knex.raw(sql);
+        return query.limit(500);
     }
     getByID(knex, userID) {
         return knex('is_user')
@@ -41,15 +40,15 @@ class IsUserModel {
             .where('username', userName)
             .orderBy('fname', 'lname');
     }
-    getByName(knex, typeSearch, valSearch, HospCode) {
-        let sql;
+    getByName(db, typeSearch, valSearch, HospCode) {
+        let query = db('is_user');
         if (typeSearch == "fname") {
-            sql = 'select * from is_user where fname like "' + valSearch + '%" order by fname,lname limit 0,50';
+            query = query.where('fname', 'like', valSearch + '%');
         }
         else {
-            sql = 'select * from is_user where lname like "' + valSearch + '%" order by fname,lname limit 0,50';
+            query = query.where('lname', 'like', valSearch + '%');
         }
-        return knex.raw(sql);
+        return query.orderBy('fname', 'lname').limit(50);
     }
     saveUser(knex, id, arrData) {
         arrData.updated_at = (0, moment_1.default)().format('x');

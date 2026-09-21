@@ -209,7 +209,6 @@ const router = (fastify, { }, next) => {
     const hospcode = body.hospcode || process.env.HOSPCODE;
 
     try {
-      const now = moment().locale('th').format('YYYY-MM-DD HH:mm:ss');
       let typeSearch = 'hn';
       let textSearch = hn;
       if (cid) {

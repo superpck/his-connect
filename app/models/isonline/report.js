@@ -3,8 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.IsReportModel = void 0;
 class IsReportModel {
     getReport1(knex, reportCond) {
-        let date1 = reportCond.date1 + ' 00:00:00';
-        let date2 = reportCond.date2 + ' 23:59:59';
+        let date1 = reportCond?.date1 + ' 00:00:00';
+        let date2 = reportCond?.date2 + ' 23:59:59';
         let Sql = `
       select b.code, b.name as reportname, c.*, h.changwatcode, h.region
       from (select case when a.icdcause between 'W00' and 'W19' then '02'
