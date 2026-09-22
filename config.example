@@ -35,9 +35,6 @@ MAX_CONNECTION_PER_MINUTE=1000
 # oracledb
 NODE_ORACLEDB_DRIVER_MODE=thin
 
-# [ISDB - for ISONLINE only]
-# ตั้งแต่ v.3.8.14 จะไม่รองรับ ISOnline (รองรับเฉพาะ PHER+)
-
 # [nRefer]
 NREFER_API_URL="https://refer.moph.go.th/api/his"
 NREFER_DATA_BACKWARD_MONTH=0

@@ -6,7 +6,7 @@ const userModel = new IsUserModel;
 const router = (fastify, { }, next) => {
 
   fastify.post('/',  async (req: any, res: any) => {
-    verifyToken(req, res);
+    await verifyToken(req, res);
     let id: number = req.body.idSeach;
 
     try {
@@ -33,7 +33,7 @@ const router = (fastify, { }, next) => {
   })
 
   fastify.post('/getbyid',  async (req: any, res: any) => {
-    verifyToken(req, res);
+    await verifyToken(req, res);
     let id: number = req.body.idSeach;
 
     try {
@@ -52,7 +52,7 @@ const router = (fastify, { }, next) => {
   })
 
   fastify.post('/getbyusername',  async (req: any, res: any) => {
-    verifyToken(req, res);
+    await verifyToken(req, res);
     let userName: string = req.body.userName;
 
     try {
@@ -70,7 +70,7 @@ const router = (fastify, { }, next) => {
   })
 
   fastify.post('/selectData',  async (req: any, res: any) => {
-    verifyToken(req, res);
+    await verifyToken(req, res);
     let tableName = req.body.tableName;
     let selectText = req.body.selectText;
     let whereText = req.body.whereText;
@@ -93,7 +93,7 @@ const router = (fastify, { }, next) => {
   })
 
   fastify.post('/save',  async (req: any, res: any) => {
-    verifyToken(req, res);
+    await verifyToken(req, res);
     let id = req.body.id;
     let data = req.body.data;
 
@@ -111,7 +111,7 @@ const router = (fastify, { }, next) => {
   })
 
   fastify.post('/remove',  async (req: any, res: any) => {
-    verifyToken(req, res);
+    await verifyToken(req, res);
     let id = req.body.id;
 
     try {
