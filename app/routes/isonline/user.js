@@ -38,7 +38,7 @@ const users_1 = require("../../models/isonline/users");
 const userModel = new users_1.IsUserModel;
 const router = (fastify, {}, next) => {
     fastify.post('/', async (req, res) => {
-        verifyToken(req, res);
+        await verifyToken(req, res);
         let id = req.body.idSeach;
         try {
             const result = await userModel.list(global.dbISOnline, id);
@@ -65,7 +65,7 @@ const router = (fastify, {}, next) => {
         }
     });
     fastify.post('/getbyid', async (req, res) => {
-        verifyToken(req, res);
+        await verifyToken(req, res);
         let id = req.body.idSeach;
         try {
             const result = await userModel.getByID(global.dbISOnline, id);
@@ -83,7 +83,7 @@ const router = (fastify, {}, next) => {
         }
     });
     fastify.post('/getbyusername', async (req, res) => {
-        verifyToken(req, res);
+        await verifyToken(req, res);
         let userName = req.body.userName;
         try {
             const result = await userModel.getByUserName(global.dbISOnline, userName);
@@ -100,7 +100,7 @@ const router = (fastify, {}, next) => {
         }
     });
     fastify.post('/selectData', async (req, res) => {
-        verifyToken(req, res);
+        await verifyToken(req, res);
         let tableName = req.body.tableName;
         let selectText = req.body.selectText;
         let whereText = req.body.whereText;
@@ -122,7 +122,7 @@ const router = (fastify, {}, next) => {
         }
     });
     fastify.post('/save', async (req, res) => {
-        verifyToken(req, res);
+        await verifyToken(req, res);
         let id = req.body.id;
         let data = req.body.data;
         try {
@@ -139,7 +139,7 @@ const router = (fastify, {}, next) => {
         }
     });
     fastify.post('/remove', async (req, res) => {
-        verifyToken(req, res);
+        await verifyToken(req, res);
         let id = req.body.id;
         try {
             const result = await userModel.remove(global.dbISOnline, id);

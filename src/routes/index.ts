@@ -5,6 +5,7 @@ var crypto = require('crypto');
 var fs = require('fs');
 
 import { Jwt } from './../plugins/jwt';
+import dayjs from 'dayjs';
 var jwt = new Jwt();
 
 const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
@@ -41,16 +42,18 @@ const router = (fastify, { }, next) => {
     const ip = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;
     const source = req.params.source || '';
     const key = req.params.key || '';
-    const trust = req.headers.host.search('localhost|127.0.0.1|192.168.0.89') > -1 || ip.indexOf('203.157.')>=0;
+
+    const now = moment().locale('th').format('YYYYMMDDTHHmmss');
+    var appkey = crypto.createHash('sha256').update(now + process.env.REQUEST_KEY).digest('hex');
+    const trust = req.headers.host.search('localhost|127.0.0.1') > -1 || ip.includes('203.157.31.');
+    console.log(dayjs().format('HH:mm:ss'), '/create-token', ip, source, key, appkey, `trust: ${trust}`);
+
     if (trust) {
       const token = fastify.jwt.sign({
         uid: 0,
         api: 'his-connect', source
       }, { expiresIn: '4h' });
-      reply.send({
-        statusCode: 200,
-        token, key
-      });
+      reply.send({ statusCode: 200, token, key });
     } else {
       reply.send({ ok: false, message: `request unreliable.` });
     }
@@ -60,10 +63,13 @@ const router = (fastify, { }, next) => {
     const ip = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;
     const source = req.params.source || '';
     const key = req.params.key;
-    const trust = req.headers.host.search('localhost|127.0.0.1|192.168.0.89') > -1 || ip.indexOf('203.157.')>=0;
+
+    const now = moment().locale('th').format('YYYYMMDDTHHmmss');
+    var appkey = crypto.createHash('sha256').update(now + process.env.REQUEST_KEY).digest('hex');
+    const trust = req.headers.host.search('localhost|127.0.0.1') > -1 || ip.includes('203.157.31.');
+    console.log(dayjs().format('HH:mm:ss'), '/create-token', ip, source, key, appkey, `trust: ${trust}`);
+
     if (trust) {
-      const now = moment().locale('th').format('YYYYMMDDTHHmmss');
-      var appkey = crypto.createHash('sha256').update(now + process.env.REQUEST_KEY).digest('hex');
       var skey = crypto.createHash('md5').update(now + key).digest('hex');
       const token = fastify.jwt.sign({
         uid: 0,
@@ -417,16 +423,16 @@ const router = (fastify, { }, next) => {
 
   async function decodeToken(req: any) {
     let token: string = null;
-    console.log('body',req.body);
+    console.log('body', req.body);
     if (req.body && req.body.token) {
       token = req.body.token;
-    } else  if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+    } else if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
       token = req.headers.authorization.split(' ')[1];
     }
     console.log('token', token);
     try {
       req.authenDecoded = await jwt.verify(token);
-      console.log(req.authenDecoded );
+      console.log(req.authenDecoded);
       return req.authenDecoded;
     } catch (error) {
       console.log('jwtVerify', error);

@@ -35,18 +35,15 @@ export class IsUserModel {
   }
 
   getByUserName(knex: Knex, userName: string) {
-    return knex('is_user')
+    return knex('is_user').select('*')
       .where('username', userName)
       .orderBy('fname', 'lname');
   }
 
   getByName(db: Knex, typeSearch: string, valSearch: string, HospCode: string) {
-    let query = db('is_user');
-    if (typeSearch == "fname") {
-      query = query.where('fname', 'like', valSearch + '%');
-    } else {
-      query = query.where('lname', 'like', valSearch + '%');
-    }
+    const column = typeSearch === "fname" ? 'fname' : 'lname';
+    let query = db('is_user').select('*').
+      where(column, 'LIKE', valSearch + '%');
     return query.orderBy('fname', 'lname').limit(50);
   }
 
