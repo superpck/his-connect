@@ -2,17 +2,6 @@ import { Knex } from 'knex';
 import moment from 'moment';
 
 export class IsLoginModel {
-  doLogin(db: Knex, username: string, password: string) {
-    return db('is_user')
-      .leftJoin('lib_hospcode', 'hcode', 'off_id')
-      .select('is_user.*', 'lib_hospcode.name as hospname', 'lib_hospcode.changwatcode as hospprov')
-      .where({
-        username: username,
-        sha: password
-      })
-      .limit(1);
-  }
-
   checkToken(knex: Knex, token: string) {
     let today = moment().locale('th').format('YYYY-MM-DD HH:mm:ss');
     return knex('is_token as token')
