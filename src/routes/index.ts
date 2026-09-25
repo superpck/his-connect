@@ -4,9 +4,9 @@ let shell = require("shelljs");
 var crypto = require('crypto');
 var fs = require('fs');
 
-import { Jwt } from './../plugins/jwt';
 import dayjs from 'dayjs';
-var jwt = new Jwt();
+import { IsUserModel } from '../models/isonline/users';
+const isUserModel = new IsUserModel();
 
 const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 const resultText = './sent_result.txt';
@@ -38,7 +38,14 @@ const router = (fastify, { }, next) => {
     reply.send(res);
   })
 
-  fastify.get('/create-token/:source/:key', async (req: any, reply: any) => {
+  fastify.get('/create-token/:source/:key/:code', async (req: any, reply: any) => {
+    const code = req.params.code || '';
+    const validCode = await isUserModel.getSessionCode(fastify.knex, code);
+    if (!validCode) {
+      reply.send({ ok: false, message: `invalid or expired code.` });
+      return;
+    }
+    
     const ip = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;
     const source = req.params.source || '';
     const key = req.params.key || '';
@@ -59,15 +66,22 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.get('/get-token/:key', async (req: any, reply: any) => {
+  fastify.get('/get-token/:key/:code', async (req: any, reply: any) => {
     const ip = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;
     const source = req.params.source || '';
     const key = req.params.key;
 
+    const code = req.params.code || '';
+    const validCode = await isUserModel.getSessionCode(fastify.knex, code);
+    if (!validCode) {
+      reply.send({ ok: false, message: `invalid or expired code.` });
+      return;
+    }
+
     const now = moment().locale('th').format('YYYYMMDDTHHmmss');
     var appkey = crypto.createHash('sha256').update(now + process.env.REQUEST_KEY).digest('hex');
     const trust = req.headers.host.search('localhost|127.0.0.1') > -1 || ip.includes('203.157.31.');
-    console.log(dayjs().format('HH:mm:ss'), '/create-token', ip, source, key, appkey, `trust: ${trust}`);
+    console.log(dayjs().format('HH:mm:ss'), '/get-token', ip, source, key, appkey, `trust: ${trust}`);
 
     if (trust) {
       var skey = crypto.createHash('md5').update(now + key).digest('hex');
@@ -87,7 +101,14 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.get('/sign-token/:requestKey', async (req: any, reply: any) => {
+  fastify.get('/sign-token/:requestKey/:code', async (req: any, reply: any) => {
+    const code = req.params.code || '';
+    const validCode = await isUserModel.getSessionCode(fastify.knex, code);
+    if (!validCode) {
+      reply.send({ ok: false, message: `invalid or expired code.` });
+      return;
+    }
+
     const requestKey = req.params.requestKey || '??';
     var hashRequestKey = crypto.createHash('md5').update(process.env.REQUEST_KEY).digest('hex');
     if (requestKey === hashRequestKey) {
@@ -419,25 +440,6 @@ const router = (fastify, { }, next) => {
           }
         });
     });
-  }
-
-  async function decodeToken(req: any) {
-    let token: string = null;
-    console.log('body', req.body);
-    if (req.body && req.body.token) {
-      token = req.body.token;
-    } else if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
-      token = req.headers.authorization.split(' ')[1];
-    }
-    console.log('token', token);
-    try {
-      req.authenDecoded = await jwt.verify(token);
-      console.log(req.authenDecoded);
-      return req.authenDecoded;
-    } catch (error) {
-      console.log('jwtVerify', error);
-      return null;
-    }
   }
 
   next();
