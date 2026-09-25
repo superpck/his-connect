@@ -5,6 +5,7 @@ var crypto = require('crypto');
 var fs = require('fs');
 
 import dayjs from 'dayjs';
+import { checkSignInCode } from '../middleware/moph-refer';
 import { IsUserModel } from '../models/isonline/users';
 const isUserModel = new IsUserModel();
 
@@ -40,7 +41,7 @@ const router = (fastify, { }, next) => {
 
   fastify.get('/create-token/:source/:key/:code', async (req: any, reply: any) => {
     const code = req.params.code || '';
-    const validCode = await isUserModel.getSessionCode(fastify.knex, code);
+    const validCode = await checkSignInCode(code);
     if (!validCode) {
       reply.send({ ok: false, message: `invalid or expired code.` });
       return;
@@ -72,7 +73,7 @@ const router = (fastify, { }, next) => {
     const key = req.params.key;
 
     const code = req.params.code || '';
-    const validCode = await isUserModel.getSessionCode(fastify.knex, code);
+    const validCode = await checkSignInCode(code);
     if (!validCode) {
       reply.send({ ok: false, message: `invalid or expired code.` });
       return;
@@ -103,7 +104,7 @@ const router = (fastify, { }, next) => {
 
   fastify.get('/sign-token/:requestKey/:code', async (req: any, reply: any) => {
     const code = req.params.code || '';
-    const validCode = await isUserModel.getSessionCode(fastify.knex, code);
+    const validCode = await checkSignInCode(code);
     if (!validCode) {
       reply.send({ ok: false, message: `invalid or expired code.` });
       return;

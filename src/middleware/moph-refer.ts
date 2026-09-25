@@ -8,7 +8,6 @@ import * as os from 'os';
 const packageJson = require('../../package.json');
 
 const referAPIUrl = process.env?.MOPH_ERP_API_URL || 'https://refer.moph.go.th/api/erp';
-const adminAPIUrl = process.env.ADMIN_API_URL || 'https://referlink.moph.go.th/api/admin';
 const erpAPIUrl = process.env.ERP_API_URL || 'https://referlink.moph.go.th/api/moph-erp';
 const hcode = process.env.HOSPCODE;
 const apiKey = process.env?.MOPH_ERP_APIKEY || process.env.NREFER_APIKEY || 'api-key';
@@ -283,6 +282,26 @@ export const updateAdminRequest = async (updateData: any) => {
     return { statusCode: status, ...data };
   } catch (error) {
     return error;
+  }
+}
+
+export const checkSignInCode = async (code: string) => {
+  await getReferToken({ purpose: 'sending-error' });
+  if (!nReferToken) {
+    return { status: 500, message: 'No nRefer token' };
+  }
+  const url = referAPIUrl + '/his-connect/check-sign-in-code/' + code;
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + nReferToken,
+    'Source-Agent': 'HISConnect-' + (crontabConfig.version || 'x') + '-' + (crontabConfig.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+  };
+  try {
+    const { status, data } = await axios.get(url, { headers });
+    return status === 200 && data?.status == 200 ? true : false;
+  } catch (error) {
+    console.error('checkSignInCode error:', getErrorMessage(error));
+    return false;
   }
 }
 

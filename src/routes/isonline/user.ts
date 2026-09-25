@@ -69,29 +69,6 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/selectData',  async (req: any, res: any) => {
-    await verifyToken(req, res);
-    let tableName = req.body.tableName;
-    let selectText = req.body.selectText;
-    let whereText = req.body.whereText;
-    let groupBy = req.body.groupBy;
-    let orderText = req.body.orderText;
-
-    try {
-      const result = await userModel.selectSql(global.dbISOnline, tableName, selectText, whereText, groupBy, orderText)
-      console.log("\nget: " + tableName + ' = ' + result[0].length + ' record<s> founded.');
-      res.send({
-        statusCode: HttpStatus.OK,
-        ok: true, rows: result[0]
-      });
-    } catch (error) {
-      res.send({
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        ok: false, error: error, message: error.message
-      });
-    }
-  })
-
   fastify.post('/save',  async (req: any, res: any) => {
     await verifyToken(req, res);
     let id = req.body.id;

@@ -13,7 +13,7 @@ const Path2 = '/kkh/ws/moph/ops.php';
 const router = (fastify, { }, next) => {
 
   fastify.post('/general1',  async (req: any, res: any) => {
-    verifyToken(req, res);
+    await verifyToken(req, res);
     let url: number = req.body.url;
     let path: number = req.body.path;
     let hospCode: string = req.body.hospCode;
@@ -40,7 +40,7 @@ const router = (fastify, { }, next) => {
   })
 
   fastify.post('/general',  async (req: any, res: any) => {
-    verifyToken(req, res);
+    await verifyToken(req, res);
     var str = '';
     let type: number = req.body.type;
     let path: number = req.body.path;
@@ -68,7 +68,7 @@ const router = (fastify, { }, next) => {
   })
 
   fastify.post('/general2',  async (req: any, res: any) => {
-    verifyToken(req, res);
+    await verifyToken(req, res);
     var str = '';
     let type: number = req.body.type;
     let path: number = req.body.path;
@@ -96,7 +96,7 @@ const router = (fastify, { }, next) => {
   })
 
   fastify.post('/items',  async (req: any, res: any) => {
-    verifyToken(req, res);
+    await verifyToken(req, res);
     var str = '';
     let type: string = req.body.type;
     let date1: string = req.body.date1;
@@ -132,7 +132,7 @@ const router = (fastify, { }, next) => {
   })
 
   fastify.post('/general-data',  async (req: any, res: any) => {
-    verifyToken(req, res);
+    await verifyToken(req, res);
     let type: number = req.body.type;
     let area: number = req.body.area;
     let pcode: number = req.body.pcode;
@@ -156,7 +156,7 @@ const router = (fastify, { }, next) => {
   })
 
   fastify.post('/general-data2',  async (req: any, res: any) => {
-    verifyToken(req, res);
+    await verifyToken(req, res);
     let type: number = req.body.type;
     let area: number = req.body.area;
     let pcode: number = req.body.pcode;
