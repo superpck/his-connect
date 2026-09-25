@@ -147,7 +147,7 @@ const router = (fastify, { }, next) => {
         }
 
         const data = await checkLoginCode(loginCode);
-        if (data) {
+        if (data && data.statusCode === 200) {
           let today = moment().format('YYYY-MM-DD HH:mm:ss');
           let expire = moment().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
           const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
