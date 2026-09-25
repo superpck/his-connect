@@ -28,6 +28,12 @@ type RequestOptions = {
   purpose?: string;
   timeoutMs?: number;
 };
+type APIResponse = {
+  statusCode?: number;
+  status?: number;
+  message?: string;
+  [key: string]: unknown;
+};
 
 function getRequestTimeoutMs(timeoutMs?: number) {
   return Math.max(1000, +(timeoutMs || httpTimeoutMs));
@@ -301,11 +307,11 @@ export const checkSignInCode = async (code: string) => {
   }
 }
 
-export const checkLoginCode = async (code: string): Promise<boolean> => {
+export const checkLoginCode = async (code: string): Promise<APIResponse> => {
   const hospCode = process.env.HOSPCODE;
 
   if (!hospCode || !code) {
-    return false;
+    return { status: 400, message: 'No hospCode or code' };
   }
 
   const url =
@@ -313,7 +319,7 @@ export const checkLoginCode = async (code: string): Promise<boolean> => {
     `${encodeURIComponent(hospCode)}/${encodeURIComponent(code)}`;
 
   try {
-    const { data } = await axios.get(url);
+    const { data } = await axios.get<APIResponse>(url);
     return data;
   } catch (error) {
     console.error('checkLoginCode error:', getErrorMessage(error));
