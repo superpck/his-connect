@@ -2,6 +2,7 @@ import * as HttpStatus from 'http-status-codes';
 
 import { IsUserModel } from '../../models/isonline/users';
 const userModel = new IsUserModel;
+import { checkSignInCode } from '../../middleware/moph-refer';
 
 const router = (fastify, { }, next) => {
 

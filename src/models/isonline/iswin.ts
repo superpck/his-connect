@@ -67,9 +67,7 @@ export class IswinModel {
   }
 
   getByRef(knex: Knex, refSeach: number, HospCode: string) {
-    let sql = 'select * from `is` where ref=' + refSeach
-      + ' and hosp="' + HospCode + '" ';
-    return knex.raw(sql);
+    return knex('is').where({ ref: refSeach, hosp: HospCode });
   }
 
   reportByDate(knex: Knex, typeDate: string, date1: string, date2: string, HospCode: string) {
