@@ -63,14 +63,4 @@ export class IsUserModel {
       .where('id', id)
       .del();
   }
-
-  async getSessionCode(knex: Knex, code: string) {
-    const exceptTime = moment().subtract(30, 'seconds').format('YYYY-MM-DD HH:mm:ss');
-    return knex('admin.request_token')
-      .where('code', code)
-      .where('isactive', 1)
-      .where('date', '>=', exceptTime)
-      .first();
-  }
-
 }

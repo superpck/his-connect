@@ -3,6 +3,7 @@ import moment from 'moment';
 const crypto = require('crypto');
 
 import { IsLoginModel } from '../../models/isonline/login';
+import { checkSignInCode } from '../../middleware/moph-refer';
 const loginModel = new IsLoginModel()
 var http = require('http');
 
@@ -93,7 +94,16 @@ const router = (fastify, { }, next) => {
     let username = body.username;
     let password = body.password;
     let ipAddr = body.ip;
-
+    
+    let code = body.code;
+    const validCode = await checkSignInCode(code);
+    if (!validCode) {
+      return res.send({
+        statusCode: StatusCodes.UNAUTHORIZED,
+        message: 'Invalid or expired code'
+      });
+    }
+    
     const ip = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;
     console.log('api-login', ip, ipAddr);
     if (['203.157.103.55', '::1', '127.0.0.1'].indexOf(ip) >= 0 && username.length == 5 && password) {
