@@ -7,8 +7,9 @@
   "scripts": {
     "start": "npx ts-node ./src/app.ts",
     "watch": "npx nodemon",
-    "build": "rm -rf app && npx tsc",
-    "test:security": "TS_NODE_TRANSPILE_ONLY=1 node --test --require ts-node/register test/security/**/*.test.ts"
+    "build1": "rm -rf app && npx tsc",
+    "test:security": "TS_NODE_TRANSPILE_ONLY=1 node --test --require ts-node/register test/security/**/*.test.ts",
+    "build": "node -e \"require('fs').rmSync('app', { recursive: true, force: true })\" && npx tsc"
   },
   "dependencies": {
     "@fastify/compress": "^9.2.0",
