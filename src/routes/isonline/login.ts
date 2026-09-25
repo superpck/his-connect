@@ -3,7 +3,7 @@ import moment from 'moment';
 const crypto = require('crypto');
 
 import { IsLoginModel } from '../../models/isonline/login';
-import { checkSignInCode } from '../../middleware/moph-refer';
+import { checkSignInCode, checkLoginCode } from '../../middleware/moph-refer';
 const loginModel = new IsLoginModel()
 var http = require('http');
 
@@ -287,22 +287,6 @@ const router = (fastify, { }, next) => {
         message: error.message
       })
     }
-  }
-
-  async function checkLoginCode(loginCode: string) {
-    var options = {
-      host: 'connect.moph.go.th',
-      port: 443,
-      path: `/is-api/login/check-his-login-code/` + process.env.HOSPCODE + `/${loginCode}`
-    };
-
-    http.get(options, function (res: any) {
-      res.on("data", function (chunk) {
-        return chunk;
-      });
-    }).on('error', function (e) {
-      return null;
-    });
   }
 
   next();

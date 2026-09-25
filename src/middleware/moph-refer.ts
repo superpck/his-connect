@@ -9,6 +9,7 @@ const packageJson = require('../../package.json');
 
 const referAPIUrl = process.env?.MOPH_ERP_API_URL || 'https://refer.moph.go.th/api/erp';
 const erpAPIUrl = process.env.ERP_API_URL || 'https://referlink.moph.go.th/api/moph-erp';
+const pherAPIUrl = process.env.PHER_API_URL || 'https://connect.moph.go.th/is-api';
 const hcode = process.env.HOSPCODE;
 const apiKey = process.env?.MOPH_ERP_APIKEY || process.env.NREFER_APIKEY || 'api-key';
 const secretKey = process.env?.MOPH_ERP_SECRETKEY || process.env.NREFER_SECRETKEY || 'secret-key';
@@ -290,7 +291,7 @@ export const checkSignInCode = async (code: string) => {
   if (!nReferToken) {
     return { status: 500, message: 'No nRefer token' };
   }
-  const url = referAPIUrl + '/his-connect/check-sign-in-code/' + code;
+  const url = pherAPIUrl + '/his-connect/check-sign-in-code/' + code;
   const headers = {
     'Content-Type': 'application/json',
     'Authorization': 'Bearer ' + nReferToken,
@@ -303,6 +304,17 @@ export const checkSignInCode = async (code: string) => {
     console.error('checkSignInCode error:', getErrorMessage(error));
     return false;
   }
+}
+
+export const checkLoginCode = async (code: string) => {
+  const url = pherAPIUrl + '/his-connect/login/check-his-login-code/' + process.env.HOSPCODE + '/' + code;
+  try {
+    const { status, data } = await axios.get(url);
+    return data;
+  } catch (error) {
+    throw error;
+  }
+
 }
 
 export const sendingError = async (dataArray: any) => {
