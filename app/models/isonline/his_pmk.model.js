@@ -40,31 +40,28 @@ class HisPmkModel {
             .select('HOME as address', 'VILLAGE as moo', 'SOIMAIN as soi', 'ROAD as road')
             .select('TAMBON as addcode', 'TEL as tel', 'ZIP_CODE as zip')
             .select(db.raw(`'' as occupation`))
-            .whereRaw(db.raw(` ${columnName}='${searchText}' `))
+            .whereRaw(db.raw(` ${columnName}=? `, [searchText]))
             .limit(maxLimit);
     }
     getOpdService(db, hn, date, columnName = '', searchText = '') {
         columnName = columnName == 'visitNo' || columnName == 'vn' ? 'OPD_NO' : columnName;
-        let where = {};
-        let cdate = '';
+        let query = db(`OPDS`);
         if (date) {
-            cdate = `OPD_DATE=TO_DATE('${date}', 'YYYY-MM-DD HH24:MI:SS')`;
+            query = query.whereRaw(`OPD_DATE=TO_DATE(?, 'YYYY-MM-DD HH24:MI:SS')`, [date]);
         }
         if (hn) {
             const _hn = hn.split('/');
-            where['PAT_RUN_HN'] = _hn[0];
-            where['PAT_YEAR_HN'] = _hn[1];
+            query = query.whereRaw(`PAT_RUN_HN=? AND PAT_YEAR_HN=?`, [_hn[0], _hn[1]]);
         }
-        if (columnName && searchText)
-            where[columnName] = searchText;
-        return db(`OPDS`)
+        if (columnName && searchText) {
+            query = query.whereRaw(` ${columnName}=? `, [searchText]);
+        }
+        return query
             .select('PAT_RUN_HN as RUN_HN', 'PAT_YEAR_HN as YEAR_HN')
             .select(db.raw(`concat(concat(to_char(PAT_RUN_HN),'/'),to_char(PAT_YEAR_HN)) AS hn`))
             .select('OPD_NO as visitno', 'OPD_DATE as date')
             .select(db.raw(`TO_CHAR(DATE_CREATED, 'HH24:MI:SS') AS time`))
             .select('BP_SYSTOLIC as bp_systolic', 'BP_DIASTOLIC as bp_diastolic', 'BP_SYSTOLIC as bp1', 'BP_DIASTOLIC as bp2', 'PALSE as pr', 'RESPIRATORY_RATE as rr', 'WT_KG as weight', 'HEIGHT_CM as height', 'TEMP_C as tem')
-            .where(where)
-            .whereRaw(db.raw(cdate))
             .limit(maxLimit);
     }
     getDiagnosisOpd(db, visitno) {
