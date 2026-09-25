@@ -311,7 +311,7 @@ export const checkLoginCode = async (code: string): Promise<APIResponse> => {
   const hospCode = process.env.HOSPCODE;
 
   if (!hospCode || !code) {
-    return { status: 400, message: 'No hospCode or code' };
+    return { statusCode: 400, message: 'No hospCode or code' };
   }
 
   const url =
