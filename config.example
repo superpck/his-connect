@@ -35,6 +35,9 @@ MAX_CONNECTION_PER_MINUTE=1000
 # oracledb
 NODE_ORACLEDB_DRIVER_MODE=thin
 
+# [PHER]
+PHER_API_URL="https://connect.moph.go.th/is-api"
+
 # [nRefer]
 NREFER_API_URL="https://refer.moph.go.th/api/his"
 NREFER_DATA_BACKWARD_MONTH=0
