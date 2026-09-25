@@ -6,16 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.IsLoginModel = void 0;
 const moment_1 = __importDefault(require("moment"));
 class IsLoginModel {
-    doLogin(db, username, password) {
-        return db('is_user')
-            .leftJoin('lib_hospcode', 'hcode', 'off_id')
-            .select('is_user.*', 'lib_hospcode.name as hospname', 'lib_hospcode.changwatcode as hospprov')
-            .where({
-            username: username,
-            sha: password
-        })
-            .limit(1);
-    }
     checkToken(knex, token) {
         let today = (0, moment_1.default)().locale('th').format('YYYY-MM-DD HH:mm:ss');
         return knex('is_token as token')
