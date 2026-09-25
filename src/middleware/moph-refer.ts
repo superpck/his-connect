@@ -28,6 +28,12 @@ type RequestOptions = {
   purpose?: string;
   timeoutMs?: number;
 };
+type APIResponse = {
+  statusCode?: number;
+  status?: number;
+  message?: string;
+  [key: string]: unknown;
+};
 
 function getRequestTimeoutMs(timeoutMs?: number) {
   return Math.max(1000, +(timeoutMs || httpTimeoutMs));
@@ -301,16 +307,25 @@ export const checkSignInCode = async (code: string) => {
   }
 }
 
-export const checkLoginCode = async (code: string) => {
-  const url = pherAPIUrl + '/his-connect/login/check-his-login-code/' + process.env.HOSPCODE + '/' + code;
-  try {
-    const { status, data } = await axios.get(url);
-    return data;
-  } catch (error) {
-    throw error;
+export const checkLoginCode = async (code: string): Promise<APIResponse> => {
+  const hospCode = process.env.HOSPCODE;
+
+  if (!hospCode || !code) {
+    return { statusCode: 400, message: 'No hospCode or code' };
   }
 
-}
+  const url =
+    `${pherAPIUrl}/his-connect/login/check-his-login-code/` +
+    `${encodeURIComponent(hospCode)}/${encodeURIComponent(code)}`;
+
+  try {
+    const { data } = await axios.get<APIResponse>(url);
+    return data;
+  } catch (error) {
+    console.error('checkLoginCode error:', getErrorMessage(error));
+    throw error;
+  }
+};
 
 export const sendingError = async (dataArray: any) => {
   await getReferToken({ purpose: 'sending-error' });
