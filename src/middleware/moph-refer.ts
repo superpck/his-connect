@@ -186,7 +186,7 @@ export const taskFunction = async (type = '', bodyData: any = null) => {
 export const sendingToMoph = async (uri: string, dataArray: any) => {
   await getReferToken();
   if (!nReferToken) {
-    return false;
+    return { status: 500, message: 'No nRefer token' };
   }
 
   const bodyData = {
@@ -218,11 +218,6 @@ export const sendingToMoph = async (uri: string, dataArray: any) => {
 }
 
 export const updateHISAlive = async (dataArray: any) => {
-  // await getReferToken();
-  // if (!nReferToken) {
-  //   return { status: 500, message: 'No nRefer token' };
-  // }
-
   const hashedApiKey = createHash('sha1')
     .update((process.env.REQUEST_KEY || '') + (dataArray.hospcode || '') + (dataArray.his || '') + moment().format('YYYY-MM-DD HH:mm:ss'))
     .digest('hex');
@@ -289,7 +284,7 @@ export const updateAdminRequest = async (updateData: any) => {
 export const checkSignInCode = async (code: string) => {
   await getReferToken({ purpose: 'sending-error' });
   if (!nReferToken) {
-    return { status: 500, message: 'No nRefer token' };
+    return false;
   }
   const url = pherAPIUrl + '/his-connect/check-sign-in-code/' + code;
   const headers = {
