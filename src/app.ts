@@ -17,6 +17,7 @@ const serveStatic = require('serve-static');
 var crypto = require('crypto');
 
 import { getIP, unGzip } from './utils/utils';
+import { authenticateRequest } from './middleware/authenticate';
 import { Readable } from 'stream';
 import helmet = require('@fastify/helmet');
 
@@ -90,22 +91,7 @@ connectDB();
 
 // check token ===========================================================
 app.decorate("authenticate", async (request: any, reply: any) => {
-  request.authenDecoded = null;
-  request.user = null;
-  if (request.body && request.body.token) {
-    request.headers.authorization = 'Bearer ' + request.body.token;
-  }
-
-  try {
-    request.user = await request.jwtVerify();
-    request.authenDecoded = request.user;
-  } catch (err) {
-    console.error(moment().format('HH:mm:ss.SSS'), request.ipAddr, 'Error client try to access API ' + StatusCodes.UNAUTHORIZED, `message: '${err.message}'`);
-    reply.send({
-      statusCode: StatusCodes.UNAUTHORIZED,
-      message: getReasonPhrase(StatusCodes.UNAUTHORIZED)
-    });
-  }
+  return authenticateRequest(request, reply);
 });
 // end: check token ===========================================================
 

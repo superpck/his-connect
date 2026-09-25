@@ -5,8 +5,7 @@ const userModel = new IsUserModel;
 
 const router = (fastify, { }, next) => {
 
-  fastify.post('/',  async (req: any, res: any) => {
-    await verifyToken(req, res);
+  fastify.post('/', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
     let id: number = req.body.idSeach;
 
     try {
@@ -32,8 +31,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/getbyid',  async (req: any, res: any) => {
-    await verifyToken(req, res);
+  fastify.post('/getbyid', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
     let id: number = req.body.idSeach;
 
     try {
@@ -51,8 +49,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/getbyusername',  async (req: any, res: any) => {
-    await verifyToken(req, res);
+  fastify.post('/getbyusername', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
     let userName: string = req.body.userName;
 
     try {
@@ -69,8 +66,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/save',  async (req: any, res: any) => {
-    await verifyToken(req, res);
+  fastify.post('/save', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
     let id = req.body.id;
     let data = req.body.data;
 
@@ -87,8 +83,7 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/remove',  async (req: any, res: any) => {
-    await verifyToken(req, res);
+  fastify.post('/remove', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
     let id = req.body.id;
 
     try {
@@ -105,29 +100,6 @@ const router = (fastify, { }, next) => {
       });
     }
   })
-
-  async function verifyToken(req, res) {
-    let token: string = null;
-
-    if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
-      token = req.headers.authorization.split(' ')[1];
-    } else if (req.query && req.query.token) {
-      token = req.query.token;
-    } else if (req.body && req.body.token) {
-      token = req.body.token;
-    }
-
-    try {
-      await fastify.jwt.verify(token);
-      return true;
-    } catch (error) {
-      console.log('authen fail!', error.message);
-      res.status(HttpStatus.UNAUTHORIZED).send({
-        statusCode: HttpStatus.UNAUTHORIZED,
-        message: error.message
-      })
-    }
-  }
 
   next();
 }

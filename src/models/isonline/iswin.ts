@@ -18,67 +18,29 @@ export class IswinModel {
       .where('TABLE_SCHEMA', '=', dbName);
   }
 
-  selectSqlK(knex: Knex, tableName: string, selectText: string, whereText: string, groupBy: string, orderBy: string, limit = '2000') {
-    let Sql: string = knex(tableName).select(selectText)
-      .where(whereText)
-      .groupBy(groupBy)
-      .orderBy(orderBy)
-      .limit(+limit)
-      .toString();
-    return knex.raw(Sql);
-  }
-
   getOffices(knex: Knex, HospCode: string, groupCode: string) {
-    let Sql = "select *, `hospname` as name, `off_id` as subcode " +
-      " from lib_hosp " +
-      " where `type` = '" + groupCode + "' and hospcode='" + HospCode + "' " +
-      " order by `off_id` ";
-    return knex.raw(Sql);
+    return knex('lib_hosp')
+      .where('type', groupCode)
+      .andWhere('hospcode', HospCode)
+      .orderBy('off_id');
   }
 
   getLibs(knex: Knex, HospCode: string, groupCode: string) {
-    let Sql = "select *, `describe` as name, substr(`code`,3) as subcode " +
-      " from lib_code " +
-      " where substr(`code`,1,2) = '" + groupCode + "' and hospcode='" + HospCode + "' " +
-      " order by `code` ";
-    return knex.raw(Sql);
+    return knex('lib_code')
+      .where('hospcode', HospCode)
+      .andWhereRaw('substr(`code`,1,2) = ?', [groupCode])
+      .orderBy('code');
   }
 
   getLib(knex: Knex, HospCode: string, tableName: string, columnsName: string, textSearch: string) {
-    let Sql = "select * " +
-      " from `" + tableName + "`"
-    " where `" + columnsName + "` = '" + textSearch + "' and `hospcode`='" + HospCode + "' " +
-      " order by `" + columnsName + "`";
-    return knex.raw(Sql);
-  }
-
-  selectSql(knex: Knex, tableName: string, selectText: string, whereText: string, groupBy: string, orderBy: string, limit: string) {
-    let sql = 'select ' + selectText + ' from ' + tableName;
-    if (whereText != '') {
-      sql = sql + ' where ' + whereText;
-    }
-    if (groupBy != '') {
-      sql = sql + ' group by ' + groupBy;
-    }
-    if (orderBy != '') {
-      sql = sql + ' order by ' + orderBy;
-    }
-    if (limit === '') {
-      sql = sql + ' limit 0,1000';
-    } else {
-      sql = sql + ' limit ' + limit;
-    }
-    return knex.raw(sql);
+    return knex(tableName)
+      .where(columnsName, textSearch)
+      .andWhere('hospcode', HospCode)
+      .orderBy(columnsName);
   }
 
   list(knex: Knex, limit: number = 50, offset: number = 0) {
-    // return knex('is')
-    //   .select('*')
-    //   .orderBy('adate', 'DESC')
-    //  .limit(limit)
-    //  .offset(offset);
-    let sql = 'select * from `is` limit ' + offset + ',' + limit;
-    return knex.raw(sql);
+    return knex('is').limit(limit).offset(offset);
   }
 
   getByDatet(knex: Knex, typeSearch: string, dateStart: string, dateEnd: string, HospCode: string) {
@@ -111,38 +73,45 @@ export class IswinModel {
   }
 
   reportByDate(knex: Knex, typeDate: string, date1: string, date2: string, HospCode: string) {
-    let sql = 'select substr(' + typeDate + ',1,10) as reportdate ,count(1) as cases, sum(if(sex=1,1,0)) as male,sum(if(sex=2,1,0)) as female,sum(if(sex<1 or sex>2,1,0)) as sex_error'
-      + ',sum(if(ps>=0.75,1,0)) as psm75 '
-      + ',sum(if(ps>0 and ps<0.75,1,0)) as ps75, sum(if(ps="" or isnull(ps) , 1,0)) as ps_error '
-      + ',sum(if(staer=1,1,0)) as dba, sum(if(staer=6,1,0)) as dead '
-      + ',sum(if(staer=3,1,0)) as refer, sum(if(staer in (1,3,6),0,1)) as staer '
-      + ' from `is` '
-      + ' where ' + typeDate
-      + ' between "' + date1 + ' 00:00:00" and "'
-      + date2 + ' 23:59:59" and hosp="'
-      + HospCode + '" '
-      + ' group by reportdate order by ' + typeDate;
-    return knex.raw(sql);
+    return knex('is')
+      .whereBetween(typeDate, [date1 + ' 00:00:00', date2 + ' 23:59:59'])
+      .andWhere('hosp', HospCode)
+      .groupByRaw('substr(' + typeDate + ',1,10)')
+      .orderBy(typeDate);
   }
 
   getByDatex(knex: Knex, typeSearch: string, dateSearch: string, HospCode: string) {
-    let sql = 'select * from `is` where ' + typeSearch + ' between "' + dateSearch + ' 00:00:00" and "' + dateSearch + ' 23:59:59" order by ' + typeSearch + ' DESC limit 0,500';
-    return knex.raw(sql);
+    return knex('is')
+      .whereBetween(typeSearch, [dateSearch + ' 00:00:00', dateSearch + ' 23:59:59'])
+      .andWhere('hosp', HospCode)
+      .orderBy(typeSearch, 'DESC')
+      .limit(500);
   }
 
   getByID(knex: Knex, idSeach: string, HospCode: string) {
-    let sql = 'select * from `is` where id="' + idSeach + '" and hosp="' + HospCode + '" limit 0,1';
-    return knex.raw(sql);
+    return knex('is')
+      .where('id', idSeach)
+      .andWhere('hosp', HospCode)
+      .limit(1);
   }
 
   getByName(knex: Knex, typeSearch: string, valSearch: string, HospCode: string) {
-    let sql: string;
     if (typeSearch == "name") {
-      sql = 'select * from `is` where hosp="' + HospCode + '" and (name like "' + valSearch + '%" or fname like "%' + valSearch + '%") order by name,fname,adate DESC,hdate DESC limit 0,50';
+      return knex('is')
+        .where('hosp', HospCode)
+        .andWhere(function() {
+          this.where('name', 'like', valSearch + '%')
+              .orWhere('fname', 'like', '%' + valSearch + '%')
+        })
+        .orderBy([{ column: 'name', order: 'asc' }, { column: 'fname', order: 'asc' }, { column: 'adate', order: 'desc' }, { column: 'hdate', order: 'desc' }])
+        .limit(50);
     } else {
-      sql = 'select * from `is` where hosp="' + HospCode + '" and ' + typeSearch + ' like "' + valSearch + '%" order by ' + typeSearch + ',adate DESC,hdate DESC limit 0,50';
+      return knex('is')
+        .where('hosp', HospCode)
+        .andWhere(typeSearch, 'like', valSearch + '%')
+        .orderBy([{ column: typeSearch, order: 'asc' }, { column: 'adate', order: 'desc' }, { column: 'hdate', order: 'desc' }])
+        .limit(50);
     }
-    return knex.raw(sql);
   }
 
   reportAgeGroup1(knex: Knex, date1: string, date2: string, HospCode: string) {
@@ -173,9 +142,9 @@ export class IswinModel {
       " ,sum(if(staer=6 and sex = 1,1,0)) as male_dead " +
       " ,sum(if(staer=6 and sex = 2,1,0)) as female_dead " +
       " FROM `is` " +
-      " WHERE adate BETWEEN '" + date1 + "' AND '" + date2 + "' AND hosp='" + HospCode + "' " +
+      " WHERE adate BETWEEN ? AND ? AND hosp=? " +
       " GROUP BY agegroup;";
-    return knex.raw(Sql);
+    return knex.raw(Sql, [date1, date2, HospCode]);
   }
 
   saveIs(knex: Knex, ref: number, arrData: IisStructure) {
@@ -238,7 +207,7 @@ export class IswinModel {
   }
 
   detail(knex: Knex, isId: string) {
-    return knex('id')
+    return knex('is')
       .where('id', isId);
   }
 
@@ -263,15 +232,6 @@ export class IswinModel {
   }
 
   async createISDeleted(db: Knex) {
-    // return db.schema.createTable('is_deleted', function (table) {
-    //   table.increments('ref').unsigned();
-    //   table.string('hcode', 5).notNullable();
-    //   table.bigInteger('is_id').unsigned().notNullable();
-    //   table.dateTime('date').defaultTo(db.fn.now()).notNullable();
-    //   table.dateTime('deleted');
-    //   table.timestamp('lastupdate').defaultTo(db.fn.now());
-    // });
-
     const sql = `CREATE TABLE is_deleted (
       ref int(11) unsigned NOT NULL AUTO_INCREMENT,
       hcode varchar(5) DEFAULT NULL,

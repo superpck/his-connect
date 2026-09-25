@@ -93,8 +93,6 @@ const router = (fastify, { }, next) => {
     let body: any = req.body;
     let username = body.username;
     let password = body.password;
-    let ipAddr = body.ip;
-    
     let code = body.code;
     const validCode = await checkSignInCode(code);
     if (!validCode) {
@@ -103,15 +101,22 @@ const router = (fastify, { }, next) => {
         message: 'Invalid or expired code'
       });
     }
-    
-    const ip = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;
-    console.log('api-login', ip, ipAddr);
-    if (['203.157.103.55', '::1', '127.0.0.1'].indexOf(ip) >= 0 && username.length == 5 && password) {
+
+    if (typeof username !== 'string' || typeof password !== 'string' || username.length === 0 || password.length === 0) {
+      return res.status(StatusCodes.UNAUTHORIZED).send({
+        statusCode: StatusCodes.UNAUTHORIZED,
+        message: getReasonPhrase(StatusCodes.UNAUTHORIZED)
+      });
+    }
+
+    const encPassword = crypto.createHash('sha256').update(password).digest('hex');
+    const results: any = await loginModel.doLogin(global.dbISOnline, username, encPassword);
+    if (results.length) {
       let today = moment().format('YYYY-MM-DD HH:mm:ss');
       let expire = moment().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
       const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
       const payload = {
-        hcode: username,
+        hcode: results[0].hcode,
         tokenKey: tokenKey,
         create: today,
         expire: expire
@@ -122,7 +127,7 @@ const router = (fastify, { }, next) => {
         token: token
       });
     } else {
-      res.send({
+      res.status(StatusCodes.UNAUTHORIZED).send({
         statusCode: StatusCodes.UNAUTHORIZED,
         message: getReasonPhrase(StatusCodes.UNAUTHORIZED)
       })
