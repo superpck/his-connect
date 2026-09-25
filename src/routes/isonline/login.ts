@@ -5,7 +5,6 @@ const crypto = require('crypto');
 import { IsLoginModel } from '../../models/isonline/login';
 import { checkSignInCode, checkLoginCode } from '../../middleware/moph-refer';
 const loginModel = new IsLoginModel()
-var http = require('http');
 
 const router = (fastify, { }, next) => {
   fastify.post('/', async (req: any, res: any) => {

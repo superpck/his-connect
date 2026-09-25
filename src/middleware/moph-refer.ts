@@ -186,7 +186,7 @@ export const taskFunction = async (type = '', bodyData: any = null) => {
 export const sendingToMoph = async (uri: string, dataArray: any) => {
   await getReferToken();
   if (!nReferToken) {
-    return { status: 500, message: 'No nRefer token' };
+    return false;
   }
 
   const bodyData = {
@@ -299,7 +299,7 @@ export const checkSignInCode = async (code: string) => {
   };
   try {
     const { status, data } = await axios.get(url, { headers });
-    return status === 200 && data?.status == 200 ? true : false;
+    return data?.status == 200 ? true : false;
   } catch (error) {
     console.error('checkSignInCode error:', getErrorMessage(error));
     return false;
