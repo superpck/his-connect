@@ -139,6 +139,13 @@ const router = (fastify, { }, next) => {
     let loginCode = body.loginCode;
     if (loginCode) {
       try {
+        const validCode = await checkSignInCode(loginCode);
+        if (!validCode) {
+          return res.send({
+            statusCode: StatusCodes.UNAUTHORIZED,
+            message: 'Invalid or expired code'
+          });
+        }
         await checkLoginCode(loginCode)
           .then((data) => {
             let today = moment().format('YYYY-MM-DD HH:mm:ss');

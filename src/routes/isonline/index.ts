@@ -47,7 +47,8 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const result = await isModel.getByRef(global.dbISOnline, refSeach, hospCode);
+      const hospcode = req.user.level === '9' ? hospCode : req.user.hcode;
+      const result = await isModel.getByRef(global.dbISOnline, refSeach, hospcode);
       global.dbISOnline.destroy;
       res.send({
         statusCode: HttpStatus.OK,
