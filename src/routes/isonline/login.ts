@@ -7,51 +7,6 @@ import { checkSignInCode, checkLoginCode } from '../../middleware/moph-refer';
 const loginModel = new IsLoginModel()
 
 const router = (fastify, { }, next) => {
-  fastify.post('/api-login', async (req: any, res: any) => {
-    let body: any = req.body;
-    let username = body.username;
-    let password = body.password;
-    let code = body.code;
-    const validCode = await checkSignInCode(code);
-    if (!validCode) {
-      return res.send({
-        statusCode: StatusCodes.UNAUTHORIZED,
-        message: 'Invalid or expired code'
-      });
-    }
-
-    if (typeof username !== 'string' || typeof password !== 'string' || username.length === 0 || password.length === 0) {
-      return res.status(StatusCodes.UNAUTHORIZED).send({
-        statusCode: StatusCodes.UNAUTHORIZED,
-        message: getReasonPhrase(StatusCodes.UNAUTHORIZED)
-      });
-    }
-
-    const encPassword = crypto.createHash('sha256').update(password).digest('hex');
-    const results: any = await loginModel.doLogin(global.dbISOnline, username, encPassword);
-    if (results.length) {
-      let today = moment().format('YYYY-MM-DD HH:mm:ss');
-      let expire = moment().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
-      const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
-      const payload = {
-        hcode: results[0].hcode,
-        tokenKey: tokenKey,
-        create: today,
-        expire: expire
-      };
-      const token = fastify.jwt.sign(payload, { expiresIn: '8h' });
-      res.send({
-        statusCode: StatusCodes.OK,
-        token: token
-      });
-    } else {
-      res.status(StatusCodes.UNAUTHORIZED).send({
-        statusCode: StatusCodes.UNAUTHORIZED,
-        message: getReasonPhrase(StatusCodes.UNAUTHORIZED)
-      })
-    }
-  })
-
   fastify.post('/login-by-code', async (req: any, res: any) => {
     let body: any = req.body;
     let loginCode = body.loginCode;

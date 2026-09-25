@@ -38,8 +38,8 @@ class HisInfodModel {
                 FROM            dbo.PATIENT AS PT LEFT OUTER JOIN  
                 dbo.PatSS AS PS ON PS.hn = PT.hn LEFT OUTER JOIN 
                 dbo.PTITLE AS PTITLE ON PT.titleCode = PTITLE.titleCode 
-                where ${columnName}='${searchText}' `;
-        var result = await db.raw(sql);
+                where ${columnName}=? `;
+        var result = await db.raw(sql, [searchText]);
         return [result[0]];
     }
     getOpdService(db, hn, date, columnName = '', searchText = '') {
@@ -58,7 +58,7 @@ class HisInfodModel {
             .select(db.raw(`CAST(CAST(SUBSTRING(OH.registDate, 1, 4) AS int) - 543 AS varchar(10)) +'-'+SUBSTRING(OH.registDate, 5, 2)+'-'+ SUBSTRING(OH.registDate, 7, 2) AS DATE_SERV`))
             .select(db.raw(`left(OH.timePt,2)+':'+right(OH.timePt,2) as TIME_SERV`))
             .select('BH.REFERIN', 'BH.TFReasonIn AS CAUSEIN', 'BH.REFEROUT', 'BH.TFReasonOut AS CAUSEOUT', 'SS.Weight', 'SS.Height', 'SS.Lbloodpress AS SBP', 'SS.Hbloodpress AS DBP', 'SS.Temperature AS BTEMP', 'SS.Pulse AS PR', 'SS.Breathe AS RR', 'hos.CHANGWAT AS chwin', 'hos2.CHANGWAT AS chwout')
-            .whereRaw(`OH.hn ='${hn}' and OH.registDate='${date}'`);
+            .whereRaw(`OH.hn =? and OH.registDate=?`, [hn, date]);
     }
     getDiagnosisOpd(db, visitno) {
         var Hn = +(visitno.substring(0, 7));
