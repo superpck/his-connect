@@ -36,9 +36,9 @@ export class HisInfodModel {
                 FROM            dbo.PATIENT AS PT LEFT OUTER JOIN  
                 dbo.PatSS AS PS ON PS.hn = PT.hn LEFT OUTER JOIN 
                 dbo.PTITLE AS PTITLE ON PT.titleCode = PTITLE.titleCode 
-                where ${columnName}='${searchText}' `;
+                where ${columnName}=? `;
 
-        var result = await db.raw(sql);
+        var result = await db.raw(sql, [searchText]);
         //    console.log(result[0]);
         return [result[0]];
 
@@ -66,31 +66,7 @@ export class HisInfodModel {
                 'SS.Weight', 'SS.Height', 'SS.Lbloodpress AS SBP', 'SS.Hbloodpress AS DBP',
                 'SS.Temperature AS BTEMP', 'SS.Pulse AS PR', 'SS.Breathe AS RR',
                 'hos.CHANGWAT AS chwin', 'hos2.CHANGWAT AS chwout')
-            .whereRaw(`OH.hn ='${hn}' and OH.registDate='${date}'`);
-
-        // var sql = ` SELECT        OH.hn, CASE WHEN OH.regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) 
-        //             + OH.regNo END AS SEQ
-        //             ,CASE WHEN OH.regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(OH.hn AS Int) AS Char))), 7) 
-        //             + OH.regNo END AS visitno
-        //             , OH.regNo, OH.registDate, CAST(CAST(SUBSTRING(OH.registDate, 1, 4) AS int) - 543 AS varchar(10)) +'-'+SUBSTRING(OH.registDate, 5, 2)+'-'+ SUBSTRING(OH.registDate, 7, 2) AS DATE_SERV, OH.timePt AS TIME_SERV2
-        //             ,left(OH.timePt,2)+':'+right(OH.timePt,2) as TIME_SERV, BH.REFERIN, 
-        //             BH.TFReasonIn AS CAUSEIN, BH.REFEROUT, BH.TFReasonOut AS CAUSEOUT, SS.Weight, SS.Height, SS.Lbloodpress AS SBP, SS.Hbloodpress AS DBP, SS.Temperature AS BTEMP, SS.Pulse AS PR, SS.Breathe AS RR, 
-        //             hos.CHANGWAT AS chwin, hos2.CHANGWAT AS chwout
-        //             FROM            dbo.OPD_H AS OH 
-        //             LEFT OUTER JOIN dbo.Bill_h AS BH ON BH.hn = OH.hn AND BH.regNo = OH.regNo 
-        //             LEFT OUTER JOIN dbo.PATIENT AS PT ON PT.hn = OH.hn 
-        //             LEFT OUTER JOIN dbo.SSREGIST AS SS ON SS.hn = OH.hn AND SS.RegNo = OH.regNo 
-        //             LEFT OUTER JOIN dbo.HOSPCODE AS hos ON BH.REFERIN = hos.OFF_ID 
-        //             LEFT OUTER JOIN dbo.HOSPCODE AS hos2 ON BH.REFEROUT = hos2.OFF_ID
-        //             where OH.hn ='${hn}' and OH.registDate='${date}'  `;
-        // // return db('getOpdService_isonline')
-        // //     .where(where)
-        // //     .orderBy('vstdate', 'desc')
-        // //     .limit(maxLimit);
-
-        // var result = await db.raw(sql);
-        // // console.log("opdservice ==", result[0]);
-        // return [result[0]];
+            .whereRaw(`OH.hn =? and OH.registDate=?`, [hn, date]);
 
     }
 
@@ -105,17 +81,6 @@ export class HisInfodModel {
             .select(db.raw(`CASE WHEN regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(Hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(Hn AS Int) AS Char))), 7) 
             + regNo END AS visitno`))
             .where({ Hn, regNo });
-        // var sql = ` SELECT       Hn as hn, regNo
-        //             ,CASE WHEN regNo IS NULL THEN RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(Hn AS Int) AS Char))), 7) + '0000' ELSE RIGHT(RTRIM(LTRIM(CAST(100000000 + CAST(Hn AS Int) AS Char))), 7) 
-        //                     + regNo END AS visitno ,'' as d_update
-        //             , VisitDate, DiagDate, DocCode, ICDCode as diagcode, DiagType, dxtype as diag_type, deptCode, pt_status, rxNo, DiagNo
-        //             FROM            dbo.PATDIAG   
-        //             where Hn='${hn}' and regNo='${regNo}' `;
-
-        // var result = await db.raw(sql);
-        // //    console.log(result[0]);
-        // return [result[0]];
-
     }
 
     getProcedureOpd(knex, columnName, searchNo, hospCode) {
