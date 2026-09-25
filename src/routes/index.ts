@@ -4,10 +4,7 @@ let shell = require("shelljs");
 var crypto = require('crypto');
 var fs = require('fs');
 
-import dayjs from 'dayjs';
 import { checkSignInCode } from '../middleware/moph-refer';
-import { IsUserModel } from '../models/isonline/users';
-const isUserModel = new IsUserModel();
 
 const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 const resultText = './sent_result.txt';
