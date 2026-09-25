@@ -1,6 +1,60 @@
 import { Knex } from 'knex';
 import moment from 'moment';
 
+const CODE_PATTERN = /^[A-Za-z0-9_-]{1,20}$/;
+
+export function buildReportQuery(reportSql: string, wrapperSql: string, columnsGroup: string, conditions: {
+  hospCode: string;
+  date1: string;
+  date2: string;
+  region?: string;
+  changwat?: string;
+}) {
+  if (!CODE_PATTERN.test(conditions.hospCode)) {
+    throw new Error('Invalid hospital code');
+  }
+  if (!moment(conditions.date1, 'YYYY-MM-DD', true).isValid() || !moment(conditions.date2, 'YYYY-MM-DD', true).isValid()) {
+    throw new Error('Invalid report date');
+  }
+  if (conditions.region && !CODE_PATTERN.test(conditions.region)) {
+    throw new Error('Invalid region');
+  }
+  if (conditions.changwat && !CODE_PATTERN.test(conditions.changwat)) {
+    throw new Error('Invalid province');
+  }
+
+  const bindings: string[] = [
+    conditions.hospCode,
+    `${conditions.date1} 00:00:00`,
+    `${conditions.date2} 23:59:59`
+  ];
+  const dateWhere = 'hosp = ? and adate between ? and ?';
+  let sql = reportSql
+    .replace(/<where>/gi, `where ${dateWhere}`)
+    .replace(/<wheredate>/gi, `${dateWhere} and `);
+
+  if (wrapperSql) {
+    sql = wrapperSql.replace(/<sql>/gi, `(${sql})`);
+    const locationConditions: string[] = [];
+    if (conditions.region) {
+      locationConditions.push('region = ?');
+      bindings.push(conditions.region);
+    }
+    if (conditions.changwat) {
+      locationConditions.push('changwatcode = ?');
+      bindings.push(conditions.changwat);
+    }
+    if (locationConditions.length) {
+      sql += ` where ${locationConditions.join(' and ')}`;
+    }
+    if (columnsGroup) {
+      sql += ` group by ${columnsGroup}`;
+    }
+  }
+
+  return { sql, bindings };
+}
+
 export class IsReportModel {
   getReport1(knex: Knex, reportCond: any) {
     let date1 = reportCond?.date1 + ' 00:00:00';
@@ -44,8 +98,8 @@ export class IsReportModel {
       .where('id', '=', reportID);
   }
 
-  getData(knex: Knex, sql) {
-    return knex.raw(sql);
+  getData(knex: Knex, sql: string, bindings: string[]) {
+    return knex.raw(sql, bindings);
   }
 
   selectSql(knex: Knex, tableName: string, selectText: string, whereText: string, groupBy: string, orderBy: string) {

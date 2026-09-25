@@ -278,49 +278,6 @@ const router = (fastify, { }, next) => {
     }
   })
 
-  fastify.post('/selectData', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
-    let tableName = req.body.tableName;
-    let selectText = req.body.selectText;
-    let whereText = req.body.whereText;
-    let groupBy = req.body.groupBy;
-    let orderText = req.body.orderText;
-    let limit = req.body.limit || '';
-    let tokenKey = req.body.tokenKey;
-    if (tokenKey === '') {
-      res.send({ ok: false, error: 'token error' });
-      return false;
-    }
-    try {
-      const results: any = await isModel.selectSql(global.dbISOnline, tableName, selectText, whereText, groupBy, orderText, limit);
-      global.dbISOnline.destroy;
-      if (results) {
-        console.log("get: " + tableName + ' = ' + results[0].length + ' record<s> founded.');
-        res.send({
-          statusCode: HttpStatus.OK,
-          status: HttpStatus.OK,
-          ok: true,
-          version: global.appDetail.version,
-          subVersion: global.appDetail.subVersion,
-          rows: results[0]
-        });
-      } else {
-        res.send({
-          statusCode: HttpStatus.NO_CONTENT,
-          status: HttpStatus.NO_CONTENT,
-          ok: false,
-          rows: []
-        });
-      }
-    } catch (error) {
-      res.send({
-        statusCode: HttpStatus.BAD_REQUEST,
-        status: 400,
-        ok: false,
-        message: error.message
-      });
-    }
-  })
-
   fastify.post('/saveis', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     let ref = req.body.ref;
     let data = req.body.data;

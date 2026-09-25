@@ -47,29 +47,22 @@ const router = (fastify, { }, next) => {
       return;
     }
     
-    const ip = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;
     const source = req.params.source || '';
     const key = req.params.key || '';
 
-    const now = moment().locale('th').format('YYYYMMDDTHHmmss');
-    var appkey = crypto.createHash('sha256').update(now + process.env.REQUEST_KEY).digest('hex');
-    const trust = req.headers.host.search('localhost|127.0.0.1') > -1 || ip.includes('203.157.31.');
-    console.log(dayjs().format('HH:mm:ss'), '/create-token', ip, source, key, appkey, `trust: ${trust}`);
-
-    if (trust) {
+    if (isValidRequestKey(key)) {
       const token = fastify.jwt.sign({
         uid: 0,
         api: 'his-connect', source
       }, { expiresIn: '4h' });
       reply.send({ statusCode: 200, token, key });
     } else {
-      reply.send({ ok: false, message: `request unreliable.` });
+      reply.status(StatusCodes.UNAUTHORIZED).send({ ok: false, message: getReasonPhrase(StatusCodes.UNAUTHORIZED) });
     }
   })
 
   fastify.get('/get-token/:key/:code', async (req: any, reply: any) => {
-    const ip = req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.ip;
-    const source = req.params.source || '';
+    const source = '';
     const key = req.params.key;
 
     const code = req.params.code || '';
@@ -79,12 +72,9 @@ const router = (fastify, { }, next) => {
       return;
     }
 
-    const now = moment().locale('th').format('YYYYMMDDTHHmmss');
-    var appkey = crypto.createHash('sha256').update(now + process.env.REQUEST_KEY).digest('hex');
-    const trust = req.headers.host.search('localhost|127.0.0.1') > -1 || ip.includes('203.157.31.');
-    console.log(dayjs().format('HH:mm:ss'), '/get-token', ip, source, key, appkey, `trust: ${trust}`);
-
-    if (trust) {
+    if (isValidRequestKey(key)) {
+      const now = moment().locale('th').format('YYYYMMDDTHHmmss');
+      const appkey = crypto.createHash('sha256').update(now + process.env.REQUEST_KEY).digest('hex');
       var skey = crypto.createHash('md5').update(now + key).digest('hex');
       const token = fastify.jwt.sign({
         uid: 0,
@@ -98,7 +88,7 @@ const router = (fastify, { }, next) => {
         secret_key: skey.substr(1, 10)
       });
     } else {
-      reply.send({ ok: false, message: `request unreliable.` });
+      reply.status(StatusCodes.UNAUTHORIZED).send({ ok: false, message: getReasonPhrase(StatusCodes.UNAUTHORIZED) });
     }
   })
 
@@ -111,8 +101,7 @@ const router = (fastify, { }, next) => {
     }
 
     const requestKey = req.params.requestKey || '??';
-    var hashRequestKey = crypto.createHash('md5').update(process.env.REQUEST_KEY).digest('hex');
-    if (requestKey === hashRequestKey) {
+    if (isValidRequestKey(requestKey)) {
       const token = fastify.jwt.sign({
         api: 'his-connect'
       }, { expiresIn: '3h' });
@@ -444,7 +433,17 @@ const router = (fastify, { }, next) => {
   }
 
   next();
+}
 
+function isValidRequestKey(requestKey: any) {
+  if (typeof requestKey !== 'string' || !process.env.REQUEST_KEY) {
+    return false;
+  }
+
+  const expected = crypto.createHash('md5').update(process.env.REQUEST_KEY).digest('hex');
+  const actual = Buffer.from(requestKey);
+  const expectedBuffer = Buffer.from(expected);
+  return actual.length === expectedBuffer.length && crypto.timingSafeEqual(actual, expectedBuffer);
 }
 
 module.exports = router;
