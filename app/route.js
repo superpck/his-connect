@@ -20,8 +20,6 @@ async function router(fastify) {
     fastify.register(require('./routes/isonline/index'), { prefix: `${rootPrefix}/is`, logger: true });
     fastify.register(require('./routes/isonline/his'), { prefix: `${rootPrefix}/his`, logger: true });
     fastify.register(require('./routes/isonline/his'), { prefix: `${rootPrefix}/isonline/his`, logger: true });
-    fastify.register(require('./routes/isonline/user'), { prefix: `${rootPrefix}/user`, logger: true });
-    fastify.register(require('./routes/isonline/user'), { prefix: `${rootPrefix}/isonline/user`, logger: true });
     fastify.register(require('./routes/isonline/report'), { prefix: `${rootPrefix}/report`, logger: true });
     fastify.register(require('./routes/isonline/report'), { prefix: `${rootPrefix}/isonline/report`, logger: true });
     fastify.register(require('./routes/isonline/moph'), { prefix: `${rootPrefix}/moph`, logger: true });
