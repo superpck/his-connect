@@ -11,7 +11,6 @@ export default async function router(fastify: FastifyInstance) {
   fastify.register(require('./routes/his/index'), { prefix: `${rootPrefix}/HIS` });
   fastify.register(require('./routes/his/ai'), { prefix: `${rootPrefix}/AI`, logger: true });
 
-  // fastify.register(require('./routes/setup'), { prefix: `${rootPrefix}/setup-api` });
   fastify.register(require('./routes/refer/v3'), { prefix: `${rootPrefix}/refer` });
   fastify.register(require('./routes/refer/v3'), { prefix: `${rootPrefix}/refer/his` });
   fastify.register(require('./routes/refer/local'), { prefix: `${rootPrefix}/refer/local` });
@@ -31,12 +30,6 @@ export default async function router(fastify: FastifyInstance) {
 
   // PCC Data connect service
   fastify.register(require('./routes/pcc/index'), { prefix: `${rootPrefix}/pcc`, logger: true });
-
-  // ร้านยาคุณภาพ
-  // fastify.register(require('./routes/qdrugstore/index'), { prefix: `${rootPrefix}/qdrugstore`, logger: true });
-
-  // รายงาน 506
-  // fastify.register(require('./routes/rp506/index'), { prefix: `${rootPrefix}/rp506`, logger: true });
 
   fastify.setNotFoundHandler((request, reply) => {
     reply.send({

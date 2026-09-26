@@ -86,8 +86,8 @@ global.mophService = require('./routes/main/crontab')(global.mophService, {});
 global.firstProcessPid = 0;
 global.mophService = null;
 
-// DB connection =========================================
-connectDB();
+// DB connection is awaited before the server starts accepting traffic (see bottom of file),
+// so route handlers/cron jobs never run against a not-yet-verified DB connection.
 
 // check token ===========================================================
 app.decorate("authenticate", async (request: any, reply: any) => {
@@ -186,6 +186,22 @@ app.addHook('onSend', async (request, reply, payload) => {
   return payload;
 });
 
+// Centralized fallback error handler: catches any error that propagates as a thrown
+// exception (i.e. wasn't already caught/formatted by a route's own try/catch). This is
+// defense-in-depth only — it does not change the many routes that already catch errors
+// locally and return `error.message` directly; that broader information-disclosure cleanup
+// is tracked separately and out of scope here, given the number of call sites involved.
+app.setErrorHandler((error: any, request: any, reply: any) => {
+  request.log?.error(error);
+  console.error(`   ❌ Unhandled error on ${request.method} ${request.url}:`, error?.message || error);
+  const statusCode = error?.statusCode && error.statusCode >= 400 && error.statusCode < 600 ? error.statusCode : 500;
+  reply.status(statusCode).send({
+    statusCode,
+    error: 'Internal Server Error',
+    message: statusCode === 500 ? 'Internal Server Error' : (error?.message || 'Internal Server Error')
+  });
+});
+
 // Add route path ======================================
 app.register(require('./route'));
 
@@ -196,24 +212,34 @@ app.register(cronjob);
 var options: any = {
   port: process.env.PORT || 3004,
   host: process.env.HOST || '0.0.0.0'
-}
-app.listen(options, (err) => {
-  if (err) throw err;
-  const instanceId = process.env.NODE_APP_INSTANCE || '0';
-  console.info(`${moment().format('HH:mm:ss')} HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid} with NodeJS: ${process.version || ''}, Instance: ${instanceId}`);
-});
+};
+// Await the DB connectivity check before accepting traffic, so the "started" log/readiness
+// reflects actual DB state instead of racing ahead of it.
+(async () => {
+  await connectDB();
+  app.listen(options, (err) => {
+    if (err) throw err;
+    const instanceId = process.env.NODE_APP_INSTANCE || '0';
+    console.info(`${moment().format('HH:mm:ss')} HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid} with NodeJS: ${process.version || ''}, Instance: ${instanceId}`);
+  });
+})();
 
 // DB connection =========================================
 async function connectDB() {
+  const dbConnection = require('./plugins/db');
+
+  // Set up HIS and ISONLINE independently: a misconfigured/unused ISONLINE DB
+  // must not prevent the (usually required) HIS DB from being checked/connected.
+  await connectHIS(dbConnection);
+  await connectISOnline(dbConnection);
+}
+
+async function connectHIS(dbConnection: any) {
   const dbClient = process.env.HIS_DB_CLIENT;
   try {
-    const dbConnection = require('./plugins/db');
     global.dbHIS = dbConnection('HIS');
-    global.dbIs = dbConnection('ISONLINE');
-    global.dbISOnline = global.dbIs;
 
     let sql = '';
-
     switch (dbClient) {
       case 'oracledb':
         sql = 'SELECT CURRENT_TIMESTAMP AS "date" FROM dual';
@@ -244,6 +270,15 @@ async function connectDB() {
     console.info(`   🔗 PID:${process.pid} >> HIS DB server '${dbClient}' connected, date/time on DB server:`, moment(date).format('YYYY-MM-DD HH:mm:ss'));
   } catch (error) {
     console.error(`   ❌ PID:${process.pid} >> HIS DB server '${dbClient}' connect error: `, error.message);
+  }
+}
+
+async function connectISOnline(dbConnection: any) {
+  try {
+    global.dbIs = dbConnection('ISONLINE');
+    global.dbISOnline = global.dbIs;
+  } catch (error) {
+    console.error(`   ❌ PID:${process.pid} >> ISONLINE DB server connect error: `, error.message);
   }
 }
 

@@ -699,6 +699,11 @@ export class HisHosxpPcuModel {
         columnName = columnName === 'an' ? 'i.an' : columnName;
         columnName = columnName === 'hn' ? 'i.hn' : columnName;
         columnName = columnName === 'visitNo' ? 'q.vn' : columnName;
+        // Allow-list the column name to prevent SQL injection.
+        const allowedColumns = ['i.an', 'i.hn', 'q.vn'];
+        if (allowedColumns.indexOf(columnName) < 0) {
+            throw new Error('Invalid columnName');
+        }
         const sql = `
             SELECT
                 (select hospitalcode from opdconfig) as HOSPCODE,
@@ -857,11 +862,11 @@ export class HisHosxpPcuModel {
                 LEFT JOIN dchstts ds ON i.dchstts = ds.dchstts
                 LEFT JOIN opitemrece c ON c.an = i.an           
             WHERE                 
-                ${columnName}='${searchNo}'
+                ?? = ?
             GROUP BY
                 i.an
             `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [columnName, searchNo]);
         return result[0];
     }
 

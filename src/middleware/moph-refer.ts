@@ -23,16 +23,10 @@ let hospitalConfig: any = null;
 let referTokenPromise: Promise<any> = null;
 let hospitalConfigPromise: Promise<any> = null;
 const gzip = promisify(zlib.gzip);
-
+import { APIResponse } from '../models/model';
 type RequestOptions = {
   purpose?: string;
   timeoutMs?: number;
-};
-type APIResponse = {
-  statusCode?: number;
-  status?: number;
-  message?: string;
-  [key: string]: unknown;
 };
 
 function getRequestTimeoutMs(timeoutMs?: number) {

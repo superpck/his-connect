@@ -79,7 +79,7 @@ function getPM2Processes() {
     }
     catch (error) {
         console.error(`${getTimestamp()} ❌ Failed to get PM2 list:`, error.message);
-        return [];
+        return null;
     }
 }
 function getMyPM2Name(processes, myPid) {
@@ -92,13 +92,30 @@ function getFirstPidOfName(processes, name) {
     return matches[0]?.pid || process.pid;
 }
 function updateProcessState() {
-    const processes = getPM2Processes();
     const myPid = process.pid;
-    processState.pm2Name = getMyPM2Name(processes, myPid);
-    const sameNameProcesses = processes.filter(p => p.name === processState.pm2Name && p.pm2_env.status === 'online');
-    processState.pm2List = sameNameProcesses.map(p => p.pid);
-    processState.firstProcessPid = getFirstPidOfName(processes, processState.pm2Name);
-    processState.isFirstProcess = processState.firstProcessPid === myPid;
+    const processes = getPM2Processes();
+    const isRunningUnderPM2 = !!process.env.pm_id;
+    if (processes === null) {
+        processState.pm2Name = process.env.PM2_NAME || 'unknown';
+        if (isRunningUnderPM2) {
+            processState.pm2List = [];
+            processState.firstProcessPid = -1;
+            processState.isFirstProcess = false;
+            console.error(`${getTimestamp()} ⚠️  Could not verify PM2 leadership; skipping leader role on this instance to avoid duplicate cron execution.`);
+        }
+        else {
+            processState.pm2List = [myPid];
+            processState.firstProcessPid = myPid;
+            processState.isFirstProcess = true;
+        }
+    }
+    else {
+        processState.pm2Name = getMyPM2Name(processes, myPid);
+        const sameNameProcesses = processes.filter(p => p.name === processState.pm2Name && p.pm2_env.status === 'online');
+        processState.pm2List = sameNameProcesses.map(p => p.pid);
+        processState.firstProcessPid = getFirstPidOfName(processes, processState.pm2Name);
+        processState.isFirstProcess = processState.firstProcessPid === myPid;
+    }
     console.log(`   ⬜ Instance: ${instanceId}.${processState.pm2Name} (PID: ${myPid}), First PID: ${processState.firstProcessPid}`);
 }
 function configureTimingSchedules() {
@@ -117,8 +134,8 @@ function configureTimingSchedules() {
 }
 function configureService(timingSchedule, serviceName, autoSendEnvVar, minuteEnvVar, minMinutes, normalizeHour) {
     timingSchedule[serviceName].autosend = +process.env[autoSendEnvVar] === 1 || false;
-    timingSchedule[serviceName].minute = process.env[minuteEnvVar] ?
-        parseInt(process.env[minuteEnvVar]) : 0;
+    const parsedMinute = process.env[minuteEnvVar] ? parseInt(process.env[minuteEnvVar]) : 0;
+    timingSchedule[serviceName].minute = Number.isNaN(parsedMinute) ? 0 : parsedMinute;
     if (normalizeHour && timingSchedule[serviceName].hour > 23) {
         timingSchedule[serviceName].hour = timingSchedule[serviceName].hour % 23;
     }
@@ -199,15 +216,16 @@ async function cronjob(fastify) {
         console.log(`      - Ward/Bed Update: At ${hourRandom}:${timeRandom}:${secondNow}`);
         logScheduledServices(timingSchedule);
     }
+    let startupTimeout;
     if (processState.isFirstProcess) {
-        setTimeout(() => {
+        startupTimeout = setTimeout(() => {
             (0, moph_erp_1.updateAlive)();
             (0, moph_erp_1.sendWardName)();
             (0, moph_erp_1.sendBedNo)();
         }, 10000);
     }
     let minuteCount = 0;
-    cron.schedule(timingSch, async (req, res) => {
+    const scheduledTask = cron.schedule(timingSch, async (req, res) => {
         minuteCount++;
         const minuteSinceLastNight = getMinutesSinceMidnight();
         const minuteNow = (0, moment_1.default)().get('minute');
@@ -227,15 +245,15 @@ async function cronjob(fastify) {
             }
             if (!onProcess?.mophAppointment && minuteSinceLastNight > 0 && minuteSinceLastNight % timeRandom == 0) {
                 onProcess.mophAppointment = true;
-                moph_appointment_1.default.process().then(() => {
-                    onProcess.mophAppointment = false;
-                });
+                moph_appointment_1.default.process()
+                    .catch((error) => console.error(`${getTimestamp()} Error in job mophAppointment:`, getErrorMessage(error)))
+                    .finally(() => { onProcess.mophAppointment = false; });
             }
             if (!onProcess?.mophIot && minuteSinceLastNight > 0 && minuteSinceLastNight % timeRandom == 0) {
                 onProcess.mophIot = true;
-                moph_iot_1.default.processIoT().then(() => {
-                    onProcess.mophIot = false;
-                });
+                moph_iot_1.default.processIoT()
+                    .catch((error) => console.error(`${getTimestamp()} Error in job mophIot:`, getErrorMessage(error)))
+                    .finally(() => { onProcess.mophIot = false; });
             }
             if ((0, moment_1.default)().hour() == hourRandom && minuteNow == timeRandom) {
                 console.log(`   --> 📅 Daily Task: Executing Ward Name & Bed No...`);
@@ -268,6 +286,12 @@ async function cronjob(fastify) {
                 runJob('getmophUrl', getmophUrl);
             }
         }
+    });
+    fastify.addHook('onClose', (instance, done) => {
+        if (startupTimeout)
+            clearTimeout(startupTimeout);
+        scheduledTask?.stop();
+        done();
     });
     console.info(`${getTimestamp()} Cronjob plugin registered in ${Date.now() - startupAt}ms`);
 }

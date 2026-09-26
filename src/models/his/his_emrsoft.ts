@@ -623,6 +623,11 @@ export class HisEmrSoftModel {
         columnName = columnName === 'visitNo' ? 'q.vn' : columnName;
         columnName = columnName === 'dateadmit' ? 'i.regdate' : columnName;
         columnName = columnName === 'datedisc' ? 'i.dchdate' : columnName;
+        // Allow-list the column name to prevent SQL injection.
+        const allowedColumns = ['i.an', 'i.hn', 'q.vn', 'i.regdate', 'i.dchdate'];
+        if (allowedColumns.indexOf(columnName) < 0) {
+            throw new Error('Invalid columnName');
+        }
         let validRefer = columnName === 'datedisc'? ' AND LENGTH(i.rfrilct) IN (5,9) ':'';
         const sql = `
             SELECT
@@ -782,9 +787,9 @@ export class HisEmrSoftModel {
                 LEFT JOIN dchstts ds ON i.dchstts = ds.dchstts
                 LEFT JOIN opitemrece c ON c.an = i.an  
                 LEFT JOIN ward ON i.ward = ward.ward           
-            WHERE ${columnName}='${searchValue}' ${validRefer}
+            WHERE ?? = ? ${validRefer}
             GROUP BY i.an `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [columnName, searchValue]);
         return result[0];
     }
 

@@ -165,9 +165,14 @@ export class HisNemoModel {
     }
 
     async getAdmission(db, columnName, searchNo, hospCode=hcode) {
+        // Allow-list the column name and bind values to prevent SQL injection.
+        const allowedColumns = ['an', 'visitNo', 'hn'];
+        if (allowedColumns.indexOf(columnName) < 0) {
+            throw new Error('Invalid columnName');
+        }
         const sql=`select * from nrefer_admission 
-            where ${columnName}="${searchNo}" and hospcode="${hospCode}"`;
-        const result = await db.raw(sql);
+            where ?? = ? and hospcode = ?`;
+        const result = await db.raw(sql, [columnName, searchNo, hospCode]);
         return result[0];
     }
 
