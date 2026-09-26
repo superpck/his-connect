@@ -100,13 +100,18 @@ class HisMdModel {
         columnName = columnName === 'an' ? 'AN' : columnName;
         columnName = columnName === 'pid' ? 'PID' : columnName;
         columnName = columnName === 'visitNo' ? 'SEQ' : columnName;
+        columnName = columnName === 'hn' ? 'HN' : columnName;
+        const allowedColumns = ['AN', 'PID', 'SEQ', 'HN'];
+        if (allowedColumns.indexOf(columnName) < 0) {
+            throw new Error('Invalid columnName');
+        }
         const sql = `select  
         HOSPCODE,PID,SEQ,AN,DATETIME_ADMIT,WARDADMIT,INSTYPE,TYPEIN,REFERINHOSP,
 CAUSEIN,ADMITWEIGHT,ADMITHEIGHT,DATETIME_DISCH,WARDDISCH,DISCHSTATUS,
 DISCHTYPE,REFEROUTHOSP,CAUSEOUT,COST,PRICE,PAYPRICE,ACTUALPAY,PROVIDER,D_UPDATE 
         from f43_admission 
-            where ${columnName}="${searchNo}" `;
-        const result = await db.raw(sql);
+            where ?? = ? `;
+        const result = await db.raw(sql, [columnName, searchNo]);
         return result[0];
     }
     async getDiagnosisIpd(db, an, hospCode = hcode) {

@@ -125,9 +125,11 @@ function getRemainingMinutes(currentMinute: number, interval: number): number {
 }
 
 /**
- * Get PM2 processes with caching to reduce shell executions
+ * Get PM2 processes with caching to reduce shell executions.
+ * Returns `null` (not `[]`) when discovery fails, so callers can distinguish
+ * "PM2 has no processes" from "we couldn't ask PM2" and fail closed accordingly.
  */
-function getPM2Processes(): PM2Process[] {
+function getPM2Processes(): PM2Process[] | null {
   const now = Date.now();
   if (now - pm2Cache.lastUpdate < pm2Cache.ttl && pm2Cache.processes.length > 0) {
     return pm2Cache.processes;
@@ -140,7 +142,7 @@ function getPM2Processes(): PM2Process[] {
     return pm2Cache.processes;
   } catch (error) {
     console.error(`${getTimestamp()} ❌ Failed to get PM2 list:`, error.message);
-    return [];
+    return null;
   }
 }
 
@@ -162,25 +164,47 @@ function getFirstPidOfName(processes: PM2Process[], name: string): number {
 }
 
 /**
- * Update the process state information
+ * Update the process state information.
+ *
+ * When this process isn't managed by PM2 at all (e.g. local dev via nodemon/ts-node,
+ * detected via the absence of `process.env.pm_id`), it's safe to act as the sole/first
+ * instance. But when PM2 discovery fails while running *under* PM2 (cluster mode), we
+ * fail closed (isFirstProcess = false) instead of defaulting to our own PID — otherwise
+ * every worker in the cluster would independently believe it is the "first process" and
+ * run scheduled jobs redundantly (duplicate sends to MOPH/refer, duplicate DB writes).
  */
 function updateProcessState(): void {
-  const processes = getPM2Processes();
   const myPid = process.pid;
+  const processes = getPM2Processes();
+  const isRunningUnderPM2 = !!process.env.pm_id;
 
-  // Set process name
-  processState.pm2Name = getMyPM2Name(processes, myPid);
+  if (processes === null) {
+    processState.pm2Name = process.env.PM2_NAME || 'unknown';
+    if (isRunningUnderPM2) {
+      processState.pm2List = [];
+      processState.firstProcessPid = -1;
+      processState.isFirstProcess = false;
+      console.error(`${getTimestamp()} ⚠️  Could not verify PM2 leadership; skipping leader role on this instance to avoid duplicate cron execution.`);
+    } else {
+      processState.pm2List = [myPid];
+      processState.firstProcessPid = myPid;
+      processState.isFirstProcess = true;
+    }
+  } else {
+    // Set process name
+    processState.pm2Name = getMyPM2Name(processes, myPid);
 
-  // Get all processes with the same name
-  const sameNameProcesses = processes.filter(p =>
-    p.name === processState.pm2Name && p.pm2_env.status === 'online'
-  );
+    // Get all processes with the same name
+    const sameNameProcesses = processes.filter(p =>
+      p.name === processState.pm2Name && p.pm2_env.status === 'online'
+    );
 
-  // Update process list and first PID
-  processState.pm2List = sameNameProcesses.map(p => p.pid);
-  processState.firstProcessPid = getFirstPidOfName(processes, processState.pm2Name);
-  // Check if this is the first process
-  processState.isFirstProcess = processState.firstProcessPid === myPid;
+    // Update process list and first PID
+    processState.pm2List = sameNameProcesses.map(p => p.pid);
+    processState.firstProcessPid = getFirstPidOfName(processes, processState.pm2Name);
+    // Check if this is the first process
+    processState.isFirstProcess = processState.firstProcessPid === myPid;
+  }
 
   console.log(`   ⬜ Instance: ${instanceId}.${processState.pm2Name} (PID: ${myPid}), First PID: ${processState.firstProcessPid}`);
 }
@@ -239,8 +263,8 @@ function configureService(
   timingSchedule[serviceName].autosend = +process.env[autoSendEnvVar] === 1 || false;
 
   // Get minutes and hours from environment
-  timingSchedule[serviceName].minute = process.env[minuteEnvVar] ?
-    parseInt(process.env[minuteEnvVar]) : 0;
+  const parsedMinute = process.env[minuteEnvVar] ? parseInt(process.env[minuteEnvVar]) : 0;
+  timingSchedule[serviceName].minute = Number.isNaN(parsedMinute) ? 0 : parsedMinute;
 
   // Normalize hour if needed (0-23)
   if (normalizeHour && timingSchedule[serviceName].hour > 23) {
@@ -377,8 +401,9 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
   }
 
   // Initial tasks on first process
+  let startupTimeout: NodeJS.Timeout | undefined;
   if (processState.isFirstProcess) {
-    setTimeout(() => {
+    startupTimeout = setTimeout(() => {
       updateAlive();
       sendWardName();
       sendBedNo();
@@ -403,7 +428,11 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
 
   // Schedule cron job
   let minuteCount = 0;
-  cron.schedule(timingSch, async (req: any, res: any) => {
+  // node-cron never invokes this callback with real HTTP request/response objects (it takes
+  // no meaningful arguments); `req`/`res` are always undefined here. They're kept only because
+  // `processSend`/`doAutoSend` accept an optional request for client-IP logging when called from
+  // an actual HTTP route elsewhere — safe to pass through as undefined from a cron context.
+  const scheduledTask = cron.schedule(timingSch, async (req: undefined, res: undefined) => {
     minuteCount++;
 
     // Get current time info
@@ -456,16 +485,16 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
       // ส่ง ผป.นัดหมาย
       if (!onProcess?.mophAppointment && minuteSinceLastNight > 0 && minuteSinceLastNight % timeRandom == 0) {
         onProcess.mophAppointment = true;
-        mophAppointment.process().then(() => {
-          onProcess.mophAppointment = false;
-        });
+        mophAppointment.process()
+          .catch((error) => console.error(`${getTimestamp()} Error in job mophAppointment:`, getErrorMessage(error)))
+          .finally(() => { onProcess.mophAppointment = false; });
       }
 
       if (!onProcess?.mophIot && minuteSinceLastNight > 0 && minuteSinceLastNight % timeRandom == 0) {
         onProcess.mophIot = true;
-        mophIot.processIoT().then(() => {
-          onProcess.mophIot = false;
-        });
+        mophIot.processIoT()
+          .catch((error) => console.error(`${getTimestamp()} Error in job mophIot:`, getErrorMessage(error)))
+          .finally(() => { onProcess.mophIot = false; });
       }
 
       // 4. Ward/Bed Daily Logic
@@ -511,6 +540,14 @@ export default async function cronjob(fastify: FastifyInstance): Promise<void> {
         runJob('getmophUrl', getmophUrl);
       }
     }
+  });
+
+  // Ensure the scheduled task and startup timer are stopped/cleared on server shutdown
+  // or plugin re-registration (e.g. hot reload) so they don't keep running duplicated work.
+  fastify.addHook('onClose', (instance, done) => {
+    if (startupTimeout) clearTimeout(startupTimeout);
+    scheduledTask?.stop();
+    done();
   });
 
   console.info(`${getTimestamp()} Cronjob plugin registered in ${Date.now() - startupAt}ms`);

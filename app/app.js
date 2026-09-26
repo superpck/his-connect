@@ -77,7 +77,6 @@ global.apiStartTime = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss');
 global.mophService = require('./routes/main/crontab')(global.mophService, {});
 global.firstProcessPid = 0;
 global.mophService = null;
-connectDB();
 app.decorate("authenticate", async (request, reply) => {
     return (0, authenticate_1.authenticateRequest)(request, reply);
 });
@@ -146,25 +145,40 @@ app.addHook('onSend', async (request, reply, payload) => {
     reply.headers(headers);
     return payload;
 });
+app.setErrorHandler((error, request, reply) => {
+    request.log?.error(error);
+    console.error(`   ❌ Unhandled error on ${request.method} ${request.url}:`, error?.message || error);
+    const statusCode = error?.statusCode && error.statusCode >= 400 && error.statusCode < 600 ? error.statusCode : 500;
+    reply.status(statusCode).send({
+        statusCode,
+        error: 'Internal Server Error',
+        message: statusCode === 500 ? 'Internal Server Error' : (error?.message || 'Internal Server Error')
+    });
+});
 app.register(require('./route'));
 app.register(nodecron_1.default);
 var options = {
     port: process.env.PORT || 3004,
     host: process.env.HOST || '0.0.0.0'
 };
-app.listen(options, (err) => {
-    if (err)
-        throw err;
-    const instanceId = process.env.NODE_APP_INSTANCE || '0';
-    console.info(`${(0, moment_1.default)().format('HH:mm:ss')} HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid} with NodeJS: ${process.version || ''}, Instance: ${instanceId}`);
-});
+(async () => {
+    await connectDB();
+    app.listen(options, (err) => {
+        if (err)
+            throw err;
+        const instanceId = process.env.NODE_APP_INSTANCE || '0';
+        console.info(`${(0, moment_1.default)().format('HH:mm:ss')} HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid} with NodeJS: ${process.version || ''}, Instance: ${instanceId}`);
+    });
+})();
 async function connectDB() {
+    const dbConnection = require('./plugins/db');
+    await connectHIS(dbConnection);
+    await connectISOnline(dbConnection);
+}
+async function connectHIS(dbConnection) {
     const dbClient = process.env.HIS_DB_CLIENT;
     try {
-        const dbConnection = require('./plugins/db');
         global.dbHIS = dbConnection('HIS');
-        global.dbIs = dbConnection('ISONLINE');
-        global.dbISOnline = global.dbIs;
         let sql = '';
         switch (dbClient) {
             case 'oracledb':
@@ -194,6 +208,15 @@ async function connectDB() {
     }
     catch (error) {
         console.error(`   ❌ PID:${process.pid} >> HIS DB server '${dbClient}' connect error: `, error.message);
+    }
+}
+async function connectISOnline(dbConnection) {
+    try {
+        global.dbIs = dbConnection('ISONLINE');
+        global.dbISOnline = global.dbIs;
+    }
+    catch (error) {
+        console.error(`   ❌ PID:${process.pid} >> ISONLINE DB server connect error: `, error.message);
     }
 }
 async function checkConfigFile() {

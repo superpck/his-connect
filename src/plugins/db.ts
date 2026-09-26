@@ -1,6 +1,20 @@
 import knex from 'knex';
 
 var timezone = 'Asia/Bangkok';
+
+// Client-aware default ports so an unset *_DB_PORT doesn't silently fall back to
+// the MySQL port (3306) for engines that use a different default (e.g. Oracle 1521).
+function defaultPortFor(client: string): number {
+  switch ((client || '').toLowerCase()) {
+    case 'oracledb': return 1521;
+    case 'mssql': return 1433;
+    case 'pg':
+    case 'postgres':
+    case 'postgresql': return 5432;
+    default: return 3306; // mysql / mysql2
+  }
+}
+
 var options = {
   HIS: {
     client: process.env.HIS_DB_CLIENT || 'mysql2',
@@ -9,24 +23,24 @@ var options = {
       user: process.env.HIS_DB_USER,
       password: process.env.HIS_DB_PASSWORD,
       database: process.env.HIS_DB_NAME,
-      port: +process.env.HIS_DB_PORT || 3306,
+      port: +process.env.HIS_DB_PORT || defaultPortFor(process.env.HIS_DB_CLIENT),
       charset: process.env.HIS_DB_CHARSET || null,
       schema: process.env.HIS_DB_SCHEMA || 'public',
       encrypt: process.env.HIS_DB_ENCRYPT || null,
       timezone
     }
   },
-  ISONLINE: {
-    client: process.env.IS_DB_CLIENT || 'mysql',
+  KIOSK: {
+    client: process.env.KIOSK_DB_CLIENT || 'mysql2',
     connection: {
-      host: process.env.IS_DB_HOST,
-      user: process.env.IS_DB_USER,
-      password: process.env.IS_DB_PASSWORD,
-      database: process.env.IS_DB_NAME || 'isdb',
-      port: +process.env.IS_DB_PORT || 3306,
-      charset: process.env.IS_DB_CHARSET || null,
-      schema: process.env.IS_DB_SCHEMA,
-      encrypt: process.env.IS_DB_ENCRYPT || true,
+      host: process.env.KIOSK_DB_HOST,
+      user: process.env.KIOSK_DB_USER,
+      password: process.env.KIOSK_DB_PASSWORD,
+      database: process.env.KIOSK_DB_NAME || 'kiosk',
+      port: +process.env.KIOSK_DB_PORT || defaultPortFor(process.env.KIOSK_DB_CLIENT),
+      charset: process.env.KIOSK_DB_CHARSET || null,
+      schema: process.env.KIOSK_DB_SCHEMA,
+      encrypt: process.env.KIOSK_DB_ENCRYPT || true,
       timezone
     }
   }
@@ -38,6 +52,15 @@ const dbConnection = (type = 'HIS') => {
   const config: any = options[type];
   const connection: any = config.connection;
   config.client = config.client ? config.client.toLowerCase() : 'mysql2';
+
+  // Validate required connection fields up front instead of only failing on first query,
+  // so a missing/misconfigured env var is caught at startup, not on a random request.
+  const envPrefix = type === 'ISONLINE' ? 'IS' : type;
+  const requiredFields = ['host', 'user', 'database'];
+  const missing = requiredFields.filter((field) => !connection[field]);
+  if (missing.length > 0) {
+    throw new Error(`[db:${type}] Missing required DB connection field(s): ${missing.join(', ')}. Check ${envPrefix}_DB_HOST/${envPrefix}_DB_USER/${envPrefix}_DB_NAME environment variables.`);
+  }
 
   let opt: any = {};
   if (config.client == 'mssql') {
@@ -63,7 +86,7 @@ const dbConnection = (type = 'HIS') => {
     opt = {
       client: 'oracledb',
       connection: {
-        connectString: `${connection.host}:${connection.port | 1521}/${connection.database}`,
+        connectString: `${connection.host}:${connection.port || 1521}/${connection.database}`,
         user: connection.user,
         password: connection.password
       },
@@ -98,7 +121,7 @@ const dbConnection = (type = 'HIS') => {
       },
       pool: {
         min: 0,
-        max: 7
+        max: 10
       },
       debug: false,
     };

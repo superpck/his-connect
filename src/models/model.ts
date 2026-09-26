@@ -1,3 +1,13 @@
+export interface APIResponse {
+  statusCode?: number;
+  status?: number;
+  success?: boolean;
+  ok?: boolean;
+  message?: string;
+  data?: any;
+  [key: string]: unknown;
+};
+
 export interface IUserStructure {
   id?: any; //int(11) NOT NULL AUTO_INCREMENT,
   date?: any; //int(11) DEFAULT NULL,

@@ -102,9 +102,13 @@ class HisNemoModel {
         return result[0];
     }
     async getAdmission(db, columnName, searchNo, hospCode = hcode) {
+        const allowedColumns = ['an', 'visitNo', 'hn'];
+        if (allowedColumns.indexOf(columnName) < 0) {
+            throw new Error('Invalid columnName');
+        }
         const sql = `select * from nrefer_admission 
-            where ${columnName}="${searchNo}" and hospcode="${hospCode}"`;
-        const result = await db.raw(sql);
+            where ?? = ? and hospcode = ?`;
+        const result = await db.raw(sql, [columnName, searchNo, hospCode]);
         return result[0];
     }
     async getDiagnosisIpd(db, an, hospCode = hcode) {

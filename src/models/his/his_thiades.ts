@@ -118,9 +118,14 @@ export class HisThiadesModel {
         columnName = columnName === 'an' ? 'AN' : columnName;
         columnName = columnName === 'pid' ? 'PID' : columnName;
         columnName = columnName === 'visitNo' ? 'SEQ' : columnName;
+        // Allow-list the column name and bind values to prevent SQL injection.
+        const allowedColumns = ['AN', 'PID', 'SEQ'];
+        if (allowedColumns.indexOf(columnName) < 0) {
+            throw new Error('Invalid columnName');
+        }
         const sql=`select * from admission 
-            where ${columnName}="${searchNo}" and HOSPCODE="${hospCode}"`;
-        const result = await db.raw(sql);
+            where ?? = ? and HOSPCODE = ?`;
+        const result = await db.raw(sql, [columnName, searchNo, hospCode]);
         return result[0];
     }
 

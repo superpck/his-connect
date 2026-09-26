@@ -3,6 +3,7 @@ import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 let shell = require("shelljs");
 var crypto = require('crypto');
 var fs = require('fs');
+const { execFile } = require('child_process');
 
 import { checkSignInCode } from '../middleware/moph-refer';
 
@@ -280,7 +281,7 @@ const router = (fastify, { }, next) => {
 
   fastify.get('/autosent-result', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
     try {
-      var contents = fs.readFileSync(resultText);
+      var contents = await fs.promises.readFile(resultText);
       reply.status(StatusCodes.OK).send({
         statusCode: StatusCodes.OK,
         is_set: process.env.NREFER_AUTO_SEND,
@@ -391,6 +392,11 @@ const router = (fastify, { }, next) => {
       const pm2Name = api.PM2_NAME === '' ? '' : api.PM2_NAME;
       const pm2Instance = +api.PM2_INSTANCE > 0 ? +api.PM2_INSTANCE : 1;
 
+      // Reject anything that isn't a safe pm2 process name to prevent shell command injection.
+      if (pm2Name !== '' && !/^[\w-]{1,64}$/.test(pm2Name)) {
+        return reject(new Error('Invalid PM2_NAME'));
+      }
+
       console.log(' ====> restart PM2:', pm2Name, moment().locale('th').format('HH:mm:ss.SS'));
       await shell.exec('tsc');
       await shell.exec("find ./app -name '*.map' -type f -delete");
@@ -402,14 +408,13 @@ const router = (fastify, { }, next) => {
       // const shellCode: any = await shell.exec(`${deleteCommand} & ${shellExecute}`).code;
       // await shell.exec(shellExecute1).code;
 
-      const shellExecute1 = `pm2 scale ${pm2Name} ${pm2Instance}`;
-      await shell.exec(shellExecute1, (err: any, r: any) => {
-        console.log(' ====> shellScaling', shellExecute1, r, moment().locale('th').format('HH:mm:ss.SS'));
+      // Run pm2 via execFile with an argument array (no shell interpolation) instead of a shell string.
+      execFile('pm2', ['scale', pm2Name, String(pm2Instance)], (err: any, stdout: any, stderr: any) => {
+        console.log(' ====> shellScaling', pm2Name, pm2Instance, stdout || stderr, moment().locale('th').format('HH:mm:ss.SS'));
       });
 
-      const shellExecute2 = `pm2 restart ${pm2Name}`;
-      shell.exec(shellExecute2, (err: any, shellCode: any) => {
-        console.log(' ====> shellCode', shellExecute2, shellCode, err, moment().locale('th').format('HH:mm:ss.SS'));
+      execFile('pm2', ['restart', pm2Name], (err: any, stdout: any, stderr: any) => {
+        console.log(' ====> shellCode', pm2Name, stdout || stderr, err, moment().locale('th').format('HH:mm:ss.SS'));
         resolve(true);
       });
     });

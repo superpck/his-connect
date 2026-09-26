@@ -152,6 +152,11 @@ WHERE  date(r1.date)="${date}"`;
         columnName = columnName === 'an' ? 'a1.an' : columnName;
         columnName = columnName === 'hn' ? 'a1.hn' : columnName;
         columnName = columnName === 'visitNo' ? 'a1.vn' : columnName;
+        // Allow-list the column name and bind values to prevent SQL injection.
+        const allowedColumns = ['a1.an', 'a1.hn', 'a1.vn'];
+        if (allowedColumns.indexOf(columnName) < 0) {
+            throw new Error('Invalid columnName');
+        }
         const sql = `SELECT  '10707'   as hospcode,a1.hn as pid,a1.vn as seq,a1.an,date_format(concat(a1.date_admit, ' ', a1.time_admit),'%Y-%m-%d %H:%i:%s') as datetime_admit,r2.code43 as wardadmit,
         r1.code_new as instype,v1.typein,v1.referinhosp,v1.typein as causein,a1.weight as admitweight,a1.high as admithight,date_format(concat(a1.date_dsc, ' ', a1.time_dsc),'%Y-%m-%d %H:%i:%s') as datetime_disch,r2.code43 as warddisch ,a1.dsc_status as dischstatus ,a1.dsc_type as dischtype,r3.referouthosp as referouthosp ,r3.causeout as causeout,a1.cost,a1.price,
         a1.payprice,a1.price as actualpay,a1.dr_admit as provider,DATE_FORMAT(CURRENT_TIMESTAMP,"%Y%m%d%H%i%s") as d_update,a2.drg,a2.rw,
@@ -161,8 +166,8 @@ WHERE  date(r1.date)="${date}"`;
         left join ref_payment r1 on v1.pttype=r1.code
         left join ref_ward r2 on a1.ward=r2.code
         left join referout r3 on a1.an=r3.an
-        where  ${columnName}=${searchNo}`;
-        const result = await db.raw(sql);
+        where  ?? = ?`;
+        const result = await db.raw(sql, [columnName, searchNo]);
         return result[0];
     }
 

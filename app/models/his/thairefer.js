@@ -523,6 +523,10 @@ class ThaiReferModel {
         columnName = columnName === "an" ? "ipt.an" : columnName;
         columnName = columnName === "hn" ? "ipt.hn" : columnName;
         columnName = columnName === "visitNo" ? "ipt.vn" : columnName;
+        const allowedColumns = ["ipt.an", "ipt.hn", "ipt.vn"];
+        if (allowedColumns.indexOf(columnName) < 0) {
+            throw new Error('Invalid columnName');
+        }
         const sql = `
               select 
                   (select hospitalcode from opdconfig) as hospcode,
@@ -636,9 +640,9 @@ class ThaiReferModel {
               
               where 
                   (ipt.an is not null or ipt.an <> '') 
-                  and ${columnName}="${searchNo}"
+                  and ?? = ?
               `;
-        const result = await db.raw(sql);
+        const result = await db.raw(sql, [columnName, searchNo]);
         return result[0];
     }
     async getDiagnosisIpd(db, an, hospCode = hcode) {
