@@ -2,8 +2,8 @@
 
 ## การติดตั้ง
 
-- คู่มือการติดตั้งด้วย NodeJS [เอกสารขั้นตอนการติดตั้ง API](https://connect.moph.go.th/pher-plus/#/main/api-installation)
-- Link สำหรับการติดตั้งด้วย Docker [HIS Connect Docker](https://hub.docker.com/r/superpck/his-connect)
+1.ติดตั้งด้วย Docker จาก [HIS Connect Docker Hub](https://hub.docker.com/r/superpck/his-connect) (แนะนำ)
+2.คู่มือการติดตั้งด้วย NodeJS [เอกสารขั้นตอนการติดตั้ง API](https://connect.moph.go.th/pher-plus/#/main/api-installation)
 
 # ข้อควรระวัง
 
