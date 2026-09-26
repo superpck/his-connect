@@ -1,3 +1,9 @@
+# 3.11.0
+## Feature
+  - ลบ Route และ Model ระบบ IsOnline v.2 ออก เพื่อเพิ่มความปลอดภัย
+  - เพิ่มการตรวจสอบการเข้าใช้งานจาก PHER+ ก่อนออก token ใช้งาน
+  - เปลี่ยน raw sql ของบาง provider เพื่อป้องกัน sql injection
+
 # 3.10.3
 ## Feature
   - เพิ่มการ Compress json ขารับ request เพื่อลดการใช้ bandwidth
