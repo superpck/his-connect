@@ -1,18 +1,19 @@
-# HIS Connection API สำหรับ nRefer, ISOnline, และ PHER Plus
+# HIS Connection API สำหรับ nRefer, และ PHER Plus
 
 ## การติดตั้ง
 
-1.ติดตั้งด้วย Docker จาก [HIS Connect Docker Hub](https://hub.docker.com/r/superpck/his-connect) (แนะนำ)
-2.คู่มือการติดตั้งด้วย NodeJS [เอกสารขั้นตอนการติดตั้ง API](https://connect.moph.go.th/pher-plus/#/main/api-installation)
+- ติดตั้งด้วย Docker จาก [MOPH HIS Connect Docker](https://hub.docker.com/r/superpck/his-connect) (แนะนำ)
+- คู่มือการติดตั้งด้วย NodeJS [เอกสารขั้นตอนการติดตั้ง API](https://connect.moph.go.th/pher-plus/#/main/api-installation)
 
 # ข้อควรระวัง
 
 ```
 3.1 user/password ที่เข้าถึงฐานข้อมูล ควรให้สิทธิ์ select อย่างเดียว
 3.2 ควรติดตั้ง API บน IP ภายในเครือข่ายเท่านั้น (Private IP)
-3.3 ไม่ควรติดตั้ง API บนเครื่องที่มีผู้ใช้งานเข้าถึงได้ง่าย เพื่อป้องกันอ่าน file config
-3.4 เพื่อความปลอดภัยในการเข้าถึงฐานข้อมูลส่วนกลาง ควรมีการเปลี่ยนรหัสสำหรับการส่งข้อมูลส่วนกลาง (API Secret Key) ทุก 3-6 เดือน
-3.5 ควรยกเลิกการใช้งาน username ที่มีการย้ายหน่วยงาน หรือ ที่ไม่ใช้งานแล้ว
+3.3 ไม่ควรติดตั้งระบบที่สามารถเข้าใช้งานจากนอกหน่วยงานได้ เช่น public ip หรือ reverse proxy
+3.4 ไม่ควรติดตั้ง API บนเครื่องที่มีผู้ใช้งานเข้าถึงได้ง่าย เพื่อป้องกันอ่าน file config
+3.5 เพื่อความปลอดภัยในการเข้าถึงฐานข้อมูลส่วนกลาง ควรมีการเปลี่ยนรหัสสำหรับการส่งข้อมูลส่วนกลาง (API Secret Key) ทุก 3-6 เดือน
+3.6 ควรยกเลิกการใช้งาน username ที่มีการย้ายหน่วยงาน หรือ ที่ไม่ใช้งานแล้ว
 ```
 
 # ความปลอดภัย (Security)
