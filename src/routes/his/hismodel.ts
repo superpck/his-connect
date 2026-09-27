@@ -85,4 +85,6 @@ switch (hisProvider) {
     hisModel = new (require(modelPath + '/his').HisModel)();
 }
 
+export const HisConnect = hisModel;
+
 export default hisModel;

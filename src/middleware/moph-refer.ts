@@ -303,17 +303,17 @@ export const checkSignInCode = async (code: string) => {
 
 export const checkLoginCode = async (code: string): Promise<APIResponse> => {
   const hospCode = process.env.HOSPCODE;
-
   if (!hospCode || !code) {
     return { statusCode: 400, message: 'No hospCode or code' };
   }
 
   const url =
-    `${pherAPIUrl}/his-connect/login/check-his-login-code/` +
+    `${pherAPIUrl}/login/check-his-login-code/` +
     `${encodeURIComponent(hospCode)}/${encodeURIComponent(code)}`;
 
   try {
     const { data } = await axios.get<APIResponse>(url);
+    console.log('checkLoginCode response:', data);
     return data;
   } catch (error) {
     console.error('checkLoginCode error:', getErrorMessage(error));

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.HisConnect = void 0;
 console.log('HIS Provider:', process.env.HIS_PROVIDER);
 const hisProvider = (process.env.HIS_PROVIDER || 'unknown-his').toLowerCase();
 const modelPath = '../../models/his';
@@ -84,4 +85,5 @@ switch (hisProvider) {
     default:
         hisModel = new (require(modelPath + '/his').HisModel)();
 }
+exports.HisConnect = hisModel;
 exports.default = hisModel;

@@ -202,17 +202,17 @@ class HisIHospitalModel {
         }
     }
     async getDiagnosisOpdVWXY(db, date) {
-        let sql = `SELECT hn, vn AS visitno, view_opd_dx.date, diag AS diagcode
-                , view_opd_dx.desc AS diag_name, short_eng AS en, short_thi AS thi
-                , view_opd_dx.type AS diag_type, dr_dx AS dr
-                , "IT" as codeset, lastupdate as d_update
-            FROM view_opd_dx WHERE vn IN (
-                SELECT vn FROM view_opd_dx 
-                WHERE date= ? AND LEFT(diag,1) IN ('V','W','X','Y'))
-                AND LEFT(diag,1) IN ('S','T','V','W','X','Y')
-            ORDER BY vn, type, lastupdate LIMIT ${maxLimit}`;
-        const result = await db.raw(sql, [date]);
-        return result[0];
+        let subQuery = db('view_opd_dx')
+            .select('vn')
+            .where('date', date)
+            .whereRaw(`LEFT(diag,1) IN ('V','W','X','Y')`);
+        let query = db('view_opd_dx').whereIn('vn', subQuery)
+            .whereRaw(`LEFT(diag,1) IN ('S','T','V','W','X','Y')`);
+        return await query.select('hn', 'vn AS visitno', 'view_opd_dx.date', 'diag AS diagcode', 'view_opd_dx.desc AS diag_name', 'short_eng AS en', 'short_thi AS thi', 'view_opd_dx.type AS diag_type', 'dr_dx AS dr', db.raw(' "IT" as codeset'), 'lastupdate as d_update')
+            .orderBy('vn')
+            .orderBy('type')
+            .orderBy('lastupdate')
+            .limit(maxLimit);
     }
     async getDiagnosisSepsisOpd(db, dateStart, dateEnd) {
         let sql = `SELECT hn, vn AS visitno, view_opd_dx.date, diag AS diagcode
