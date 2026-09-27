@@ -10,9 +10,11 @@ package-lock.json
 bower_components/*
 /config
 /temp
+.vscode
 .DS_Store
 .idea
 .env
+.venv
 *.db
 data/
 *.sh
