@@ -198,7 +198,7 @@ export class HisHosxpv3Model {
       .orderBy('ward.ward');
 
     result.forEach((item: any) => {
-      if (!item.bedcount || item.bedcount == 0){
+      if (!item.bedcount || item.bedcount == 0) {
         item.active_bed = Number(item.active_bed);
         item.inactive_bed = Number(item.inactive_bed);
         item.bedcount = item.active_bed;
@@ -1602,44 +1602,81 @@ export class HisHosxpv3Model {
   }
 
   async getAccident(db: Knex, visitNo, hospCode = hisHospcode) {
-    const sql = `
-            select 
-                (select hospitalcode from opdconfig) as hospcode,
-                o.hn, o.hn as pid, p.cid,
-                q.seq_id, q.vn as seq,
-                date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_serv,
-                date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_ae,
-                CASE WHEN d.er_accident_type_id IS NULL THEN '' ELSE d.er_accident_type_id,2,'0') END AS aetype,
-                CASE WHEN vt.export_code IS NULL THEN '1' ELSE vt.export_code END AS typein_ae,
-                CASE WHEN d.accident_person_type_id IS NULL THEN '9' ELSE d.accident_person_type_id END AS traffic,
-                CASE WHEN tt.export_code IS NULL THEN '99' ELSE tt.export_code END AS vehicle,
-                CASE WHEN d.accident_alcohol_type_id IS NULL THEN '9' ELSE d.accident_alcohol_type_id END AS alcohol,
-                CASE WHEN d.accident_drug_type_id IS NULL THEN '9' ELSE d.accident_drug_type_id END AS nacrotic_drug,
-                CASE WHEN d.accident_belt_type_id IS NULL THEN '9' ELSE d.accident_belt_type_id END AS belt,
-                CASE WHEN d.accident_helmet_type_id IS NULL THEN '9' ELSE d.accident_helmet_type_id END AS helmet,
-                CASE WHEN d.accident_airway_type_id IS NULL THEN '3' ELSE d.accident_airway_type_id END AS airway,
-                CASE WHEN d.accident_bleed_type_id IS NULL THEN '3' ELSE d.accident_bleed_type_id END AS stopbleed,
-                CASE WHEN d.accident_splint_type_id IS NULL THEN '3' ELSE d.accident_splint_type_id END AS splint,
-                CASE WHEN d.accident_fluid_type_id IS NULL THEN '3' ELSE d.accident_fluid_type_id END AS fluid,
-                CASE WHEN d.er_emergency_type IS NULL THEN '6' ELSE d.er_emergency_type END AS urgency,
-                IF (d.gcs_e IN (1, 2, 3, 4),d.gcs_e,'4') coma_eye,
-                IF (d.gcs_v IN (1, 2, 3, 4, 5),d.gcs_v,'5') coma_speak,
-                IF (d.gcs_m IN (1, 2, 3, 4, 5, 6),d.gcs_m,'6') coma_movement,
-                date_format(now(), '%Y-%m-%d %H:%i:%s') d_update
-            FROM
-                er_regist er
-            LEFT JOIN ovst o ON er.vn = o.vn
-            LEFT JOIN er_pt_type t ON t.er_pt_type = er.er_pt_type
-            LEFT JOIN ovst_seq q ON o.vn = q.vn
-            LEFT JOIN patient pt ON pt.hn = o.hn
-            LEFT JOIN person p ON p.patient_hn = pt.hn
-            LEFT JOIN er_nursing_detail d ON er.vn = d.vn
-            LEFT JOIN er_nursing_visit_type vt ON vt.visit_type = d.visit_type
-            LEFT JOIN accident_transport_type tt ON tt.accident_transport_type_id = d.accident_transport_type_id
-            where q.vn = ?
-            `;
-    const result = await db.raw(sql, [visitNo]);
-    return result[0];
+    // const sql = `
+    //         select 
+    //             (select hospitalcode from opdconfig) as hospcode,
+    //             o.hn, o.hn as pid, p.cid,
+    //             q.seq_id, q.vn as seq,
+    //             date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_serv,
+    //             date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_ae,
+    //             CASE WHEN d.er_accident_type_id IS NULL THEN '' ELSE d.er_accident_type_id,2,'0') END AS aetype,
+    //             CASE WHEN vt.export_code IS NULL THEN '1' ELSE vt.export_code END AS typein_ae,
+    //             CASE WHEN d.accident_person_type_id IS NULL THEN '9' ELSE d.accident_person_type_id END AS traffic,
+    //             CASE WHEN tt.export_code IS NULL THEN '99' ELSE tt.export_code END AS vehicle,
+    //             CASE WHEN d.accident_alcohol_type_id IS NULL THEN '9' ELSE d.accident_alcohol_type_id END AS alcohol,
+    //             CASE WHEN d.accident_drug_type_id IS NULL THEN '9' ELSE d.accident_drug_type_id END AS nacrotic_drug,
+    //             CASE WHEN d.accident_belt_type_id IS NULL THEN '9' ELSE d.accident_belt_type_id END AS belt,
+    //             CASE WHEN d.accident_helmet_type_id IS NULL THEN '9' ELSE d.accident_helmet_type_id END AS helmet,
+    //             CASE WHEN d.accident_airway_type_id IS NULL THEN '3' ELSE d.accident_airway_type_id END AS airway,
+    //             CASE WHEN d.accident_bleed_type_id IS NULL THEN '3' ELSE d.accident_bleed_type_id END AS stopbleed,
+    //             CASE WHEN d.accident_splint_type_id IS NULL THEN '3' ELSE d.accident_splint_type_id END AS splint,
+    //             CASE WHEN d.accident_fluid_type_id IS NULL THEN '3' ELSE d.accident_fluid_type_id END AS fluid,
+    //             CASE WHEN d.er_emergency_type IS NULL THEN '6' ELSE d.er_emergency_type END AS urgency,
+    //             IF (d.gcs_e IN (1, 2, 3, 4),d.gcs_e,'4') coma_eye,
+    //             IF (d.gcs_v IN (1, 2, 3, 4, 5),d.gcs_v,'5') coma_speak,
+    //             IF (d.gcs_m IN (1, 2, 3, 4, 5, 6),d.gcs_m,'6') coma_movement,
+    //             date_format(now(), '%Y-%m-%d %H:%i:%s') d_update
+    //         FROM
+    //             er_regist er
+    //         LEFT JOIN ovst o ON er.vn = o.vn
+    //         LEFT JOIN er_pt_type t ON t.er_pt_type = er.er_pt_type
+    //         LEFT JOIN ovst_seq q ON o.vn = q.vn
+    //         LEFT JOIN patient pt ON pt.hn = o.hn
+    //         LEFT JOIN person p ON p.patient_hn = pt.hn
+    //         LEFT JOIN er_nursing_detail d ON er.vn = d.vn
+    //         LEFT JOIN er_nursing_visit_type vt ON vt.visit_type = d.visit_type
+    //         LEFT JOIN accident_transport_type tt ON tt.accident_transport_type_id = d.accident_transport_type_id
+    //         where q.vn = ?
+    //         `;
+    // const result = await db.raw(sql, [visitNo]);
+    // return result[0];
+
+    let query = db('er_regist er')
+      .leftJoin('ovst as o', 'er.vn', 'o.vn')
+      .leftJoin('er_pt_type as t', 't.er_pt_type', 'er.er_pt_type')
+      .leftJoin('ovst_seq as q', 'o.vn', 'q.vn')
+      .leftJoin('patient as pt', 'pt.hn', 'o.hn')
+      .leftJoin('person as p', 'p.patient_hn', 'pt.hn')
+      .leftJoin('er_nursing_detail as d', 'er.vn', 'd.vn')
+      .leftJoin('er_nursing_visit_type as vt', 'vt.visit_type', 'd.visit_type')
+      .leftJoin('accident_transport_type as tt', 'tt.accident_transport_type_id', 'd.accident_transport_type_id')
+      .select(db.raw('(select hospitalcode from opdconfig) as hospcode'),
+        'o.hn',
+        'o.hn as pid',
+        'p.cid',
+        'q.seq_id',
+        'q.vn as seq',
+        db.raw("date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_serv"),
+        db.raw("date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_ae"),
+        db.raw('CASE WHEN d.er_accident_type_id IS NULL THEN \'\' ELSE lpad(d.er_accident_type_id,2,\'0\') END as aetype'),
+        db.raw('CASE WHEN vt.export_code IS NULL THEN \'1\' ELSE vt.export_code END as typein_ae'),
+        db.raw('CASE WHEN d.accident_person_type_id IS NULL THEN \'9\' ELSE d.accident_person_type_id END as traffic'),
+        db.raw('CASE WHEN tt.export_code IS NULL THEN \'99\' ELSE tt.export_code END as vehicle'),
+        db.raw('CASE WHEN d.accident_alcohol_type_id IS NULL THEN \'9\' ELSE d.accident_alcohol_type_id END as alcohol'),
+        db.raw('CASE WHEN d.accident_drug_type_id IS NULL THEN \'9\' ELSE d.accident_drug_type_id END as nacrotic_drug'),
+        db.raw('CASE WHEN d.accident_belt_type_id IS NULL THEN \'9\' ELSE d.accident_belt_type_id END as belt'),
+        db.raw('CASE WHEN d.accident_helmet_type_id IS NULL THEN \'9\' ELSE d.accident_helmet_type_id END as helmet'),
+        db.raw('CASE WHEN d.accident_airway_type_id IS NULL THEN \'3\' ELSE d.accident_airway_type_id END as airway'),
+        db.raw('CASE WHEN d.accident_bleed_type_id IS NULL THEN \'3\' ELSE d.accident_bleed_type_id END as stopbleed'),
+        db.raw('CASE WHEN d.accident_splint_type_id IS NULL THEN \'3\' ELSE d.accident_splint_type_id END as splint'),
+        db.raw('CASE WHEN d.accident_fluid_type_id IS NULL THEN \'3\' ELSE d.accident_fluid_type_id END as fluid'),
+        db.raw('CASE WHEN d.er_emergency_type IS NULL THEN \'6\' ELSE d.er_emergency_type END as urgency'),
+        db.raw('IF (d.gcs_e IN (1, 2, 3, 4),d.gcs_e,\'4\') as coma_eye'),
+        db.raw('IF (d.gcs_v IN (1, 2, 3, 4, 5),d.gcs_v,\'5\') as coma_speak'),
+        db.raw('IF (d.gcs_m IN (1, 2, 3, 4, 5, 6),d.gcs_m,\'6\') as coma_movement'),
+        db.raw("date_format(now(), '%Y-%m-%d %H:%i:%s') as d_update")
+      );
+    return await query.where('q.vn', visitNo);
   }
 
   async getDrugAllergy__(db: Knex, hn, hospCode = hisHospcode) {
@@ -1762,7 +1799,7 @@ export class HisHosxpv3Model {
       .select([
         db.raw("? AS hospcode", [hisHospcode]),
         db.raw("oapp_id AS appointment_id"),
-        "o.hn", "o.an", "o.vn", "o.visit_vn",'p.cid',
+        "o.hn", "o.an", "o.vn", "o.visit_vn", 'p.cid',
         db.raw("CASE WHEN o.patient_visit = 'Y' THEN 1 ELSE 0 END AS isvisited"),
         // db.raw("o.vstdate AS visit_date"),
         db.raw("concat(o.vstdate,' ',ovst.vsttime) AS visit_date"),
