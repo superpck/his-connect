@@ -5,6 +5,7 @@ Dockerfile
 
 # Git files
 .git
+.github
 .gitignore
 .gitattributes
 
