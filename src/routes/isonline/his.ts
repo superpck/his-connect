@@ -25,6 +25,9 @@ import { Jwt } from './../../plugins/jwt';
 import moment = require('moment');
 var jwt = new Jwt();
 
+import HisConnect from '../his/hismodel';
+const hisConnect = HisConnect;
+
 const provider = process.env.HIS_PROVIDER.toLowerCase();
 let hisModel: any;
 
@@ -244,7 +247,8 @@ const router = (fastify, { }, next) => {
     let where: any = req.body.where;
     if (visitNo) {
       try {
-        const rows = await hisModel.getOpdServiceByVN(global.dbHIS, visitNo, where);
+        // const rows = await hisModel.getOpdServiceByVN(global.dbHIS, visitNo, where);
+        const rows = await hisConnect.getService(global.dbHIS, 'visitNo', visitNo);
         res.send({ statusCode: StatusCodes.OK, rows });
       } catch (error) {
         console.log('opd-service-by-vn', error.message);
@@ -293,7 +297,7 @@ const router = (fastify, { }, next) => {
   fastify.post('/opd-diagnosis-vwxy', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
     let date: any = req.body.date || moment().format('YYYY-MM-DD');
     try {
-      const rows = await hisModel.getDiagnosisOpdVWXY(global.dbHIS, date);
+      const rows = await hisConnect.getDiagnosisOpdVWXY(global.dbHIS, date);
       res.send({ statusCode: StatusCodes.OK, rows });
     } catch (error) {
       console.log('opd-diagnosis-vwxy', error.message);

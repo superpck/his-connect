@@ -3,7 +3,7 @@ import moment from 'moment';
 const crypto = require('crypto');
 
 import { IsLoginModel } from '../../models/isonline/login';
-import { checkSignInCode, checkLoginCode } from '../../middleware/moph-refer';
+import { checkLoginCode } from '../../middleware/moph-refer';
 const loginModel = new IsLoginModel()
 
 const router = (fastify, { }, next) => {
@@ -12,16 +12,8 @@ const router = (fastify, { }, next) => {
     let loginCode = body.loginCode;
     if (loginCode) {
       try {
-        const validCode = await checkSignInCode(loginCode);
-        if (!validCode) {
-          return res.send({
-            statusCode: StatusCodes.UNAUTHORIZED,
-            message: 'Invalid or expired code'
-          });
-        }
-
         const data = await checkLoginCode(loginCode);
-        if (data && data.statusCode === 200) {
+        if (data && (data.statusCode === 200 || data.status === 200 || data.status === 1)) {
           let today = moment().format('YYYY-MM-DD HH:mm:ss');
           let expire = moment().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
           const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
@@ -38,7 +30,7 @@ const router = (fastify, { }, next) => {
           });
         } else {
           return res.send({
-            statusCode: StatusCodes.BAD_REQUEST,
+            statusCode: data?.statusCode || data?.status || StatusCodes.BAD_REQUEST,
             message: 'Invalid login code'
           });
         }

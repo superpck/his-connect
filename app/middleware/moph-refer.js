@@ -324,10 +324,11 @@ const checkLoginCode = async (code) => {
     if (!hospCode || !code) {
         return { statusCode: 400, message: 'No hospCode or code' };
     }
-    const url = `${pherAPIUrl}/his-connect/login/check-his-login-code/` +
+    const url = `${pherAPIUrl}/login/check-his-login-code/` +
         `${encodeURIComponent(hospCode)}/${encodeURIComponent(code)}`;
     try {
         const { data } = await axios_1.default.get(url);
+        console.log('checkLoginCode response:', data);
         return data;
     }
     catch (error) {

@@ -15,15 +15,8 @@ const router = (fastify, {}, next) => {
         let loginCode = body.loginCode;
         if (loginCode) {
             try {
-                const validCode = await (0, moph_refer_1.checkSignInCode)(loginCode);
-                if (!validCode) {
-                    return res.send({
-                        statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED,
-                        message: 'Invalid or expired code'
-                    });
-                }
                 const data = await (0, moph_refer_1.checkLoginCode)(loginCode);
-                if (data && data.statusCode === 200) {
+                if (data && (data.statusCode === 200 || data.status === 200 || data.status === 1)) {
                     let today = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss');
                     let expire = (0, moment_1.default)().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
                     const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
@@ -41,7 +34,7 @@ const router = (fastify, {}, next) => {
                 }
                 else {
                     return res.send({
-                        statusCode: http_status_codes_1.StatusCodes.BAD_REQUEST,
+                        statusCode: data?.statusCode || data?.status || http_status_codes_1.StatusCodes.BAD_REQUEST,
                         message: 'Invalid login code'
                     });
                 }

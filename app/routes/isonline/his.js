@@ -26,6 +26,8 @@ const his_haos_model_1 = require("../../models/isonline/his_haos.model");
 const jwt_1 = require("./../../plugins/jwt");
 const moment = require("moment");
 var jwt = new jwt_1.Jwt();
+const hismodel_1 = __importDefault(require("../his/hismodel"));
+const hisConnect = hismodel_1.default;
 const provider = process.env.HIS_PROVIDER.toLowerCase();
 let hisModel;
 switch (provider) {
@@ -98,7 +100,7 @@ switch (provider) {
     default:
         hisModel = new his_model_1.HisModel();
 }
-const hismodel_1 = __importDefault(require("./../his/hismodel"));
+const hismodel_2 = __importDefault(require("./../his/hismodel"));
 const his_mitnet_1 = require("../../models/his/his_mitnet");
 const his_vpm_1 = require("../../models/his/his_vpm");
 const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb',
@@ -108,7 +110,7 @@ const router = (fastify, {}, next) => {
     fastify.get('/alive', async (req, res) => {
         let result;
         try {
-            result = await hismodel_1.default.testConnect(global.dbHIS);
+            result = await hismodel_2.default.testConnect(global.dbHIS);
         }
         catch (error) {
         }
@@ -242,7 +244,7 @@ const router = (fastify, {}, next) => {
         let where = req.body.where;
         if (visitNo) {
             try {
-                const rows = await hisModel.getOpdServiceByVN(global.dbHIS, visitNo, where);
+                const rows = await hisConnect.getService(global.dbHIS, 'visitNo', visitNo);
                 res.send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
             }
             catch (error) {
@@ -292,7 +294,7 @@ const router = (fastify, {}, next) => {
     fastify.post('/opd-diagnosis-vwxy', { preHandler: [fastify.authenticate] }, async (req, res) => {
         let date = req.body.date || moment().format('YYYY-MM-DD');
         try {
-            const rows = await hisModel.getDiagnosisOpdVWXY(global.dbHIS, date);
+            const rows = await hisConnect.getDiagnosisOpdVWXY(global.dbHIS, date);
             res.send({ statusCode: http_status_codes_1.StatusCodes.OK, rows });
         }
         catch (error) {
