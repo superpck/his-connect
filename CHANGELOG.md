@@ -4,6 +4,7 @@
   - เพิ่มการตรวจสอบการเข้าใช้งานจาก PHER+ ก่อนออก token ใช้งาน
   - เปลี่ยน raw sql ของบาง provider เพื่อป้องกัน sql injection
   - ลบ route และ model ที่ไม่ได้ใช้งาน
+  - ปรับ SQL รองรับแฟ้ม accident
   - Update package
 
 # 3.10.3
