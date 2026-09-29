@@ -19,6 +19,7 @@ var crypto = require('crypto');
 const utils_1 = require("./utils/utils");
 const authenticate_1 = require("./middleware/authenticate");
 const stream_1 = require("stream");
+const mqtt_1 = require("./middleware/mqtt");
 const helmet = require("@fastify/helmet");
 var serverOption = {};
 if (process.env.SSL_ENABLE && process.env.SSL_ENABLE == '1' && process.env.SSL_KEY) {
@@ -163,6 +164,7 @@ var options = {
 };
 (async () => {
     await connectDB();
+    await mqttSubscribe();
     app.listen(options, (err) => {
         if (err)
             throw err;
@@ -239,4 +241,11 @@ async function isIPInSubnet(ip) {
     localIP = (localIP?.ip || '').split('.');
     const isValidIP = ip.includes(localIP.slice(0, 3).join('.'));
     return isValidIP;
+}
+const mqtt = new mqtt_1.Mqtt();
+async function mqttSubscribe() {
+    const instanceNo = process.env.NODE_APP_INSTANCE;
+    if (instanceNo == '0') {
+        await mqtt.mqttSubscribe();
+    }
 }
