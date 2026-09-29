@@ -10,16 +10,18 @@ const login_1 = require("../../models/isonline/login");
 const moph_refer_1 = require("../../middleware/moph-refer");
 const loginModel = new login_1.IsLoginModel();
 const router = (fastify, {}, next) => {
-    fastify.post('/login-by-code', async (req, res) => {
+    fastify.post('/login-by-code', {
+        config: { rateLimit: { max: 10, timeWindow: '1 minute' } }
+    }, async (req, res) => {
         let body = req.body;
-        let loginCode = body.loginCode;
-        if (loginCode) {
+        let loginCode = body?.loginCode;
+        if (typeof loginCode === 'string' && loginCode.trim().length > 0 && loginCode.length <= 128) {
             try {
                 const data = await (0, moph_refer_1.checkLoginCode)(loginCode);
                 if (data && (data.statusCode === 200 || data.status === 200 || data.status === 1)) {
                     let today = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss');
                     let expire = (0, moment_1.default)().add(3, 'hours').format('YYYY-MM-DD HH:mm:ss');
-                    const tokenKey = crypto.createHash('md5').update(today + expire).digest('hex');
+                    const tokenKey = crypto.randomBytes(32).toString('hex');
                     const payload = {
                         hcode: process.env.HOSPCODE,
                         tokenKey: tokenKey,
@@ -42,8 +44,8 @@ const router = (fastify, {}, next) => {
             catch (error) {
                 console.error('login-by-code error:', error.message);
                 return res.send({
-                    statusCode: error?.status || 500,
-                    message: error.message
+                    statusCode: 500,
+                    message: 'Login failed, please try again later'
                 });
             }
         }
@@ -56,7 +58,7 @@ const router = (fastify, {}, next) => {
     });
     fastify.post('/token-status/:tokenKey', { preHandler: [fastify.authenticate] }, async (req, res) => {
         let tokenKey = req.params.tokenKey;
-        if (tokenKey) {
+        if (tokenKey && req.user?.tokenKey && req.user.tokenKey === tokenKey) {
             try {
                 const result = await loginModel.checkToken(global.dbISOnline, tokenKey);
                 if (result.length) {
@@ -87,15 +89,17 @@ const router = (fastify, {}, next) => {
         }
         else {
             res.send({
-                statusCode: http_status_codes_1.StatusCodes.BAD_REQUEST,
-                status: http_status_codes_1.StatusCodes.BAD_REQUEST,
+                statusCode: http_status_codes_1.StatusCodes.FORBIDDEN,
+                status: http_status_codes_1.StatusCodes.FORBIDDEN,
                 ok: false,
-                message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.BAD_REQUEST)
+                message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.FORBIDDEN)
             });
         }
     });
     fastify.post('/token-status__/:tokenKey', { preHandler: [fastify.authenticate] }, async (req, res) => {
-        verifyToken(req, res);
+        if (!(await verifyToken(req, res))) {
+            return;
+        }
         let tokenKey = req.params.tokenKey;
         if (tokenKey) {
             loginModel.checkToken(global.dbISOnline, tokenKey)

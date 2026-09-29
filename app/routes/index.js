@@ -36,7 +36,9 @@ const router = (fastify, {}, next) => {
         };
         reply.send(res);
     });
-    fastify.get('/create-token/:source/:key/:code', async (req, reply) => {
+    fastify.get('/create-token/:source/:key/:code', {
+        config: { rateLimit: { max: 10, timeWindow: '1 minute' } }
+    }, async (req, reply) => {
         const code = req.params.code || '';
         const validCode = await (0, moph_refer_1.checkSignInCode)(code);
         if (!validCode) {
@@ -56,7 +58,9 @@ const router = (fastify, {}, next) => {
             reply.status(http_status_codes_1.StatusCodes.UNAUTHORIZED).send({ ok: false, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED) });
         }
     });
-    fastify.get('/get-token/:key/:code', async (req, reply) => {
+    fastify.get('/get-token/:key/:code', {
+        config: { rateLimit: { max: 10, timeWindow: '1 minute' } }
+    }, async (req, reply) => {
         const source = '';
         const key = req.params.key;
         const code = req.params.code || '';
@@ -84,7 +88,9 @@ const router = (fastify, {}, next) => {
             reply.status(http_status_codes_1.StatusCodes.UNAUTHORIZED).send({ ok: false, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED) });
         }
     });
-    fastify.get('/sign-token/:requestKey/:code', async (req, reply) => {
+    fastify.get('/sign-token/:requestKey/:code', {
+        config: { rateLimit: { max: 10, timeWindow: '1 minute' } }
+    }, async (req, reply) => {
         const code = req.params.code || '';
         const validCode = await (0, moph_refer_1.checkSignInCode)(code);
         if (!validCode) {
@@ -135,12 +141,18 @@ const router = (fastify, {}, next) => {
         const requestKey = req.params.requestKey || '??';
         const status = req.body.status || 0;
         const province = req.body.province || 0;
-        var hashRequestKey = crypto.createHash('md5').update(process.env.REQUEST_KEY).digest('hex');
-        if (req.body.requestKey
-            && requestKey === hashRequestKey
+        if (isValidRequestKey(requestKey)
+            && isValidRequestKey(req.body.requestKey)
             && ((+status === 15 && +province === 0)
                 || ((+status === 25 || +status === 35) && +province === 1))) {
-            reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, config: process.env });
+            try {
+                const config = await readSafeConfig();
+                reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, config });
+            }
+            catch (error) {
+                console.error('get-config error:', error.message);
+                reply.status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR).send({ statusCode: http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, message: 'Unable to read config' });
+            }
         }
         else {
             reply.status(http_status_codes_1.StatusCodes.UNAUTHORIZED).send({ statusCode: http_status_codes_1.StatusCodes.UNAUTHORIZED, message: (0, http_status_codes_1.getReasonPhrase)(http_status_codes_1.StatusCodes.UNAUTHORIZED) });
@@ -150,11 +162,14 @@ const router = (fastify, {}, next) => {
         const requestKey = req.params.requestKey || '??';
         const province = req.body.province || 0;
         const userInfo = req.body.userInfo;
-        const body = req.body;
-        var hashRequestKey = crypto.createHash('md5').update(process.env.REQUEST_KEY).digest('hex');
-        if (userInfo && req.body.requestKey === hashRequestKey && requestKey === hashRequestKey
+        if (userInfo && isValidRequestKey(req.body.requestKey) && isValidRequestKey(requestKey)
             && ((+userInfo.status === 15 && +province === 0)
                 || ((+userInfo.status === 25 || +userInfo.status === 35) && +province === 1))) {
+            const body = sanitizeConfigBody(req.body);
+            if (!body) {
+                reply.status(http_status_codes_1.StatusCodes.BAD_REQUEST).send({ statusCode: http_status_codes_1.StatusCodes.BAD_REQUEST, message: 'Invalid config value' });
+                return;
+            }
             const configFileName = 'config';
             const configFileNameBak = configFileName + '_' +
                 (0, moment_1.default)().locale('th').format('YYYYMMDD_HHmmss') + '.bak';
@@ -274,12 +289,60 @@ const router = (fastify, {}, next) => {
             });
         }
         catch (error) {
+            console.error('autosent-result error:', error.message);
             reply.status(http_status_codes_1.StatusCodes.NO_CONTENT).send({
                 statusCode: http_status_codes_1.StatusCodes.NO_CONTENT,
-                message: error.message
+                message: 'Result not available'
             });
         }
     });
+    const CONFIG_SECTIONS = ['hosp', 'api', 'db_his', 'db_refer', 'db_is', 'nrefer', 'notify', 'jwt'];
+    const CONFIG_KEY_PATTERN = /^[A-Za-z0-9_]{1,64}$/;
+    const CONFIG_UNSAFE_VALUE_PATTERN = /[\r\n[\]]/;
+    const SENSITIVE_CONFIG_KEY_PATTERN = /PASSWORD|SECRET|APIKEY|API_KEY|_KEY$|TOKEN/i;
+    function sanitizeConfigBody(rawBody) {
+        const sanitized = {};
+        for (const section of CONFIG_SECTIONS) {
+            const raw = rawBody?.[section];
+            if (raw === undefined || raw === null) {
+                sanitized[section] = {};
+                continue;
+            }
+            if (typeof raw !== 'object' || Array.isArray(raw)) {
+                return null;
+            }
+            const cleanSection = {};
+            for (const key of Object.keys(raw)) {
+                const value = raw[key];
+                if (!CONFIG_KEY_PATTERN.test(key)
+                    || (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean')
+                    || CONFIG_UNSAFE_VALUE_PATTERN.test(String(value))) {
+                    return null;
+                }
+                cleanSection[key] = String(value);
+            }
+            sanitized[section] = cleanSection;
+        }
+        return sanitized;
+    }
+    async function readSafeConfig() {
+        const raw = await fs.promises.readFile('config', 'utf-8');
+        const result = {};
+        for (const line of raw.split(/\r?\n/)) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('//') || trimmed.startsWith('[')) {
+                continue;
+            }
+            const idx = trimmed.indexOf('=');
+            if (idx === -1) {
+                continue;
+            }
+            const key = trimmed.slice(0, idx).trim();
+            const value = trimmed.slice(idx + 1).trim();
+            result[key] = SENSITIVE_CONFIG_KEY_PATTERN.test(key) ? '••••••' : value;
+        }
+        return result;
+    }
     async function saveConfig(ip, body, userInfo, configFileName, configFileNameBak) {
         return new Promise(async (resolve, reject) => {
             let content = "// FIle: " + configFileName + "\r\n";
