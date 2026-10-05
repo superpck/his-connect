@@ -15,7 +15,7 @@ class Mqtt {
                 return false;
             }
             try {
-                const url = process.env.MQTT_url || 'https://referlink.moph.go.th/api/mqtt';
+                const url = process.env.MQTT_url || 'https://connect.moph.go.th/api/mqtt';
                 const options = {
                     url: `${url}/subscribe`,
                     method: 'POST',
@@ -29,7 +29,7 @@ class Mqtt {
                     }
                 };
                 const { status, data } = await (0, axios_1.default)(options);
-                if (status === 200) {
+                if (data?.statusCode === 200) {
                 }
                 else {
                 }

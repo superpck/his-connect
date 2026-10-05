@@ -1,3 +1,7 @@
+# 3.11.1
+## Feature
+  - ย้ายการ select data ของ isonline ไปที่ his model
+
 # 3.11.0
 ## Feature
   - ลบ Route และ Model ระบบ IsOnline v.2 ออก เพื่อเพิ่มความปลอดภัย

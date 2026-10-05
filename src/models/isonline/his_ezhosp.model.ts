@@ -9,7 +9,7 @@ export class HisEzhospModel {
         return true;
     }
 
-    getTableName(db: Knex, dbname = dbName) {
+    getTableName__(db: Knex, dbname = dbName) {
         const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'table_schema';
         return db('information_schema.tables')
             .where(whereDB, dbname);
@@ -21,7 +21,7 @@ export class HisEzhospModel {
             .where('table_schema', '=', dbname);
     }
 
-    async testConnect(db: Knex) {
+    async testConnect__(db: Knex) {
         let result: any;
         result = await global.dbHIS('hospdata.sys_hospital').first();
         const hospname = result?.hname || null;
@@ -60,7 +60,10 @@ export class HisEzhospModel {
             'lastupdate as d_update');
     }
 
-    getOpdService(db: Knex, hn, date, columnName = '', searchText = '') {
+    getOpdService(db: Knex, hn: any, date: any, columnName = '', searchText: any) {
+        if (!hn || !date) {
+            throw new Error('Missing parameter for search');
+        }
         columnName = columnName == 'visitNo' ? 'visit.vn' : `visit.${columnName}`;
         let where: any = {};
         if (hn) where['visit.hn'] = hn;
@@ -110,7 +113,7 @@ export class HisEzhospModel {
             .limit(maxLimit);
     }
 
-    getDiagnosisOpd(knex, visitno) {
+    getDiagnosisOpd__(knex, visitno) {
         return knex('view_opd_dx as dx')
             .select('vn as visitno', 'diag as diagcode', 'desc as diag_name',
                 'short_eng as en', 'short_thi as thi',
@@ -122,7 +125,7 @@ export class HisEzhospModel {
         //     , 'update_datetime as d_update')
         // .select(db.raw(`concat(vstdate,' ',vsttime) as date_serv`))
     }
-    async getDiagnosisOpdVWXY(db: Knex, date: any) {
+    async getDiagnosisOpdVWXY__(db: Knex, date: any) {
         let sql = `SELECT hn, vn AS visitno, view_opd_dx.date, diag AS diagcode
                 , view_opd_dx.desc AS diag_name, short_eng AS en, short_thi AS thi
                 , view_opd_dx.type AS diag_type, dr_dx AS dr
@@ -233,7 +236,7 @@ export class HisEzhospModel {
             .where(columnName, "=", searchNo);
     }
 
-    getAccident(knex, columnName, searchNo, hospCode) {
+    getAccident__(knex, columnName, searchNo, hospCode) {
         columnName = columnName === 'visitno' ? 'vn' : columnName;
         return knex('accident')
             .where(columnName, "=", searchNo);

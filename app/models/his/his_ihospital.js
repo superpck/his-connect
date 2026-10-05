@@ -9,6 +9,7 @@ const maxLimit = 1000;
 const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
 const dbClient = process.env.HIS_DB_CLIENT ? process.env.HIS_DB_CLIENT.toLowerCase() : 'mysql2';
+const dbName = process.env.HIS_DB_NAME;
 class HisIHospitalModel {
     check() {
         return true;
@@ -38,6 +39,11 @@ class HisIHospitalModel {
             charset = result?.DEFAULT_CHARACTER_SET_NAME || '';
         }
         return { hospname, connection, charset };
+    }
+    getTableName(db, dbname = dbName) {
+        const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'table_schema';
+        return db('information_schema.tables')
+            .where(whereDB, dbname);
     }
     getDepartment(db, depCode = '', depName = '') {
         let sql = db('lib_clinic');
@@ -153,9 +159,9 @@ class HisIHospitalModel {
             query.where(columnName, "=", searchText);
         }
         return query
-            .select(db.raw('"' + hisHospcode + '" as hospcode'))
+            .select(db.raw('? as hospcode', [hisHospcode]))
             .select(db.raw('4 as typearea'))
-            .select('no_card as cid', 'hn as pid', 'title as prename', 'name', 'name as fname', 'surname as lname', 'hn', 'birth', 'sex', 'marry_std as mstatus', 'blood as abogroup', 'occ_std as occupation_new', 'race_std as race', 'nation_std as nation', 'religion_std as religion', 'edu_std as education', 'tel as telephone', 'lastupdate as d_update')
+            .select('no_card as cid', 'hn as pid', 'title as prename', 'name', 'name as fname', 'surname as lname', 'hn', 'birth', 'birth as dob', 'sex', 'marry_std as mstatus', 'blood as abogroup', 'occ_std as occupation_new', 'race_std as race', 'nation_std as nation', 'religion_std as religion', 'edu_std as education', 'tel as telephone', 'add as addcode', 'address', 'lastupdate as d_update')
             .limit(5000);
     }
     getAddress(db, columnName, searchNo, hospCode = hisHospcode) {
@@ -165,8 +171,8 @@ class HisIHospitalModel {
             .orderBy('ADDRESSTYPE')
             .limit(maxLimit);
     }
-    async getService(db, columnName, searchText, hospCode = hisHospcode) {
-        columnName = columnName === 'visitNo' ? 'vn' : columnName;
+    async getService(db, column, searchText, dateServ, hospCode = hisHospcode) {
+        let columnName = column === 'visitNo' ? 'vn' : column;
         columnName = columnName === 'cid' ? 'no_card' : columnName;
         columnName = columnName === 'date_serv' ? 'visit.date' : `visit.${columnName}`;
         let query = db('view_opd_visit as visit')
@@ -177,7 +183,10 @@ class HisIHospitalModel {
         else {
             query = query.where(columnName, searchText);
         }
-        query = query.select(db.raw('? as hospcode', [hisHospcode]), 'visit.hn as pid', 'visit.hn', 'visit.no_card as cid', 'visit.title as prename', 'visit.name as fname', 'visit.surname as lname', 'visit.birth as dob', 'visit.sex', 'visit.vn as seq', 'visit.date as date_serv', 'visit.hospmain as main', 'visit.hospsub as hsub', 'visit.waistline as waist', 'visit.refer as referinhosp', db.raw(" case when visit.time='' or visit.time='08:00' then visit.time_reg else visit.time end as time_serv "), db.raw('? as servplace', [1]), 'visit.nurse_cc as chiefcomp', 'visit.pi_dr as presentillness', 'visit.pe_dr as physicalexam', 'visit.nurse_ph as pasthistory', 'visit.t as btemp', 'visit.bp as sbp', 'visit.bp1 as dbp', 'visit.weigh as weight', 'visit.high as height', 'visit.puls as pr', 'visit.rr', 'visit.bmi', db.raw(`IF(visit.dr > 0, CONCAT("ว",visit.dr),'') as provider`), 'visit.pttype_std as instype', 'visit.no_ptt as insid', 'triage.e as gcs_e', 'triage.v as gcs_v', 'triage.m as gcs_m', 'triage.gcs', 'triage.o2sat', 'triage.pupil_lt as pupil_left', 'triage.pupil_rt as pupil_right', db.raw('IF(visit.period>1,2,1) AS intime'), 'visit.cost as price', 'visit.opd_result_hdc as typeout', db.raw('IF(visit.hospmain=? OR visit.`add`=?,1,2) AS location', [hcode, '4001']), db.raw('concat(visit.date, " " , visit.time) as d_update'));
+        if (dateServ && columnName !== 'visit.date') {
+            query = query.where('visit.date', dateServ);
+        }
+        query = query.select(db.raw('? as hospcode', [hisHospcode]), 'visit.hn as pid', 'visit.hn', 'visit.no_card as cid', 'visit.title as prename', 'visit.name as fname', 'visit.surname as lname', 'visit.birth as dob', 'visit.sex', 'visit.vn as seq', 'visit.date as date_serv', 'visit.hospmain as main', 'visit.hospsub as hsub', 'visit.waistline as waist', 'visit.refer as referinhosp', 'visit.dep as clinic_local_code', 'visit.dep_name as clinic_local_name', 'visit.dep_standard as clinic', 'visit.dr', db.raw(" case when visit.time='' or visit.time='08:00' then visit.time_reg else visit.time end as time_serv "), db.raw('? as servplace', [1]), 'visit.nurse_cc as chiefcomp', 'visit.pi_dr as presentillness', 'visit.pe_dr as physicalexam', 'visit.nurse_ph as pasthistory', 'visit.t as btemp', 'visit.bp as sbp', 'visit.bp1 as dbp', 'visit.weigh as weight', 'visit.high as height', 'visit.puls as pr', 'visit.rr', 'visit.bmi', db.raw(`IF(visit.dr > 0, CONCAT("ว",visit.dr),'') as provider`), 'visit.pttype_std as instype', 'visit.no_ptt as insid', 'triage.e as gcs_e', 'triage.v as gcs_v', 'triage.m as gcs_m', 'triage.gcs', 'triage.o2sat', 'triage.pupil_lt as pupil_left', 'triage.pupil_rt as pupil_right', db.raw('IF(visit.period>1,2,1) AS intime'), 'visit.cost as price', 'visit.opd_result_hdc as typeout', db.raw('IF(visit.hospmain=? OR visit.`add`=?,1,2) AS location', [hcode, '4001']), db.raw('concat(visit.date, " " , visit.time) as d_update'));
         return await query.orderBy('visit.date', 'desc');
     }
     getDiagnosisOpd(db, visitno, hospCode = hisHospcode) {
@@ -416,11 +425,16 @@ class HisIHospitalModel {
         }
     }
     getAccident(db, visitNo, hospCode = hisHospcode) {
-        return db('opd_visit as visit')
+        let query = db('opd_visit as visit')
             .leftJoin('opd_vs as vs', 'visit.vn', 'vs.vn')
-            .leftJoin('er_triage as triage', 'visit.vn', 'triage.vn')
-            .select(db.raw('? as hospcode', [hospCode]), 'visit.hn as hn', 'visit.vn as vn', 'visit.vn as seq', db.raw('concat(visit.date, " ", visit.time) as datetime_serv'), 'vs.date_ill as datetime_ae', 'vs.bp as sbp', 'vs.bp1 as dbp', 'vs.puls as pulse', 'vs.rr as rr', 'vs.weigh as weight', 'vs.high as height', 'vs.t as temperature', 'triage.e as coma_eye', 'triage.v as coma_verbal', 'triage.m as coma_motor', 'triage.gcs as gcs', 'visit.emg as urgency')
-            .where('visit.vn', visitNo)
+            .leftJoin('er_triage as triage', 'visit.vn', 'triage.vn');
+        if (Array.isArray(visitNo)) {
+            query.whereIn('visit.vn', visitNo);
+        }
+        else {
+            query.where('visit.vn', visitNo);
+        }
+        return query.select(db.raw('? as hospcode', [hospCode]), 'visit.hn as hn', 'visit.vn as vn', 'visit.vn as seq', db.raw('concat(visit.date, " ", visit.time) as datetime_serv'), 'vs.date_ill as datetime_ae', 'vs.bp as sbp', 'vs.bp1 as dbp', 'vs.puls as pulse', 'vs.rr as rr', 'vs.weigh as weight', 'vs.high as height', 'vs.t as temperature', 'triage.e as coma_eye', 'triage.v as coma_verbal', 'triage.m as coma_motor', 'triage.gcs as gcs', 'visit.emg as urgency')
             .groupBy('visit.vn');
     }
     getDrugAllergy(db, hn, hospCode = hisHospcode) {
