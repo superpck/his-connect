@@ -1,6 +1,7 @@
 # 3.11.1
 ## Feature
   - ย้ายการ select data ของ isonline ไปที่ his model
+  - เพิ่มการ get person, service, admission โดย hn, vn, an แบบ array ครั้งละ 50 เพื่อลดการ select หลายครั้งใน HIS
 
 # 3.11.0
 ## Feature
