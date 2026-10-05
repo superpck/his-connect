@@ -80,9 +80,9 @@ class HisHosxpv4Model {
         return { hospname, connection, charset };
     }
     getTableName(db, dbName = process.env.HIS_DB_NAME) {
+        const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'table_schema';
         return db('information_schema.tables')
-            .select('table_name')
-            .where('table_schema', '=', dbName);
+            .where(whereDB, dbName);
     }
     getDepartment(db, depCode = '', depName = '') {
         let sql = db('clinic');
@@ -296,7 +296,7 @@ class HisHosxpv4Model {
         else {
             query.where(columnName, searchText);
         }
-        const result = await query.select(db.raw('? as HOSPCODE', [hisHospcode]), 'h.house_id as HID', 'p.cid as CID', 'p.pname as PRENAME', 'p.fname as NAME', 'p.lname as LNAME', 'p.hn as HN', 'p.hn as PID', 'p.sex as SEX', 'p.birthday as BIRTH', db.raw("CASE WHEN p.marrystatus IN (1,2,3,4,5,6) THEN p.marrystatus ELSE 9 END as MSTATUS"), db.raw("CASE WHEN person.person_house_position_id = 1 THEN '1' ELSE '2' END as FSTATUS"), db.raw("CASE WHEN o.occupation IS NULL THEN '000' ELSE o.occupation END AS OCCUPATION_OLD"), db.raw("CASE WHEN o.nhso_code IS NULL THEN '9999' ELSE o.nhso_code END AS OCCUPATION_NEW"), db.raw("CASE WHEN nt0.nhso_code IS NULL THEN '099' ELSE nt0.nhso_code END AS RACE"), db.raw("CASE WHEN nt1.nhso_code IS NULL THEN '099' ELSE nt1.nhso_code END AS NATION"), db.raw("CASE WHEN p.religion IS NULL THEN '01' ELSE p.religion END AS RELIGION"), db.raw("CASE WHEN e.provis_code IS NULL THEN '9' ELSE e.provis_code END as EDUCATION"), 'p.father_cid as FATHER', 'p.mother_cid as MOTHER', 'p.couple_cid as COUPLE', db.raw(`(${vstatusSubquery.toString()}) as VSTATUS`), 'person.movein_date as MOVEIN', db.raw("CASE WHEN person.person_discharge_id IS NULL THEN '9' ELSE person.person_discharge_id END AS DISCHARGE"), 'person.discharge_date as DDISCHARGE', `person.blood_group as ABOGROUP`, `${rhGrp} as RHGROUP`, 'pl.nhso_code as LABOR', 'p.passport_no as PASSPORT', 'p.type_area as TYPEAREA', 'p.mobile_phone_number as MOBILE', 'p.deathday as dead', db.raw('CASE WHEN p.last_update IS NULL THEN p.last_update ELSE p.last_visit END as D_UPDATE'));
+        const result = await query.select(db.raw('? as HOSPCODE', [hisHospcode]), 'h.house_id as HID', 'p.cid as CID', 'p.pname as PRENAME', 'p.fname as NAME', 'p.lname as LNAME', 'p.hn as HN', 'p.hn as PID', 'p.sex as SEX', 'p.birthday as BIRTH', 'p.birthday as dob', db.raw("CASE WHEN p.marrystatus IN (1,2,3,4,5,6) THEN p.marrystatus ELSE 9 END as MSTATUS"), db.raw("CASE WHEN person.person_house_position_id = 1 THEN '1' ELSE '2' END as FSTATUS"), db.raw("CASE WHEN o.occupation IS NULL THEN '000' ELSE o.occupation END AS OCCUPATION_OLD"), db.raw("CASE WHEN o.nhso_code IS NULL THEN '9999' ELSE o.nhso_code END AS OCCUPATION_NEW"), db.raw("CASE WHEN nt0.nhso_code IS NULL THEN '099' ELSE nt0.nhso_code END AS RACE"), db.raw("CASE WHEN nt1.nhso_code IS NULL THEN '099' ELSE nt1.nhso_code END AS NATION"), db.raw("CASE WHEN p.religion IS NULL THEN '01' ELSE p.religion END AS RELIGION"), db.raw("CASE WHEN e.provis_code IS NULL THEN '9' ELSE e.provis_code END as EDUCATION"), 'p.father_cid as FATHER', 'p.mother_cid as MOTHER', 'p.couple_cid as COUPLE', db.raw(`(${vstatusSubquery.toString()}) as VSTATUS`), 'person.movein_date as MOVEIN', db.raw("CASE WHEN person.person_discharge_id IS NULL THEN '9' ELSE person.person_discharge_id END AS DISCHARGE"), 'person.discharge_date as DDISCHARGE', `person.blood_group as ABOGROUP`, `${rhGrp} as RHGROUP`, 'pl.nhso_code as LABOR', 'p.passport_no as PASSPORT', 'p.type_area as TYPEAREA', 'p.mobile_phone_number as MOBILE', 'p.deathday as dead', db.raw('CASE WHEN p.last_update IS NULL THEN p.last_update ELSE p.last_visit END as D_UPDATE'));
         return result;
     }
     async getAddress(db, columnName, searchText, hospCode = hisHospcode) {
@@ -310,7 +310,7 @@ class HisHosxpv4Model {
             .where(columnName, searchText);
         return result[0];
     }
-    async getService(db, columnName, searchText, hospCode = hisHospcode) {
+    async getService(db, columnName, searchText, dateServ = null, hospCode = hisHospcode) {
         const colMap = {
             'visitNo': 'os.vn',
             'vn': 'os.vn',
@@ -376,12 +376,18 @@ class HisHosxpv4Model {
             .leftJoin('doctor', 'o.doctor', 'doctor.code')
             .leftJoin('er_nursing_detail as er', 'er.vn', 'o.vn')
             .leftJoin(`spclty`, 'o.spclty', 'spclty.spclty')
-            .leftJoin(`clinic`, 'o.cur_dep', 'clinic.clinic');
+            .leftJoin(`clinic`, 'o.cur_dep', 'clinic.clinic')
+            .leftJoin(`er_regist`, 'er_regist.vn', 'o.vn')
+            .leftJoin(`er_emergency_type`, `er_emergency_type.er_emergency_type`, `er_regist.er_emergency_type`)
+            .leftJoin(`accident_transport_type`, 'er.accident_transport_type_id', 'accident_transport_type.accident_transport_type_id');
         if (Array.isArray(searchText)) {
             query.whereRaw(`${targetCol} IN (${searchText.map(() => '?').join(',')})`, searchText);
         }
         else {
             query.whereRaw(`${targetCol} = ?`, [searchText]);
+        }
+        if (dateServ && targetCol !== 'o.vstdate') {
+            query.where('o.vstdate', dateServ);
         }
         return query.select([
             db.raw('? as "HOSPCODE"', [hospCode]),
@@ -425,20 +431,47 @@ class HisHosxpv4Model {
             db.raw(`${sqlNum('vn.paid_money', 2)} as PAYPRICE`),
             db.raw(`${sqlNum('vn.rcpt_money', 2)} as ACTUALPAY`),
             db.raw(`${sqlDateTime('o.vstdate', 'o.vsttime')} as D_UPDATE`),
-            'vn.hospsub as hsub'
+            'vn.hospsub as hsub',
+            'er.er_accident_type_id as cause',
+            'accident_transport_type.export_code as injt',
+            'er.accident_person_type_id as injp',
+            'er.accident_airway_type_id as airway',
+            'er.accident_alcohol_type_id as risk1',
+            'er.accident_drug_type_id as risk2',
+            'er.accident_belt_type_id as risk3',
+            'er.accident_helmet_type_id as risk4',
+            'er.accident_bleed_type_id as blood',
+            'er.accident_splint_type_id as splintc',
+            'er.accident_fluid_type_id as iv',
+            'er.accident_type_1 as br1',
+            'er.accident_type_2 as br2',
+            'er.accident_type_3 as tinj',
+            'er.accident_type_4 as ais1',
+            'er.accident_type_5 as ais2',
+            'er.accident_place_type_id as apoint',
+            'er.accident_place as apointname',
+            'er_regist.finish_time as disc_date_er',
+            'er_emergency_type.export_code as cause_t'
         ]);
     }
     async getDiagnosisOpd(db, visitNo, hospCode = hisHospcode) {
-        const result = await db('ovst as o')
-            .select(db.raw('? as HOSPCODE', [hisHospcode]), db.raw('pt.cid as CID'), db.raw('o.hn as PID'), db.raw('o.hn'), db.raw('q.seq_id'), db.raw('q.vn as SEQ'), db.raw('q.vn as VN'), db.raw('o.vstdate as DATE_SERV'), db.raw(`CASE WHEN odx.diagtype IS NULL THEN '' ELSE odx.diagtype END as DIAGTYPE`), db.raw('odx.icd10 as DIAGCODE'), db.raw(`CASE WHEN s.provis_code IS NULL THEN '' ELSE s.provis_code END as CLINIC`), db.raw('d.CODE as PROVIDER'), db.raw('q.update_datetime as D_UPDATE'))
+        if (!visitNo) {
+            throw new Error('Invalid visit number');
+        }
+        let query = db('ovst as o')
             .leftJoin('ovst_seq as q', 'q.vn', 'o.vn')
             .leftJoin('ovstdiag as odx', 'odx.vn', 'o.vn')
             .leftJoin('patient as pt', 'pt.hn', 'o.hn')
             .leftJoin('person as p', 'p.patient_hn', 'pt.hn')
             .leftJoin('spclty as s', 's.spclty', 'o.spclty')
-            .leftJoin('doctor as d', 'd.CODE', 'o.doctor')
-            .where('q.vn', visitNo)
-            .whereRaw(`odx.icd10 REGEXP '[A-Z]'`);
+            .leftJoin('doctor as d', 'd.CODE', 'o.doctor');
+        if (Array.isArray(visitNo)) {
+            query.whereIn('o.vn', visitNo);
+        }
+        else {
+            query.where('o.vn', visitNo);
+        }
+        const result = await query.select(db.raw('? as HOSPCODE', [hisHospcode]), db.raw('pt.cid as CID'), db.raw('o.hn as PID'), db.raw('o.hn'), db.raw('q.seq_id'), db.raw('q.vn as SEQ'), db.raw('q.vn as VN'), db.raw('o.vstdate as DATE_SERV'), db.raw(`CASE WHEN odx.diagtype IS NULL THEN '' ELSE odx.diagtype END as DIAGTYPE`), db.raw('odx.icd10 as DIAGCODE'), db.raw(`CASE WHEN s.provis_code IS NULL THEN '' ELSE s.provis_code END as CLINIC`), db.raw('d.CODE as PROVIDER'), db.raw('q.update_datetime as D_UPDATE')).whereRaw(`odx.icd10 REGEXP '[A-Z]'`);
         return result;
     }
     async getDiagnosisOpdAccident(db, dateStart, dateEnd, hospCode = hisHospcode) {
@@ -1213,9 +1246,14 @@ class HisHosxpv4Model {
             .leftJoin('er_nursing_detail as d', 'er.vn', 'd.vn')
             .leftJoin('er_nursing_visit_type as vt', 'vt.visit_type', 'd.visit_type')
             .leftJoin('accident_transport_type as tt', 'tt.accident_transport_type_id', 'd.accident_transport_type_id');
+        if (Array.isArray(visitNo)) {
+            query.whereIn('q.vn', visitNo);
+        }
+        else {
+            query.where('q.vn', visitNo);
+        }
         return await query
-            .select(db.raw('? as HOSPCODE', [hisHospcode]), 'o.hn', 'o.hn as pid', 'p.cid as cid', 'q.seq_id', 'q.vn as seq', 'd.*', db.raw("date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_serv"), db.raw("date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_ae"), db.raw("ifnull(lpad(d.er_accident_type_id,2,'0'),'') aetype"), db.raw("ifnull(lpad(d.accident_place_type_id,2,'0'),'99') aeplace"), db.raw("ifnull(vt.export_code, '1') typein_ae"), db.raw("ifnull(d.accident_person_type_id,'9') traffic"), db.raw("ifnull(tt.export_code, '99') vehicle"), db.raw("ifnull(d.accident_alcohol_type_id,'9') alcohol"), db.raw("ifnull(d.accident_drug_type_id,'9') nacrotic_drug"), db.raw("ifnull(d.accident_belt_type_id,'9') belt"), db.raw("ifnull(d.accident_helmet_type_id,'9') helmet"), db.raw("ifnull(d.accident_airway_type_id,'3') airway"), db.raw("ifnull(d.accident_bleed_type_id,'3') stopbleed"), db.raw("ifnull(d.accident_splint_type_id,'3') splint"), db.raw("ifnull(d.accident_fluid_type_id,'3') fluid"), db.raw("ifnull(d.er_emergency_type, '6') urgency"), db.raw("IF (d.gcs_e IN (1, 2, 3, 4),d.gcs_e,'4') coma_eye"), db.raw("IF (d.gcs_v IN (1, 2, 3, 4, 5),d.gcs_v,'5') coma_verbal"), db.raw("IF (d.gcs_m IN (1, 2, 3, 4, 5, 6),d.gcs_m,'6') coma_motor"), db.raw("date_format(now(), '%Y-%m-%d %H:%i:%s') d_update"), 'd.dba')
-            .where('q.vn', visitNo);
+            .select(db.raw('? as HOSPCODE', [hisHospcode]), 'o.hn', 'o.hn as pid', 'p.cid as cid', 'q.seq_id', 'q.vn as seq', 'd.*', db.raw("date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_serv"), db.raw("date_format(concat(o.vstdate, ' ', o.vsttime),'%Y-%m-%d %H:%i:%s') datetime_ae"), db.raw("ifnull(lpad(d.er_accident_type_id,2,'0'),'') aetype"), db.raw("ifnull(lpad(d.accident_place_type_id,2,'0'),'99') aeplace"), db.raw("ifnull(vt.export_code, '1') typein_ae"), db.raw("ifnull(d.accident_person_type_id,'9') traffic"), db.raw("ifnull(tt.export_code, '99') vehicle"), db.raw("ifnull(d.accident_alcohol_type_id,'9') alcohol"), db.raw("ifnull(d.accident_drug_type_id,'9') nacrotic_drug"), db.raw("ifnull(d.accident_belt_type_id,'9') belt"), db.raw("ifnull(d.accident_helmet_type_id,'9') helmet"), db.raw("ifnull(d.accident_airway_type_id,'3') airway"), db.raw("ifnull(d.accident_bleed_type_id,'3') stopbleed"), db.raw("ifnull(d.accident_splint_type_id,'3') splint"), db.raw("ifnull(d.accident_fluid_type_id,'3') fluid"), db.raw("ifnull(d.er_emergency_type, '6') urgency"), db.raw("IF (d.gcs_e IN (1, 2, 3, 4),d.gcs_e,'4') coma_eye"), db.raw("IF (d.gcs_v IN (1, 2, 3, 4, 5),d.gcs_v,'5') coma_verbal"), db.raw("IF (d.gcs_m IN (1, 2, 3, 4, 5, 6),d.gcs_m,'6') coma_motor"), db.raw("date_format(now(), '%Y-%m-%d %H:%i:%s') d_update"), 'd.dba');
     }
     async getDrugAllergy(db, hn, hospCode = hisHospcode) {
         return db('opd_allergy as oe')

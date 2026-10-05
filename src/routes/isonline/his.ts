@@ -1,110 +1,108 @@
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 // แก้ไขเพื่อใช้ merged models จาก isonline/ (2026-08-3.model0)
 // Imports now point to models/his_merged/ instead of models/isonline/
-import { HisModel } from './../../models/isonline/his.model';
-import { HisHosxpv3Model } from './../../models/isonline/his_hosxpv3.model';
-import { HisHosxpv4Model } from './../../models/isonline/his_hosxpv4.model';
-import { HisSsbModel } from './../../models/isonline/his_ssb.model';
-import { HisInfodModel } from './../../models/isonline/his_infod.model';
-import { HisHimproModel } from './../../models/isonline/his_himpro.model';
-import { HisHiModel } from './../../models/isonline/his_hi.model';
-import { HisHosxppcuModel } from './../../models/isonline/his_hosxppcu.model';
-import { HisJhcisModel } from './../../models/isonline/his_jhcis.model';
-import { HisHospitalOsModel } from './../../models/isonline/his_hospitalos.model';
-import { HisSpdcModel } from './../../models/isonline/his_spdc.model';
-import { HisMdModel } from './../../models/isonline/his_md.model';
-import { HisPmkModel } from './../../models/isonline/his_pmk.model';
-import { HisJhosModel } from './../../models/isonline/his_jhos.model';
-import { HisMedical2020Model } from './../../models/isonline/his_medical2020.model';
-import { HisEmrSoftModel } from '../../models/isonline/his_emrsoft.model';
-import { HisKpstatModel } from '../../models/isonline/his_kpstat.model';
-import { HisMkhospitalModel } from '../../models/isonline/his_mkhospital.model';
-import { HisHaosModel } from '../../models/isonline/his_haos.model';
+// import { HisModel } from './../../models/isonline/his.model';
+// import { HisHosxpv3Model } from './../../models/isonline/his_hosxpv3.model';
+// import { HisHosxpv4Model } from './../../models/isonline/his_hosxpv4.model';
+// import { HisSsbModel } from './../../models/isonline/his_ssb.model';
+// import { HisInfodModel } from './../../models/isonline/his_infod.model';
+// import { HisHimproModel } from './../../models/isonline/his_himpro.model';
+// import { HisHiModel } from './../../models/isonline/his_hi.model';
+// import { HisHosxppcuModel } from './../../models/isonline/his_hosxppcu.model';
+// import { HisJhcisModel } from './../../models/isonline/his_jhcis.model';
+// import { HisHospitalOsModel } from './../../models/isonline/his_hospitalos.model';
+// import { HisSpdcModel } from './../../models/isonline/his_spdc.model';
+// import { HisMdModel } from './../../models/isonline/his_md.model';
+// import { HisPmkModel } from './../../models/isonline/his_pmk.model';
+// import { HisJhosModel } from './../../models/isonline/his_jhos.model';
+// import { HisMedical2020Model } from './../../models/isonline/his_medical2020.model';
+// import { HisEmrSoftModel } from '../../models/isonline/his_emrsoft.model';
+// import { HisKpstatModel } from '../../models/isonline/his_kpstat.model';
+// import { HisMkhospitalModel } from '../../models/isonline/his_mkhospital.model';
+// import { HisHaosModel } from '../../models/isonline/his_haos.model';
+// import { HisMitnetModel } from '../../models/his/his_mitnet';
+// import { HisVpmHModel } from '../../models/his/his_vpm';
 
 import { Jwt } from './../../plugins/jwt';
-import moment = require('moment');
+import moment from 'moment';
 var jwt = new Jwt();
 
 import HisConnect from '../his/hismodel';
 const hisConnect = HisConnect;
 
 const provider = process.env.HIS_PROVIDER.toLowerCase();
-let hisModel: any;
+// let hisModel: any;
 
-switch (provider) {
-  case 'ezhosp':
-  case 'ihospital':
-    hisModel = new HisModel(); // HisEzhospModel not copied from isonline
-    break;
-  case 'hosxpv3':
-    hisModel = new HisHosxpv3Model();
-    break;
-  case 'hosxpv4':
-    hisModel = new HisHosxpv4Model();
-    break;
-  case 'ssb':
-    hisModel = new HisSsbModel();
-    break;
-  case 'infod':
-  case 'homc':
-    hisModel = new HisInfodModel();
-    break;
-  case 'hi':
-    hisModel = new HisHiModel();
-    break;
-  case 'himpro':
-    hisModel = new HisHimproModel();
-    break;
-  case 'jhcis':
-    hisModel = new HisJhcisModel();
-    break;
-  case 'hosxppcu':
-    hisModel = new HisHosxppcuModel();
-    break;
-  case 'hospitalos':
-  case 'hospitalosv4':
-    hisModel = new HisHospitalOsModel();
-    break;
-  case 'emrsoft':
-    hisModel = new HisEmrSoftModel();
-    break;
-  case 'jhos':
-    hisModel = new HisJhosModel();
-    break;
-  case 'pmk':
-    hisModel = new HisPmkModel();
-    break;
-  case 'meedee':
-    hisModel = new HisMdModel();
-    break;
-  case 'kpstat':
-    hisModel = new HisKpstatModel();
-    break;
-  case 'spdc':
-    hisModel = new HisSpdcModel();
-    break;
-  case 'mkhospital':
-    hisModel = new HisMkhospitalModel();
-    break;
-  case 'medical2020':
-    hisModel = new HisMedical2020Model();
-    break;
-  case 'haos':
-    hisModel = new HisHaosModel();
-    break;
-  case 'mitnet':
-    hisModel = new HisMitnetModel();
-    break;
-  case 'vpm':
-    hisModel = new HisVpmHModel();
-    break;
-  default:
-    hisModel = new HisModel();
-}
-
-import hisReferModel from './../his/hismodel';
-import { HisMitnetModel } from '../../models/his/his_mitnet';
-import { HisVpmHModel } from '../../models/his/his_vpm';
+// switch (provider) {
+//   case 'ezhosp':
+//   case 'ihospital':
+//     hisModel = new HisModel(); // HisEzhospModel not copied from isonline
+//     break;
+//   case 'hosxpv3':
+//     hisModel = new HisHosxpv3Model();
+//     break;
+//   case 'hosxpv4':
+//     hisModel = new HisHosxpv4Model();
+//     break;
+//   case 'ssb':
+//     hisModel = new HisSsbModel();
+//     break;
+//   case 'infod':
+//   case 'homc':
+//     hisModel = new HisInfodModel();
+//     break;
+//   case 'hi':
+//     hisModel = new HisHiModel();
+//     break;
+//   case 'himpro':
+//     hisModel = new HisHimproModel();
+//     break;
+//   case 'jhcis':
+//     hisModel = new HisJhcisModel();
+//     break;
+//   case 'hosxppcu':
+//     hisModel = new HisHosxppcuModel();
+//     break;
+//   case 'hospitalos':
+//   case 'hospitalosv4':
+//     hisModel = new HisHospitalOsModel();
+//     break;
+//   case 'emrsoft':
+//     hisModel = new HisEmrSoftModel();
+//     break;
+//   case 'jhos':
+//     hisModel = new HisJhosModel();
+//     break;
+//   case 'pmk':
+//     hisModel = new HisPmkModel();
+//     break;
+//   case 'meedee':
+//     hisModel = new HisMdModel();
+//     break;
+//   case 'kpstat':
+//     hisModel = new HisKpstatModel();
+//     break;
+//   case 'spdc':
+//     hisModel = new HisSpdcModel();
+//     break;
+//   case 'mkhospital':
+//     hisModel = new HisMkhospitalModel();
+//     break;
+//   case 'medical2020':
+//     hisModel = new HisMedical2020Model();
+//     break;
+//   case 'haos':
+//     hisModel = new HisHaosModel();
+//     break;
+//   case 'mitnet':
+//     hisModel = new HisMitnetModel();
+//     break;
+//   case 'vpm':
+//     hisModel = new HisVpmHModel();
+//     break;
+//   default:
+//     hisModel = new HisModel();
+// }
 
 const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb'
   , 'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades'
@@ -115,12 +113,12 @@ const router = (fastify, { }, next) => {
   fastify.get('/alive', async (req: any, res: any) => {
     let result: any;
     try {
-      result = await hisReferModel.testConnect(global.dbHIS);
+      result = await hisConnect.testConnect(global.dbHIS);
     } catch (error) {
     }
     try {
       if (!result || !result.connection) {
-        result = await hisModel.testConnect(global.dbHIS);
+        result = await hisConnect.testConnect(global.dbHIS);
       }
 
       res.send({
@@ -148,7 +146,7 @@ const router = (fastify, { }, next) => {
 
   fastify.post('/alive', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
     try {
-      const result = await hisModel.getTableName(global.dbHIS);
+      const result = await hisConnect.getTableName(global.dbHIS);
       if (result && result.length) {
         res.send({
           statusCode: StatusCodes.OK,
@@ -182,7 +180,7 @@ const router = (fastify, { }, next) => {
 
   fastify.post('/showTbl', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
     try {
-      const result = await hisModel.getTableName(global.dbHIS);
+      const result = await hisConnect.getTableName(global.dbHIS);
       res.send({
         statusCode: StatusCodes.OK,
         rows: result
@@ -201,7 +199,8 @@ const router = (fastify, { }, next) => {
     let searchText: any = req.body.searchText;
     if (columnName && searchText && ['hn', 'cid', 'pid', 'name', 'hid'].includes(columnName)) {
       try {
-        const rows = await hisModel.getPerson(global.dbHIS, columnName, searchText);
+        // const rows = await hisModel_.getPerson(global.dbHIS, columnName, searchText);
+        const rows = await hisConnect.getPerson(global.dbHIS, columnName, searchText);
         res.send({ statusCode: StatusCodes.OK, rows });
       } catch (error) {
         console.log('person', error.message);
@@ -219,13 +218,29 @@ const router = (fastify, { }, next) => {
   });
 
   fastify.post('/opd-service', { preHandler: [fastify.authenticate] }, async (req: any, res: any) => {
-    let hn: string = req.body.hn;
-    let date: string = req.body.date;
-    let visitNo: string = req.body.visitNo || '';
+    let hn: any = req.body.hn;
+    let date: any = req.body.date || null;
+    let visitNo: any = req.body.visitNo || '';
 
-    if (visitNo + hn) {
+    if (visitNo || hn || date) {
       try {
-        const rows = await hisModel.getOpdService(global.dbHIS, hn, date, 'vn', visitNo);
+        let columnName: string = '';
+        let searchText: any = '';
+        if (visitNo) {
+          columnName = 'visitNo';
+          searchText = visitNo;
+        } else if (hn) {
+          columnName = 'hn';
+          searchText = hn;
+        } else {
+          columnName = 'date_serv';
+          searchText = date;
+        }
+        // const rows = await hisModel_.getOpdService(global.dbHIS, hn, date, 'vn', visitNo);
+        let rows = await hisConnect.getService(global.dbHIS, columnName, searchText, date);
+        // if (rows.length > 0 && !visitNo && hn && date) {
+        //   rows = rows.filter((row: any) => row.hn === hn && row.date_serv === date);
+        // }
         res.send({ statusCode: StatusCodes.OK, rows });
       } catch (error) {
         console.log('opd-service', error.message);
@@ -247,8 +262,11 @@ const router = (fastify, { }, next) => {
     let where: any = req.body.where;
     if (visitNo) {
       try {
-        // const rows = await hisModel.getOpdServiceByVN(global.dbHIS, visitNo, where);
+
+        // ย้ายไปใช้ his model แทน isonline model
+        // const rows = await hisModel_.getOpdServiceByVN(global.dbHIS, visitNo, where);
         const rows = await hisConnect.getService(global.dbHIS, 'visitNo', visitNo);
+        
         res.send({ statusCode: StatusCodes.OK, rows });
       } catch (error) {
         console.log('opd-service-by-vn', error.message);
@@ -270,7 +288,8 @@ const router = (fastify, { }, next) => {
 
     if (visitNo) {
       try {
-        const result = await hisModel.getDiagnosisOpd(global.dbHIS, visitNo);
+        // const result = await hisModel__.getDiagnosisOpd(global.dbHIS, visitNo);
+        const result = await hisConnect.getDiagnosisOpd(global.dbHIS, visitNo);
         res.send({
           statusCode: StatusCodes.OK,
           version: global.appDetail.version,
@@ -319,7 +338,7 @@ const router = (fastify, { }, next) => {
     }
 
     try {
-      const rows = await hisModel.getAccident(global.dbHIS, visitNo, hospcode);
+      const rows = await hisConnect.getAccident(global.dbHIS, visitNo, hospcode);
       reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows });
     } catch (error) {
       console.log('accident', error.message);

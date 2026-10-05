@@ -49,7 +49,7 @@ export class Mqtt {
     }
 
     try {
-      const url = process.env.MQTT_url || 'https://referlink.moph.go.th/api/mqtt';
+      const url = process.env.MQTT_url || 'https://connect.moph.go.th/api/mqtt';
       const options = {
         url: `${url}/subscribe`,
         method: 'POST',
@@ -63,7 +63,8 @@ export class Mqtt {
         }
       };
       const { status, data } = await axios(options);
-      if (status === 200) {
+      // data { statusCode, message (if error) }
+      if (data?.statusCode === 200) {
         // console.log(dayjs().format('HH:mm:ss'), 'MQTT subscribed successfully');
       } else {
         // console.error(dayjs().format('HH:mm:ss'), 'MQTT subscribe error:', data?.message || data);

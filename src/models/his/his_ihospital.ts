@@ -4,6 +4,7 @@ const maxLimit = 1000;
 const hcode = process.env.HOSPCODE;
 let hisHospcode = process.env.HOSPCODE;
 const dbClient = process.env.HIS_DB_CLIENT ? process.env.HIS_DB_CLIENT.toLowerCase() : 'mysql2';
+const dbName = process.env.HIS_DB_NAME;
 
 export class HisIHospitalModel {
   check() {
@@ -37,6 +38,12 @@ export class HisIHospitalModel {
       charset = result?.DEFAULT_CHARACTER_SET_NAME || '';
     }
     return { hospname, connection, charset };
+  }
+
+  getTableName(db: Knex, dbname = dbName) {
+    const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'table_schema';
+    return db('information_schema.tables')
+      .where(whereDB, dbname);
   }
 
   // รหัสห้องตรวจ
@@ -187,14 +194,15 @@ export class HisIHospitalModel {
     }
 
     return query
-      .select(db.raw('"' + hisHospcode + '" as hospcode'))
+      .select(db.raw('? as hospcode', [hisHospcode]))
       .select(db.raw('4 as typearea'))
       .select('no_card as cid', 'hn as pid', 'title as prename',
         'name', 'name as fname', 'surname as lname', 'hn',
-        'birth', 'sex', 'marry_std as mstatus', 'blood as abogroup',
+        'birth', 'birth as dob', 'sex', 'marry_std as mstatus', 'blood as abogroup',
         'occ_std as occupation_new', 'race_std as race',
         'nation_std as nation', 'religion_std as religion',
-        'edu_std as education', 'tel as telephone',
+        'edu_std as education', 'tel as telephone', 'add as addcode',
+        'address',
         'lastupdate as d_update')
       .limit(5000);
   }
@@ -207,9 +215,9 @@ export class HisIHospitalModel {
       .limit(maxLimit);
   }
 
-  async getService(db: Knex, columnName: string, searchText: any, hospCode = hisHospcode) {
+  async getService(db: Knex, column: string, searchText: any, dateServ?: string, hospCode = hisHospcode) {
     //columnName => visitNo, hn
-    columnName = columnName === 'visitNo' ? 'vn' : columnName;
+    let columnName = column === 'visitNo' ? 'vn' : column;
     columnName = columnName === 'cid' ? 'no_card' : columnName;
     columnName = columnName === 'date_serv' ? 'visit.date' : `visit.${columnName}`;
     let query = db('view_opd_visit as visit')
@@ -219,6 +227,9 @@ export class HisIHospitalModel {
     } else {
       query = query.where(columnName, searchText);
     }
+    if (dateServ && columnName !== 'visit.date') {
+      query = query.where('visit.date', dateServ);
+    }
     query = query.select(db.raw('? as hospcode', [hisHospcode]),
       'visit.hn as pid', 'visit.hn', 'visit.no_card as cid',
       'visit.title as prename', 'visit.name as fname', 'visit.surname as lname',
@@ -226,6 +237,8 @@ export class HisIHospitalModel {
       'visit.vn as seq', 'visit.date as date_serv',
       'visit.hospmain as main', 'visit.hospsub as hsub', 'visit.waistline as waist',
       'visit.refer as referinhosp',
+      'visit.dep as clinic_local_code', 'visit.dep_name as clinic_local_name',
+      'visit.dep_standard as clinic', 'visit.dr',
       db.raw(" case when visit.time='' or visit.time='08:00' then visit.time_reg else visit.time end as time_serv "),
       db.raw('? as servplace', [1]), 'visit.nurse_cc as chiefcomp',
       'visit.pi_dr as presentillness', 'visit.pe_dr as physicalexam', 'visit.nurse_ph as pasthistory',
@@ -279,18 +292,6 @@ export class HisIHospitalModel {
       .orderBy('type')
       .orderBy('lastupdate')
       .limit(maxLimit);
-    // let sql = `SELECT hn, vn AS visitno, view_opd_dx.date, diag AS diagcode
-    //             , view_opd_dx.desc AS diag_name, short_eng AS en, short_thi AS thi
-    //             , view_opd_dx.type AS diag_type, dr_dx AS dr
-    //             , "IT" as codeset, lastupdate as d_update
-    //         FROM view_opd_dx WHERE vn IN (
-    //             SELECT vn FROM view_opd_dx 
-    //             WHERE date= ? AND LEFT(diag,1) IN ('V','W','X','Y'))
-    //             AND LEFT(diag,1) IN ('S','T','V','W','X','Y')
-    //         ORDER BY vn, type, lastupdate LIMIT ${maxLimit}`
-
-    // const result = await db.raw(sql, [date]);
-    // return result[0];
   }
   async getDiagnosisSepsisOpd(db: Knex, dateStart: any, dateEnd: any) {
     let sql = `SELECT hn, vn AS visitno, view_opd_dx.date, diag AS diagcode
@@ -579,21 +580,25 @@ export class HisIHospitalModel {
     }
   }
 
-  getAccident(db: Knex, visitNo: string, hospCode = hisHospcode) {
-    return db('opd_visit as visit')
+  getAccident(db: Knex, visitNo: any, hospCode = hisHospcode) {
+    let query = db('opd_visit as visit')
       .leftJoin('opd_vs as vs', 'visit.vn', 'vs.vn')
-      .leftJoin('er_triage as triage', 'visit.vn', 'triage.vn')
-      .select(db.raw('? as hospcode', [hospCode]),
-        'visit.hn as hn', 'visit.vn as vn', 'visit.vn as seq',
-        db.raw('concat(visit.date, " ", visit.time) as datetime_serv'),
-        'vs.date_ill as datetime_ae',
-        'vs.bp as sbp', 'vs.bp1 as dbp', 'vs.puls as pulse', 'vs.rr as rr',
-        'vs.weigh as weight', 'vs.high as height',
-        'vs.t as temperature', 'triage.e as coma_eye',
-        'triage.v as coma_verbal', 'triage.m as coma_motor', 'triage.gcs as gcs',
-        'visit.emg as urgency'
-      )
-      .where('visit.vn', visitNo)
+      .leftJoin('er_triage as triage', 'visit.vn', 'triage.vn');
+    if (Array.isArray(visitNo)) {
+      query.whereIn('visit.vn', visitNo);
+    } else {
+      query.where('visit.vn', visitNo);
+    }
+    return query.select(db.raw('? as hospcode', [hospCode]),
+      'visit.hn as hn', 'visit.vn as vn', 'visit.vn as seq',
+      db.raw('concat(visit.date, " ", visit.time) as datetime_serv'),
+      'vs.date_ill as datetime_ae',
+      'vs.bp as sbp', 'vs.bp1 as dbp', 'vs.puls as pulse', 'vs.rr as rr',
+      'vs.weigh as weight', 'vs.high as height',
+      'vs.t as temperature', 'triage.e as coma_eye',
+      'triage.v as coma_verbal', 'triage.m as coma_motor', 'triage.gcs as gcs',
+      'visit.emg as urgency'
+    )
       .groupBy('visit.vn');
 
     //             ifnull(lpad(d.er_accident_type_id,2,'0'),'') aetype,

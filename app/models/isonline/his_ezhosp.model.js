@@ -9,7 +9,7 @@ class HisEzhospModel {
     check() {
         return true;
     }
-    getTableName(db, dbname = dbName) {
+    getTableName__(db, dbname = dbName) {
         const whereDB = dbClient === 'mssql' ? 'TABLE_CATALOG' : 'table_schema';
         return db('information_schema.tables')
             .where(whereDB, dbname);
@@ -19,7 +19,7 @@ class HisEzhospModel {
             .select('table_name')
             .where('table_schema', '=', dbname);
     }
-    async testConnect(db) {
+    async testConnect__(db) {
         let result;
         result = await global.dbHIS('hospdata.sys_hospital').first();
         const hospname = result?.hname || null;
@@ -46,7 +46,10 @@ class HisEzhospModel {
         }
         return sql.select('no_card as cid', 'hn as pid', 'title as prename', 'name', 'name as fname', 'surname as lname', 'hn', 'birth', 'birth as dob', 'sex', 'marry_std as mstatus', 'blood as abogroup', 'address', 'moo', 'road', 'soi', 'add as addcode', 'tel', 'zip', 'occ_std as occupation', 'religion_std as religion', 'nation_std as nation', 'religion_std as religion', 'edu_std as education', 'tel as telephone', 'lastupdate as d_update');
     }
-    getOpdService(db, hn, date, columnName = '', searchText = '') {
+    getOpdService(db, hn, date, columnName = '', searchText) {
+        if (!hn || !date) {
+            throw new Error('Missing parameter for search');
+        }
         columnName = columnName == 'visitNo' ? 'visit.vn' : `visit.${columnName}`;
         let where = {};
         if (hn)
@@ -79,13 +82,13 @@ class HisEzhospModel {
             .groupBy('visit.vn')
             .limit(maxLimit);
     }
-    getDiagnosisOpd(knex, visitno) {
+    getDiagnosisOpd__(knex, visitno) {
         return knex('view_opd_dx as dx')
             .select('vn as visitno', 'diag as diagcode', 'desc as diag_name', 'short_eng as en', 'short_thi as thi', 'type as diag_type', 'dr_dx as dr')
             .select(knex.raw(' "IT" as codeset'))
             .where('vn', "=", visitno);
     }
-    async getDiagnosisOpdVWXY(db, date) {
+    async getDiagnosisOpdVWXY__(db, date) {
         let sql = `SELECT hn, vn AS visitno, view_opd_dx.date, diag AS diagcode
                 , view_opd_dx.desc AS diag_name, short_eng AS en, short_thi AS thi
                 , view_opd_dx.type AS diag_type, dr_dx AS dr
@@ -163,7 +166,7 @@ class HisEzhospModel {
         return knex('drug_ipd')
             .where(columnName, "=", searchNo);
     }
-    getAccident(knex, columnName, searchNo, hospCode) {
+    getAccident__(knex, columnName, searchNo, hospCode) {
         columnName = columnName === 'visitno' ? 'vn' : columnName;
         return knex('accident')
             .where(columnName, "=", searchNo);
