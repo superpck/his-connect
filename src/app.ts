@@ -66,7 +66,7 @@ app.register(helmet, {
   crossOriginResourcePolicy: { policy: 'cross-origin' }
 });
 app.register(require('@fastify/rate-limit'), {
-  max: +process.env.MAX_CONNECTION_PER_MINUTE || 1000,
+  max: +process.env.MAX_CONNECTION_PER_MINUTE || 200,
   timeWindow: '1 minute'
 });
 app.register(serveStatic(path.join(__dirname, '../public')));

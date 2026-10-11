@@ -433,6 +433,7 @@ export class HisHosxpv4Model {
       'p.cid as CID',
       'p.pname as PRENAME',
       'p.fname as NAME',
+      'p.fname as FNAME',
       'p.lname as LNAME',
       'p.hn as HN',
       'p.hn as PID',
