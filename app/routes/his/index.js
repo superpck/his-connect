@@ -186,7 +186,13 @@ const router = (fastify, {}, next) => {
                 typeSearch = 'cid';
                 textSearch = cid;
             }
-            const result = await hismodel_1.default.getPerson(global.dbHIS, typeSearch, textSearch, hospcode);
+            let result = await hismodel_1.default.getPerson(global.dbHIS, typeSearch, textSearch, hospcode);
+            if (result && result.length > 0) {
+                result = result.map((item) => {
+                    item.fname = item.fname || item.name || item.FNAME || item.NAME || '';
+                    return item;
+                });
+            }
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows: result });
         }
         catch (error) {

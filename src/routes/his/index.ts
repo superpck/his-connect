@@ -216,7 +216,13 @@ const router = (fastify, { }, next) => {
         textSearch = cid;
       }
 
-      const result = await hisModel.getPerson(global.dbHIS, typeSearch, textSearch, hospcode);
+      let result = await hisModel.getPerson(global.dbHIS, typeSearch, textSearch, hospcode);
+      if (result && result.length > 0){
+        result = result.map((item: any) => {
+          item.fname = item.fname || item.name || item.FNAME || item.NAME || '';
+          return item;
+        });
+      }
       reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows: result });
 
     } catch (error) {
