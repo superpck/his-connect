@@ -175,7 +175,6 @@ var options = {
 async function connectDB() {
     const dbConnection = require('./plugins/db');
     await connectHIS(dbConnection);
-    await connectISOnline(dbConnection);
 }
 async function connectHIS(dbConnection) {
     const dbClient = process.env.HIS_DB_CLIENT;

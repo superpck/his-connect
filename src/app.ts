@@ -233,7 +233,7 @@ async function connectDB() {
   // Set up HIS and ISONLINE independently: a misconfigured/unused ISONLINE DB
   // must not prevent the (usually required) HIS DB from being checked/connected.
   await connectHIS(dbConnection);
-  await connectISOnline(dbConnection);
+  // await connectISOnline(dbConnection);
 }
 
 async function connectHIS(dbConnection: any) {
