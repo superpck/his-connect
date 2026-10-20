@@ -160,14 +160,14 @@ export const person = async (_req: any, reply: any): Promise<void> => {
   address = address && address.length > 0 ? address[0] : null;
   if (address) {
     data.address.addresstype = address.addresstype || null;
-    data.address.province = address.changwat || null;
-    data.address.district = address.ampur || null;
-    data.address.sub_district = address.tambon || null;
+    data.address.province = address.changwat || address?.province || null;
+    data.address.district = address.ampur || address?.district || null;
+    data.address.sub_district = address.tambon || address?.subdistrict || null;
     data.address.zipcode = address.zip || null;
     data.address.road = address.road || row.road || null;
-    data.address.alley = address.soimain || null;
-    data.address.village = address.villaname || null;
-    data.address.village_no = address.village || null;
+    data.address.alley = address.soimain || address?.alley || null;
+    data.address.village = address.villaname || address?.village_name || address?.ban || null;
+    data.address.village_no = address.village || address?.moo || null;
     data.address.house_no = address.houseno || null;
   }
 

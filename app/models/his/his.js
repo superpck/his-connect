@@ -41,7 +41,10 @@ class HisModel {
         return query.limit(maxLimit);
     }
     getAddress(db, columnName, searchNo, hospCode = hisHospcode) {
-        return [];
+        return db('address')
+            .select('hn', 'addresstype', 'house_no', 'village as village_no', 'village_name', 'alley', 'road', 'province', 'district', 'subdistrict', 'zip', 'tel_home as tel')
+            .where(columnName || 'hn', searchNo)
+            .limit(maxLimit);
     }
     getService(db, columnName, searchText, hospCode = hisHospcode) {
         return [];
