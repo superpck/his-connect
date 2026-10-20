@@ -50,6 +50,7 @@ interface JobQueue {
 const shell = require("shelljs");
 const cron = require('node-cron');
 const referCrontab = require('./routes/refer/crontab');
+const UATMode = process.env.UAT_MODE || null;
 const instanceId = process.env.NODE_APP_INSTANCE ? +process.env.NODE_APP_INSTANCE + 1 : null;
 const cronjobStartupTimeoutMs = Math.max(1000, +(process.env.CRONJOB_STARTUP_TIMEOUT_MS || 12000));
 
@@ -358,6 +359,10 @@ async function getmophUrl(): Promise<void> {
  * Main cron job function
  */
 export default async function cronjob(fastify: FastifyInstance): Promise<void> {
+  if (UATMode && UATMode == 'YES') {
+    return;
+  }
+
   // Initialize process state
   const startupAt = Date.now();
   console.info(`${getTimestamp()} Cronjob plugin init start for hospcode ${process.env.HOSPCODE || 'unknown'}`);

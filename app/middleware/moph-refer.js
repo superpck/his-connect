@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendingError = exports.checkLoginCode = exports.checkSignInCode = exports.updateAdminRequest = exports.checkAdminRequest = exports.updateHISAlive = exports.sendingToMoph = exports.taskFunction = exports.getHospitalConfig = exports.getReferToken = void 0;
+exports.sendingError = exports.checkLoginCode = exports.checkSignInCode = exports.updateAdminRequest = exports.checkAdminRequest = exports.updateHISAlive = exports.sendingToMoph = exports.taskFunction = exports.saveIoTData = exports.getIoTDevice = exports.getHospitalConfig = exports.getReferToken = void 0;
 const axios_1 = __importDefault(require("axios"));
 const moment = require("moment");
 const crypto_1 = require("crypto");
@@ -180,6 +180,53 @@ const getHospitalConfig = async (options = {}) => {
     return hospitalConfigPromise;
 };
 exports.getHospitalConfig = getHospitalConfig;
+const getIoTDevice = async (parameterData = null) => {
+    await (0, exports.getReferToken)();
+    if (!nReferToken) {
+        return { status: 500, message: 'No nRefer token' };
+    }
+    const url = 'https://refer.moph.go.th/api/beta/moph-iot/get-device';
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + nReferToken,
+        'source-agent': 'HISConnect-' + (crontabConfig.version || packageJson?.version || 'x') + '-' + (crontabConfig.subVersion || packageJson?.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+    };
+    try {
+        const { status, data } = await axios_1.default.post(url, parameterData, { headers });
+        return {
+            statusCode: data?.status || data?.statusCode || status,
+            message: data?.message || '',
+            ...data
+        };
+    }
+    catch (error) {
+        console.error('sendingToMoph error:', getErrorMessage(error));
+        return error;
+    }
+};
+exports.getIoTDevice = getIoTDevice;
+const saveIoTData = async (parameterData = null) => {
+    await (0, exports.getReferToken)();
+    if (!nReferToken) {
+        return { status: 500, message: 'No nRefer token' };
+    }
+    const url = 'https://refer.moph.go.th/api/beta/moph-iot/save-iot-data';
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + nReferToken,
+        'content-encoding': 'gzip',
+        'source-agent': 'HISConnect-' + (crontabConfig.version || packageJson?.version || 'x') + '-' + (crontabConfig.subVersion || packageJson?.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+    };
+    try {
+        const { status, data } = await axios_1.default.post(url, parameterData, { headers });
+        return { statusCode: status, ...data };
+    }
+    catch (error) {
+        console.error('sendingToMoph error:', getErrorMessage(error));
+        return error;
+    }
+};
+exports.saveIoTData = saveIoTData;
 const taskFunction = async (type = '', bodyData = null) => {
     await (0, exports.getReferToken)();
     if (!nReferToken) {

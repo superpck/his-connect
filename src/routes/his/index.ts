@@ -3,16 +3,14 @@ import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import moment from 'moment';
 import * as _ from 'lodash';
 
-import hisModel from './hismodel';
+import hisModel, { HisProvider } from './hismodel';
 const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 
 import { Jwt } from './../../plugins/jwt';
 var jwt = new Jwt();
 var crypto = require('crypto');
 
-const hisProviderList = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb'
-  , 'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades'
-  , 'himpro', 'nemo', 'mypcu', 'emrsoft', 'haos', 'other'];
+const hisProviderList = HisProvider;
 
 const router = (fastify, { }, next) => {
   // =============================================================

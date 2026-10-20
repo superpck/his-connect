@@ -162,6 +162,53 @@ export const getHospitalConfig = async (options: RequestOptions = {}) => {
   return hospitalConfigPromise;
 }
 
+export const getIoTDevice = async (parameterData: any | null = null) => {
+  await getReferToken();
+  if (!nReferToken) {
+    return { status: 500, message: 'No nRefer token' };
+  }
+
+  const url = 'https://refer.moph.go.th/api/beta/moph-iot/get-device';
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + nReferToken,
+    'source-agent': 'HISConnect-' + (crontabConfig.version || packageJson?.version || 'x') + '-' + (crontabConfig.subVersion || packageJson?.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+  };
+  try {
+    const { status, data } = await axios.post(url, parameterData, { headers });
+    return {
+      statusCode: data?.status || data?.statusCode || status,
+      message: data?.message || '',
+      ...data
+    };
+  } catch (error) {
+    console.error('sendingToMoph error:', getErrorMessage(error));
+    return error;
+  }
+}
+
+export const saveIoTData = async (parameterData: any | null = null) => {
+  await getReferToken();
+  if (!nReferToken) {
+    return { status: 500, message: 'No nRefer token' };
+  }
+
+  const url = 'https://refer.moph.go.th/api/beta/moph-iot/save-iot-data';
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + nReferToken,
+    'content-encoding': 'gzip',
+    'source-agent': 'HISConnect-' + (crontabConfig.version || packageJson?.version || 'x') + '-' + (crontabConfig.subVersion || packageJson?.subVersion || 'x') + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
+  };
+  try {
+    const { status, data } = await axios.post(url, parameterData, { headers });
+    return { statusCode: status, ...data };
+  } catch (error) {
+    console.error('sendingToMoph error:', getErrorMessage(error));
+    return error;
+  }
+}
+
 export const taskFunction = async (type = '', bodyData: any = null) => {
   await getReferToken();
   if (!nReferToken) {

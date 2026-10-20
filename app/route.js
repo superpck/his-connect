@@ -24,6 +24,7 @@ async function router(fastify) {
     fastify.register(require('./routes/isonline/report'), { prefix: `${rootPrefix}/isonline/report`, logger: true });
     fastify.register(require('./routes/isonline/moph'), { prefix: `${rootPrefix}/moph`, logger: true });
     fastify.register(require('./routes/isonline/ops'), { prefix: `${rootPrefix}/ops`, logger: true });
+    fastify.register(require('./routes/kiosk/index.route'), { prefix: `${rootPrefix}/kiosk`, logger: true });
     fastify.register(require('./routes/pcc/index'), { prefix: `${rootPrefix}/pcc`, logger: true });
     fastify.setNotFoundHandler((request, reply) => {
         reply.send({

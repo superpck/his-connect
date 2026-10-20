@@ -438,7 +438,7 @@ export class HisHosxpv4Model {
       'p.hn as HN',
       'p.hn as PID',
       'p.sex as SEX',
-      'p.birthday as BIRTH','p.birthday as dob',
+      'p.birthday as BIRTH', 'p.birthday as dob',
       db.raw("CASE WHEN p.marrystatus IN (1,2,3,4,5,6) THEN p.marrystatus ELSE 9 END as MSTATUS"),
       db.raw("CASE WHEN person.person_house_position_id = 1 THEN '1' ELSE '2' END as FSTATUS"),
       db.raw("CASE WHEN o.occupation IS NULL THEN '000' ELSE o.occupation END AS OCCUPATION_OLD"),
@@ -468,7 +468,9 @@ export class HisHosxpv4Model {
 
   async getAddress(db: Knex, columnName, searchText, hospCode = hisHospcode) {
     //columnName => hn
-    const result = await db('person as p')
+    columnName = columnName == 'hn' ? 'pt.hn' : columnName;
+    columnName = columnName == 'cid' ? 'p.cid' : columnName;
+    let query = db('person as p')
       .leftJoin('patient as pt', 'p.cid', 'pt.cid')
       .leftJoin('house as h', 'h.house_id', 'p.house_id')
       .leftJoin('village as v', 'v.village_id', 'h.village_id')
@@ -497,7 +499,8 @@ export class HisHosxpv4Model {
       )
       .where(columnName, searchText);
 
-    return result[0];
+    const result = await query;
+    return result;
   }
   async getService(db: Knex, columnName: string, searchText: any, dateServ: any = null, hospCode = hisHospcode) {
     // 1. Mapping Column Name (Sanitize input)
