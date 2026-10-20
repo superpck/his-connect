@@ -3,8 +3,61 @@ import dayjs from 'dayjs';
 import hisModel from '../../routes/his/hismodel';
 import { getIoTDevice } from '../../middleware/moph-refer';
 import { Jwt } from '../../plugins/jwt';
-const db = global.dbHIS;
+import axios from 'axios';
+
+const dbConnection = require('../../plugins/db');
+
+// const db = global.dbHIS;
+const db = dbConnection('HIS');
 const jwt = new Jwt();
+
+export const login = async (_req: any, reply: any): Promise<void> => {
+  const token = _req?.headers?.authorization?.replace('Bearer ', '') || null;
+  if (!token) {
+    return reply.status(StatusCodes.UNAUTHORIZED).send({
+      status: StatusCodes.UNAUTHORIZED,
+      message: 'Missing authorization token'
+    });
+  }
+  const expire_minute = _req?.query?.expire_minute || _req?.body?.expire_minute || null;
+  const url = 'https://uat-kiosk.one.th/api/v1/his-connect/provider';
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`
+  };
+  try {
+    const { status, data } = await axios.get(url, { headers });
+    console.log(url, status);
+    if (data && data?.cid && data?.id) {
+      const token = jwt.sign({
+        type: 'KIOSK-APP',
+        id: data.id
+      }, `${expire_minute || 12 * 60}m`, 'KIOSK');
+      return reply.status(StatusCodes.OK).send({
+        status: StatusCodes.OK,
+        token,
+        data: {
+          create_hn: false,
+          create_visitno: false
+        }
+      });
+    } else {
+      const status_code = data?.status_code || data?.status || StatusCodes.UNAUTHORIZED;
+      return reply.status(status_code).send({
+        status: status_code,
+        message: 'Invalid authorization token'
+      });
+    }
+  } catch (error) {
+    console.log('/kiosk/login', url, error?.status, error?.message);
+    return reply.status(error?.status || StatusCodes.UNAUTHORIZED).send({
+      status: error?.status || StatusCodes.UNAUTHORIZED,
+      message: error?.message || 'Invalid authorization token',
+      error: error.response?.data || error.message
+    });
+  }
+
+}
 
 export const signIn = async (_req: any, reply: any): Promise<void> => {
   const hospcode = _req?.body?.hospcode || null;
@@ -40,7 +93,10 @@ export const signIn = async (_req: any, reply: any): Promise<void> => {
     });
   }
 
-  const token = jwt.sign({ device: getDevice.ref, hospcode, device_no, allow_code }, `${expire_minute}m`, 'KIOSK');
+  const token = jwt.sign({
+    type: 'KIOSK-DEVICE',
+    device: getDevice.ref, hospcode, device_no, allow_code
+  }, `${expire_minute}m`, 'KIOSK');
 
   return reply.status(StatusCodes.OK).send({
     status: StatusCodes.OK,
@@ -56,6 +112,7 @@ export const signIn = async (_req: any, reply: any): Promise<void> => {
 export const person = async (_req: any, reply: any): Promise<void> => {
   const type = _req?.body?.type;
   const id = _req?.body?.id;
+
   if (!type || !id) {
     return reply.status(StatusCodes.BAD_REQUEST).send({
       status: StatusCodes.BAD_REQUEST,
@@ -72,6 +129,9 @@ export const person = async (_req: any, reply: any): Promise<void> => {
   }
 
   result = await toLowerColumnName(result);
+  result = result.filter(row => row?.nation == '099' || row?.nationality == '099');
+
+  //    nationality: row.nation || row.nationality || null,
   let row = result[0];
   let data: any = {
     prename: row.prename || null,
@@ -83,9 +143,9 @@ export const person = async (_req: any, reply: any): Promise<void> => {
     sex: row.sex || null,
     gender: row.sex == '1' ? 'M' : row.sex == '2' ? 'F' : 'U',
     phone: row.phone || row.mobile || row.tel || row.telephone || null,
-    occupation: row.occupation_new || row.occupation_old || null,
+    occupation: row.occupation_new || row.occupation || row.occupation_old || null,
     nationality: row.nation || row.nationality || null,
-    ethnicity: row.ethnicity || row.race || null,
+    ethnicity: row.ethnic || row.ethnicity || row.race || null,
     father_name: row.father_name || row.father || null,
     mother_name: row.mother_name || row.mother || null,
   };

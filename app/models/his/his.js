@@ -20,17 +20,25 @@ class HisModel {
     getDr(db, code, license_no) {
         return [];
     }
-    async getPerson1(db, columnName, searchText) {
-        return [];
-    }
     getReferOut(db, date, hospCode = hisHospcode, visitNo = null) {
         return [];
     }
     sumReferOut(db, dateStart, dateEnd) {
         return [];
     }
-    getPerson(db, columnName, searchText, hospCode = hisHospcode) {
-        return [];
+    async getPerson(db, columnName, searchText, hospCode = hisHospcode) {
+        if (!columnName || !searchText) {
+            throw new Error('Invalid parameter');
+        }
+        let query = db('person')
+            .select('person.*', 'ethnic as race', 'father as father_name', 'mother as mother_name');
+        if (Array.isArray(searchText)) {
+            query = query.whereIn(columnName, searchText);
+        }
+        else {
+            query = query.where(columnName, searchText);
+        }
+        return query.limit(maxLimit);
     }
     getAddress(db, columnName, searchNo, hospCode = hisHospcode) {
         return [];

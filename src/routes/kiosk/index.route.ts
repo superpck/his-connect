@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { person, saveIoTData, signIn } from '../../controllers/kiosk/kiosk.controller';
+import { person, saveIoTData, signIn, login } from '../../controllers/kiosk/kiosk.controller';
 
 const router = (fastify, { }, next) => {
   fastify.get('/', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
@@ -10,8 +10,12 @@ const router = (fastify, { }, next) => {
     });
   });
 
-  fastify.post('/create-token', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
+  fastify.post('/create-token', async (req: any, reply: any) => {
     return signIn(req, reply);
+  });
+
+  fastify.get('/login', async (req: any, reply: any) => {
+    return login(req, reply);
   });
 
   fastify.post('/person', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {

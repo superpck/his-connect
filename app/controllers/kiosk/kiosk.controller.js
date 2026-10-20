@@ -3,14 +3,65 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.saveIoTData = exports.person = exports.signIn = void 0;
+exports.saveIoTData = exports.person = exports.signIn = exports.login = void 0;
 const http_status_codes_1 = require("http-status-codes");
 const dayjs_1 = __importDefault(require("dayjs"));
 const hismodel_1 = __importDefault(require("../../routes/his/hismodel"));
 const moph_refer_1 = require("../../middleware/moph-refer");
 const jwt_1 = require("../../plugins/jwt");
-const db = global.dbHIS;
+const axios_1 = __importDefault(require("axios"));
+const dbConnection = require('../../plugins/db');
+const db = dbConnection('HIS');
 const jwt = new jwt_1.Jwt();
+const login = async (_req, reply) => {
+    const token = _req?.headers?.authorization?.replace('Bearer ', '') || null;
+    if (!token) {
+        return reply.status(http_status_codes_1.StatusCodes.UNAUTHORIZED).send({
+            status: http_status_codes_1.StatusCodes.UNAUTHORIZED,
+            message: 'Missing authorization token'
+        });
+    }
+    const expire_minute = _req?.query?.expire_minute || _req?.body?.expire_minute || null;
+    const url = 'https://uat-kiosk.one.th/api/v1/his-connect/provider';
+    const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+    };
+    try {
+        const { status, data } = await axios_1.default.get(url, { headers });
+        console.log(url, status);
+        if (data && data?.cid && data?.id) {
+            const token = jwt.sign({
+                type: 'KIOSK-APP',
+                id: data.id
+            }, `${expire_minute || 12 * 60}m`, 'KIOSK');
+            return reply.status(http_status_codes_1.StatusCodes.OK).send({
+                status: http_status_codes_1.StatusCodes.OK,
+                token,
+                data: {
+                    create_hn: false,
+                    create_visitno: false
+                }
+            });
+        }
+        else {
+            const status_code = data?.status_code || data?.status || http_status_codes_1.StatusCodes.UNAUTHORIZED;
+            return reply.status(status_code).send({
+                status: status_code,
+                message: 'Invalid authorization token'
+            });
+        }
+    }
+    catch (error) {
+        console.log('/kiosk/login', url, error?.status, error?.message);
+        return reply.status(error?.status || http_status_codes_1.StatusCodes.UNAUTHORIZED).send({
+            status: error?.status || http_status_codes_1.StatusCodes.UNAUTHORIZED,
+            message: error?.message || 'Invalid authorization token',
+            error: error.response?.data || error.message
+        });
+    }
+};
+exports.login = login;
 const signIn = async (_req, reply) => {
     const hospcode = _req?.body?.hospcode || null;
     const device_no = _req?.body?.device_no || null;
@@ -42,7 +93,10 @@ const signIn = async (_req, reply) => {
             message: 'Device not found'
         });
     }
-    const token = jwt.sign({ device: getDevice.ref, hospcode, device_no, allow_code }, `${expire_minute}m`, 'KIOSK');
+    const token = jwt.sign({
+        type: 'KIOSK-DEVICE',
+        device: getDevice.ref, hospcode, device_no, allow_code
+    }, `${expire_minute}m`, 'KIOSK');
     return reply.status(http_status_codes_1.StatusCodes.OK).send({
         status: http_status_codes_1.StatusCodes.OK,
         token,
@@ -71,6 +125,7 @@ const person = async (_req, reply) => {
         });
     }
     result = await toLowerColumnName(result);
+    result = result.filter(row => row?.nation == '099' || row?.nationality == '099');
     let row = result[0];
     let data = {
         prename: row.prename || null,
@@ -82,9 +137,9 @@ const person = async (_req, reply) => {
         sex: row.sex || null,
         gender: row.sex == '1' ? 'M' : row.sex == '2' ? 'F' : 'U',
         phone: row.phone || row.mobile || row.tel || row.telephone || null,
-        occupation: row.occupation_new || row.occupation_old || null,
+        occupation: row.occupation_new || row.occupation || row.occupation_old || null,
         nationality: row.nation || row.nationality || null,
-        ethnicity: row.ethnicity || row.race || null,
+        ethnicity: row.ethnic || row.ethnicity || row.race || null,
         father_name: row.father_name || row.father || null,
         mother_name: row.mother_name || row.mother || null,
     };

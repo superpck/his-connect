@@ -1,3 +1,9 @@
+# 3.12.0
+## Feature
+  - เพิ่มการเชื่อมข้อมูลกับระบบ MOPH Kiosk device และ MOPH Kiosk Application
+  - ปรับ serverOption ให้รองรับ Fastify 5
+  - Update package
+
 # 3.11.1
 ## Feature
   - ย้ายการ select data ของ isonline ไปที่ his model

@@ -122,7 +122,7 @@ const getReferToken = async (options = {}) => {
         const startedAt = Date.now();
         logRequestStart('MOPH token request', purpose, timeoutMs);
         try {
-            const { data } = await axios_1.default.post(url, bodyData, { headers, timeout: timeoutMs });
+            const { status, data } = await axios_1.default.post(url, bodyData, { headers, timeout: timeoutMs });
             nReferToken = data?.token || nReferToken;
             logRequestResult('MOPH token request', purpose, startedAt);
             return data;
