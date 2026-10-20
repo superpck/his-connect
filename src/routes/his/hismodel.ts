@@ -86,5 +86,8 @@ switch (hisProvider) {
 }
 
 export const HisConnect = hisModel;
+export const HisProvider = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb'
+  , 'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades'
+  , 'himpro', 'nemo', 'mypcu', 'emrsoft', 'haos', 'other'];
 
 export default hisModel;

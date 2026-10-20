@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.HisConnect = void 0;
+exports.HisProvider = exports.HisConnect = void 0;
 console.log('HIS Provider:', process.env.HIS_PROVIDER);
 const hisProvider = (process.env.HIS_PROVIDER || 'unknown-his').toLowerCase();
 const modelPath = '../../models/his';
@@ -86,4 +86,7 @@ switch (hisProvider) {
         hisModel = new (require(modelPath + '/his').HisModel)();
 }
 exports.HisConnect = hisModel;
+exports.HisProvider = ['ihospital', 'hosxpv3', 'hosxpv4', 'hosxppcu', 'infod', 'homc', 'ssb',
+    'hospitalos', 'jhcis', 'kpstat', 'md', 'mkhospital', 'thiades',
+    'himpro', 'nemo', 'mypcu', 'emrsoft', 'haos', 'other'];
 exports.default = hisModel;

@@ -300,7 +300,9 @@ class HisHosxpv4Model {
         return result;
     }
     async getAddress(db, columnName, searchText, hospCode = hisHospcode) {
-        const result = await db('person as p')
+        columnName = columnName == 'hn' ? 'pt.hn' : columnName;
+        columnName = columnName == 'cid' ? 'p.cid' : columnName;
+        let query = db('person as p')
             .leftJoin('patient as pt', 'p.cid', 'pt.cid')
             .leftJoin('house as h', 'h.house_id', 'p.house_id')
             .leftJoin('village as v', 'v.village_id', 'h.village_id')
@@ -308,7 +310,8 @@ class HisHosxpv4Model {
             .leftJoin('person_address as pa', 'pa.person_id', 'p.person_id')
             .select(db.raw('? AS hospcode', [hisHospcode]), 'pt.cid', 'pt.hn', db.raw('pt.hn as pid'), db.raw("CASE WHEN p.house_regist_type_id IN (1, 2) THEN '1' ELSE '2' END as addresstype"), db.raw("CASE WHEN h.census_id IS NULL THEN '' ELSE h.census_id END AS house_id"), db.raw("CASE WHEN p.house_regist_type_id IN (4) THEN '9' ELSE h.house_type_id END as housetype"), db.raw('h.house_condo_roomno as roomno'), db.raw('h.house_condo_name as condo'), db.raw("CASE WHEN p.house_regist_type_id IN (4) THEN pt.addrpart ELSE h.address END as houseno"), db.raw("'' as soisub"), db.raw("'' as soimain"), db.raw("CASE WHEN p.house_regist_type_id IN (4) THEN pt.road ELSE h.road END as road"), db.raw("CASE WHEN p.house_regist_type_id IN (4) THEN '' ELSE v.village_name END as villaname"), db.raw("CASE WHEN p.house_regist_type_id IN (4) THEN pt.moopart ELSE v.village_moo END as village"), db.raw("CASE WHEN p.house_regist_type_id IN (4) THEN pt.tmbpart ELSE t.tmbpart END as tambon"), db.raw("CASE WHEN p.house_regist_type_id IN (4) THEN pt.amppart ELSE t.amppart END as ampur"), db.raw("CASE WHEN p.house_regist_type_id IN (4) THEN pt.chwpart ELSE t.chwpart END as changwat"), db.raw('p.last_update as D_Update'))
             .where(columnName, searchText);
-        return result[0];
+        const result = await query;
+        return result;
     }
     async getService(db, columnName, searchText, dateServ = null, hospCode = hisHospcode) {
         const colMap = {

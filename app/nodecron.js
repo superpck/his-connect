@@ -14,6 +14,7 @@ const moph_appointment_1 = __importDefault(require("./task/moph-appointment"));
 const shell = require("shelljs");
 const cron = require('node-cron');
 const referCrontab = require('./routes/refer/crontab');
+const UATMode = process.env.UAT_MODE || null;
 const instanceId = process.env.NODE_APP_INSTANCE ? +process.env.NODE_APP_INSTANCE + 1 : null;
 const cronjobStartupTimeoutMs = Math.max(1000, +(process.env.CRONJOB_STARTUP_TIMEOUT_MS || 12000));
 let hospitalConfig = null;
@@ -189,6 +190,9 @@ async function getmophUrl() {
     global.mophService = await require('./routes/main/crontab')(global.mophService, {});
 }
 async function cronjob(fastify) {
+    if (UATMode && UATMode == 'YES') {
+        return;
+    }
     const startupAt = Date.now();
     console.info(`${getTimestamp()} Cronjob plugin init start for hospcode ${process.env.HOSPCODE || 'unknown'}`);
     try {

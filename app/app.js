@@ -27,7 +27,9 @@ if (process.env.SSL_ENABLE && process.env.SSL_ENABLE == '1' && process.env.SSL_K
         logger: {
             level: 'error',
         },
-        ignoreTrailingSlash: true,
+        routerOptions: {
+            ignoreTrailingSlash: true,
+        },
         bodyLimit: 20 * 1024 * 1024,
         https: {
             key: fs.readFileSync(process.env.SSL_KEY),
@@ -40,7 +42,9 @@ else {
         logger: {
             level: 'error',
         },
-        ignoreTrailingSlash: true,
+        routerOptions: {
+            ignoreTrailingSlash: true,
+        },
         bodyLimit: 20 * 1024 * 1024,
         connectionTimeout: 10000
     };
@@ -164,7 +168,6 @@ var options = {
 };
 (async () => {
     await connectDB();
-    await mqttSubscribe();
     app.listen(options, (err) => {
         if (err)
             throw err;

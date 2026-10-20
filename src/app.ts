@@ -28,7 +28,9 @@ if (process.env.SSL_ENABLE && process.env.SSL_ENABLE == '1' && process.env.SSL_K
     logger: {
       level: 'error',
     },
-    ignoreTrailingSlash: true,
+    routerOptions: {
+      ignoreTrailingSlash: true,
+    },
     bodyLimit: 20 * 1024 * 1024,    // 20 MB
     // http2: true,
     https: {
@@ -41,7 +43,9 @@ if (process.env.SSL_ENABLE && process.env.SSL_ENABLE == '1' && process.env.SSL_K
     logger: {
       level: 'error',
     },
-    ignoreTrailingSlash: true,
+    routerOptions: {
+      ignoreTrailingSlash: true,
+    },
     bodyLimit: 20 * 1024 * 1024,    // 20 MB
     connectionTimeout: 10000
   }
@@ -218,7 +222,7 @@ var options: any = {
 // reflects actual DB state instead of racing ahead of it.
 (async () => {
   await connectDB();
-  await mqttSubscribe();
+  // await mqttSubscribe();
   app.listen(options, (err) => {
     if (err) throw err;
     const instanceId = process.env.NODE_APP_INSTANCE || '0';
