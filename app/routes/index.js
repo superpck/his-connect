@@ -10,17 +10,20 @@ var crypto = require('crypto');
 var fs = require('fs');
 const { execFile } = require('child_process');
 const moph_refer_1 = require("../middleware/moph-refer");
+const utils_1 = require("../utils/utils");
 const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 const resultText = './sent_result.txt';
 const router = (fastify, {}, next) => {
     var startServer = fastify.startServerTime;
     fastify.get('/', async (req, reply) => {
+        const runtimeEnv = await (0, utils_1.detectRuntimeEnvironment)();
         reply.send({
             status: 200, statusCode: 200, ok: true,
             date: (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss'),
             apiName: global.appDetail.name,
             version: global.appDetail.version,
             subVersion: global.appDetail.subVersion,
+            runtime: runtimeEnv,
             apiStartTime: global.apiStartTime
         });
     });

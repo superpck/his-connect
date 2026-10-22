@@ -37,9 +37,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.base64Decode = exports.base64Encode = exports.decryptString = exports.encryptString = exports.sha1 = exports.sha512 = exports.sha256 = exports.md5 = exports.replyGzip = exports.unGzip = exports.gzip = exports.getClientIp = exports.getIP = exports.timeSecond = exports.timeMinute = exports.thaiDateFull = exports.thaiDateAbbr = exports.thaiDate = exports.dateLen = exports.isNumeric = exports.randomString = void 0;
+exports.detectRuntimeEnvironment = detectRuntimeEnvironment;
 const dayjs_1 = __importDefault(require("dayjs"));
 const duration_1 = __importDefault(require("dayjs/plugin/duration"));
-const os = __importStar(require("os"));
+const os_1 = __importStar(require("os"));
+const fs_1 = __importDefault(require("fs"));
 const zlib_1 = __importDefault(require("zlib"));
 const util_1 = require("util");
 const crypto_1 = __importDefault(require("crypto"));
@@ -136,7 +138,7 @@ const timeSecond = (date = (0, dayjs_1.default)()) => {
 };
 exports.timeSecond = timeSecond;
 const getIP = () => {
-    const interfaces = os.networkInterfaces();
+    const interfaces = os_1.default.networkInterfaces();
     for (const ifaces of Object.values(interfaces)) {
         const iface = ifaces.find(i => i.family === 'IPv4' && !i.internal);
         if (iface)
@@ -247,3 +249,32 @@ const base64Decode = (data) => {
     return Buffer.from(data, 'base64').toString('utf8');
 };
 exports.base64Decode = base64Decode;
+async function detectRuntimeEnvironment() {
+    let env = "host";
+    if (fs_1.default.existsSync("/.dockerenv")) {
+        env = "docker";
+    }
+    else {
+        try {
+            const cgroup = fs_1.default.readFileSync("/proc/1/cgroup", "utf8");
+            if (/docker|containerd/i.test(cgroup)) {
+                env = "docker";
+            }
+            if (/kubepods/i.test(cgroup)) {
+                env = "kubernetes";
+            }
+        }
+        catch { }
+    }
+    const r = (0, os_1.release)().toLowerCase();
+    try {
+        const version = fs_1.default.readFileSync("/proc/version", "utf8").toLowerCase();
+        if (r.includes("microsoft") ||
+            r.includes("wsl") ||
+            version.includes("microsoft")) {
+            env = "wsl";
+        }
+    }
+    catch { }
+    return env;
+}

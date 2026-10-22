@@ -6,6 +6,7 @@ var fs = require('fs');
 const { execFile } = require('child_process');
 
 import { checkSignInCode } from '../middleware/moph-refer';
+import { detectRuntimeEnvironment } from '../utils/utils';
 
 const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 const resultText = './sent_result.txt';
@@ -14,12 +15,14 @@ const router = (fastify, { }, next) => {
   var startServer = fastify.startServerTime;
 
   fastify.get('/', async (req: any, reply: any) => {
+    const runtimeEnv = await detectRuntimeEnvironment();
     reply.send({
       status: 200, statusCode: 200, ok: true,
       date: moment().format('YYYY-MM-DD HH:mm:ss'),
       apiName: global.appDetail.name,
       version: global.appDetail.version,
       subVersion: global.appDetail.subVersion,
+      runtime: runtimeEnv,
       apiStartTime: global.apiStartTime
     });
   })
