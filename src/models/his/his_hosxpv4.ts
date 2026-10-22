@@ -736,7 +736,7 @@ export class HisHosxpv4Model {
         `)
     );
 
-    console.log('getPerson query executed', query.toString());
+    // console.log('getPerson query executed', query.toString());
     const result = await query;
     return result;
   }
