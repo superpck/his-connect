@@ -391,7 +391,7 @@ export class HisHosxpv4Model {
     }
   }
 
-  async getPerson(db: Knex, columnName: string, searchText: any, hospCode = hisHospcode) {
+  async getPerson_old(db: Knex, columnName: string, searchText: any, hospCode = hisHospcode) {
     columnName = columnName == 'hn' ? 'p.hn' : columnName;
     columnName = columnName == 'cid' ? 'p.cid' : columnName;
     columnName = columnName == 'name' ? 'p.fname' : columnName;
@@ -463,6 +463,281 @@ export class HisHosxpv4Model {
       db.raw('CASE WHEN p.last_update IS NULL THEN p.last_update ELSE p.last_visit END as D_UPDATE')
     );
 
+    return result;
+  }
+  async getPerson(db: Knex, columnName: string, searchText: any, hospCode = hisHospcode) {
+    const isPostgres = [
+      'pg',
+      'postgres',
+      'postgresql'
+    ].includes(
+      String(db.client.config.client).toLowerCase()
+    );
+    // กำหนดคอลัมน์ที่อนุญาตให้ค้นหา
+    const columnMap = {
+      hn: 'p.hn',
+      cid: 'p.cid',
+      name: 'p.fname',
+      hid: 'h.house_id'
+    };
+
+    const targetColumn = columnMap[columnName];
+    if (!targetColumn) {
+      throw new Error(`Invalid search column: ${columnName}`);
+    }
+
+    // แปลงค่าค้นหาเป็นข้อความโดยไม่ตัดเลข 0 นำหน้า
+    const normalizeValue = (value) => {
+      if (value === null || value === undefined) {
+        return null;
+      }
+      return String(value).trim();
+    };
+
+    const searchValues = Array.isArray(searchText)
+      ? searchText.map(normalizeValue).filter(v => v !== null)
+      : normalizeValue(searchText);
+
+    if (Array.isArray(searchValues) && searchValues.length === 0) {
+      return [];
+    }
+
+    if (!Array.isArray(searchValues) &&
+      (searchValues === null || searchValues === '')) {
+      return [];
+    }
+
+    const rhGrp = hisVersion === '4'
+      ? 'person.bloodgroup_rh'
+      : 'person.blood_grp_rh';
+
+    // เปรียบเทียบรหัสเป็นข้อความสำหรับ PostgreSQL
+    // ช่วยรองรับ character และ integer ที่ต่างชนิดกัน
+    const textEqual = (left, right) => {
+      if (isPostgres) {
+        return db.raw('??::text = ??::text', [left, right]);
+      }
+
+      return db.raw('?? = ??', [left, right]);
+    };
+
+    // VSTATUS: เชื่อมด้วย person_id ไม่ใช่ CID
+    const vstatusSubquery = db('person_village_duty as pvd')
+      .select(
+        db.raw(`
+            CASE
+                    WHEN ${isPostgres
+            ? 'pvd.person_duty_id::text'
+            : 'pvd.person_duty_id'}
+                        IN ('1','2','4','5') THEN '1'
+                    WHEN ${isPostgres
+            ? 'pvd.person_duty_id::text'
+            : 'pvd.person_duty_id'}
+                        = '6' THEN '2'
+                    WHEN ${isPostgres
+            ? 'pvd.person_duty_id::text'
+            : 'pvd.person_duty_id'}
+                        = '3' THEN '3'
+                    WHEN ${isPostgres
+            ? 'pvd.person_duty_id::text'
+            : 'pvd.person_duty_id'}
+                        = '10' THEN '4'
+                    WHEN ${isPostgres
+            ? 'pvd.person_duty_id::text'
+            : 'pvd.person_duty_id'}
+                        IN ('7','8','9') THEN '5'
+                    ELSE '5'
+                END
+            `)
+      )
+      .where('pvd.person_id', '=', db.ref('person.person_id'))
+      // .whereColumn('pvd.person_id', 'person.person_id')
+      .limit(1);
+
+    // Query หลัก
+    let query = db('patient as p')
+      .leftJoin('person', function () {
+        this.on(
+          textEqual('p.hn', 'person.patient_hn')
+        );
+      })
+      .leftJoin('house as h', function () {
+        this.on(
+          textEqual('person.house_id', 'h.house_id')
+        );
+      })
+      .leftJoin('occupation as o', function () {
+        this.on(
+          textEqual('o.occupation', 'p.occupation')
+        );
+      })
+      .leftJoin('nationality as nt0', function () {
+        this.on(
+          textEqual('nt0.nationality', 'p.citizenship')
+        );
+      })
+      .leftJoin('nationality as nt1', function () {
+        this.on(
+          textEqual('nt1.nationality', 'p.nationality')
+        );
+      })
+      .leftJoin('provis_religion as r', function () {
+        this.on(
+          textEqual('r.code', 'p.religion')
+        );
+      })
+      .leftJoin('education as e', function () {
+        this.on(
+          textEqual('e.education', 'p.educate')
+        );
+      })
+      .leftJoin('person_labor_type as pl', function () {
+        this.on(
+          textEqual(
+            'person.person_labor_type_id',
+            'pl.person_labor_type_id'
+          )
+        );
+      });
+
+    // เงื่อนไขค้นหา
+    if (Array.isArray(searchValues)) {
+
+      if (isPostgres) {
+        query.whereRaw(
+          '??::text IN (' +
+          searchValues.map(() => '?::text').join(',') +
+          ')',
+          [targetColumn, ...searchValues]
+        );
+      } else {
+        query.whereIn(targetColumn, searchValues);
+      }
+
+    } else {
+
+      if (isPostgres) {
+        query.whereRaw(
+          '??::text = ?::text',
+          [targetColumn, searchValues]
+        );
+      } else {
+        query.where(targetColumn, searchValues);
+      }
+    }
+
+    const asText = (field) => {
+      return isPostgres ? `${ field }::text` : field;
+    };
+
+    query = query.select(
+      db.raw('? AS HOSPCODE', [hospCode]),
+      'h.house_id AS HID',
+      'p.cid AS CID',
+      'p.pname AS PRENAME',
+      'p.fname AS NAME',
+      'p.fname AS FNAME',
+      'p.lname AS LNAME',
+      'p.hn AS HN',
+      'p.hn AS PID',
+      'p.sex AS SEX',
+      'p.birthday AS BIRTH',
+      'p.birthday AS dob',
+
+      // สถานภาพสมรส
+      db.raw(`
+            CASE
+                WHEN ${asText('p.marrystatus')}
+                    IN ('1','2','3','4','5','6')
+                THEN ${asText('p.marrystatus')}
+                ELSE '9'
+            END AS MSTATUS
+        `),
+
+      // สถานะในครอบครัว
+      db.raw(`
+            CASE
+                WHEN ${asText('person.person_house_position_id')} = '1'
+                THEN '1'
+                ELSE '2'
+            END AS FSTATUS
+        `),
+
+      // อาชีพเดิม
+      db.raw(`
+            COALESCE(
+                ${asText('o.occupation')},
+                '000'
+            ) AS OCCUPATION_OLD
+        `),
+
+      // อาชีพมาตรฐานใหม่
+      db.raw(`
+            COALESCE(
+                ${asText('o.nhso_code')},
+                '9999'
+            ) AS OCCUPATION_NEW
+        `),
+      // เชื้อชาติ
+      db.raw(`
+            COALESCE(
+                ${asText('nt0.nhso_code')},
+                '099'
+            ) AS RACE
+        `),
+      // สัญชาติ
+      db.raw(`
+            COALESCE(
+                ${asText('nt1.nhso_code')},
+                '099'
+            ) AS NATION
+        `),
+      // ศาสนา
+      db.raw(`
+            COALESCE(
+                ${asText('p.religion')},
+                '01'
+            ) AS RELIGION
+        `),
+      // การศึกษา
+      db.raw(`
+            COALESCE(
+                ${asText('e.provis_code')},
+                '9'
+            ) AS EDUCATION
+        `),
+      'p.father_cid AS FATHER',
+      'p.mother_cid AS MOTHER',
+      'p.couple_cid AS COUPLE',
+      // สถานะชุมชน
+      vstatusSubquery.as('VSTATUS'),
+      'person.movein_date AS MOVEIN',
+      // สถานะจำหน่าย
+      db.raw(`
+            COALESCE(
+                ${asText('person.person_discharge_id')},
+                '9'
+            ) AS DISCHARGE
+        `),
+      'person.discharge_date AS DDISCHARGE',
+      'person.blood_group AS ABOGROUP',
+      db.raw('? AS RHGROUP', [rhGrp]),
+      'pl.nhso_code AS LABOR',
+      'p.passport_no AS PASSPORT',
+      'p.type_area AS TYPEAREA',
+      'p.mobile_phone_number AS MOBILE',
+      'p.deathday AS dead',
+      // วันที่แก้ไขล่าสุด
+      db.raw(`
+            COALESCE(
+                p.last_update,
+                p.last_visit
+            ) AS D_UPDATE
+        `)
+    );
+
+    console.log('getPerson query executed', query.toString());
+    const result = await query;
     return result;
   }
 

@@ -7,14 +7,12 @@ exports.authenticateRequest = authenticateRequest;
 const http_status_codes_1 = require("http-status-codes");
 const moment_1 = __importDefault(require("moment"));
 async function authenticateRequest(request, reply) {
-    request.authenDecoded = null;
     request.user = null;
     if (request.body && request.body.token) {
         request.headers.authorization = 'Bearer ' + request.body.token;
     }
     try {
         request.user = await request.jwtVerify();
-        request.authenDecoded = request.user;
     }
     catch (err) {
         console.error((0, moment_1.default)().format('HH:mm:ss.SSS'), request.ipAddr, 'Error client try to access API ' + http_status_codes_1.StatusCodes.UNAUTHORIZED, `message: '${err.message}'`);

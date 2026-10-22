@@ -29,12 +29,13 @@ const login = async (_req, reply) => {
     };
     try {
         const { status, data } = await axios_1.default.get(url, { headers });
-        console.log(url, status);
-        if (data && data?.cid && data?.id) {
+        console.log(url, status, data);
+        const result = data?.data || data;
+        if (result && result?.cid && result?.id) {
             const token = jwt.sign({
                 type: 'KIOSK-APP',
-                id: data.id
-            }, `${expire_minute || 12 * 60}m`, 'KIOSK');
+                id: result.id
+            }, `${expire_minute || (12 * 60)}m`, 'KIOSK');
             return reply.status(http_status_codes_1.StatusCodes.OK).send({
                 status: http_status_codes_1.StatusCodes.OK,
                 token,
@@ -46,9 +47,9 @@ const login = async (_req, reply) => {
         }
         else {
             const status_code = data?.status_code || data?.status || http_status_codes_1.StatusCodes.UNAUTHORIZED;
-            return reply.status(status_code).send({
+            return reply.send({
                 status: status_code,
-                message: 'Invalid authorization token'
+                message: data?.Message || 'Invalid authorization token'
             });
         }
     }

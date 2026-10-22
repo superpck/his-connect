@@ -264,7 +264,7 @@ class HisHosxpv4Model {
             throw error;
         }
     }
-    async getPerson(db, columnName, searchText, hospCode = hisHospcode) {
+    async getPerson_old(db, columnName, searchText, hospCode = hisHospcode) {
         columnName = columnName == 'hn' ? 'p.hn' : columnName;
         columnName = columnName == 'cid' ? 'p.cid' : columnName;
         columnName = columnName == 'name' ? 'p.fname' : columnName;
@@ -297,6 +297,179 @@ class HisHosxpv4Model {
             query.where(columnName, searchText);
         }
         const result = await query.select(db.raw('? as HOSPCODE', [hisHospcode]), 'h.house_id as HID', 'p.cid as CID', 'p.pname as PRENAME', 'p.fname as NAME', 'p.fname as FNAME', 'p.lname as LNAME', 'p.hn as HN', 'p.hn as PID', 'p.sex as SEX', 'p.birthday as BIRTH', 'p.birthday as dob', db.raw("CASE WHEN p.marrystatus IN (1,2,3,4,5,6) THEN p.marrystatus ELSE 9 END as MSTATUS"), db.raw("CASE WHEN person.person_house_position_id = 1 THEN '1' ELSE '2' END as FSTATUS"), db.raw("CASE WHEN o.occupation IS NULL THEN '000' ELSE o.occupation END AS OCCUPATION_OLD"), db.raw("CASE WHEN o.nhso_code IS NULL THEN '9999' ELSE o.nhso_code END AS OCCUPATION_NEW"), db.raw("CASE WHEN nt0.nhso_code IS NULL THEN '099' ELSE nt0.nhso_code END AS RACE"), db.raw("CASE WHEN nt1.nhso_code IS NULL THEN '099' ELSE nt1.nhso_code END AS NATION"), db.raw("CASE WHEN p.religion IS NULL THEN '01' ELSE p.religion END AS RELIGION"), db.raw("CASE WHEN e.provis_code IS NULL THEN '9' ELSE e.provis_code END as EDUCATION"), 'p.father_cid as FATHER', 'p.mother_cid as MOTHER', 'p.couple_cid as COUPLE', db.raw(`(${vstatusSubquery.toString()}) as VSTATUS`), 'person.movein_date as MOVEIN', db.raw("CASE WHEN person.person_discharge_id IS NULL THEN '9' ELSE person.person_discharge_id END AS DISCHARGE"), 'person.discharge_date as DDISCHARGE', `person.blood_group as ABOGROUP`, `${rhGrp} as RHGROUP`, 'pl.nhso_code as LABOR', 'p.passport_no as PASSPORT', 'p.type_area as TYPEAREA', 'p.mobile_phone_number as MOBILE', 'p.deathday as dead', db.raw('CASE WHEN p.last_update IS NULL THEN p.last_update ELSE p.last_visit END as D_UPDATE'));
+        return result;
+    }
+    async getPerson(db, columnName, searchText, hospCode = hisHospcode) {
+        const isPostgres = [
+            'pg',
+            'postgres',
+            'postgresql'
+        ].includes(String(db.client.config.client).toLowerCase());
+        const columnMap = {
+            hn: 'p.hn',
+            cid: 'p.cid',
+            name: 'p.fname',
+            hid: 'h.house_id'
+        };
+        const targetColumn = columnMap[columnName];
+        if (!targetColumn) {
+            throw new Error(`Invalid search column: ${columnName}`);
+        }
+        const normalizeValue = (value) => {
+            if (value === null || value === undefined) {
+                return null;
+            }
+            return String(value).trim();
+        };
+        const searchValues = Array.isArray(searchText)
+            ? searchText.map(normalizeValue).filter(v => v !== null)
+            : normalizeValue(searchText);
+        if (Array.isArray(searchValues) && searchValues.length === 0) {
+            return [];
+        }
+        if (!Array.isArray(searchValues) &&
+            (searchValues === null || searchValues === '')) {
+            return [];
+        }
+        const rhGrp = hisVersion === '4'
+            ? 'person.bloodgroup_rh'
+            : 'person.blood_grp_rh';
+        const textEqual = (left, right) => {
+            if (isPostgres) {
+                return db.raw('??::text = ??::text', [left, right]);
+            }
+            return db.raw('?? = ??', [left, right]);
+        };
+        const vstatusSubquery = db('person_village_duty as pvd')
+            .select(db.raw(`
+            CASE
+                    WHEN ${isPostgres
+            ? 'pvd.person_duty_id::text'
+            : 'pvd.person_duty_id'}
+                        IN ('1','2','4','5') THEN '1'
+                    WHEN ${isPostgres
+            ? 'pvd.person_duty_id::text'
+            : 'pvd.person_duty_id'}
+                        = '6' THEN '2'
+                    WHEN ${isPostgres
+            ? 'pvd.person_duty_id::text'
+            : 'pvd.person_duty_id'}
+                        = '3' THEN '3'
+                    WHEN ${isPostgres
+            ? 'pvd.person_duty_id::text'
+            : 'pvd.person_duty_id'}
+                        = '10' THEN '4'
+                    WHEN ${isPostgres
+            ? 'pvd.person_duty_id::text'
+            : 'pvd.person_duty_id'}
+                        IN ('7','8','9') THEN '5'
+                    ELSE '5'
+                END
+            `))
+            .where('pvd.person_id', '=', db.ref('person.person_id'))
+            .limit(1);
+        let query = db('patient as p')
+            .leftJoin('person', function () {
+            this.on(textEqual('p.hn', 'person.patient_hn'));
+        })
+            .leftJoin('house as h', function () {
+            this.on(textEqual('person.house_id', 'h.house_id'));
+        })
+            .leftJoin('occupation as o', function () {
+            this.on(textEqual('o.occupation', 'p.occupation'));
+        })
+            .leftJoin('nationality as nt0', function () {
+            this.on(textEqual('nt0.nationality', 'p.citizenship'));
+        })
+            .leftJoin('nationality as nt1', function () {
+            this.on(textEqual('nt1.nationality', 'p.nationality'));
+        })
+            .leftJoin('provis_religion as r', function () {
+            this.on(textEqual('r.code', 'p.religion'));
+        })
+            .leftJoin('education as e', function () {
+            this.on(textEqual('e.education', 'p.educate'));
+        })
+            .leftJoin('person_labor_type as pl', function () {
+            this.on(textEqual('person.person_labor_type_id', 'pl.person_labor_type_id'));
+        });
+        if (Array.isArray(searchValues)) {
+            if (isPostgres) {
+                query.whereRaw('??::text IN (' +
+                    searchValues.map(() => '?::text').join(',') +
+                    ')', [targetColumn, ...searchValues]);
+            }
+            else {
+                query.whereIn(targetColumn, searchValues);
+            }
+        }
+        else {
+            if (isPostgres) {
+                query.whereRaw('??::text = ?::text', [targetColumn, searchValues]);
+            }
+            else {
+                query.where(targetColumn, searchValues);
+            }
+        }
+        const asText = (field) => {
+            return isPostgres ? `${field}::text` : field;
+        };
+        query = query.select(db.raw('? AS HOSPCODE', [hospCode]), 'h.house_id AS HID', 'p.cid AS CID', 'p.pname AS PRENAME', 'p.fname AS NAME', 'p.fname AS FNAME', 'p.lname AS LNAME', 'p.hn AS HN', 'p.hn AS PID', 'p.sex AS SEX', 'p.birthday AS BIRTH', 'p.birthday AS dob', db.raw(`
+            CASE
+                WHEN ${asText('p.marrystatus')}
+                    IN ('1','2','3','4','5','6')
+                THEN ${asText('p.marrystatus')}
+                ELSE '9'
+            END AS MSTATUS
+        `), db.raw(`
+            CASE
+                WHEN ${asText('person.person_house_position_id')} = '1'
+                THEN '1'
+                ELSE '2'
+            END AS FSTATUS
+        `), db.raw(`
+            COALESCE(
+                ${asText('o.occupation')},
+                '000'
+            ) AS OCCUPATION_OLD
+        `), db.raw(`
+            COALESCE(
+                ${asText('o.nhso_code')},
+                '9999'
+            ) AS OCCUPATION_NEW
+        `), db.raw(`
+            COALESCE(
+                ${asText('nt0.nhso_code')},
+                '099'
+            ) AS RACE
+        `), db.raw(`
+            COALESCE(
+                ${asText('nt1.nhso_code')},
+                '099'
+            ) AS NATION
+        `), db.raw(`
+            COALESCE(
+                ${asText('p.religion')},
+                '01'
+            ) AS RELIGION
+        `), db.raw(`
+            COALESCE(
+                ${asText('e.provis_code')},
+                '9'
+            ) AS EDUCATION
+        `), 'p.father_cid AS FATHER', 'p.mother_cid AS MOTHER', 'p.couple_cid AS COUPLE', vstatusSubquery.as('VSTATUS'), 'person.movein_date AS MOVEIN', db.raw(`
+            COALESCE(
+                ${asText('person.person_discharge_id')},
+                '9'
+            ) AS DISCHARGE
+        `), 'person.discharge_date AS DDISCHARGE', 'person.blood_group AS ABOGROUP', db.raw('? AS RHGROUP', [rhGrp]), 'pl.nhso_code AS LABOR', 'p.passport_no AS PASSPORT', 'p.type_area AS TYPEAREA', 'p.mobile_phone_number AS MOBILE', 'p.deathday AS dead', db.raw(`
+            COALESCE(
+                p.last_update,
+                p.last_visit
+            ) AS D_UPDATE
+        `));
+        console.log('getPerson query executed', query.toString());
+        const result = await query;
         return result;
     }
     async getAddress(db, columnName, searchText, hospCode = hisHospcode) {

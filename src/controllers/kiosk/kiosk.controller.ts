@@ -4,6 +4,7 @@ import hisModel from '../../routes/his/hismodel';
 import { getIoTDevice } from '../../middleware/moph-refer';
 import { Jwt } from '../../plugins/jwt';
 import axios from 'axios';
+import Message from '../../../node_modules/tedious/lib/message.d';
 
 const dbConnection = require('../../plugins/db');
 
@@ -27,12 +28,13 @@ export const login = async (_req: any, reply: any): Promise<void> => {
   };
   try {
     const { status, data } = await axios.get(url, { headers });
-    console.log(url, status);
-    if (data && data?.cid && data?.id) {
+    console.log(url, status, data);
+    const result = data?.data || data;
+    if (result && result?.cid && result?.id) {
       const token = jwt.sign({
         type: 'KIOSK-APP',
-        id: data.id
-      }, `${expire_minute || 12 * 60}m`, 'KIOSK');
+        id: result.id
+      }, `${expire_minute || (12 * 60)}m`, 'KIOSK');
       return reply.status(StatusCodes.OK).send({
         status: StatusCodes.OK,
         token,
@@ -43,9 +45,9 @@ export const login = async (_req: any, reply: any): Promise<void> => {
       });
     } else {
       const status_code = data?.status_code || data?.status || StatusCodes.UNAUTHORIZED;
-      return reply.status(status_code).send({
+      return reply.send({
         status: status_code,
-        message: 'Invalid authorization token'
+        message: data?.Message || 'Invalid authorization token'
       });
     }
   } catch (error) {
