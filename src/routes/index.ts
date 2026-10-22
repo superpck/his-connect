@@ -26,6 +26,7 @@ const router = (fastify, { }, next) => {
       version: global.appDetail.version,
       subVersion: global.appDetail.subVersion,
       runtime: runtimeEnv,
+      nodeVersion: process.version,
       apiStartTime: global.apiStartTime
     };
 

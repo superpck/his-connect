@@ -257,11 +257,8 @@ export const updateAlive = async () => {
       host_type: apiEnv || 'host',
       nodejs: process.version || '',
       platform: os.platform || '',
-      os_version: (os?.release? (os.release + ' '):'') + os.version,
+      os_version: (os?.release? (os.release + ' '):'') + os.version+' NodeJS '+process.version,
       his: hisProvider, ssl: process.env?.SSL_ENABLE || 0,
-      /* 
-        `dbconnect` tinyint unsigned DEFAULT NULL,
-      */
     };
     const result: any = await updateHISAlive(data);
     const status = result.status == 200 || result.statusCode == 200 ? true : false;
