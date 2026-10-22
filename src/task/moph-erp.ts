@@ -257,7 +257,7 @@ export const updateAlive = async () => {
       host_type: apiEnv || 'host',
       nodejs: process.version || '',
       platform: os.platform || '',
-      os_version: (os?.release? (os.release + ' '):'') + os.version+' NodeJS '+process.version,
+      os_version: (os?.release? (os.release + ' '):'') + os.version,
       his: hisProvider, ssl: process.env?.SSL_ENABLE || 0,
     };
     const result: any = await updateHISAlive(data);
