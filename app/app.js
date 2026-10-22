@@ -173,6 +173,7 @@ var options = {
             throw err;
         const instanceId = process.env.NODE_APP_INSTANCE || '0';
         console.info(`${(0, moment_1.default)().format('HH:mm:ss')} HIS-Connect API ${global.appDetail.version}-${global.appDetail.subVersion} started on port ${options.port}, PID: ${process.pid} with NodeJS: ${process.version || ''}, Instance: ${instanceId}`);
+        console.info(`   🔗 NodeJS version: ${process.version}`);
     });
 })();
 async function connectDB() {

@@ -8,6 +8,7 @@
 ## Feature
   - ปรับ SQL getPerson ให้เข้ากับ PgSQL
   - ตรวจสอบการ run ผ่าน Docker
+  - Update nodejs เป็น version 24.22.1 ใน Docker
 
 # 3.11.1
 ## Feature
