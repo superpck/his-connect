@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.base64Decode = exports.base64Encode = exports.decryptString = exports.encryptString = exports.sha1 = exports.sha512 = exports.sha256 = exports.md5 = exports.replyGzip = exports.unGzip = exports.gzip = exports.getClientIp = exports.getIP = exports.timeSecond = exports.timeMinute = exports.thaiDateFull = exports.thaiDateAbbr = exports.thaiDate = exports.dateLen = exports.isNumeric = exports.randomString = void 0;
+exports.osDetail = exports.base64Decode = exports.base64Encode = exports.decryptString = exports.encryptString = exports.sha1 = exports.sha512 = exports.sha256 = exports.md5 = exports.replyGzip = exports.unGzip = exports.gzip = exports.getClientIp = exports.getIP = exports.timeSecond = exports.timeMinute = exports.thaiDateFull = exports.thaiDateAbbr = exports.thaiDate = exports.dateLen = exports.isNumeric = exports.randomString = void 0;
 exports.detectRuntimeEnvironment = detectRuntimeEnvironment;
 const dayjs_1 = __importDefault(require("dayjs"));
 const duration_1 = __importDefault(require("dayjs/plugin/duration"));
@@ -278,3 +278,28 @@ async function detectRuntimeEnvironment() {
     catch { }
     return env;
 }
+const osDetail = async () => {
+    return {
+        platform: (0, os_1.platform)(),
+        release: (0, os_1.release)(),
+        arch: (0, os_1.arch)(),
+        os: os_1.default.type(),
+        version: os_1.default.version(),
+        hostname: os_1.default.hostname(),
+        runtimeEnvironment: await detectRuntimeEnvironment(),
+        cpu: os_1.default.cpus(),
+        memory: os_1.default.totalmem(),
+        freeMemory: os_1.default.freemem(),
+        uptime: os_1.default.uptime(),
+        networkInterfaces: os_1.default.networkInterfaces(),
+        loadAverage: os_1.default.loadavg(),
+        uptimeHours: os_1.default.uptime() / 3600,
+        uptimeDays: os_1.default.uptime() / 86400,
+        uptimeWeeks: os_1.default.uptime() / (86400 * 7),
+        uptimeMonths: os_1.default.uptime() / (86400 * 30),
+        uptimeYears: os_1.default.uptime() / (86400 * 365),
+        uptimeSeconds: os_1.default.uptime(),
+        ip: (0, exports.getIP)()
+    };
+};
+exports.osDetail = osDetail;

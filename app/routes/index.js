@@ -17,6 +17,7 @@ const router = (fastify, {}, next) => {
     var startServer = fastify.startServerTime;
     fastify.get('/', async (req, reply) => {
         const runtimeEnv = await (0, utils_1.detectRuntimeEnvironment)();
+        const os = await (0, utils_1.osDetail)();
         reply.send({
             status: 200, statusCode: 200, ok: true,
             date: (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss'),
@@ -24,6 +25,8 @@ const router = (fastify, {}, next) => {
             version: global.appDetail.version,
             subVersion: global.appDetail.subVersion,
             runtime: runtimeEnv,
+            os_platform: os?.os || os?.platform,
+            os_version: (os?.release ? (os.release + ' ') : '') + os.version,
             apiStartTime: global.apiStartTime
         });
     });

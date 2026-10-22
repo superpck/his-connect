@@ -2,10 +2,8 @@ import moment from 'moment';
 import { sendingToMoph, updateHISAlive, checkAdminRequest, updateAdminRequest, taskFunction, getHospitalConfig, sendingError } from "../middleware/moph-refer";
 import hisModel from './../routes/his/hismodel';
 import { Knex } from 'knex';
-import { platform, release } from "os";
-const fs = require('fs');
 import { getIP } from "../utils/utils";
-import { detectRuntimeEnvironment } from '../utils/utils';
+import { detectRuntimeEnvironment, osDetail } from '../utils/utils';
 const packageJson = require('../../package.json');
 
 const dbConnection = require('../plugins/db');
@@ -246,6 +244,7 @@ export const updateAlive = async () => {
   const ipServer: any = getIP();
   try {
     const apiEnv = await detectRuntimeEnvironment();
+    const os = await osDetail();
 
     let data = {
       api_date: global.apiStartTime,
@@ -257,8 +256,8 @@ export const updateAlive = async () => {
       ip: ipServer.ip,
       host_type: apiEnv || 'host',
       nodejs: process.version || '',
-      platform: platform() || '',
-      os_version: release() || '',
+      platform: os.platform || '',
+      os_version: (os?.release? (os.release + ' '):'') + os.version,
       his: hisProvider, ssl: process.env?.SSL_ENABLE || 0,
       /* 
         `dbconnect` tinyint unsigned DEFAULT NULL,

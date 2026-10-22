@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
-import os, { platform, release } from "os";
+import os, { arch, platform, release } from "os";
 import fs from 'fs';
 
 import zlib from 'zlib';
@@ -229,3 +229,27 @@ export async function detectRuntimeEnvironment() {
   // -------------------------------
   return env;
 }
+export const osDetail = async () => {
+  return {
+    platform: platform(),
+    release: release(),
+    arch: arch(),
+    os: os.type(),
+    version: os.version(),
+    hostname: os.hostname(),
+    runtimeEnvironment: await detectRuntimeEnvironment(),
+    cpu: os.cpus(),
+    memory: os.totalmem(),
+    freeMemory: os.freemem(),
+    uptime: os.uptime(),
+    networkInterfaces: os.networkInterfaces(),
+    loadAverage: os.loadavg(),
+    uptimeHours: os.uptime() / 3600,
+    uptimeDays: os.uptime() / 86400,
+    uptimeWeeks: os.uptime() / (86400 * 7),
+    uptimeMonths: os.uptime() / (86400 * 30),
+    uptimeYears: os.uptime() / (86400 * 365),
+    uptimeSeconds: os.uptime(),
+    ip: getIP()
+  };
+};

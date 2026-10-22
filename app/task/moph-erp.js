@@ -7,8 +7,6 @@ exports.erpAdminRequest = exports.updateAlive = exports.sendBedNo = exports.send
 const moment_1 = __importDefault(require("moment"));
 const moph_refer_1 = require("../middleware/moph-refer");
 const hismodel_1 = __importDefault(require("./../routes/his/hismodel"));
-const os_1 = require("os");
-const fs = require('fs');
 const utils_1 = require("../utils/utils");
 const utils_2 = require("../utils/utils");
 const packageJson = require('../../package.json');
@@ -233,6 +231,7 @@ const updateAlive = async () => {
     const ipServer = (0, utils_1.getIP)();
     try {
         const apiEnv = await (0, utils_2.detectRuntimeEnvironment)();
+        const os = await (0, utils_2.osDetail)();
         let data = {
             api_date: global.apiStartTime,
             server_date: (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss'),
@@ -243,8 +242,8 @@ const updateAlive = async () => {
             ip: ipServer.ip,
             host_type: apiEnv || 'host',
             nodejs: process.version || '',
-            platform: (0, os_1.platform)() || '',
-            os_version: (0, os_1.release)() || '',
+            platform: os.platform || '',
+            os_version: (os?.release ? (os.release + ' ') : '') + os.version,
             his: hisProvider, ssl: process.env?.SSL_ENABLE || 0,
         };
         const result = await (0, moph_refer_1.updateHISAlive)(data);
