@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
-import * as os from 'os';
+import os, { platform, release } from "os";
+import fs from 'fs';
 
 import zlib from 'zlib';
 import { promisify } from 'util';
@@ -183,3 +184,48 @@ export const base64Decode = (data: string) => {
   if (!data) throw new Error('Data to decode cannot be empty');
   return Buffer.from(data, 'base64').toString('utf8');
 };
+export async function detectRuntimeEnvironment() {
+  // Default = host
+  let env: "docker" | "kubernetes" | "wsl" | "host" = "host";
+
+  // -------------------------------
+  // 1) ตรวจ Docker
+  // -------------------------------
+  if (fs.existsSync("/.dockerenv")) {
+    env = "docker";
+  } else {
+    try {
+      const cgroup = fs.readFileSync("/proc/1/cgroup", "utf8");
+
+      // Docker / containerd
+      if (/docker|containerd/i.test(cgroup)) {
+        env = "docker";
+      }
+
+      // Kubernetes pod
+      if (/kubepods/i.test(cgroup)) {
+        env = "kubernetes";
+      }
+    } catch { }
+  }
+
+  // -------------------------------
+  // 2) ตรวจ WSL (WSL1 / WSL2)
+  // -------------------------------
+  const r = release().toLowerCase();
+  try {
+    const version = fs.readFileSync("/proc/version", "utf8").toLowerCase();
+    if (
+      r.includes("microsoft") ||
+      r.includes("wsl") ||
+      version.includes("microsoft")
+    ) {
+      env = "wsl";
+    }
+  } catch { }
+
+  // -------------------------------
+  // 3) Return พร้อมข้อมูลเพิ่มเติม
+  // -------------------------------
+  return env;
+}

@@ -7,6 +7,7 @@
 # 3.11.2
 ## Feature
   - ปรับ SQL getPerson ให้เข้ากับ PgSQL
+  - ตรวจสอบการ run ผ่าน Docker
 
 # 3.11.1
 ## Feature

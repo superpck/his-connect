@@ -5,6 +5,7 @@ import { Knex } from 'knex';
 import { platform, release } from "os";
 const fs = require('fs');
 import { getIP } from "../utils/utils";
+import { detectRuntimeEnvironment } from '../utils/utils';
 const packageJson = require('../../package.json');
 
 const dbConnection = require('../plugins/db');
@@ -392,50 +393,4 @@ function toSnakeCase(value: string) {
   }
 
   return value.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
-}
-
-async function detectRuntimeEnvironment() {
-  // Default = host
-  let env: "docker" | "kubernetes" | "wsl" | "host" = "host";
-
-  // -------------------------------
-  // 1) ตรวจ Docker แบบชัวร์ที่สุด
-  // -------------------------------
-  if (fs.existsSync("/.dockerenv")) {
-    env = "docker";
-  } else {
-    try {
-      const cgroup = fs.readFileSync("/proc/1/cgroup", "utf8");
-
-      // Docker / containerd
-      if (/docker|containerd/i.test(cgroup)) {
-        env = "docker";
-      }
-
-      // Kubernetes pod
-      if (/kubepods/i.test(cgroup)) {
-        env = "kubernetes";
-      }
-    } catch { }
-  }
-
-  // -------------------------------
-  // 2) ตรวจ WSL (WSL1 / WSL2)
-  // -------------------------------
-  const r = release().toLowerCase();
-  try {
-    const version = fs.readFileSync("/proc/version", "utf8").toLowerCase();
-    if (
-      r.includes("microsoft") ||
-      r.includes("wsl") ||
-      version.includes("microsoft")
-    ) {
-      env = "wsl";
-    }
-  } catch { }
-
-  // -------------------------------
-  // 3) Return พร้อมข้อมูลเพิ่มเติม
-  // -------------------------------
-  return env;
 }
