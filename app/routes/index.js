@@ -11,24 +11,35 @@ var fs = require('fs');
 const { execFile } = require('child_process');
 const moph_refer_1 = require("../middleware/moph-refer");
 const utils_1 = require("../utils/utils");
+const jwt_1 = require("../plugins/jwt");
+const jwt = new jwt_1.Jwt();
 const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 const resultText = './sent_result.txt';
 const router = (fastify, {}, next) => {
     var startServer = fastify.startServerTime;
     fastify.get('/', async (req, reply) => {
         const runtimeEnv = await (0, utils_1.detectRuntimeEnvironment)();
-        const os = await (0, utils_1.osDetail)();
-        reply.send({
+        let returnData = {
             status: 200, statusCode: 200, ok: true,
             date: (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss'),
             apiName: global.appDetail.name,
             version: global.appDetail.version,
             subVersion: global.appDetail.subVersion,
             runtime: runtimeEnv,
-            os_platform: os?.os || os?.platform,
-            os_version: (os?.release ? (os.release + ' ') : '') + os.version,
             apiStartTime: global.apiStartTime
-        });
+        };
+        const decodedToken = await decodeToken(req);
+        if (decodedToken && decodedToken.uid) {
+            const os = await (0, utils_1.osDetail)();
+            returnData = {
+                ...returnData,
+                os_platform: os?.os || os?.platform,
+                os_version: (os?.release ? (os.release + ' ') : '') + os.version,
+                ip: os?.ip,
+                freeMemory: os?.freeMemory
+            };
+        }
+        reply.send(returnData);
     });
     fastify.post('/', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         let res = {
@@ -475,4 +486,17 @@ function isValidRequestKey(requestKey) {
     const expectedBuffer = Buffer.from(expected);
     return actual.length === expectedBuffer.length && crypto.timingSafeEqual(actual, expectedBuffer);
 }
+const decodeToken = async (request) => {
+    const token = request.headers['authorization']?.split(' ')[1] || '';
+    if (!token) {
+        return null;
+    }
+    try {
+        const decoded = jwt.verify(token);
+        return decoded;
+    }
+    catch (error) {
+        return null;
+    }
+};
 module.exports = router;

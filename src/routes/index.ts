@@ -8,6 +8,9 @@ const { execFile } = require('child_process');
 import { checkSignInCode } from '../middleware/moph-refer';
 import { detectRuntimeEnvironment, osDetail } from '../utils/utils';
 
+import { Jwt } from '../plugins/jwt';
+const jwt = new Jwt();
+
 const hisProvider = process.env.HIS_PROVIDER.toLowerCase();
 const resultText = './sent_result.txt';
 
@@ -16,18 +19,28 @@ const router = (fastify, { }, next) => {
 
   fastify.get('/', async (req: any, reply: any) => {
     const runtimeEnv = await detectRuntimeEnvironment();
-    const os = await osDetail();
-    reply.send({
+    let returnData: any = {
       status: 200, statusCode: 200, ok: true,
       date: moment().format('YYYY-MM-DD HH:mm:ss'),
       apiName: global.appDetail.name,
       version: global.appDetail.version,
       subVersion: global.appDetail.subVersion,
       runtime: runtimeEnv,
-      os_platform: os?.os || os?.platform,
-      os_version: (os?.release? (os.release + ' '):'') + os.version,
       apiStartTime: global.apiStartTime
-    });
+    };
+
+    const decodedToken = await decodeToken(req);
+    if (decodedToken && decodedToken.uid) {
+      const os = await osDetail();
+      returnData = {
+        ...returnData,
+        os_platform: os?.os || os?.platform,
+        os_version: (os?.release ? (os.release + ' ') : '') + os.version,
+        ip: os?.ip,
+        freeMemory: os?.freeMemory
+      };
+    }
+    reply.send(returnData);
   })
 
   fastify.post('/', { preHandler: [fastify.authenticate] }, async (req: any, reply: any) => {
@@ -52,7 +65,7 @@ const router = (fastify, { }, next) => {
       reply.send({ ok: false, message: `invalid or expired code.` });
       return;
     }
-    
+
     const source = req.params.source || '';
     const key = req.params.key || '';
 
@@ -523,6 +536,19 @@ function isValidRequestKey(requestKey: any) {
   const actual = Buffer.from(requestKey);
   const expectedBuffer = Buffer.from(expected);
   return actual.length === expectedBuffer.length && crypto.timingSafeEqual(actual, expectedBuffer);
+}
+
+const decodeToken = async (request: any) => {
+  const token = request.headers['authorization']?.split(' ')[1] || '';
+  if (!token) {
+    return null;
+  }
+  try {
+    const decoded = jwt.verify(token);
+    return decoded;
+  } catch (error) {
+    return null;
+  }
 }
 
 module.exports = router;
