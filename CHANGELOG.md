@@ -1,4 +1,4 @@
-# 3.12.0 ** pre release
+# 3.12.0-beta ** pre-release
 ## Feature
   - เพิ่มการเชื่อมข้อมูลกับระบบ MOPH Kiosk device และ MOPH Kiosk Application
   - ปรับ serverOption ให้รองรับ Fastify 5
