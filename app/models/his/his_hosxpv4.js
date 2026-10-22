@@ -300,6 +300,9 @@ class HisHosxpv4Model {
         return result;
     }
     async getPerson(db, columnName, searchText, hospCode = hisHospcode) {
+        if (!columnName || !searchText || (Array.isArray(searchText) && searchText.length === 0)) {
+            return [];
+        }
         const isPostgres = [
             'pg',
             'postgres',
@@ -462,13 +465,12 @@ class HisHosxpv4Model {
                 ${asText('person.person_discharge_id')},
                 '9'
             ) AS DISCHARGE
-        `), 'person.discharge_date AS DDISCHARGE', 'person.blood_group AS ABOGROUP', db.raw('? AS RHGROUP', [rhGrp]), 'pl.nhso_code AS LABOR', 'p.passport_no AS PASSPORT', 'p.type_area AS TYPEAREA', 'p.mobile_phone_number AS MOBILE', 'p.deathday AS dead', db.raw(`
+        `), 'person.discharge_date AS DDISCHARGE', 'person.blood_group AS ABOGROUP', db.raw('?? AS RHGROUP', [rhGrp]), 'pl.nhso_code AS LABOR', 'p.passport_no AS PASSPORT', 'p.type_area AS TYPEAREA', 'p.mobile_phone_number AS MOBILE', 'p.deathday AS dead', db.raw(`
             COALESCE(
                 p.last_update,
                 p.last_visit
             ) AS D_UPDATE
         `));
-        console.log('getPerson query executed', query.toString());
         const result = await query;
         return result;
     }

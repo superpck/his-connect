@@ -466,6 +466,9 @@ export class HisHosxpv4Model {
     return result;
   }
   async getPerson(db: Knex, columnName: string, searchText: any, hospCode = hisHospcode) {
+    if (!columnName || !searchText || (Array.isArray(searchText) && searchText.length === 0)) {
+      return [];
+    }
     const isPostgres = [
       'pg',
       'postgres',
@@ -721,7 +724,7 @@ export class HisHosxpv4Model {
         `),
       'person.discharge_date AS DDISCHARGE',
       'person.blood_group AS ABOGROUP',
-      db.raw('? AS RHGROUP', [rhGrp]),
+      db.raw('?? AS RHGROUP', [rhGrp]),
       'pl.nhso_code AS LABOR',
       'p.passport_no AS PASSPORT',
       'p.type_area AS TYPEAREA',
@@ -738,6 +741,7 @@ export class HisHosxpv4Model {
 
     // console.log('getPerson query executed', query.toString());
     const result = await query;
+    // console.log('getPerson query executed', result);
     return result;
   }
 
