@@ -13,8 +13,11 @@ const router = (fastify, {}, next) => {
             date: (0, dayjs_1.default)().format('YYYY-MM-DD HH:mm:ss')
         });
     });
-    fastify.post('/create-token', { preHandler: [fastify.authenticate] }, async (req, reply) => {
+    fastify.post('/create-token', async (req, reply) => {
         return (0, kiosk_controller_1.signIn)(req, reply);
+    });
+    fastify.get('/login', async (req, reply) => {
+        return (0, kiosk_controller_1.login)(req, reply);
     });
     fastify.post('/person', { preHandler: [fastify.authenticate] }, async (req, reply) => {
         return (0, kiosk_controller_1.person)(req, reply);

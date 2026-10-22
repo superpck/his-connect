@@ -27,10 +27,6 @@ export class HisModel {
     return [];
   }
 
-  async getPerson1(db: Knex, columnName, searchText) {
-    return [];
-  }
-
   // select รายชื่อเพื่อแสดงทะเบียน
   getReferOut(db: Knex, date: any, hospCode = hisHospcode, visitNo: string = null) {
     return [];
@@ -40,12 +36,28 @@ export class HisModel {
     return [];
   }
 
-  getPerson(db: Knex, columnName, searchText, hospCode = hisHospcode) {
-    return [];
+  async getPerson(db: Knex, columnName, searchText, hospCode = hisHospcode) {
+    if (!columnName || !searchText) {
+      throw new Error('Invalid parameter');
+    }
+    let query = db('person')
+      .select('person.*', 'ethnic as race', 'father as father_name', 'mother as mother_name');
+    if (Array.isArray(searchText)) {
+      query = query.whereIn(columnName, searchText);
+    } else {
+      query = query.where(columnName, searchText);
+    }
+    return query.limit(maxLimit);
   }
 
   getAddress(db: Knex, columnName, searchNo, hospCode = hisHospcode) {
-    return [];
+    return db('address')
+      .select('hn', 'addresstype', 'house_no', 'village as village_no','village_name',
+        'alley', 'road', 'province', 'district', 'subdistrict', 'zip',
+        'tel_home as tel'
+      )
+      .where(columnName || 'hn', searchNo)
+      .limit(maxLimit);
   }
 
   getService(db: Knex, columnName: string, searchText: any, hospCode = hisHospcode) {

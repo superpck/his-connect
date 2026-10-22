@@ -1,3 +1,13 @@
+# 3.12.0-beta ** pre-release
+## Feature
+  - เพิ่มการเชื่อมข้อมูลกับระบบ MOPH Kiosk device และ MOPH Kiosk Application
+  - ปรับ serverOption ให้รองรับ Fastify 5
+  - Update package
+
+# 3.11.2
+## Feature
+  - ปรับ SQL getPerson ให้เข้ากับ PgSQL
+
 # 3.11.1
 ## Feature
   - ย้ายการ select data ของ isonline ไปที่ his model
@@ -255,7 +265,7 @@
   - ใช้ axios แทน http, request
   - ส่งค่า version, subVersion และ app name ไปยัง API server กลาง
   - ปรับระบบไปเรียกใช้ https
-  - เพิ่ม req.authenDecoded ในการตรวจสอบ Authen
+  - เพิ่ม req.user ในการตรวจสอบ Authen
 
 # 3.6.2
 ## BugFix
