@@ -253,3 +253,14 @@ export const osDetail = async () => {
     ip: getIP()
   };
 };
+export const toLowerCaseName = async (data: any[]) => {
+  for (let row of data) {
+    for (const key in row) {
+      if (key != key.toLowerCase()) {
+        row[key.toLowerCase()] = row[key];
+        delete row[key];
+      }
+    }
+  }
+  return data;
+};

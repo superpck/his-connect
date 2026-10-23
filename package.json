@@ -18,7 +18,7 @@
     "@fastify/helmet": "^13.2.0",
     "@fastify/jwt": "^10.2.5",
     "@fastify/rate-limit": "^11.2.1",
-    "@fastify/static": "^10.1.6",
+    "@fastify/static": "^10.1.7",
     "@fastify/view": "^12.0.1",
     "axios": "^1.20.0",
     "better-sqlite3": "^13.0.3",
@@ -55,7 +55,7 @@
     "@types/better-sqlite3": "^9.6.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/knex": "^0.16.1",
-    "@types/node": "^24.5.2",
+    "@types/node": "^26.6.5",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   }
