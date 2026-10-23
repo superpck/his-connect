@@ -2,7 +2,7 @@
 # Build stage
 # =========================================================
 
-FROM node:24-alpine AS builder
+FROM node:26-alpine AS builder
 
 # Upgrade all OS packages to patch known vulnerabilities
 RUN apk upgrade --no-cache
@@ -29,7 +29,7 @@ RUN npm prune --production
 # =========================================================
 # Production stage
 # =========================================================
-FROM node:24-alpine
+FROM node:26-alpine
 
 # Upgrade all OS packages to patch known vulnerabilities
 RUN apk upgrade --no-cache

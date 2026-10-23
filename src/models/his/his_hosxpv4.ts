@@ -1478,7 +1478,7 @@ export class HisHosxpv4Model {
     columnName = columnName === 'dateadmit' ? 'i.regdate' : columnName;
     columnName = columnName === 'datedisc' ? 'i.dchdate' : columnName;
 
-    let sqlCommand = db('ipt as i')
+    let query = db('ipt as i')
       .leftJoin('an_stat as a', 'i.an', 'a.an')
       .leftJoin('iptdiag as idx', 'i.an', 'idx.an')
       .leftJoin('patient as pt', 'i.hn', 'pt.hn')
@@ -1495,14 +1495,14 @@ export class HisHosxpv4Model {
       .leftJoin('doctor', 'a.dx_doctor', 'doctor.code')
       .leftJoin('ward', 'i.ward', 'ward.ward');
     if (Array.isArray(searchValue)) {
-      sqlCommand.whereIn(columnName, searchValue);
+      query = query.whereIn(columnName, searchValue);
     } else {
-      sqlCommand.where(columnName, searchValue);
+      query = query.where(columnName, searchValue);
     }
     if (isRefer) {
-      sqlCommand.whereRaw('LENGTH(i.rfrilct) IN (5,9)'); // get only referin
+      query = query.whereRaw('LENGTH(i.rfrilct) IN (5,9)'); // get only referin
     }
-    return sqlCommand
+    return query
       .select(db.raw(`? as HOSPCODE`, [hisHospcode]),
         'i.hn as PID', 'q.seq_id', 'o.vn as SEQ',
         'i.an AS AN', 'pt.cid', 'pt.sex as SEX', 'pt.birthday as dob',
