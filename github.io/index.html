@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="คู่มือการติดตั้ง HIS Connect API">
+    <title>HIS Connect API</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #183153;
+        background: #f3f7fb;
+      }
+
+      body {
+        margin: 0;
+        line-height: 1.65;
+      }
+
+      main {
+        width: min(760px, calc(100% - 32px));
+        margin: 48px auto;
+      }
+
+      header,
+      section {
+        padding: 24px;
+        margin-bottom: 20px;
+        border: 1px solid #dce6f0;
+        border-radius: 14px;
+        background: #fff;
+      }
+
+      h1,
+      h2 {
+        margin-top: 0;
+      }
+
+      a {
+        color: #075bbb;
+      }
+
+      .version {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #e8f2ff;
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      }
+
+      @media (max-width: 520px) {
+        main {
+          margin: 20px auto;
+        }
+
+        header,
+        section {
+          padding: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>HIS Connect API</h1>
+        <p>API สำหรับเชื่อมต่อ HIS กับ nRefer และ PHER Plus</p>
+        <p>เวอร์ชันปัจจุบัน: <span class="version" id="last-version">3.11.2-2026.10.24-1</span></p>
+      </header>
+
+      <section>
+        <h2>ติดตั้งด้วย Docker (แนะนำ)</h2>
+        <p>
+          ดู image และคำแนะนำการใช้งานได้ที่
+          <a href="https://hub.docker.com/r/superpck/his-connect">Docker Hub: superpck/his-connect</a>
+        </p>
+      </section>
+
+      <section>
+        <h2>ติดตั้งด้วย Node.js</h2>
+        <p>
+          อ่าน
+          <a href="https://connect.moph.go.th/pher-plus/#/main/api-installation">
+            คู่มือการติดตั้ง API
+          </a>
+          สำหรับขั้นตอนและการตั้งค่า
+        </p>
+      </section>
+
+      <section>
+        <h2>ข้อควรระวังด้านความปลอดภัย</h2>
+        <ul>
+          <li>บัญชีฐานข้อมูลควรมีสิทธิ์อ่านข้อมูลเท่าที่จำเป็น</li>
+          <li>ควรติดตั้ง API ในเครือข่ายภายใน และไม่เปิดเผยต่ออินเทอร์เน็ตสาธารณะ</li>
+          <li>ควรเปลี่ยน API Secret Key เป็นระยะ และยกเลิกบัญชีที่ไม่ใช้งาน</li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>

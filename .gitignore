@@ -8,6 +8,9 @@ package-lock.json
 .settings/*
 .git/*
 .github
+!.github/
+!.github/workflows/
+!.github/workflows/deploy-pages.yml
 bower_components/*
 /config
 /temp
@@ -26,3 +29,4 @@ data/
 *.sql
 null
 /sent_result.txt
+!deploy.sh
