@@ -9,6 +9,7 @@
   - ปรับ SQL getPerson ให้เข้ากับ PgSQL
   - ตรวจสอบการ run ผ่าน Docker
   - Update nodejs เป็น version 24.22.1 ใน Docker
+  - เพิ่ม git.io ของ his connect
 
 # 3.11.1
 ## Feature
