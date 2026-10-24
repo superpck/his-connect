@@ -1,0 +1,75 @@
+# การติดตั้ง
+
+## 1.ทำการติดตั้ง [docker](https://www.docker.com/get-started/) (กรณีที่ยังไม่ติดตั้ง) 
+
+## 2.สร้าง folder และ file ที่จำเป็นดังนี้ (เช่น folder his_connect) 
+ตัวอย่าง File ที่จำเป็น [github](https://github.com/superpck/his-connect/tree/main/his_connect_docker)
+```
+  2.1 สร้าง folder เพื่อติดตั้ง API ให้ใช้คำสั่งดังนี้ mkdir his_connect
+  2.2 cd his_connect
+  2.3 download file จาก https://github.com/superpck/his-connect/tree/main/his_connect_docker ทั้ง 3 files
+  2.4 แก้ไขค่าใน file config ให้ถูกต้อง
+  2.5 หากต้องการเปลี่ยน port ให้เปลี่ยนใน file docker-compose.yml บรรทัด "3004:3004" เป็น port ตามต้องการ เช่น "8080:3004"
+
+  โครงสร้าง folder หลังสร้างเสร็จแล้ว
+   - his_connect
+     |- docker-compose.yml
+     |- config
+     |- sent_result.txt
+
+```
+
+## 3.การใช้คำสั่งให้ his-connect api (docker) ทำงาน (ภายใต้ folder ที่มี file config ตามข้อ 2.)
+```
+>> docker compose up -d หรือ
+>> docker-compose up -d
+
+```
+
+## 4.ตรวจสอบการทำงาน his-connect api ด้วยคำสั่ง
+```
+>> docker compose logs -f หรือ
+>> docker-compose logs -f
+```
+
+## 5.การสั่ง his-connect api (docker) หยุดทำงาน (ถ้าต้องการ)
+```
+>> docker compose down หรือ
+>> docker-compose down
+
+```
+
+## 6.การลบ image file ออกจากเครื่อง (ถ้าต้องการ)
+```
+ 6.1.หยุดการทำงานของ image his-connect >> docker compose down
+ 6.2.ตรวจสอบ IMAGE ID ด้วยคำสั่ง >> docker images
+ 6.3.ทำการลบ Image ด้วยคำสั่ง >> docker rmi -f <IMAGE ID>
+
+```
+
+# หมายเหตุ
+### 1.script ใน file docker-compose.yml
+```
+services:
+  api:
+    image: superpck/his-connect:linux-latest
+    container_name: his-connect-api
+    environment:
+      - TZ=Asia/Bangkok
+    ports:
+      - "3004:3004"
+    volumes:
+      - ./config:/usr/src/his_connect/config:ro
+      - ./sent_result.txt:/usr/src/his_connect/sent_result.txt
+    command: ["pm2-runtime", "start", "app/app.js", "-i", "2", "--name", "his-connect-api"]
+    pull_policy: always
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+```
+
+### 2.การเปลี่ยนแปลงแต่ละ Version: [CHANGELOG](https://github.com/superpck/his-connect/blob/main/CHANGELOG.md)
+

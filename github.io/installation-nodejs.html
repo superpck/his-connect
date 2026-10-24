@@ -1,0 +1,165 @@
+<nav class="breadcrumb">
+  <a class="breadcrumb-item" href="javascript://" routerLink="/main">Main</a>
+  <a class="breadcrumb-item" href="javascript://" routerLink="/main/link">Link</a>
+  <span class="breadcrumb-item active">การติดตั้ง PHER+ API</span>
+</nav>
+
+<div class="pk-card mt-2">
+  <div class="pk-card-header flex justify-content-between align-items-center">
+    API Document
+    <pk-icon name="print" class="mx-5 no-print cursor-pointer" (click)="printDiv('divPrnt')"></pk-icon>
+  </div>
+  <div class="pk-card-body" id="divPrnt" style="line-height: 1.4;">
+    <h3 style="margin: 0px; margin-top: 2px; color: rgb(196, 109, 10);">
+      ขั้นตอนการติดตั้ง API สำหรับ nRefer และ PHER+ (ISOnline v.3) &nbsp;
+    </h3>
+    <hr style="margin: 3px;">
+    <ol style="list-style: decimal; padding-left: 1.5rem;">
+      <li>ติดตั้งโปรแกรมที่จำเป็นในการใช้งาน
+        <ul style="list-style: disc; padding-left: 1.5rem;">
+          <li>เลือกติดตั้ง nodejs version 20 ขึ้นไป
+            <ul style="list-style: circle; padding-left: 1.5rem;">
+              <li><a href="https://nodejs.org/en/download/" target="_blank">วิธีติดตั้งบน Windows OS หรือ MacOS</a>
+              </li>
+              <li><a href="https://github.com/nodesource/distributions/blob/master/README.md#rpminstall"
+                  target="_blank">วิธีติดตั้งบน CentOS Linux</a></li>
+              <li><a href="https://github.com/nodesource/distributions/blob/master/README.md#debinstall"
+                  target="_blank">วิธีติดตั้งบน Ubuntu Linux</a></li>
+              <li>ติดตั้ง package ที่จำเป็นต้องใช้งานของ NodeJS >> <span class="command">npm install -g pm2 nodemon
+                  typescript ts-node</span></li>
+            </ul>
+          </li>
+          <li><a href="https://git-scm.com/downloads" target="_blank">ติดตั้งโปรแกรมสำหรับ Download และ Update source
+              code จาก github</a></li>
+        </ul>
+      </li>
+      <li>สมัครเพื่อขอใช้งานโปรแกรมดังนี้
+        <ul style="list-style: disc; padding-left: 1.5rem;">
+          <li><a href="https://connect.moph.go.th/pher-plus/#/login" target="_blank">PHER+/ISOnline V.3
+              (ลงทะเบียนผู้ใช้งานใหม่)</a></li>
+          <li><a href="https://nrefer.moph.go.th/#/login" target="_blank">ระบบ nRefer (Sign up new user)</a></li>
+          <li><a href="https://github.com/join?return_to=%2Fjoin&source=login" target="_blank">Github</a></li>
+        </ul>
+      </li>
+      <li><u>ไม่ต้องติดตั้ง</u>ฐานข้อมูล isdb เหมือน version ที่ผ่านมา เนื่องจากเป็นการบันทึกไปยังฐานข้อมูลส่วนกลาง</li>
+      <li>ติดตั้ง API โดย
+        <ul style="list-style: disc; padding-left: 1.5rem;">
+          <li>สร้าง folder เพื่อติดตั้ง (เช่น >> <span class="command">mkdir d:\api</span>)</li>
+          <li>>> <span class="command">cd d:\api</span></li>
+          <li>
+            <a href="https://github.com/superpck/his-connect" target="_blank">Clone Source code จาก
+              Github</a> ด้วยคำสั่ง >> <span class="command">git clone https://github.com/superpck/his-connect
+              his_connect</span>
+          </li>
+          <li>>> <span class="command">cd his_connect</span></li>
+          <li>ใช้คำสั่งติดตั้ง package >> <span class="command">npm install</span></li>
+        </ul>
+      </li>
+      <li><a href="https://github.com/superpck/his-connect/blob/main/config.example" target="_blank">สร้างและแก้ไข
+          config file (เป็น file ที่ไม่มี extension)</a>
+        <ul style="list-style: disc; padding-left: 1.5rem;">
+          <li>windows
+            <ul style="list-style: circle; padding-left: 1.5rem;">
+              <li><span class="command">copy config.example config</span></li>
+              <li>ใช้ nodepad หรือ editor โปรแกรมใดก็ได้เปิด file config เพื่อแก้ไข</li>
+            </ul>
+          </li>
+          <li>Linux
+            <ul style="list-style: circle; padding-left: 1.5rem;">
+              <li><span class="command">scp config.example config</span></li>
+              <li><span class="command">vi config</span></li>
+            </ul>
+          </li>
+          <li>ให้ข้ามการ config ส่วน [ISDB] เนื่องจากเป็นการบันทึกข้อมูลเข้าสู่ส่วนกลางตรง</li>
+          <li>หากต้องการใช้ protocol https ให้ระบุ SSL_ENABLE=1</li>
+          <li>สามารถเปลี่ยน key และ cert ให้เป็นของหน่วยงานได้โดย copy file ไปวางใน folder public/ssl</li>
+        </ul>
+      </li>
+      <li>run API โดยใช้โปรแกรม pm2
+        <ul style="list-style: disc; padding-left: 1.5rem;">
+          <li>กรณี windows ให้ติดตั้ง auto start ด้วยคำสั่ง
+            <ul style="list-style: circle; padding-left: 1.5rem;">
+              <li>>> <span class="command">npm install pm2-windows-startup -g</span></li>
+              <li>>> <span class="command">pm2-startup install</span></li>
+            </ul>
+          </li>
+          <li>กรณี Linux ให้ใช้คำสั้ง >> <span class="command">pm2 startup</span></li>
+          <li>start การใช้งาน API ด้วยคำสั่ง >> <strong class="command">pm2 start app/app.js -i 2 --name
+              "his-connect"</strong></li>
+          <li>ใช้คำสั่งเพื่อบันทึกค่าที่ใช้งานในปัจจุบัน >> <span class="command">pm2 save</span></li>
+          <li>ทดสอบการเชื่อมต่อฐานข้อมูล HIS http://ip:port/his/alive หรือ https://ip:port/his/alive เช่น
+            http://192.168.0.250:3004/his/alive เป็นต้น</li>
+        </ul>
+      </li>
+
+      <li>การ config ใช้งานโปรแกรม PHER+ และ nRefer (กรณีต้องการ)
+        <ul style="list-style: disc; padding-left: 1.5rem;">
+          <li>nRefer
+            <ul style="list-style: circle; padding-left: 1.5rem;">
+              <li>ให้ใช้ url <a href="http://refer.moph.go.th" target="_blank">http://refer.moph.go.th</a> กรณีเลือก
+                SSL_ENABLE=0</li>
+              <li>หรือ ใช้ url <a href="https://nrefer.moph.go.th" target="_blank">https://nrefer.moph.go.th</a>
+                กรณีเลือก SSL_ENABLE=1</li>
+              <li>Login เข้าสู่ระบบ</li>
+              <li>เข้าไปที่เมนู 'Tools'->'Config ระบบ'</li>
+              <li>กำหนดค่า HIS API http://ip:port หรือ https://ip:port ที่ติดตั้ง API ไว้</li>
+              <li>กำหนดค่า HIS Request Key ตามที่กำหนดใน Config file บรรทัด REQUEST_KEY=..</li>
+              <li>ทดสอบการเชื่อมต่อโดยเข้าไปที่เมนู 'ทะเบียนจาก HIS รพ.'=>'ทะเบียนส่ง Refer'
+                หากถูกต้องจะสามารถค้นหาข้อมูลการส่ง Refer จาก HIS รพ.ได้</li>
+            </ul>
+          </li>
+          <li>ISOnline
+            <ul style="list-style: circle; padding-left: 1.5rem;">
+              <li>ให้ใช้ url <a href="https://connect.moph.go.th/pher-plus"
+                  target="_blank">https://connect.moph.go.th/pher-plus</a> กรณีเลือก SSL_ENABLE=1</li>
+              <li>กำหนดค่าเชื่อมต่อเป็น http://ip:port หรือ https://ip:port ที่ติดตั้ง API ไว้</li>
+              <li><a href="javascript://" routerLink="/admin/api-local">ทำการ Config API ในระบบ PHER Plus
+                  โดยกำหนดค่าเชื่อมต่อเป็น http://ip:port หรือ https://ip:port ตามที่ติดตั้ง API ไว้</a></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+
+      <li>การ Update API/Source Code
+        <ul style="list-style: disc; padding-left: 1.5rem;">
+          <li>เข้าไปที่ Folder ที่ติดตั้ง API ไว้</li>
+          <li>ใช้คำสั่ง >> git pull</li>
+          <li>restart API ด้วยคำสั่ง >> pm2 restart his-connect</li>
+        </ul>
+      </li>
+
+      <li>กรณี API ไม่ทำงาน ให้ตรวจสอบดังนี้
+        <ul style="list-style: disc; padding-left: 1.5rem;">
+          <li>ตรวจสอบโดยใช้คำสั่ง pm2 logs เพื่อแสดงข้อผิดพลาด</li>
+          <li>ตรวจสอบ Firewall และ AntiVirus ของเครื่องที่ติดตั้ง API ว่ามีการ Block Port หรือไม่
+            <ul style="list-style: circle; padding-left: 1.5rem;">
+              <li><a
+                  href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-using-firewalld-on-centos-7"
+                  target="_blank">FirewallD on Linux</a></li>
+              <li><a href="https://wiki.centos.org/HowTos/Network/IPTables" target="_blank">IPTables on Linux</a></li>
+            </ul>
+          </li>
+          <li>ตรวจสอบ Config ของ Router หรือ Switch ว่าได้ Allow Port หรือยัง</li>
+        </ul>
+      </li>
+
+      <li>คำสั่ง pm2
+        <ul style="list-style: disc; padding-left: 1.5rem;">
+          <li>start service: <span class="command">pm2 start 'folder/file' [-i n] [--name "pm2Name" ] </span></li>
+          <li>restart service: <span class="command">pm2 restart [pm2Name]</span></li>
+          <li>stop service: <span class="command">pm2 delete [pm2Name]</span></li>
+          <li>save state for next reboot: <span class="command">pm2 save</span></li>
+          <li>ตรวจสอบสถานะ: <span class="command">pm2 status</span></li>
+          <li>ตรวจสอบ Logs การทำงาน: <span class="command">pm2 logs</span></li>
+          <li>Monitor pm2: <span class="command">pm2 monit</span></li>
+          <li>stop pm2: <span class="command">pm2 kill</span></li>
+        </ul>
+      </li>
+
+    </ol>
+
+  </div>
+</div>
+
+<div class="box">
+</div>
