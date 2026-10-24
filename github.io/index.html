@@ -1,101 +1,462 @@
 <!doctype html>
 <html lang="th">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="คู่มือการติดตั้ง HIS Connect API">
-    <title>HIS Connect API</title>
-    <style>
-      :root {
-        color-scheme: light;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        color: #183153;
-        background: #f3f7fb;
-      }
 
-      body {
-        margin: 0;
-        line-height: 1.65;
-      }
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="คู่มือการติดตั้ง HIS Connect API">
+  <title>HIS Connect API</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #183153;
+      background: #f3f7fb;
+    }
 
+    body {
+      margin: 0;
+      line-height: 1.65;
+    }
+
+    main {
+      width: min(760px, calc(100% - 32px));
+      margin: 48px auto;
+    }
+
+    header,
+    section {
+      padding: 24px;
+      margin-bottom: 20px;
+      border: 1px solid #dce6f0;
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    h1,
+    h2 {
+      margin-top: 0;
+    }
+
+    a {
+      color: #075bbb;
+    }
+
+    .version {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #e8f2ff;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+
+    .dropdown summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: #075bbb;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .dropdown summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .dropdown summary::after {
+      content: "\25BE";
+      transition: transform 0.2s;
+    }
+
+    .dropdown[open] summary::after {
+      transform: rotate(180deg);
+    }
+
+    .dropdown-body {
+      padding-top: 16px;
+    }
+
+    .dropdown-body h3 {
+      margin: 20px 0 8px;
+      font-size: 1.05rem;
+      color: #c46d0a;
+    }
+
+    .dropdown-body h3:first-child {
+      margin-top: 0;
+    }
+
+    .dropdown-body pre {
+      margin: 8px 0;
+      padding: 12px 14px;
+      overflow-x: auto;
+      border-radius: 8px;
+      background: #0f2036;
+      color: #e6eef8;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .dropdown-body code {
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: #eef3f8;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 0.9em;
+      overflow-wrap: anywhere;
+    }
+
+    .dropdown-body ol,
+    .dropdown-body ul {
+      padding-left: 1.5rem;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 8px 10px;
+      border: 1px solid #dce6f0;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #e8f2ff;
+    }
+
+    @media (max-width: 520px) {
       main {
-        width: min(760px, calc(100% - 32px));
-        margin: 48px auto;
+        margin: 20px auto;
       }
 
       header,
       section {
-        padding: 24px;
-        margin-bottom: 20px;
-        border: 1px solid #dce6f0;
-        border-radius: 14px;
-        background: #fff;
+        padding: 18px;
       }
+    }
+  </style>
+</head>
 
-      h1,
-      h2 {
-        margin-top: 0;
-      }
+<body>
+  <main>
+    <header>
+      <h1 style="color: darkgreen;">HIS Connect API</h1>
+      <p>API สำหรับเชื่อมต่อ HIS กับระบบต่าง ๆ เช่น nRefer, PHER Plus, MOPH ERP และ MOPH Kiosk</p>
+      <p>เวอร์ชันปัจจุบัน: <span class="version" id="last-version">3.11.2-2026.10.24-1</span></p>
+    </header>
 
-      a {
-        color: #075bbb;
-      }
+    <section>
+      <details class="dropdown" open>
+        <summary>ติดตั้งด้วย Docker (แนะนำ)</summary>
+        <div class="dropdown-body">
+          <h3>1. ติดตั้ง <a href="https://www.docker.com/get-started/">Docker</a> (กรณีที่ยังไม่ติดตั้ง)</h3>
 
-      .version {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 999px;
-        background: #e8f2ff;
-        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-      }
+          <h3>2. สร้าง folder และ file ที่จำเป็น (เช่น folder his_connect)</h3>
+          <p>
+            ตัวอย่าง file ที่จำเป็น:
+            <a href="https://github.com/superpck/his-connect/tree/main/his_connect_docker">github</a>
+          </p>
+          <pre>2.1 สร้าง folder เพื่อติดตั้ง API ด้วยคำสั่ง mkdir his_connect
+2.2 cd his_connect
+2.3 download file จาก https://github.com/superpck/his-connect/tree/main/his_connect_docker ทั้ง 3 files
+2.4 แก้ไขค่าใน file config ให้ถูกต้อง
+2.5 หากต้องการเปลี่ยน port ให้เปลี่ยนใน file docker-compose.yml
+    บรรทัด "3004:3004" เป็น port ตามต้องการ เช่น "8080:3004"
 
-      @media (max-width: 520px) {
-        main {
-          margin: 20px auto;
-        }
+โครงสร้าง folder หลังสร้างเสร็จแล้ว
+ - his_connect
+   |- docker-compose.yml
+   |- config
+   |- sent_result.txt</pre>
 
-        header,
-        section {
-          padding: 18px;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <main>
-      <header>
-        <h1>HIS Connect API</h1>
-        <p>API สำหรับเชื่อมต่อ HIS กับ nRefer และ PHER Plus</p>
-        <p>เวอร์ชันปัจจุบัน: <span class="version" id="last-version">3.11.2-2026.10.24-1</span></p>
-      </header>
+          <h3>3. สั่งให้ his-connect api (docker) ทำงาน (ภายใต้ folder ที่มี file config ตามข้อ 2)</h3>
+          <pre>docker compose up -d
+# หรือ
+docker-compose up -d</pre>
 
-      <section>
-        <h2>ติดตั้งด้วย Docker (แนะนำ)</h2>
-        <p>
-          ดู image และคำแนะนำการใช้งานได้ที่
-          <a href="https://hub.docker.com/r/superpck/his-connect">Docker Hub: superpck/his-connect</a>
-        </p>
-      </section>
+          <h3>4. ตรวจสอบการทำงานของ his-connect api</h3>
+          <pre>docker compose logs -f
+# หรือ
+docker-compose logs -f</pre>
 
-      <section>
-        <h2>ติดตั้งด้วย Node.js</h2>
-        <p>
-          อ่าน
-          <a href="https://connect.moph.go.th/pher-plus/#/main/api-installation">
-            คู่มือการติดตั้ง API
-          </a>
-          สำหรับขั้นตอนและการตั้งค่า
-        </p>
-      </section>
+          <h3>5. สั่งให้ his-connect api (docker) หยุดทำงาน (ถ้าต้องการ)</h3>
+          <pre>docker compose down
+# หรือ
+docker-compose down</pre>
 
-      <section>
-        <h2>ข้อควรระวังด้านความปลอดภัย</h2>
-        <ul>
-          <li>บัญชีฐานข้อมูลควรมีสิทธิ์อ่านข้อมูลเท่าที่จำเป็น</li>
-          <li>ควรติดตั้ง API ในเครือข่ายภายใน และไม่เปิดเผยต่ออินเทอร์เน็ตสาธารณะ</li>
-          <li>ควรเปลี่ยน API Secret Key เป็นระยะ และยกเลิกบัญชีที่ไม่ใช้งาน</li>
-        </ul>
-      </section>
-    </main>
-  </body>
+          <h3>6. ลบ image file ออกจากเครื่อง (ถ้าต้องการ)</h3>
+          <pre>6.1 หยุดการทำงานของ image his-connect >> docker compose down
+6.2 ตรวจสอบ IMAGE ID ด้วยคำสั่ง >> docker images
+6.3 ลบ image ด้วยคำสั่ง >> docker rmi -f &lt;IMAGE ID&gt;</pre>
+
+          <h3>หมายเหตุ</h3>
+          <p>1. script ใน file docker-compose.yml</p>
+          <pre>services:
+  api:
+    image: superpck/his-connect:linux-latest
+    container_name: his-connect-api
+    environment:
+      - TZ=Asia/Bangkok
+    ports:
+      - "3004:3004"
+    volumes:
+      - ./config:/usr/src/his_connect/config:ro
+      - ./sent_result.txt:/usr/src/his_connect/sent_result.txt
+    command: ["pm2-runtime", "start", "app/app.js", "-i", "2", "--name", "his-connect-api"]
+    pull_policy: always
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004"]
+      interval: 30s
+      timeout: 10s
+      retries: 5</pre>
+          <p>
+            2. การเปลี่ยนแปลงแต่ละ version:
+            <a href="https://github.com/superpck/his-connect/blob/main/CHANGELOG.md">CHANGELOG</a>
+          </p>
+        </div>
+      </details>
+    </section>
+
+    <section>
+      <details class="dropdown">
+        <summary>ติดตั้งด้วย Node.js</summary>
+        <div class="dropdown-body">
+          <h3>ขั้นตอนการติดตั้ง API สำหรับ nRefer และ PHER+ (ISOnline v.3)</h3>
+          <ol>
+            <li>
+              ติดตั้งโปรแกรมที่จำเป็นในการใช้งาน
+              <ul>
+                <li>
+                  เลือกติดตั้ง Node.js version 20 ขึ้นไป
+                  <ul>
+                    <li><a href="https://nodejs.org/en/download/">วิธีติดตั้งบน Windows OS หรือ MacOS</a></li>
+                    <li><a
+                        href="https://github.com/nodesource/distributions/blob/master/README.md#rpminstall">วิธีติดตั้งบน
+                        CentOS Linux</a></li>
+                    <li><a
+                        href="https://github.com/nodesource/distributions/blob/master/README.md#debinstall">วิธีติดตั้งบน
+                        Ubuntu Linux</a></li>
+                    <li>ติดตั้ง package ที่จำเป็นของ Node.js &gt;&gt;
+                      <code>npm install -g pm2 nodemon typescript ts-node</code></li>
+                  </ul>
+                </li>
+                <li><a href="https://git-scm.com/downloads">ติดตั้งโปรแกรมสำหรับ download และ update source code จาก
+                    github</a></li>
+              </ul>
+            </li>
+            <li>
+              สมัครเพื่อขอใช้งานโปรแกรมดังนี้
+              <ul>
+                <li><a href="https://connect.moph.go.th/pher-plus/#/login">PHER+/ISOnline V.3
+                    (ลงทะเบียนผู้ใช้งานใหม่)</a></li>
+                <li><a href="https://nrefer.moph.go.th/#/login">ระบบ nRefer (Sign up new user)</a></li>
+                <li><a href="https://github.com/join?return_to=%2Fjoin&amp;source=login">Github</a></li>
+              </ul>
+            </li>
+            <li><u>ไม่ต้องติดตั้ง</u>ฐานข้อมูล isdb เหมือน version ที่ผ่านมา
+              เนื่องจากเป็นการบันทึกไปยังฐานข้อมูลส่วนกลาง</li>
+            <li>
+              ติดตั้ง API โดย
+              <ul>
+                <li>สร้าง folder เพื่อติดตั้ง (เช่น &gt;&gt; <code>mkdir d:\api</code>)</li>
+                <li>&gt;&gt; <code>cd d:\api</code></li>
+                <li>
+                  <a href="https://github.com/superpck/his-connect">Clone source code จาก Github</a>
+                  ด้วยคำสั่ง &gt;&gt; <code>git clone https://github.com/superpck/his-connect his_connect</code>
+                </li>
+                <li>&gt;&gt; <code>cd his_connect</code></li>
+                <li>ใช้คำสั่งติดตั้ง package &gt;&gt; <code>npm install</code></li>
+              </ul>
+            </li>
+            <li>
+              <a href="https://github.com/superpck/his-connect/blob/main/config.example">สร้างและแก้ไข config file (เป็น
+                file ที่ไม่มี extension)</a>
+              <ul>
+                <li>
+                  Windows
+                  <ul>
+                    <li><code>copy config.example config</code></li>
+                    <li>ใช้ notepad หรือ editor โปรแกรมใดก็ได้เปิด file config เพื่อแก้ไข</li>
+                  </ul>
+                </li>
+                <li>
+                  Linux
+                  <ul>
+                    <li><code>cp config.example config</code></li>
+                    <li><code>vi config</code></li>
+                  </ul>
+                </li>
+                <li>ให้ข้ามการ config ส่วน [ISDB] เนื่องจากเป็นการบันทึกข้อมูลเข้าสู่ส่วนกลางโดยตรง</li>
+                <li>หากต้องการใช้ protocol https ให้ระบุ SSL_ENABLE=1</li>
+                <li>สามารถเปลี่ยน key และ cert ให้เป็นของหน่วยงานได้โดย copy file ไปวางใน folder public/ssl</li>
+              </ul>
+            </li>
+            <li>
+              run API โดยใช้โปรแกรม pm2
+              <ul>
+                <li>
+                  กรณี Windows ให้ติดตั้ง auto start ด้วยคำสั่ง
+                  <ul>
+                    <li>&gt;&gt; <code>npm install pm2-windows-startup -g</code></li>
+                    <li>&gt;&gt; <code>pm2-startup install</code></li>
+                  </ul>
+                </li>
+                <li>กรณี Linux ให้ใช้คำสั่ง &gt;&gt; <code>pm2 startup</code></li>
+                <li>start การใช้งาน API ด้วยคำสั่ง &gt;&gt; <code>pm2 start app/app.js -i 2 --name "his-connect"</code>
+                </li>
+                <li>บันทึกค่าที่ใช้งานในปัจจุบัน &gt;&gt; <code>pm2 save</code></li>
+                <li>
+                  ทดสอบการเชื่อมต่อฐานข้อมูล HIS ที่ http://ip:port/his/alive หรือ https://ip:port/his/alive
+                  เช่น http://192.168.0.250:3004/his/alive
+                </li>
+              </ul>
+            </li>
+            <li>
+              การ config ใช้งานโปรแกรม PHER+ และ nRefer (กรณีต้องการ)
+              <ul>
+                <li>
+                  nRefer
+                  <ul>
+                    <li>ใช้ url <a href="http://refer.moph.go.th">http://refer.moph.go.th</a> กรณีเลือก SSL_ENABLE=0
+                    </li>
+                    <li>หรือใช้ url <a href="https://nrefer.moph.go.th">https://nrefer.moph.go.th</a> กรณีเลือก
+                      SSL_ENABLE=1</li>
+                    <li>Login เข้าสู่ระบบ</li>
+                    <li>เข้าไปที่เมนู 'Tools' -&gt; 'Config ระบบ'</li>
+                    <li>กำหนดค่า HIS API http://ip:port หรือ https://ip:port ที่ติดตั้ง API ไว้</li>
+                    <li>กำหนดค่า HIS Request Key ตามที่กำหนดใน config file บรรทัด REQUEST_KEY=..</li>
+                    <li>
+                      ทดสอบการเชื่อมต่อโดยเข้าไปที่เมนู 'ทะเบียนจาก HIS รพ.' =&gt; 'ทะเบียนส่ง Refer'
+                      หากถูกต้องจะสามารถค้นหาข้อมูลการส่ง Refer จาก HIS รพ. ได้
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  ISOnline
+                  <ul>
+                    <li>ใช้ url <a href="https://connect.moph.go.th/pher-plus">https://connect.moph.go.th/pher-plus</a>
+                      กรณีเลือก SSL_ENABLE=1</li>
+                    <li>กำหนดค่าเชื่อมต่อเป็น http://ip:port หรือ https://ip:port ที่ติดตั้ง API ไว้</li>
+                    <li>ทำการ config API ในระบบ PHER Plus โดยกำหนดค่าเชื่อมต่อเป็น http://ip:port หรือ https://ip:port
+                      ตามที่ติดตั้ง API ไว้</li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+            <li>
+              การ update API/Source code
+              <ul>
+                <li>เข้าไปที่ folder ที่ติดตั้ง API ไว้</li>
+                <li>ใช้คำสั่ง &gt;&gt; <code>git pull</code></li>
+                <li>restart API ด้วยคำสั่ง &gt;&gt; <code>pm2 restart his-connect</code></li>
+              </ul>
+            </li>
+            <li>
+              กรณี API ไม่ทำงาน ให้ตรวจสอบดังนี้
+              <ul>
+                <li>ตรวจสอบโดยใช้คำสั่ง <code>pm2 logs</code> เพื่อแสดงข้อผิดพลาด</li>
+                <li>
+                  ตรวจสอบ Firewall และ AntiVirus ของเครื่องที่ติดตั้ง API ว่ามีการ block port หรือไม่
+                  <ul>
+                    <li><a
+                        href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-using-firewalld-on-centos-7">FirewallD
+                        on Linux</a></li>
+                    <li><a href="https://wiki.centos.org/HowTos/Network/IPTables">IPTables on Linux</a></li>
+                  </ul>
+                </li>
+                <li>ตรวจสอบ config ของ Router หรือ Switch ว่าได้ allow port หรือยัง</li>
+              </ul>
+            </li>
+            <li>
+              คำสั่ง pm2
+              <ul>
+                <li>start service: <code>pm2 start 'folder/file' [-i n] [--name "pm2Name"]</code></li>
+                <li>restart service: <code>pm2 restart [pm2Name]</code></li>
+                <li>stop service: <code>pm2 delete [pm2Name]</code></li>
+                <li>save state for next reboot: <code>pm2 save</code></li>
+                <li>ตรวจสอบสถานะ: <code>pm2 status</code></li>
+                <li>ตรวจสอบ logs การทำงาน: <code>pm2 logs</code></li>
+                <li>monitor pm2: <code>pm2 monit</code></li>
+                <li>stop pm2: <code>pm2 kill</code></li>
+              </ul>
+            </li>
+          </ol>
+        </div>
+      </details>
+    </section>
+
+    <section>
+      <h2>ข้อควรระวังด้านความปลอดภัย</h2>
+      <ul>
+        <li>user/password ที่เข้าถึงฐานข้อมูล ควรให้สิทธิ์ select อย่างเดียว</li>
+        <li>ควรติดตั้ง API บน IP ภายในเครือข่ายเท่านั้น (Private IP)</li>
+        <li>ไม่ควรติดตั้งระบบที่สามารถเข้าใช้งานจากนอกหน่วยงานได้ เช่น public ip หรือ reverse proxy</li>
+        <li>ไม่ควรติดตั้ง API บนเครื่องที่มีผู้ใช้งานเข้าถึงได้ง่าย เพื่อป้องกันอ่าน file config</li>
+        <li>เพื่อความปลอดภัยในการเข้าถึงฐานข้อมูลส่วนกลาง ควรมีการเปลี่ยนรหัสสำหรับการส่งข้อมูลส่วนกลาง (API Secret Key)
+          ทุก 3-6 เดือน</li>
+        <li>ควรยกเลิกการใช้งาน username ที่มีการย้ายหน่วยงาน หรือ ที่ไม่ใช้งานแล้ว</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Private IP คืออะไร</h2>
+      <p>
+        Private IP คือหมายเลข IP ที่ใช้ภายในเครือข่ายของหน่วยงานเท่านั้น ไม่สามารถเข้าถึงจากอินเทอร์เน็ตโดยตรง
+        ผู้ติดตั้งควรใช้ IP ในช่วงต่อไปนี้ (ตามมาตรฐาน RFC 1918) สำหรับเครื่องที่ติดตั้ง API
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Class</th>
+              <th>ช่วง IP</th>
+              <th>Subnet mask</th>
+              <th>CIDR</th>
+              <th>ตัวอย่าง</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>A</td>
+              <td>10.0.0.0 – 10.255.255.255</td>
+              <td>255.0.0.0</td>
+              <td>10.0.0.0/8</td>
+              <td>10.10.100.25</td>
+            </tr>
+            <tr>
+              <td>B</td>
+              <td>172.16.0.0 – 172.31.255.255</td>
+              <td>255.240.0.0</td>
+              <td>172.16.0.0/12</td>
+              <td>172.16.1.10</td>
+            </tr>
+            <tr>
+              <td>C</td>
+              <td>192.168.0.0 – 192.168.255.255</td>
+              <td>255.255.0.0</td>
+              <td>192.168.0.0/16</td>
+              <td>192.168.0.250</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>IP นอกช่วงข้างต้นถือเป็น Public IP ซึ่งไม่ควรใช้ติดตั้ง API</p>
+    </section>
+  </main>
+</body>
+
 </html>
