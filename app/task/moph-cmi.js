@@ -10,6 +10,7 @@ const dbConnection = require('../plugins/db');
 let db = dbConnection('HIS');
 let hisHospcode = process.env.HOSPCODE;
 let token;
+const addedColumn = ['seq', 'sdx', 'proc', 'udp'];
 const processCMI = (async (dateStart = null, dateEnd = null) => {
     dateStart = dateStart ? (0, moment_1.default)(dateStart).format('YYYY-MM-DD') : (0, moment_1.default)().subtract(35, 'days').format('YYYY-MM-DD');
     dateEnd = dateEnd ? (0, moment_1.default)(dateEnd).format('YYYY-MM-DD') : (0, moment_1.default)().subtract(30, 'days').format('YYYY-MM-DD');
@@ -48,6 +49,10 @@ const getIPD = (async (dateStart, dateEnd) => {
                     dischs: row.dischstatus,
                     discht: row.dischtype,
                     los: Number(row?.los || 0), actlos: Number(row?.actlos || 0),
+                    pdx: '',
+                    drpdx: null,
+                    sdx: [],
+                    proc: [],
                     referin: row?.referinhosp,
                     admwt: Number(row?.admwt || row?.admitweight || 0),
                     insure: row?.instype || null,
@@ -63,25 +68,27 @@ const getIPD = (async (dateStart, dateEnd) => {
                     tgrp: row.grouper_version,
                     udp: row?.udp || row?.d_update || row?.lastupdate || null
                 };
-                data.pdx = '';
-                data.drpdx = null;
                 let i = 0;
                 for (const d of row.dx) {
+                    const dx = (d.diagcode || '').replace('.', '').toUpperCase();
                     if (d.diagtype === '1') {
-                        data.pdx = (d.diagcode || '').replace('.', '').toUpperCase();
+                        data.pdx = dx;
                         data.drpdx = d.provider || null;
                     }
                     else {
                         if (i++ < 12) {
-                            data[`sdx${i}`] = (d.diagcode || '').replace('.', '').toUpperCase();
+                            data.sdx.push(dx);
+                            data[`sdx${i}`] = dx;
                             data[`drsdx${i}`] = d.provider || null;
                         }
                     }
                 }
                 i = 0;
                 for (const op of row.op) {
-                    if (i++ < 20) {
-                        data[`proc${i}`] = op.procedcode.replace(/\/|\-|\*/g, '+').replace('.', '');
+                    const proc = op.procedcode.replace(/\/|\-|\*/g, '+').replace('.', '');
+                    if (proc && i++ < 20) {
+                        data.proc.push(proc);
+                        data[`proc${i}`] = proc;
                         data[`drop${i}`] = op.provider || op.doctor || null;
                         data[`datein${i}`] = op.timestart ? (0, moment_1.default)(op.timestart).format('YYYY-MM-DD') : null;
                         data[`timein${i}`] = op.timestart ? (0, moment_1.default)(op.timestart).format('HHmm') : null;
@@ -110,7 +117,7 @@ async function getIPDDischarge(date) {
         if (!rows || rows.length === 0) {
             return [];
         }
-        rows = toLowerColumnName(rows);
+        rows = (0, utils_1.toLowerCaseName)(rows);
         for (let row of rows) {
             row.dob = row?.dob ? (0, moment_1.default)(row.dob).format('YYYY-MM-DD') : null;
             if (row.dob && row?.datetime_admit) {
@@ -129,14 +136,14 @@ async function getIPDDischarge(date) {
         }
         let anList = rows.map((r) => r.an);
         let dx = await hismodel_1.default.getDiagnosisIpd(db, 'an', anList);
-        dx = toLowerColumnName(dx);
+        dx = (0, utils_1.toLowerCaseName)(dx);
         dx.filter((r) => ['1', '2', '3', '5'].includes(r.diagtype))
             .forEach((d) => {
             const index = rows.findIndex((r) => r.an === d.an);
             rows[index].dx.push(d);
         });
         let op = await hismodel_1.default.getProcedureIpd(db, anList);
-        op = toLowerColumnName(op);
+        op = (0, utils_1.toLowerCaseName)(op);
         op.forEach((p) => {
             const index = rows.findIndex((r) => r.an === p.an);
             rows[index].op.push(p);
@@ -147,23 +154,6 @@ async function getIPDDischarge(date) {
         console.error((0, moment_1.default)().format('HH:mm:ss'), error.message || error);
         throw error;
     }
-}
-function toLowerColumnName(data) {
-    if (!data) {
-        return data;
-    }
-    const isArray = Array.isArray(data);
-    const dataArray = isArray ? data : [data];
-    const result = dataArray.map(row => {
-        const newRow = {};
-        for (const key in row) {
-            if (row.hasOwnProperty(key)) {
-                newRow[key.toLowerCase()] = row[key];
-            }
-        }
-        return newRow;
-    });
-    return isArray ? result : result[0];
 }
 async function sendingToMoph(rows) {
     try {
