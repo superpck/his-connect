@@ -1,5 +1,9 @@
 # HIS Connection API สำหรับ nRefer, และ PHER Plus
 
+## เอกสารการติดตั้ง
+
+[MOPH HIS Connect Getting Start](https://superpck.github.io/his-connect/)
+
 ## การติดตั้ง
 
 - ติดตั้งด้วย Docker จาก [MOPH HIS Connect Docker](https://hub.docker.com/r/superpck/his-connect) (แนะนำ)
