@@ -165,10 +165,6 @@
           <h3>1. ติดตั้ง <a href="https://www.docker.com/get-started/" target="_blank">Docker</a> (กรณีที่ยังไม่ติดตั้ง)</h3>
 
           <h3>2. สร้าง folder และ file ที่จำเป็น (เช่น folder his_connect)</h3>
-          <p>
-            file ที่จำเป็น (docker-compose.yml, config, sent_result.txt):
-            <a href="https://github.com/superpck/his-connect/tree/main/his_connect_docker" target="_blank">github</a>
-          </p>
           <pre>2.1 สร้าง folder เพื่อติดตั้ง API ด้วยคำสั่ง mkdir his_connect
 2.2 cd his_connect
 2.3 download file จาก https://github.com/superpck/his-connect/tree/main/his_connect_docker ทั้ง 3 files
@@ -181,6 +177,10 @@
    |- docker-compose.yml
    |- config
    |- sent_result.txt</pre>
+          <p>
+            file ที่จำเป็นสำหรับ 2.3 (docker-compose.yml, config, sent_result.txt):
+            <a href="https://github.com/superpck/his-connect/tree/main/his_connect_docker" target="_blank">github</a>
+          </p>
 
           <h3>3. สั่งให้ his-connect api (docker) ทำงาน (ภายใต้ folder ที่มี file config ตามข้อ 2)</h3>
           <pre>docker compose up -d
