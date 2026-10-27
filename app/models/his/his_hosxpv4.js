@@ -974,7 +974,7 @@ class HisHosxpv4Model {
         columnName = columnName === 'visitNo' ? 'q.vn' : columnName;
         columnName = columnName === 'dateadmit' ? 'i.regdate' : columnName;
         columnName = columnName === 'datedisc' ? 'i.dchdate' : columnName;
-        let sqlCommand = db('ipt as i')
+        let query = db('ipt as i')
             .leftJoin('an_stat as a', 'i.an', 'a.an')
             .leftJoin('iptdiag as idx', 'i.an', 'idx.an')
             .leftJoin('patient as pt', 'i.hn', 'pt.hn')
@@ -991,15 +991,15 @@ class HisHosxpv4Model {
             .leftJoin('doctor', 'a.dx_doctor', 'doctor.code')
             .leftJoin('ward', 'i.ward', 'ward.ward');
         if (Array.isArray(searchValue)) {
-            sqlCommand.whereIn(columnName, searchValue);
+            query = query.whereIn(columnName, searchValue);
         }
         else {
-            sqlCommand.where(columnName, searchValue);
+            query = query.where(columnName, searchValue);
         }
         if (isRefer) {
-            sqlCommand.whereRaw('LENGTH(i.rfrilct) IN (5,9)');
+            query = query.whereRaw('LENGTH(i.rfrilct) IN (5,9)');
         }
-        return sqlCommand
+        return query
             .select(db.raw(`? as HOSPCODE`, [hisHospcode]), 'i.hn as PID', 'q.seq_id', 'o.vn as SEQ', 'i.an AS AN', 'pt.cid', 'pt.sex as SEX', 'pt.birthday as dob', db.raw(`date_format(concat(i.regdate, ' ', i.regtime),'%Y-%m-%d %H:%i:%s') as datetime_admit`), 'i.ward as WARD_LOCAL', db.raw(`CASE WHEN s.provis_code IS NULL THEN '' ELSE s.provis_code END AS wardadmit`), `ward.name as WARDADMITNAME`, db.raw(`CASE WHEN ps.pttype_std_code THEN '' ELSE ps.pttype_std_code END AS instype`), db.raw(`RIGHT((SELECT export_code FROM ovstist WHERE ovstist = i.ivstist),1) AS typein`), 'i.rfrilct as referinhosp', 'i.rfrics as causein', db.raw(`cast(
                     IF (
                         i.bw = 0,'',

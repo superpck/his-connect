@@ -60,7 +60,10 @@ app.register(require('@fastify/formbody'));
 app.register(require('@fastify/cors'), {
   origin: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'localkey', 'content-encoding', 'content-length', 'source-agent', 'client-ip', 'uid'],
+  allowedHeaders: [
+    'Content-Type', 'Authorization', 'localkey', 'content-encoding',
+    'content-length', 'source-agent', 'x-client-id', 'client-ip', 'uid'
+  ],
   credentials: true,
   strictPreflight: false,
   allowPrivateNetwork: true
