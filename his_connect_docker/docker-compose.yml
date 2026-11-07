@@ -9,7 +9,7 @@ services:
     volumes:
       - ./config:/usr/src/his_connect/config:ro
       - ./sent_result.txt:/usr/src/his_connect/sent_result.txt
-    command: ["pm2-runtime", "start", "app/app.js", "-i", "2", "--name", "his-connect-api"]
+    command: ["pm2-runtime", "app/app.js", "-i", "2", "--name", "his-connect-api"]
     pull_policy: always
     restart: always
     healthcheck:
