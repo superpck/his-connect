@@ -253,12 +253,16 @@ export const osDetail = async () => {
     ip: getIP()
   };
 };
-export const toLowerCaseName = async (data: any[]) => {
+export const toLowerColumnName = async (data: any[], removeColumn: boolean = true) => {
+  if (!Array.isArray(data) || data.length === 0) return data;
+  
   for (let row of data) {
     for (const key in row) {
       if (key != key.toLowerCase()) {
         row[key.toLowerCase()] = row[key];
-        delete row[key];
+        if (removeColumn) {
+          delete row[key];
+        }
       }
     }
   }

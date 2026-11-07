@@ -43,6 +43,7 @@ coverage
 # Build artifacts from host
 dist
 build
+app
 
 # Environment files
 .env

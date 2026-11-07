@@ -6,7 +6,7 @@ const aiRouter = (fastify, {}, next) => {
         return reply.status(200).send({ status: 200, message: 'HIS AI' });
     });
     fastify.get('/ipd-visit-data/:an', { preHandler: [fastify.authenticate] }, (req, reply) => {
-        if (!req.use || !req.user.uid) {
+        if (!req.user || !req.user.hcode || !req.user.tokenKey) {
             return reply.status(401).send({ status: 401, message: 'Forbidden' });
         }
         return (0, ipd_controller_1.ipdData)(req, reply);
