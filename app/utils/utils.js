@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toLowerCaseName = exports.osDetail = exports.base64Decode = exports.base64Encode = exports.decryptString = exports.encryptString = exports.sha1 = exports.sha512 = exports.sha256 = exports.md5 = exports.replyGzip = exports.unGzip = exports.gzip = exports.getClientIp = exports.getIP = exports.timeSecond = exports.timeMinute = exports.thaiDateFull = exports.thaiDateAbbr = exports.thaiDate = exports.dateLen = exports.isNumeric = exports.randomString = void 0;
+exports.toLowerColumnName = exports.osDetail = exports.base64Decode = exports.base64Encode = exports.decryptString = exports.encryptString = exports.sha1 = exports.sha512 = exports.sha256 = exports.md5 = exports.replyGzip = exports.unGzip = exports.gzip = exports.getClientIp = exports.getIP = exports.timeSecond = exports.timeMinute = exports.thaiDateFull = exports.thaiDateAbbr = exports.thaiDate = exports.dateLen = exports.isNumeric = exports.randomString = void 0;
 exports.detectRuntimeEnvironment = detectRuntimeEnvironment;
 const dayjs_1 = __importDefault(require("dayjs"));
 const duration_1 = __importDefault(require("dayjs/plugin/duration"));
@@ -303,15 +303,19 @@ const osDetail = async () => {
     };
 };
 exports.osDetail = osDetail;
-const toLowerCaseName = async (data) => {
+const toLowerColumnName = async (data, removeColumn = true) => {
+    if (!Array.isArray(data) || data.length === 0)
+        return data;
     for (let row of data) {
         for (const key in row) {
             if (key != key.toLowerCase()) {
                 row[key.toLowerCase()] = row[key];
-                delete row[key];
+                if (removeColumn) {
+                    delete row[key];
+                }
             }
         }
     }
     return data;
 };
-exports.toLowerCaseName = toLowerCaseName;
+exports.toLowerColumnName = toLowerColumnName;

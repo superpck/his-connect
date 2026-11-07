@@ -117,7 +117,7 @@ async function getIPDDischarge(date) {
         if (!rows || rows.length === 0) {
             return [];
         }
-        rows = (0, utils_1.toLowerCaseName)(rows);
+        rows = await (0, utils_1.toLowerColumnName)(rows);
         for (let row of rows) {
             row.dob = row?.dob ? (0, moment_1.default)(row.dob).format('YYYY-MM-DD') : null;
             if (row.dob && row?.datetime_admit) {
@@ -136,14 +136,14 @@ async function getIPDDischarge(date) {
         }
         let anList = rows.map((r) => r.an);
         let dx = await hismodel_1.default.getDiagnosisIpd(db, 'an', anList);
-        dx = (0, utils_1.toLowerCaseName)(dx);
+        dx = await (0, utils_1.toLowerColumnName)(dx);
         dx.filter((r) => ['1', '2', '3', '5'].includes(r.diagtype))
             .forEach((d) => {
             const index = rows.findIndex((r) => r.an === d.an);
             rows[index].dx.push(d);
         });
         let op = await hismodel_1.default.getProcedureIpd(db, anList);
-        op = (0, utils_1.toLowerCaseName)(op);
+        op = await (0, utils_1.toLowerColumnName)(op);
         op.forEach((p) => {
             const index = rows.findIndex((r) => r.an === p.an);
             rows[index].op.push(p);

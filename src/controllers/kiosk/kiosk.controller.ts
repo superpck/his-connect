@@ -4,7 +4,6 @@ import hisModel from '../../routes/his/hismodel';
 import { getIoTDevice } from '../../middleware/moph-refer';
 import { Jwt } from '../../plugins/jwt';
 import axios from 'axios';
-import Message from '../../../node_modules/tedious/lib/message.d';
 
 const dbConnection = require('../../plugins/db');
 

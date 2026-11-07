@@ -1,7 +1,7 @@
 import moment from 'moment';
 import hisModel from './../routes/his/hismodel';
 import { Knex } from 'knex';
-import { dateLen, toLowerCaseName } from '../utils/utils';
+import { dateLen, toLowerColumnName } from '../utils/utils';
 
 const dbConnection = require('../plugins/db');
 let db: Knex = dbConnection('HIS');
@@ -337,7 +337,7 @@ async function getIPDDischarge(date: any) {
     if (!rows || rows.length === 0) {
       return [];
     }
-    rows = toLowerCaseName(rows);
+    rows = await toLowerColumnName(rows);
     for (let row of rows) {
       row.dob = row?.dob ? moment(row.dob).format('YYYY-MM-DD') : null;
       if (row.dob && row?.datetime_admit) {
@@ -357,7 +357,7 @@ async function getIPDDischarge(date: any) {
 
     let anList = rows.map((r: any) => r.an);
     let dx = await hisModel.getDiagnosisIpd(db, 'an', anList);
-    dx = toLowerCaseName(dx);
+    dx = await toLowerColumnName(dx);
     dx.filter((r: any) => ['1', '2', '3', '5'].includes(r.diagtype))
       .forEach((d: any) => {
         const index = rows.findIndex((r: any) => r.an === d.an);
@@ -365,14 +365,14 @@ async function getIPDDischarge(date: any) {
       });
 
     let op = await hisModel.getProcedureIpd(db, anList);
-    op = toLowerCaseName(op);
+    op = await toLowerColumnName(op);
     op.forEach((p: any) => {
       const index = rows.findIndex((r: any) => r.an === p.an);
       rows[index].op.push(p);
     });
 
     // let charge = await hisModel.getChargeIpd(db, anList);
-    // charge = toLowerCaseName(charge);
+    // charge = await toLowerColumnName(charge);
     // charge.forEach((c: any) => {
     //   const index = rows.findIndex((r: any) => r.an === c.an);
     //   rows[index].charge.push(c);

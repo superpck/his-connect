@@ -10,6 +10,7 @@
   - ตรวจสอบการ run ผ่าน Docker
   - Update nodejs เป็น version 24.22.1 ใน Docker
   - เพิ่ม git.io ของ his connect
+  - ปรับ Docker script
 
 # 3.11.1
 ## Feature

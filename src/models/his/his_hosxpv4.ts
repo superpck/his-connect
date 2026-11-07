@@ -176,55 +176,6 @@ export class HisHosxpv4Model {
   }
 
   // รหัส Ward
-  async getWard_(db: Knex, wardCode: string = '', wardName: string = '') {
-    const subQuery = db('ward')
-      .select('*')
-      .select(db.raw('SUBSTRING(ward_export_code, 4, 3) as sub_code_3'))
-      .select(db.raw('SUBSTRING(ward_export_code, 4, 1) as sub_code_1'))
-      .as('w');
-
-    let sql = db.select('*').from(subQuery);
-
-    if (wardCode) {
-      sql.where('w.ward', wardCode);
-    } else if (wardName) {
-      const op = db.client.driverName === 'pg' ? 'ilike' : 'like';
-      sql.where('w.name', op, `%${wardName}%`);
-    }
-
-    sql = sql.select([
-      'w.ward as wardcode',
-      'w.name as wardname',
-      'w.ward_export_code as std_code',
-
-      // เรียกใช้ sub_code ที่เตรียมไว้ได้เลย โค้ดจะสั้นลง
-      db.raw(`CASE 
-                WHEN sub_code_3 IN ('602','603','604','606','607','608','609') THEN 0 
-                WHEN sub_code_1 IN ('2','3','4','5') THEN 0
-                ELSE bedcount 
-              END as bed_normal`),
-
-      db.raw("CASE WHEN sub_code_3 = '602' THEN bedcount ELSE 0 END as imc"),
-      db.raw("CASE WHEN sub_code_3 = '603' THEN bedcount ELSE 0 END as bed_extra"),
-      db.raw("CASE WHEN sub_code_3 = '604' THEN bedcount ELSE 0 END as bed_minithanyaruk"),
-      db.raw("CASE WHEN sub_code_3 = '606' THEN bedcount ELSE 0 END as bed_special"),
-      db.raw("CASE WHEN sub_code_3 = '607' THEN bedcount ELSE 0 END as homeward"),
-      db.raw("CASE WHEN sub_code_3 = '608' THEN bedcount ELSE 0 END as lr"),
-      db.raw("CASE WHEN sub_code_3 = '609' THEN bedcount ELSE 0 END as clip"),
-
-      db.raw("CASE WHEN sub_code_1 = '2' THEN bedcount ELSE 0 END as bed_icu"),
-      db.raw("CASE WHEN sub_code_1 = '3' THEN bedcount ELSE 0 END as bed_semi"),
-      db.raw("CASE WHEN sub_code_1 = '4' THEN bedcount ELSE 0 END as bed_stroke"),
-      db.raw("CASE WHEN sub_code_1 = '5' THEN bedcount ELSE 0 END as bed_burn"),
-
-      db.raw("CASE WHEN w.ward_active = 'Y' THEN 1 ELSE 0 END as isactive")
-    ])
-      .where('w.ward', '<>', '')
-      .whereNotNull('w.ward');
-
-    return sql.orderBy('w.ward').limit(maxLimit);
-  }
-
   async getWard(db: Knex, wardCode: string = '', wardName: string = '') {
     let query = db('ward')
       .leftJoin('roomno', 'ward.ward', 'roomno.ward')
@@ -1513,6 +1464,7 @@ export class HisHosxpv4Model {
         db.raw(`CASE WHEN ps.pttype_std_code THEN '' ELSE ps.pttype_std_code END AS instype`),
         db.raw(`RIGHT((SELECT export_code FROM ovstist WHERE ovstist = i.ivstist),1) AS typein`),
         'i.rfrilct as referinhosp', 'i.rfrics as causein',
+        'i.rfrolct as referouthosp', 'i.rfrocs as causeout',
         db.raw(`cast(
                     IF (
                         i.bw = 0,'',
@@ -1567,39 +1519,9 @@ export class HisHosxpv4Model {
                 CASE WHEN i.grouper_actlos IS NULL THEN 0 ELSE i.grouper_actlos END AS actlos,
                 CASE WHEN i.grouper_version IS NULL THEN '5.1.3' ELSE i.grouper_version END AS grouper_version,
                 CASE WHEN i.grouper_version IS NULL THEN '5.1.3' ELSE i.grouper_version END AS grouper_version
-        `))
+        `),
+        'i.prediag as admit_diag')
       .groupBy('i.an');
-  }
-
-  async getDiagnosisIpd_(db: Knex, columnName, searchNo, hospCode = hisHospcode) {
-    columnName = columnName === 'visitNo' ? 'q.vn' : columnName;
-    columnName = columnName === 'an' ? 'ipt.an' : columnName;
-    const sql = `
-            select 
-                ? as hospcode,
-                pt.hn as pid,
-                ipt.an as an,
-                ifnull(date_format(concat(ipt.regdate,' ',ipt.regtime),'%Y-%m-%d %H:%i:%s'),'') as datetime_admit,
-                concat('0',right(spclty.provis_code,4)) as warddiag,
-                iptdiag.diagtype as diagtype,
-                iptdiag.icd10 as diagcode, 
-                icd.name AS diagname,
-                iptdiag.doctor as provider,
-                ifnull(date_format(iptdiag.modify_datetime,'%Y-%m-%d %H:%i:%s'),date_format(NOW(),'%Y-%m-%d %H:%i:%s')) d_update,
-                pt.cid as CID
-                
-            from 
-                iptdiag
-                left join ipt on ipt.an=iptdiag.an
-                left join ovst_seq q ON q.vn = ipt.vn
-                left join patient pt on pt.hn = ipt.hn
-                left join person p on p.patient_hn = ipt.hn
-                LEFT JOIN icd10_sss as icd ON iptdiag.icd10 = icd.code
-                left outer join spclty on spclty.spclty=ipt.spclty              
-            where ${columnName} = ?
-            order by ipt.an, iptdiag.diagtype`;
-    const result = await db.raw(sql, [hisHospcode, searchNo]);
-    return result[0];
   }
 
   async getDiagnosisIpd(db: Knex, columnName: string, searchNo: any, hospCode = hisHospcode) {
@@ -1990,46 +1912,6 @@ export class HisHosxpv4Model {
     }
     const result = await query;
     return result;
-  }
-  async getDrugIpd_(db: Knex, an, hospCode = hisHospcode) {
-    const sql = `
-            select 
-                (select hospitalcode from opdconfig) as HOSPCODE
-                ,p.person_id AS PID
-                ,i.an AS AN
-                ,CASE WHEN i.regdate IS NULL THEN '' ELSE date_format(concat(i.regdate,' ',i.regtime),'%Y-%m-%d %H:%i:%s') END AS DATETIME_ADMIT
-                ,s.provis_code AS WARDSTAY
-                ,if(o.item_type='H','2','1') TYPEDRUG
-                ,d.did AS DIDSTD
-                ,CASE WHEN d.strength IS NULL THEN d.name ELSE concat(d.name,' ',d.strength) END AS DNAME
-                ,m.orderdate AS DATESTART
-                ,m.offdate AS DATEFINISH
-                ,SUM(CASE WHEN o.qty IS NULL THEN 0 ELSE o.qty END) AS AMOUNT
-                ,d.provis_medication_unit_code AS UNIT
-                ,d.packqty AS UNIT_PACKING
-                ,SUM(CASE WHEN d.unitprice IS NULL THEN 0 ELSE d.unitprice END) AS DRUGPRICE
-                ,IF(d.unitcost IS NULL OR d.unitcost=0, d.unitprice, d.unitcost) AS DRUGCOST
-                ,provider(o.doctor,'doctor') AS PROVIDER
-                ,CASE WHEN o.rxdate IS NULL THEN '' ELSE date_format(concat(o.rxdate,' ',o.rxtime),'%Y-%m-%d %H:%i:%s') END AS D_UPDATE
-                ,pt.cid as CID
-            from ipt i
-                left join an_stat a on a.an=i.an
-                left join opitemrece o on o.an=i.an
-                left join patient pt on pt.hn=i.hn
-                left join person p on p.patient_hn=pt.hn
-                left join spclty s on s.spclty=i.spclty
-                left join drugitems d on d.icode=o.icode
-                left join medplan_ipd m on m.an=o.an and m.icode=o.icode                    
-            where                 
-                i.an= ?     
-                and d.icode is not null
-                and o.qty<>0
-                and o.sum_price>0
-            group by i.an,o.icode,typedrug
-            order by i.an,typedrug,o.icode      
-            `;
-    const result = await db.raw(sql, [an]);
-    return result[0];
   }
 
   async getAccident(db: Knex, visitNo: any, hospCode = hisHospcode) {
@@ -2514,31 +2396,6 @@ export class HisHosxpv4Model {
     } catch (error) {
       throw error;
     }
-  }
-
-  async getProviderDr_(db: Knex, drList: any[]) {
-    return db('doctor as d')
-      .leftJoin('patient as p', 'd.cid', 'p.cid')
-      .leftJoin('pname as pn', 'pn.name', 'p.pname')
-      .leftJoin('provis_pname as p2', 'p2.provis_pname_code', 'pn.provis_code')
-      .select(db.raw(`
-                '${hisHospcode}' as hospcode,
-                d.code as provider,
-                d.licenseno as registerno,
-                d.council_code as council,
-                d.cid as cid,
-                CASE WHEN p2.provis_pname_long_name IS NULL THEN d.pname ELSE p2.provis_pname_long_name END as prename,
-                CASE WHEN p.fname IS NULL THEN d.fname ELSE p.fname END as name,
-                CASE WHEN p.lname IS NULL THEN d.lname ELSE p.lname END as lname,
-                d.sex as sex,	
-                if(p.birthday is null or trim(p.birthday )='' or p.birthday   like '0000-00-00%','',date_format(p.birthday,'%Y-%m-%d')) as  birth,
-                d.provider_type_code as providertype,
-                if( d.start_date is null or trim(d.start_date)='' or d.start_date like '0000-00-00%','',date_format(d.start_date,'%Y-%m-%d')) as startdate,
-                if( d.finish_date is null or trim(d.finish_date)='' or d.finish_date like '0000-00-00%','',date_format(d.finish_date,'%Y-%m-%d')) as outdate,
-                d.move_from_hospcode as movefrom,
-                d.move_to_hospcode as  moveto,
-                if(d.update_datetime is null or trim(d.update_datetime)='' or d.update_datetime like '0000-00-00%','',date_format(d.update_datetime,'%Y-%m-%d %H:%i:%s') ) as d_update`))
-      .whereIn('d.code', drList);
   }
 
   // verified for mysql, pg, mssql

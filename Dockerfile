@@ -50,4 +50,4 @@ RUN mkdir -p data && chmod 777 data
 EXPOSE 3004
 
 # Start application with PM2 in cluster mode
-CMD ["pm2-runtime", "start", "app/app.js", "-i", "2", "--name", "his-connect"]
+CMD ["pm2-runtime", "app/app.js", "-i", "2", "--name", "his-connect"]
