@@ -4,6 +4,10 @@
   - ปรับ serverOption ให้รองรับ Fastify 5
   - Update package
 
+# 3.11.3
+## Feature
+  - ปรับการ Request token จากส่วนกลาง
+
 # 3.11.2
 ## Feature
   - ปรับ SQL getPerson ให้เข้ากับ PgSQL

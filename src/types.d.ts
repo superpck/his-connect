@@ -6,5 +6,6 @@ declare module 'fastify' {
   }
   interface FastifyRequest {
     user: any;      // from JWT.verify token
+    ipAddr: string;
   }
 }

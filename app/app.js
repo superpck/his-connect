@@ -10,6 +10,7 @@ require('dotenv').config({
     path: path.join(__dirname, '../config'),
     quiet: true
 });
+checkConfigKey();
 const http_status_codes_1 = require("http-status-codes");
 const fastify_1 = __importDefault(require("fastify"));
 const moment_1 = __importDefault(require("moment"));
@@ -234,6 +235,15 @@ async function checkConfigFile() {
     else {
         console.error(`❌ PID:${process.pid} >> Check local 'config' file exist: Not found, please create file 'config' and try again.`);
         process.exit(1);
+    }
+}
+async function checkConfigKey() {
+    const apiKey = process.env.NREFER_APIKEY || process.env.MOPH_ERP_APIKEY || null;
+    if (!apiKey || apiKey.includes('กรุณา')) {
+        console.error('❗Invalid API Key, please set NREFER_APIKEY or MOPH_ERP_APIKEY in config file');
+        process.exit(1);
+    }
+    else {
     }
 }
 async function isIPInSubnet(ip) {

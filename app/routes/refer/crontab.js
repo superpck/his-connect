@@ -14,6 +14,7 @@ const moment_1 = __importDefault(require("moment"));
 const axios_1 = __importDefault(require("axios"));
 const hismodel_1 = __importDefault(require("./../his/hismodel"));
 const moph_refer_1 = require("../../middleware/moph-refer");
+const authenticate_1 = require("../../middleware/authenticate");
 var fs = require('fs');
 const hcode = process.env.HOSPCODE;
 const resultText = 'sent_result.txt';
@@ -54,9 +55,11 @@ const processSend = async (request, reply, dbConn, config = {}) => {
 };
 async function sendMoph(req, reply, db) {
     const dateNow = (0, moment_1.default)().format('YYYY-MM-DD');
+    const reqHeaders = req.headers || {};
+    const ip = reqHeaders['x-forwarded-for'] || req.ipAddr || reqHeaders.ip || '127.0.0.1';
     sentContent = `${global.appDetail.name} v.${global.appDetail.version}-${global.appDetail.subVersion} ` +
         (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss') + ' data:' + dateNow + "\r\n";
-    const resultToken = await getNReferToken(apiKey, secretKey);
+    const resultToken = await (0, authenticate_1.getNReferToken)(ip);
     if (resultToken && resultToken.statusCode == 200 && resultToken.token) {
         nReferToken = resultToken.token;
         sentContent += `token ${nReferToken}\r`;
@@ -730,12 +733,9 @@ async function getLabResult(db, row, sentResult) {
 }
 async function ipdChecking(req, res) {
     try {
-        const resultToken = await getNReferToken(apiKey, secretKey);
-        if (resultToken && resultToken.statusCode == 200 && resultToken.token) {
-            nReferToken = resultToken.token;
-        }
-        else {
-            console.log('Get nRefer token error', resultToken.message);
+        const ip = req.headers['x-forwarded-for'] || req.ipAddr || req.ip || '127.0.0.1';
+        nReferToken = await (0, authenticate_1.getNReferToken)(ip);
+        if (!nReferToken) {
             return false;
         }
         sentResult = {
@@ -994,7 +994,7 @@ async function getDrugAllergy(db, hn, sentResult) {
         sentResult += '  - drugallergy = ' + rows.length + '\r';
         if (rows && rows.length) {
             for (const row of rows) {
-                await rowSave.push({
+                rowSave.push({
                     HOSPCODE: hcode,
                     PID: row.PID || row.pid || row.HN || row.hn,
                     DATERECORD: row.DATERECORD || null,
@@ -1082,29 +1082,6 @@ async function referSending(path, dataArray) {
     }
     catch (error) {
         console.log('referSending error ', error.message);
-        return error;
-    }
-}
-async function getNReferToken(apiKey, secretKey) {
-    const fixedUrl = process.env.NREFER_API_URL || 'https://refer.moph.go.th/api/his';
-    const url = fixedUrl + '/login/api-key';
-    const bodyData = {
-        ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
-        apiKey, secretKey, hospcode: hcode,
-        processPid: process.pid, dateTime: (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss'),
-        sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version, subVersion: crontabConfig.subVersion,
-        hisProvider: process.env.HIS_PROVIDER
-    };
-    const headers = {
-        'Content-Type': 'application/json',
-        'Source-Agent': 'HISConnect-' + crontabConfig.version + '-' + crontabConfig.subVersion + '-' + (process.env.HOSPCODE || 'hosp') + '-' + (0, moment_1.default)().format('x') + '-' + Math.random().toString(36).substring(2, 10),
-    };
-    try {
-        const { status, data } = await axios_1.default.post(url, bodyData, { headers });
-        return data;
-    }
-    catch (error) {
-        console.log('getNReferToken', error.status || '', error.message);
         return error;
     }
 }

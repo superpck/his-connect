@@ -157,22 +157,22 @@ const sendWardName = async () => {
                 return { ...v, hospcode: process.env.HOSPCODE || '' };
             });
             const result = await (0, moph_refer_1.sendingToMoph)('/save-ward', rows);
-            console.log((0, moment_1.default)().format('HH:mm:ss'), 'sendWardName', result.status || '', result.message || '', rows.length, 'rows');
+            console.log((0, moment_1.default)().format('HH:mm:ss'), 'sendWardName (1)', result.status || '', result.message || '', rows.length, 'rows');
             console.log('-'.repeat(70));
             return result;
         }
         else {
-            console.log((0, moment_1.default)().format('HH:mm:ss'), 'sendWardName', 'No ward data');
+            console.log((0, moment_1.default)().format('HH:mm:ss'), 'sendWardName (2)', 'No ward data');
             console.log('-'.repeat(70));
             return { statusCode: 200, message: 'No ward data' };
         }
     }
     catch (error) {
         (0, moph_refer_1.sendingError)({
-            route_name: 'sendWardName', error_code: error.status || '500',
+            route_name: 'sendWardName (3)', error_code: error.status || '500',
             error_message: error.message || ''
         });
-        console.log((0, moment_1.default)().format('HH:mm:ss'), 'getWard error', error.message);
+        console.error((0, moment_1.default)().format('HH:mm:ss'), 'getWard error', error.message);
         console.log('-'.repeat(70));
         return [];
     }

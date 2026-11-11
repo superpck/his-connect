@@ -5,12 +5,15 @@ require('dotenv').config({
   debug: false
 });
 
+
 var fastify = require('fastify');
 import moment from 'moment';
 import axios from 'axios';
 import hisModel from './../his/hismodel';
 import { Knex } from 'knex';
 import { sendingToMoph } from '../../middleware/moph-refer';
+import { getNReferToken } from '../../middleware/authenticate';
+import { FastifyReply } from 'fastify';
 var fs = require('fs');
 
 const hcode = process.env.HOSPCODE;
@@ -52,13 +55,15 @@ const processSend = async (request: any, reply: any, dbConn: Knex, config = {}) 
   return result;
 }
 
-async function sendMoph(req, reply, db) {
+async function sendMoph(req: any, reply: any, db: Knex) {
   const dateNow = moment().format('YYYY-MM-DD');
+  const reqHeaders: any = req.headers || {};
+  const ip: any = reqHeaders['x-forwarded-for'] || req.ipAddr || reqHeaders.ip || '127.0.0.1';
 
   sentContent = `${global.appDetail.name} v.${global.appDetail.version}-${global.appDetail.subVersion} ` +
     moment().format('YYYY-MM-DD HH:mm:ss') + ' data:' + dateNow + "\r\n";
 
-  const resultToken: any = await getNReferToken(apiKey, secretKey);
+  const resultToken: any = await getNReferToken(ip as string);
   if (resultToken && resultToken.statusCode == 200 && resultToken.token) {
     nReferToken = resultToken.token;
     sentContent += `token ${nReferToken}\r`;
@@ -787,11 +792,9 @@ async function getLabResult(db, row, sentResult) {
 // ตรวจสอบย้อนหลัง
 async function ipdChecking(req: any, res: any) {
   try {
-    const resultToken: any = await getNReferToken(apiKey, secretKey);
-    if (resultToken && resultToken.statusCode == 200 && resultToken.token) {
-      nReferToken = resultToken.token;
-    } else {
-      console.log('Get nRefer token error', resultToken.message);
+    const ip: any = req.headers['x-forwarded-for'] || req.ipAddr || req.ip || '127.0.0.1';
+    nReferToken = await getNReferToken(ip);
+    if (!nReferToken) {
       return false;
     }
     sentResult = {
@@ -1048,7 +1051,7 @@ async function getProcedureIpd(db, an) {
   return rowSave;
 }
 
-async function getDrugAllergy(db, hn, sentResult) {
+async function getDrugAllergy(db: Knex, hn: string, sentResult: any) {
   if (!hn) {
     return [];
   }
@@ -1059,7 +1062,7 @@ async function getDrugAllergy(db, hn, sentResult) {
     sentResult += '  - drugallergy = ' + rows.length + '\r';
     if (rows && rows.length) {
       for (const row of rows) {
-        await rowSave.push({
+        rowSave.push({
           HOSPCODE: hcode,
           PID: row.PID || row.pid || row.HN || row.hn,
           DATERECORD: row.DATERECORD || null,
@@ -1132,7 +1135,7 @@ async function getProvider(db: Knex, drList: any, sentResult: any) {
   return rowSave;
 }
 
-async function referSending(path, dataArray) {
+async function referSending(path: string | null, dataArray: any) {
   const fixedUrl = process.env.NREFER_API_URL || 'https://refer.moph.go.th/api/his';
   const bodyData = {
     ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
@@ -1153,30 +1156,6 @@ async function referSending(path, dataArray) {
     return data;
   } catch (error) {
     console.log('referSending error ', error.message);
-    return error;
-  }
-}
-
-async function getNReferToken(apiKey: string, secretKey: string) {
-  const fixedUrl = process.env.NREFER_API_URL || 'https://refer.moph.go.th/api/his';
-  const url = fixedUrl + '/login/api-key';
-  const bodyData = {
-    ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
-    apiKey, secretKey, hospcode: hcode,
-    processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
-    sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version, subVersion: crontabConfig.subVersion,
-    hisProvider: process.env.HIS_PROVIDER
-  };
-  const headers = {
-    'Content-Type': 'application/json',
-    'Source-Agent': 'HISConnect-' + crontabConfig.version + '-' + crontabConfig.subVersion + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
-  };
-
-  try {
-    const { status, data } = await axios.post(url, bodyData, { headers });
-    return data;
-  } catch (error) {
-    console.log('getNReferToken', error.status || '', error.message);
     return error;
   }
 }
