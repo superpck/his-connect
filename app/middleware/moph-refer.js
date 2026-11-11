@@ -44,6 +44,7 @@ const zlib_1 = __importDefault(require("zlib"));
 const util_1 = require("util");
 const utils_1 = require("../utils/utils");
 const os = __importStar(require("os"));
+const authenticate_1 = require("./authenticate");
 const packageJson = require('../../package.json');
 const referAPIUrl = process.env?.MOPH_ERP_API_URL || 'https://refer.moph.go.th/api/erp';
 const erpAPIUrl = process.env.ERP_API_URL || 'https://referlink.moph.go.th/api/moph-erp';
@@ -87,55 +88,8 @@ function logRequestResult(label, purpose, startTime, error) {
     console.info(`${moment().format('HH:mm:ss')} ${label} success${purpose ? ` (${purpose})` : ''} in ${elapsedMs}ms`);
 }
 const getReferToken = async (options = {}) => {
-    if (nReferToken) {
-        const toke = nReferToken.split('.');
-        if (toke.length == 3) {
-            const payload = JSON.parse(Buffer.from(toke[1], 'base64').toString('utf-8'));
-            if (payload && payload.exp) {
-                const expireTime = moment.unix(payload.exp);
-                const now = moment();
-                const diff = expireTime.diff(now, 'minutes');
-                if (diff > 3) {
-                    return { token: nReferToken, status: 200 };
-                }
-            }
-        }
-    }
-    if (referTokenPromise) {
-        return referTokenPromise;
-    }
-    const url = referAPIUrl + '/login/api-key';
-    const bodyData = {
-        ip: crontabConfig['client_ip'] || '127.0.0.1',
-        apiKey, secretKey, hospcode: hcode,
-        processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
-        sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version, subVersion: crontabConfig.subVersion,
-        hisProvider: process.env.HIS_PROVIDER
-    };
-    const headers = {
-        'Content-Type': 'application/json',
-        'Source-Agent': 'HISConnect-' + crontabConfig.version + '-' + crontabConfig.subVersion + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
-    };
-    const timeoutMs = getRequestTimeoutMs(options.timeoutMs);
-    const purpose = options.purpose || '';
-    referTokenPromise = (async () => {
-        const startedAt = Date.now();
-        logRequestStart('MOPH token request', purpose, timeoutMs);
-        try {
-            const { status, data } = await axios_1.default.post(url, bodyData, { headers, timeout: timeoutMs });
-            nReferToken = data?.token || nReferToken;
-            logRequestResult('MOPH token request', purpose, startedAt);
-            return data;
-        }
-        catch (error) {
-            logRequestResult('MOPH token request', purpose, startedAt, error);
-            return error;
-        }
-        finally {
-            referTokenPromise = null;
-        }
-    })();
-    return referTokenPromise;
+    nReferToken = await (0, authenticate_1.getNReferToken)(crontabConfig['client_ip'] || '127.0.0.1');
+    return nReferToken;
 };
 exports.getReferToken = getReferToken;
 const getHospitalConfig = async (options = {}) => {
@@ -181,7 +135,7 @@ const getHospitalConfig = async (options = {}) => {
 };
 exports.getHospitalConfig = getHospitalConfig;
 const getIoTDevice = async (parameterData = null) => {
-    await (0, exports.getReferToken)();
+    nReferToken = await (0, exports.getReferToken)();
     if (!nReferToken) {
         return { status: 500, message: 'No nRefer token' };
     }
@@ -200,13 +154,13 @@ const getIoTDevice = async (parameterData = null) => {
         };
     }
     catch (error) {
-        console.error('sendingToMoph error:', getErrorMessage(error));
+        console.error('sendingToMoph error (1):', getErrorMessage(error));
         return error;
     }
 };
 exports.getIoTDevice = getIoTDevice;
 const saveIoTData = async (parameterData = null) => {
-    await (0, exports.getReferToken)();
+    nReferToken = await (0, exports.getReferToken)();
     if (!nReferToken) {
         return { status: 500, message: 'No nRefer token' };
     }
@@ -222,7 +176,7 @@ const saveIoTData = async (parameterData = null) => {
         return { statusCode: status, ...data };
     }
     catch (error) {
-        console.error('sendingToMoph error:', getErrorMessage(error));
+        console.error('sendingToMoph error (2):', getErrorMessage(error));
         return error;
     }
 };
@@ -251,7 +205,7 @@ const taskFunction = async (type = '', bodyData = null) => {
 };
 exports.taskFunction = taskFunction;
 const sendingToMoph = async (uri, dataArray) => {
-    await (0, exports.getReferToken)();
+    nReferToken = await (0, exports.getReferToken)();
     if (!nReferToken) {
         return { status: 500, message: 'No nRefer token' };
     }
@@ -276,7 +230,7 @@ const sendingToMoph = async (uri, dataArray) => {
         return { statusCode: status, ...data };
     }
     catch (error) {
-        console.error('sendingToMoph error:', getErrorMessage(error));
+        console.error('sendingToMoph error (3):', uri, getErrorMessage(error));
         return error;
     }
 };
@@ -375,7 +329,6 @@ const checkLoginCode = async (code) => {
         `${encodeURIComponent(hospCode)}/${encodeURIComponent(code)}`;
     try {
         const { data } = await axios_1.default.get(url);
-        console.log('checkLoginCode response:', data);
         return data;
     }
     catch (error) {
