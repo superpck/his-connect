@@ -11,7 +11,7 @@ export class Mqtt {
   async getCode() {
     try {
       if (!this.token) {
-        const result = await getReferToken();
+        const result: any = await getReferToken();
         this.token = result?.token || result || null;
       }
       if (!this.token) {
