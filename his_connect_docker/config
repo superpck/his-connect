@@ -37,13 +37,13 @@ NODE_ORACLEDB_DRIVER_MODE=thin
 PHER_API_URL="https://connect.moph.go.th/is-api"
 
 # [nRefer]
-NREFER_API_URL="https://refer.moph.go.th/api/his"
+NREFER_API_URL="https://nrefer.moph.go.th/api/his"
 NREFER_DATA_BACKWARD_MONTH=0
 NREFER_AUTO_SEND=1
 NREFER_AUTO_SEND_EVERY_MINUTE=15
 
 #[MOPH ERP]
-MOPH_ERP_API_URL='https://refer.moph.go.th/api/erp'
+MOPH_ERP_API_URL='https://nrefer.moph.go.th/api/erp'
 MOPH_ERP_APIKEY="กรุณาระบุ API Key จากหน้า Admin page"
 MOPH_ERP_SECRETKEY="กรุณาระบุ API Secret Key จากหน้า Admin page"
 

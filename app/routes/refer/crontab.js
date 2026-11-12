@@ -18,8 +18,6 @@ const authenticate_1 = require("../../middleware/authenticate");
 var fs = require('fs');
 const hcode = process.env.HOSPCODE;
 const resultText = 'sent_result.txt';
-const apiKey = process.env?.MOPH_ERP_APIKEY || process.env.NREFER_APIKEY || 'api-key';
-const secretKey = process.env?.MOPH_ERP_SECRETKEY || process.env.NREFER_SECRETKEY || 'secret-key';
 const backwardMonth = process.env.NREFER_DATA_BACKWARD_MONTH;
 const sendEveryMinute = Number(process.env.NREFER_AUTO_SEND_EVERY_MINUTE) || 5;
 let sentContent = '';
@@ -1062,7 +1060,7 @@ async function getProvider(db, drList, sentResult) {
     return rowSave;
 }
 async function referSending(path, dataArray) {
-    const fixedUrl = process.env.NREFER_API_URL || 'https://refer.moph.go.th/api/his';
+    const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/api/his';
     const bodyData = {
         ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
         hospcode: hcode, data: JSON.stringify(dataArray),

@@ -46,7 +46,7 @@ const utils_1 = require("../utils/utils");
 const os = __importStar(require("os"));
 const authenticate_1 = require("./authenticate");
 const packageJson = require('../../package.json');
-const referAPIUrl = process.env?.MOPH_ERP_API_URL || 'https://refer.moph.go.th/api/erp';
+const referAPIUrl = process.env?.MOPH_ERP_API_URL || 'https://nrefer.moph.go.th/api/erp';
 const erpAPIUrl = process.env.ERP_API_URL || 'https://referlink.moph.go.th/api/moph-erp';
 const pherAPIUrl = process.env.PHER_API_URL || 'https://connect.moph.go.th/is-api';
 const hcode = process.env.HOSPCODE;
@@ -139,7 +139,7 @@ const getIoTDevice = async (parameterData = null) => {
     if (!nReferToken) {
         return { status: 500, message: 'No nRefer token' };
     }
-    const url = 'https://refer.moph.go.th/api/beta/moph-iot/get-device';
+    const url = 'https://nrefer.moph.go.th/api/beta/moph-iot/get-device';
     const headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + nReferToken,
@@ -164,7 +164,7 @@ const saveIoTData = async (parameterData = null) => {
     if (!nReferToken) {
         return { status: 500, message: 'No nRefer token' };
     }
-    const url = 'https://refer.moph.go.th/api/beta/moph-iot/save-iot-data';
+    const url = 'https://nrefer.moph.go.th/api/beta/moph-iot/save-iot-data';
     const headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + nReferToken,

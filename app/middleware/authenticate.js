@@ -43,7 +43,7 @@ const getNReferToken = async (ip = null) => {
     if (!ip || ip === '127.0.0.1') {
         ip = (0, utils_1.getIP)()?.ip || '127.0.0.1';
     }
-    const fixedUrl = process.env.NREFER_API_URL || 'https://refer.moph.go.th/api/his';
+    const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/api/his';
     const url = fixedUrl + '/login/api-key';
     const bodyData = {
         ip,
