@@ -7,6 +7,7 @@
 # 3.11.3
 ## Feature
   - ปรับการ Request token จากส่วนกลาง
+  - ปรับการ Connect Oracle
 
 # 3.11.2
 ## Feature

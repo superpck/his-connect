@@ -32,8 +32,11 @@ HIS_DB_PASSWORD="password"
 HIS_DB_CHARSET=utf8mb4
 HIS_DB_ENCRYPT=true
 MAX_CONNECTION_PER_MINUTE=1000
-# oracledb
-NODE_ORACLEDB_DRIVER_MODE=thin
+
+# กรณี oracledb (thick mode) และเป็น version ที่ต่ำกว่า 12.1 ให้ระบุ lib dir
+# เช่น HIS_DB_LIBDIR="C:\\oracle\\instantclient"
+# สามารถdownload จาก https://www.oracle.com/database/technologies/instant-client/winx64-64-downloads.html
+HIS_DB_LIBDIR=
 
 # [PHER]
 PHER_API_URL="https://connect.moph.go.th/is-api"
