@@ -61,7 +61,6 @@ const router = (fastify, { }, next) => {
     // get token nRefer ------------------------------
     try {
       const result: any = await getNReferToken(apiKey, secretKey);
-      // console.log('getNReferToken', result);
       if (result.statusCode && result.statusCode === 200 && result.token) {
         tokenNRefer = result.token;
       } else {
@@ -187,7 +186,7 @@ async function getToken(apiKey, secretKey) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'Source-Agent': 'HISConnect-'+apiVersion+'-'+subVersion+'-'+(process.env.HOSPCODE || 'hosp')+'-'+moment().format('x')+'-'+Math.random().toString(36).substring(2,10),
+      'Source-Agent': 'HISConnect-' + apiVersion + '-' + subVersion + '-' + (process.env.HOSPCODE || 'hosp') + '-' + moment().format('x') + '-' + Math.random().toString(36).substring(2, 10),
       'Content-Length': Buffer.byteLength(postData)
     }
   };
