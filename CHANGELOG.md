@@ -8,6 +8,8 @@
 ## Feature
   - ปรับการ Request token จากส่วนกลาง
   - ปรับการ Connect Oracle
+  - ปิดการใช้งาน mqtt
+  - Update package
 
 # 3.11.2
 ## Feature
