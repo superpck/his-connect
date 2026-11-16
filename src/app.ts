@@ -20,7 +20,7 @@ var crypto = require('crypto');
 import { getIP, unGzip } from './utils/utils';
 import { authenticateRequest } from './middleware/authenticate';
 import { Readable } from 'stream';
-import { Mqtt } from './middleware/mqtt';
+// import { Mqtt } from './middleware/mqtt';
 import helmet = require('@fastify/helmet');
 
 var serverOption = {}
@@ -326,11 +326,11 @@ async function isIPInSubnet(ip: any) {
   return isValidIP;
 }
 
-const mqtt = new Mqtt();
-async function mqttSubscribe() {
-  const instanceNo = process.env.NODE_APP_INSTANCE;
-  if (instanceNo == '0') {
-    // console.log(moment().format('HH:mm:ss'), `MQTT initializing on instance ${instanceNo}.....`);
-    await mqtt.mqttSubscribe();
-  }
-}
+// const mqtt = new Mqtt();
+// async function mqttSubscribe() {
+//   const instanceNo = process.env.NODE_APP_INSTANCE;
+//   if (instanceNo == '0') {
+//     // console.log(moment().format('HH:mm:ss'), `MQTT initializing on instance ${instanceNo}.....`);
+//     await mqtt.mqttSubscribe();
+//   }
+// }
