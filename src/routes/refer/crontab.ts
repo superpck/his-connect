@@ -61,11 +61,12 @@ async function sendMoph(req: any, reply: any, db: Knex) {
     moment().format('YYYY-MM-DD HH:mm:ss') + ' data:' + dateNow + "\r\n";
 
   const resultToken: any = await getNReferToken(ip as string);
-  if (resultToken && resultToken.statusCode == 200 && resultToken.token) {
+  nReferToken = resultToken || resultToken?.token || null;
+  if (nReferToken) {
     nReferToken = resultToken.token;
     sentContent += `token ${nReferToken}\r`;
   } else {
-    console.error('Get nRefer token error', resultToken.message);
+    console.error('Get nRefer token error');
     sentContent += `get token Error:` + JSON.stringify(resultToken) + `\r`;
     writeResult(resultText, sentContent);
     return false;
