@@ -59,7 +59,7 @@ async function getService(db, date) {
     drugOpd: { success: 0, fail: 0 },
   }
 
-  const rows = await hisModel.getService(db, 'date_serv', date, hcode);
+  const rows = await hisModel.getService(db, 'date_serv', date);
   sentContent += '  - service = ' + rows.length + '\r';
   const d_update = moment().locale('th').format('YYYY-MM-DD HH:mm:ss');
   if (rows && rows.length) {

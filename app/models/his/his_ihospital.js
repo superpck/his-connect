@@ -171,7 +171,7 @@ class HisIHospitalModel {
             .orderBy('ADDRESSTYPE')
             .limit(maxLimit);
     }
-    async getService(db, column, searchText, hospCode = hisHospcode) {
+    async getService(db, column, searchText, dateServ, hospCode = hisHospcode) {
         let columnName = column === 'visitNo' ? 'vn' : column;
         columnName = columnName === 'cid' ? 'no_card' : columnName;
         columnName = columnName === 'date_serv' ? 'visit.date' : `visit.${columnName}`;
@@ -182,6 +182,9 @@ class HisIHospitalModel {
         }
         else {
             query = query.where(columnName, searchText);
+        }
+        if (dateServ && columnName !== 'visit.date') {
+            query = query.where('visit.date', dateServ);
         }
         query = query.select(db.raw('? as hospcode', [hisHospcode]), 'visit.hn as pid', 'visit.hn', 'visit.no_card as cid', 'visit.title as prename', 'visit.name as fname', 'visit.surname as lname', 'visit.birth as dob', 'visit.sex', 'visit.vn as seq', 'visit.date as date_serv', 'visit.hospmain as main', 'visit.hospsub as hsub', 'visit.waistline as waist', 'visit.refer as referinhosp', 'visit.dep as clinic_local_code', 'visit.dep_name as clinic_local_name', 'visit.dep_standard as clinic', 'visit.dr', db.raw(" case when visit.time='' or visit.time='08:00' then visit.time_reg else visit.time end as time_serv "), db.raw('? as servplace', [1]), 'visit.nurse_cc as chiefcomp', 'visit.pi_dr as presentillness', 'visit.pe_dr as physicalexam', 'visit.nurse_ph as pasthistory', 'visit.t as btemp', 'visit.bp as sbp', 'visit.bp1 as dbp', 'visit.weigh as weight', 'visit.high as height', 'visit.puls as pr', 'visit.rr', 'visit.bmi', db.raw(`IF(visit.dr > 0, CONCAT("ว",visit.dr),'') as provider`), 'visit.pttype_std as instype', 'visit.no_ptt as insid', 'triage.e as gcs_e', 'triage.v as gcs_v', 'triage.m as gcs_m', 'triage.gcs', 'triage.o2sat', 'triage.pupil_lt as pupil_left', 'triage.pupil_rt as pupil_right', db.raw('IF(visit.period>1,2,1) AS intime'), 'visit.cost as price', 'visit.opd_result_hdc as typeout', db.raw('IF(visit.hospmain=? OR visit.`add`=?,1,2) AS location', [hcode, '4001']), db.raw('concat(visit.date, " " , visit.time) as d_update'));
         return await query.orderBy('visit.date', 'desc');

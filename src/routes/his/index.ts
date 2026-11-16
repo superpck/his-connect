@@ -300,7 +300,7 @@ const router = (fastify, { }, next) => {
         textSearch = visitNo;
       }
 
-      const result = await hisModel.getService(global.dbHIS, typeSearch, textSearch, hospcode);
+      const result = await hisModel.getService(global.dbHIS, typeSearch, textSearch);
       reply.status(StatusCodes.OK).send({ statusCode: StatusCodes.OK, rows: result });
 
     } catch (error) {

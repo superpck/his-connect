@@ -490,7 +490,7 @@ async function getAddress(db, pid, sentResult) {
     }
 }
 async function getService(db, visitNo, sentResult) {
-    const rows = await hismodel_1.default.getService(db, 'visitNo', visitNo, hcode);
+    const rows = await hismodel_1.default.getService(db, 'visitNo', visitNo);
     sentContent += '  - service = ' + rows.length + '\r';
     const d_update = (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss');
     if (rows && rows.length) {

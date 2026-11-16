@@ -215,7 +215,7 @@ export class HisIHospitalModel {
       .limit(maxLimit);
   }
 
-  async getService(db: Knex, column: string, searchText: any, hospCode = hisHospcode) {
+  async getService(db: Knex, column: string, searchText: any, dateServ?: string, hospCode = hisHospcode) {
     //columnName => visitNo, hn
     let columnName = column === 'visitNo' ? 'vn' : column;
     columnName = columnName === 'cid' ? 'no_card' : columnName;
@@ -226,6 +226,9 @@ export class HisIHospitalModel {
       query = query.whereIn(columnName, searchText);
     } else {
       query = query.where(columnName, searchText);
+    }
+    if (dateServ && columnName !== 'visit.date') {
+      query = query.where('visit.date', dateServ);
     }
     query = query.select(db.raw('? as hospcode', [hisHospcode]),
       'visit.hn as pid', 'visit.hn', 'visit.no_card as cid',
