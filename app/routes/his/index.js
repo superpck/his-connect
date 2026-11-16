@@ -291,7 +291,7 @@ const router = (fastify, {}, next) => {
                 typeSearch = 'visitNo';
                 textSearch = visitNo;
             }
-            const result = await hismodel_1.default.getService(global.dbHIS, typeSearch, textSearch, hospcode);
+            const result = await hismodel_1.default.getService(global.dbHIS, typeSearch, textSearch);
             reply.status(http_status_codes_1.StatusCodes.OK).send({ statusCode: http_status_codes_1.StatusCodes.OK, rows: result });
         }
         catch (error) {

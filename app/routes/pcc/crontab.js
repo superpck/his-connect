@@ -55,7 +55,7 @@ async function getService(db, date) {
         diagnosisOpd: { success: 0, fail: 0 },
         drugOpd: { success: 0, fail: 0 },
     };
-    const rows = await hismodel_1.default.getService(db, 'date_serv', date, hcode);
+    const rows = await hismodel_1.default.getService(db, 'date_serv', date);
     sentContent += '  - service = ' + rows.length + '\r';
     const d_update = (0, moment_1.default)().locale('th').format('YYYY-MM-DD HH:mm:ss');
     if (rows && rows.length) {

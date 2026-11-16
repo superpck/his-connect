@@ -273,15 +273,10 @@ async function getReferInIPDByDateDisc(db: any, sentResultResult: any) {
       }
     }
     let date = moment().subtract(backward, 'days').format('YYYY-MM-DD');
-    // let datedisc = moment().subtract(backward, 'days').format('YYYY-MM-DD');
     do {
       await getReferInIPD(db, date, 0, sentResultResult);
       date = moment(date).add(1, 'day').format('YYYY-MM-DD');
     } while (date <= dateEnd && date <= today);
-    // for (let i = 0; i <= backward; i++) {
-    //   await getReferInIPD(db, datedisc, 0, sentResultResult);
-    //   datedisc = moment(datedisc).add(1, 'day').format('YYYY-MM-DD');
-    // }
     console.log(process.env.HOSPCODE, ' refer result (refer in)', sentResultResult);
     return true;
   } catch (error) {
@@ -531,7 +526,7 @@ async function getAddress(db, pid, sentResult) {
 }
 
 async function getService(db, visitNo, sentResult) {
-  const rows = await hisModel.getService(db, 'visitNo', visitNo, hcode);
+  const rows = await hisModel.getService(db, 'visitNo', visitNo);
   sentContent += '  - service = ' + rows.length + '\r';
   const d_update = moment().format('YYYY-MM-DD HH:mm:ss');
   if (rows && rows.length) {
