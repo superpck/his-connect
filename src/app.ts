@@ -20,7 +20,6 @@ var crypto = require('crypto');
 import { getIP, unGzip } from './utils/utils';
 import { authenticateRequest } from './middleware/authenticate';
 import { Readable } from 'stream';
-// import { Mqtt } from './middleware/mqtt';
 import helmet = require('@fastify/helmet');
 
 var serverOption = {}
@@ -226,7 +225,6 @@ var options: any = {
 // reflects actual DB state instead of racing ahead of it.
 (async () => {
   await connectDB();
-  // await mqttSubscribe();
   app.listen(options, (err) => {
     if (err) throw err;
     const instanceId = process.env.NODE_APP_INSTANCE || '0';
@@ -326,11 +324,3 @@ async function isIPInSubnet(ip: any) {
   return isValidIP;
 }
 
-// const mqtt = new Mqtt();
-// async function mqttSubscribe() {
-//   const instanceNo = process.env.NODE_APP_INSTANCE;
-//   if (instanceNo == '0') {
-//     // console.log(moment().format('HH:mm:ss'), `MQTT initializing on instance ${instanceNo}.....`);
-//     await mqtt.mqttSubscribe();
-//   }
-// }
