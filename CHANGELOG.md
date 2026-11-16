@@ -2,6 +2,8 @@
 ## Feature
   - เพิ่มการเชื่อมข้อมูลกับระบบ MOPH Kiosk device และ MOPH Kiosk Application
   - ปรับ serverOption ให้รองรับ Fastify 5
+  - ลบโค้ด mqtt ออก (เตรียมเปลี่ยนไปใช้ Socket.IO แทน)
+  - ลบ dependency fastify-ws ที่ไม่ได้ใช้งาน
   - Update package
 
 # 3.11.3
