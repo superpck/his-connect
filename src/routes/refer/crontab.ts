@@ -13,6 +13,7 @@ import hisModel from './../his/hismodel';
 import { Knex } from 'knex';
 import { sendingToMoph } from '../../middleware/moph-refer';
 import { getNReferToken } from '../../middleware/authenticate';
+import { getIP } from '../../utils/utils';
 var fs = require('fs');
 
 const hcode = process.env.HOSPCODE;
@@ -1129,9 +1130,13 @@ async function getProvider(db: Knex, drList: any, sentResult: any) {
 }
 
 async function referSending(path: string | null, dataArray: any) {
+  const ipAddr = getIP();
+  if (!nReferToken) {
+    nReferToken = await getNReferToken(ipAddr.toString());
+  }
   const fixedUrl = process.env.NREFER_API_URL || 'https://nrefer.moph.go.th/api/his';
   const bodyData = {
-    ip: crontabConfig['client_ip'] || fastify.ipAddr || '127.0.0.1',
+    ip: crontabConfig['client_ip'] || fastify.ipAddr || ipAddr.toString() || '127.0.0.1',
     hospcode: hcode, data: JSON.stringify(dataArray),
     processPid: process.pid, dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
     sourceApiName: 'HIS-connect', apiVersion: crontabConfig.version, subVersion: crontabConfig.subVersion,
@@ -1148,7 +1153,7 @@ async function referSending(path: string | null, dataArray: any) {
     const { status, data } = await axios.post(url, bodyData, { headers });
     return data;
   } catch (error) {
-    console.log('referSending error ', error.message);
+    console.error('referSending error', error.message, 'on ', url, nReferToken);
     return error;
   }
 }
@@ -1173,7 +1178,7 @@ async function getNReferIPD(bodyData: any = {}) {
     const { status, data } = await axios.post(url, body, { headers });
     return data;
   } catch (error) {
-    console.log('referSending error ', error.message);
+    console.error('getNReferIPD error', error.message);
     return error;
   }
 }
@@ -1181,12 +1186,12 @@ async function getNReferIPD(bodyData: any = {}) {
 async function writeResult(file, content) {
   fs.writeFile(file, content, async function (err) {
     if (err) {
-      console.log(err.message);
+      console.error(err.message);
     } else {
       let fileDesc: any;
       await fs.stat(resultText, (err, stat) => {
         if (err) {
-          console.log(err.message);
+          console.error(err.message);
         } else {
           fileDesc = stat;
         }
