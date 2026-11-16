@@ -58,12 +58,13 @@ async function sendMoph(req, reply, db) {
     sentContent = `${global.appDetail.name} v.${global.appDetail.version}-${global.appDetail.subVersion} ` +
         (0, moment_1.default)().format('YYYY-MM-DD HH:mm:ss') + ' data:' + dateNow + "\r\n";
     const resultToken = await (0, authenticate_1.getNReferToken)(ip);
-    if (resultToken && resultToken.statusCode == 200 && resultToken.token) {
+    nReferToken = resultToken || resultToken?.token || null;
+    if (nReferToken) {
         nReferToken = resultToken.token;
         sentContent += `token ${nReferToken}\r`;
     }
     else {
-        console.error('Get nRefer token error', resultToken.message);
+        console.error('Get nRefer token error');
         sentContent += `get token Error:` + JSON.stringify(resultToken) + `\r`;
         writeResult(resultText, sentContent);
         return false;
